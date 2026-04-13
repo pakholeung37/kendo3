@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.idea
+.vscode
+
+coverage
+node_modules
+tmp
+
+apps/server/.env
+apps/server/assets/build/*
+!apps/server/assets/build/.gitkeep
+apps/server/coverage
+apps/server/dist
+apps/server/logs
+

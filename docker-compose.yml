@@ -1,0 +1,59 @@
+services:
+    rsshub:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - '1200:1200'
+        environment:
+            NODE_ENV: production
+            CACHE_TYPE: redis
+            REDIS_URL: 'redis://redis:6379/'
+            PUPPETEER_WS_ENDPOINT: 'ws://browserless:3000'
+        depends_on:
+            redis:
+                condition: service_healthy
+            browserless:
+                condition: service_healthy
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'bun',
+                    '-e',
+                    "fetch('http://127.0.0.1:1200/healthz').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+
+    browserless:
+        image: browserless/chrome
+        restart: always
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'node',
+                    '-e',
+                    "fetch('http://127.0.0.1:3000/pressure').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+
+    redis:
+        image: redis:alpine
+        restart: always
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 5s
+
+volumes:
+    redis-data:

@@ -1,0 +1,32 @@
+name: Docker
+
+on:
+    push:
+        branches:
+            - main
+            - master
+        paths:
+            - '.github/workflows/docker.yml'
+            - 'apps/server/**'
+            - 'package.json'
+            - 'bun.lock'
+            - 'scripts/**'
+            - 'Dockerfile'
+            - 'docker-compose.yml'
+    pull_request:
+        paths:
+            - '.github/workflows/docker.yml'
+            - 'apps/server/**'
+            - 'package.json'
+            - 'bun.lock'
+            - 'scripts/**'
+            - 'Dockerfile'
+            - 'docker-compose.yml'
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@v4
+            - run: bash scripts/docker/test-docker.sh

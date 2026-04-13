@@ -1,0 +1,6 @@
+assets/build/*
+!assets/build/.gitkeep
+coverage
+dist
+logs
+node_modules

@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+coverage
+node_modules
+
+apps/server/.env
+apps/server/assets/build
+apps/server/coverage
+apps/server/dist
+apps/server/logs
+
