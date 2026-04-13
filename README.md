@@ -11,6 +11,8 @@
 Useful commands:
 
 - `bun run build`
+- `bun run lint`
+- `bun run format`
 - `bun run start`
 - `bun run test`
 - `bun run smoke:bun`

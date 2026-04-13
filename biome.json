@@ -1,0 +1,94 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": true
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 233
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "a11y": "off",
+            "security": {
+                "noBlankTarget": "off",
+                "noDangerouslySetInnerHtml": "off"
+            },
+            "style": {
+                "noNonNullAssertion": "off",
+                "useExponentiationOperator": "off",
+                "useNodejsImportProtocol": "off",
+                "useTemplate": "off"
+            },
+            "correctness": {
+                "noUnusedFunctionParameters": "off",
+                "noUnusedPrivateClassMembers": "off",
+                "noVoidElementsWithChildren": "off",
+                "useExhaustiveDependencies": "warn",
+                "useHookAtTopLevel": "off",
+                "useJsxKeyInIterable": "off",
+                "useParseIntRadix": "off"
+            },
+            "suspicious": {
+                "noApproximativeNumericConstant": "off",
+                "noArrayIndexKey": "off",
+                "noAssignInExpressions": "off",
+                "noControlCharactersInRegex": "off",
+                "noEmptyInterface": "off",
+                "noExplicitAny": "off",
+                "noImplicitAnyLet": "off",
+                "noPrototypeBuiltins": "off",
+                "noRedundantUseStrict": "off",
+                "noShadowRestrictedNames": "off",
+                "noTemplateCurlyInString": "off",
+                "noTsIgnore": "off",
+                "useIterableCallbackReturn": "off"
+            },
+            "complexity": {
+                "noArguments": "off",
+                "noCommaOperator": "off",
+                "noStaticOnlyClass": "off",
+                "noUselessStringRaw": "off",
+                "noUselessSwitchCase": "off",
+                "noUselessUndefinedInitialization": "off",
+                "noUselessFragments": "off",
+                "useArrowFunction": "off",
+                "useLiteralKeys": "off",
+                "useOptionalChain": "off"
+            }
+        },
+        "domains": {
+            "react": "recommended"
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "arrowParentheses": "always",
+            "quoteStyle": "single",
+            "semicolons": "always",
+            "trailingCommas": "es5"
+        }
+    },
+    "css": {
+        "parser": {
+            "tailwindDirectives": true
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    }
+}

@@ -48,10 +48,7 @@ async function handler() {
             const rawLink = linkEl.attr('href');
             const link = rawLink ? new URL(rawLink, baseUrl).href : '';
 
-            const dateText = el
-                .find(String.raw`.font-mono span.md\:inline`)
-                .text()
-                .trim();
+            const dateText = el.find(String.raw`.font-mono span.md\:inline`).text().trim();
 
             return {
                 title,

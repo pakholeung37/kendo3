@@ -5,6 +5,7 @@
 
 coverage
 node_modules
+.turbo
 tmp
 
 apps/server/.env
@@ -13,4 +14,3 @@ apps/server/assets/build/*
 apps/server/coverage
 apps/server/dist
 apps/server/logs
-

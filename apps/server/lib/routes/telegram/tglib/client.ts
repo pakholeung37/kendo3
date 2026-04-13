@@ -64,9 +64,7 @@ export function getDocument(m: Api.TypeMessageMedia) {
 }
 
 export async function getStory(entity: Api.TypeEntityLike, id: number) {
-    const result = await (
-        await getClient()
-    ).invoke(
+    const result = await (await getClient()).invoke(
         new Api.stories.GetStoriesByID({
             id: [id],
             peer: entity,

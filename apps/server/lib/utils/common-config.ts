@@ -8,12 +8,12 @@ import _timezone from '@/utils/timezone';
 function transElemText($, prop) {
     const regex = /\$\((.*)\)/g;
     let result = prop;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // biome-ignore lint/correctness/noUnusedVariables: referenced via legacy eval templates
     const parseDate = _parseDate;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // biome-ignore lint/correctness/noUnusedVariables: referenced via legacy eval templates
     const timezone = _timezone;
     if (regex.test(result)) {
-        // eslint-disable-next-line no-eval
+        // biome-ignore lint/security/noGlobalEval: legacy route config evaluates injected expressions
         result = eval(result);
     }
     return result;
