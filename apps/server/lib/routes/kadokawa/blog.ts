@@ -1,32 +1,32 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://www.kadokawa.com.tw';
-    const currentUrl = new URL('blog/posts', rootUrl).href;
+    const rootUrl = 'https://www.kadokawa.com.tw'
+    const currentUrl = new URL('blog/posts', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.List-item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const image = item.find('div.List-item-excerpt img').prop('src')?.split(/\?/)[0] ?? undefined;
-            const title = item.find('h2.List-item-title').text();
+            const image = item.find('div.List-item-excerpt img').prop('src')?.split(/\?/)[0] ?? undefined
+            const title = item.find('h2.List-item-title').text()
             const description = renderDescription({
                 images: image
                     ? [
@@ -37,7 +37,7 @@ export const handler = async (ctx) => {
                       ]
                     : undefined,
                 intro: item.find('div.List-item-preview').text(),
-            });
+            })
 
             return {
                 title,
@@ -54,42 +54,42 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: image ? `image/${image.split(/\./).pop()}` : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.Post-title').text().trim();
+                const title = $$('h1.Post-title').text().trim()
                 const description = renderDescription({
                     description: $$('div.Post-content').html(),
-                });
-                const image = $$('meta[property="og:image"]').prop('content')?.split(/\?/)[0] ?? undefined;
+                })
+                const image = $$('meta[property="og:image"]').prop('content')?.split(/\?/)[0] ?? undefined
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('div.Post-date').text().trim());
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('div.Post-date').text().trim())
                 item.content = {
                     html: description,
                     text: $$('div.Post-content').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
-                item.enclosure_url = image;
-                item.enclosure_type = image ? `image/${image.split(/\./).pop()}` : undefined;
-                item.enclosure_title = title;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
+                item.enclosure_url = image
+                item.enclosure_type = image ? `image/${image.split(/\./).pop()}` : undefined
+                item.enclosure_title = title
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('meta[property="og:image"]').prop('content'), rootUrl).href;
+    const image = new URL($('meta[property="og:image"]').prop('content'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -100,8 +100,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/blog',
@@ -129,4 +129,4 @@ export const route: Route = {
             target: '/blog',
         },
     ],
-};
+}

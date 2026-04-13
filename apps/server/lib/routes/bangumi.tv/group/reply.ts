@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/topic/:id',
@@ -26,38 +26,38 @@ export const route: Route = {
     name: '小组话题的新回复',
     maintainers: ['ylc395'],
     handler,
-};
+}
 
 async function handler(ctx) {
     // bangumi.tv未提供获取小组话题的API，因此仍需要通过抓取网页来获取
-    const topicID = ctx.req.param('id');
-    const link = `https://bgm.tv/group/topic/${topicID}`;
-    const html = await ofetch(link);
-    const $ = load(html);
-    const title = $('#pageHeader h1').text();
+    const topicID = ctx.req.param('id')
+    const link = `https://bgm.tv/group/topic/${topicID}`
+    const html = await ofetch(link)
+    const $ = load(html)
+    const title = $('#pageHeader h1').text()
     const latestReplies = $('.row_reply')
         .toArray()
         .map((el) => {
-            const $el = $(el);
+            const $el = $(el)
             return {
                 id: $el.attr('id'),
                 author: $el.find('.userInfo .l').text(),
                 content: $el.find('.reply_content .message').html(),
                 date: $el.children().first().find('small').children().remove().end().text().slice(3),
-            };
-        });
+            }
+        })
     const latestSubReplies = $('.sub_reply_bg')
         .toArray()
         .map((el) => {
-            const $el = $(el);
+            const $el = $(el)
             return {
                 id: $el.attr('id'),
                 author: $el.find('.userName .l').text(),
                 content: $el.find('.cmt_sub_content').html(),
                 date: $el.children().first().find('small').children().remove().end().text().slice(3),
-            };
-        });
-    const finalLatestReplies = [...latestReplies, ...latestSubReplies].toSorted((a, b) => (a.id < b.id ? 1 : -1));
+            }
+        })
+    const finalLatestReplies = [...latestReplies, ...latestSubReplies].toSorted((a, b) => (a.id < b.id ? 1 : -1))
 
     const postTopic = {
         title,
@@ -65,7 +65,7 @@ async function handler(ctx) {
         author: $('.postTopic .inner strong a').first().text(),
         pubDate: timezone(parseDate($('.postTopic .re_info small').text().trim().slice(5)), +8),
         link,
-    };
+    }
 
     return {
         title: `${title}的最新回复`,
@@ -80,5 +80,5 @@ async function handler(ctx) {
             })),
             postTopic,
         ],
-    };
+    }
 }

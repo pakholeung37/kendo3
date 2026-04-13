@@ -1,44 +1,44 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
 
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const baseUrl = 'https://river.to/occasus';
+const baseUrl = 'https://river.to/occasus'
 // Reason: the main homepage (/occasus) is severely outdated;
 // this sub-page is the real full-site latest feed, updated daily
-const defaultFeedPath = 'vncwdhq2xje7wp/rawzi0ruu6p6a1';
+const defaultFeedPath = 'vncwdhq2xje7wp/rawzi0ruu6p6a1'
 
 export const handler = async (ctx): Promise<Data> => {
-    const { filter } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 40;
+    const { filter } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 40
 
     // Reason: filter supports category/slug or just a slug directly for backward compatibility
-    const slug = parseSlug(filter);
-    const targetUrl = slug ? `${baseUrl}/${slug}` : `${baseUrl}/${defaultFeedPath}`;
+    const slug = parseSlug(filter)
+    const targetUrl = slug ? `${baseUrl}/${slug}` : `${baseUrl}/${defaultFeedPath}`
 
-    const { data: response } = await got(targetUrl);
+    const { data: response } = await got(targetUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const title = $('title').first().text() || '江河日下';
+    const title = $('title').first().text() || '江河日下'
 
-    const items = [...extractFromStreamItems($), ...extractFromMaterialBlocks($, targetUrl), ...extractFromPostPreviews($, targetUrl)];
+    const items = [...extractFromStreamItems($), ...extractFromMaterialBlocks($, targetUrl), ...extractFromPostPreviews($, targetUrl)]
 
     // Reason: deduplicate by guid and enforce limit
-    const seen = new Set<string>();
+    const seen = new Set<string>()
     const deduped = items.filter((item) => {
-        const key = item.guid || item.title;
+        const key = item.guid || item.title
         if (seen.has(key)) {
-            return false;
+            return false
         }
-        seen.add(key);
-        return true;
-    });
+        seen.add(key)
+        return true
+    })
 
     return {
         title: `${title} - 江河日下`,
@@ -48,8 +48,8 @@ export const handler = async (ctx): Promise<Data> => {
         image: $('meta[property="og:image"]').attr('content') || '',
         language: 'zh-CN',
         item: deduped.slice(0, limit),
-    };
-};
+    }
+}
 
 /**
  * Parse filter string to get the target slug.
@@ -57,22 +57,22 @@ export const handler = async (ctx): Promise<Data> => {
  */
 function parseSlug(filter: string | undefined): string | undefined {
     if (!filter) {
-        return undefined;
+        return undefined
     }
 
-    const parts = filter.split('/').filter(Boolean);
+    const parts = filter.split('/').filter(Boolean)
 
     // Reason: for backward compatibility, /the/category/rawXXX maps to /occasus/rawXXX
     if (parts.length >= 2 && (parts[0] === 'category' || parts[0] === 'tag')) {
-        return parts[1];
+        return parts[1]
     }
 
     // Direct slug access: /the/rawXXX
     if (parts.length === 1) {
-        return parts[0];
+        return parts[0]
     }
 
-    return parts[1] || parts[0];
+    return parts[1] || parts[0]
 }
 
 /**
@@ -81,59 +81,59 @@ function parseSlug(filter: string | undefined): string | undefined {
  * Links in author/publication areas (.postMetaInline, .uiScale, avatar containers) are excluded.
  */
 function findArticleLink($: CheerioAPI, block: Cheerio<Element>): string | undefined {
-    let link: string | undefined;
+    let link: string | undefined
 
     // Reason: look for links that contain h3 (title) — these are actual article links
     block.find('a').each((_, el) => {
-        const $el = $(el);
-        const href = $el.attr('href');
+        const $el = $(el)
+        const href = $el.attr('href')
 
         if (!href || href === '#Unauthorized' || href === baseUrl || href === `${baseUrl}/` || !href.startsWith('https://river.to/occasus/')) {
-            return;
+            return
         }
 
         // Only consider links that wrap article titles (h3) or the main image
-        const hasTitle = $el.find('h3').length > 0;
-        const isMainImage = $el.hasClass('u-block') && $el.find('.graf-image').length > 0;
+        const hasTitle = $el.find('h3').length > 0
+        const isMainImage = $el.hasClass('u-block') && $el.find('.graf-image').length > 0
 
         if (hasTitle || isMainImage) {
-            link = href;
-            return false;
+            link = href
+            return false
         }
-    });
+    })
 
-    return link;
+    return link
 }
 
 /**
  * Extract articles from extremePostPreview sections (list items on homepage).
  */
 function extractFromStreamItems($: CheerioAPI): DataItem[] {
-    const items: DataItem[] = [];
+    const items: DataItem[] = []
 
     $('section.extremePostPreview').each((_, el) => {
-        const section = $(el);
-        const link = findArticleLink($, section);
+        const section = $(el)
+        const link = findArticleLink($, section)
 
         if (!link) {
-            return;
+            return
         }
 
-        const title = section.find('h3 div').first().text().trim();
-        const summary = section.find('.u-contentSansThin div, .ui-summary').first().text().trim();
-        const dateStr = section.find('time').attr('datetime');
-        const tag = section.find('.TagName').attr('title') || '';
-        const author = section.find('.uiScale a').first().text().trim();
-        const image = section.find('img.graf-image--src').attr('data-srcset');
+        const title = section.find('h3 div').first().text().trim()
+        const summary = section.find('.u-contentSansThin div, .ui-summary').first().text().trim()
+        const dateStr = section.find('time').attr('datetime')
+        const tag = section.find('.TagName').attr('title') || ''
+        const author = section.find('.uiScale a').first().text().trim()
+        const image = section.find('img.graf-image--src').attr('data-srcset')
 
         if (!title) {
-            return;
+            return
         }
 
         const description = renderDescription({
             images: image ? [{ src: image }] : undefined,
             intro: summary || undefined,
-        });
+        })
 
         items.push({
             title,
@@ -143,10 +143,10 @@ function extractFromStreamItems($: CheerioAPI): DataItem[] {
             category: tag ? [tag] : [],
             author,
             guid: link,
-        });
-    });
+        })
+    })
 
-    return items;
+    return items
 }
 
 /**
@@ -155,31 +155,31 @@ function extractFromStreamItems($: CheerioAPI): DataItem[] {
  * We still extract the metadata and use the page URL + title hash as guid.
  */
 function extractFromMaterialBlocks($: CheerioAPI, pageUrl: string): DataItem[] {
-    const items: DataItem[] = [];
+    const items: DataItem[] = []
 
     $('[class^="material5"]').each((_, el) => {
-        const block = $(el);
+        const block = $(el)
 
-        const title = block.find('h3').first().text().trim();
+        const title = block.find('h3').first().text().trim()
         if (!title) {
-            return;
+            return
         }
 
-        const summary = block.find('.ui-summary, h4.ui-summary, p.ui-summary').first().text().trim();
-        const dateStr = block.find('time').first().attr('datetime');
-        const tag = block.find('.TagName').attr('title') || '';
-        const author = block.find('.postMetaInline--author').first().text().trim();
-        const image = block.find('img.graf-image--src').first().attr('data-srcset');
+        const summary = block.find('.ui-summary, h4.ui-summary, p.ui-summary').first().text().trim()
+        const dateStr = block.find('time').first().attr('datetime')
+        const tag = block.find('.TagName').attr('title') || ''
+        const author = block.find('.postMetaInline--author').first().text().trim()
+        const image = block.find('img.graf-image--src').first().attr('data-srcset')
 
         // Reason: try to find a real article link; fall back to page URL for subscriber-only content
-        const articleLink = findArticleLink($, block);
-        const link = articleLink || pageUrl;
-        const guid = articleLink || `${pageUrl}#${encodeURIComponent(title)}`;
+        const articleLink = findArticleLink($, block)
+        const link = articleLink || pageUrl
+        const guid = articleLink || `${pageUrl}#${encodeURIComponent(title)}`
 
         const description = renderDescription({
             images: image ? [{ src: image }] : undefined,
             intro: summary || undefined,
-        });
+        })
 
         items.push({
             title,
@@ -189,10 +189,10 @@ function extractFromMaterialBlocks($: CheerioAPI, pageUrl: string): DataItem[] {
             category: tag ? [tag] : [],
             author,
             guid,
-        });
-    });
+        })
+    })
 
-    return items;
+    return items
 }
 
 /**
@@ -201,31 +201,31 @@ function extractFromMaterialBlocks($: CheerioAPI, pageUrl: string): DataItem[] {
  * These are typically subscriber-only articles with #Unauthorized links.
  */
 function extractFromPostPreviews($: CheerioAPI, pageUrl: string): DataItem[] {
-    const items: DataItem[] = [];
+    const items: DataItem[] = []
 
     $('.streamItem--postPreview').each((_, el) => {
-        const block = $(el);
+        const block = $(el)
 
-        const title = block.find('h3.graf--title').first().text().trim();
+        const title = block.find('h3.graf--title').first().text().trim()
         if (!title) {
-            return;
+            return
         }
 
-        const summary = block.find('h4.ui-summary, .graf--subtitle').first().text().trim();
-        const dateStr = block.find('time').first().attr('datetime');
-        const author = block.find('.postMetaInline-authorLockup a').first().text().trim();
-        const tag = block.find('.TagName').attr('title') || '';
-        const image = block.find('img.graf-image--src').not('.avatar-image img').first().attr('data-srcset');
+        const summary = block.find('h4.ui-summary, .graf--subtitle').first().text().trim()
+        const dateStr = block.find('time').first().attr('datetime')
+        const author = block.find('.postMetaInline-authorLockup a').first().text().trim()
+        const tag = block.find('.TagName').attr('title') || ''
+        const image = block.find('img.graf-image--src').not('.avatar-image img').first().attr('data-srcset')
 
         // Reason: these blocks typically have #Unauthorized links; use page URL as fallback
-        const articleLink = findArticleLink($, block);
-        const link = articleLink || pageUrl;
-        const guid = articleLink || `${pageUrl}#${encodeURIComponent(title)}`;
+        const articleLink = findArticleLink($, block)
+        const link = articleLink || pageUrl
+        const guid = articleLink || `${pageUrl}#${encodeURIComponent(title)}`
 
         const description = renderDescription({
             images: image ? [{ src: image }] : undefined,
             intro: summary || undefined,
-        });
+        })
 
         items.push({
             title,
@@ -235,10 +235,10 @@ function extractFromPostPreviews($: CheerioAPI, pageUrl: string): DataItem[] {
             category: tag ? [tag] : [],
             author,
             guid,
-        });
-    });
+        })
+    })
 
-    return items;
+    return items
 }
 
 export const route: Route = {
@@ -286,9 +286,9 @@ export const route: Route = {
         {
             source: ['river.to/occasus/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/the${category ? `/category/${category}` : ''}`;
+                return `/the${category ? `/category/${category}` : ''}`
             },
         },
         {
@@ -347,4 +347,4 @@ export const route: Route = {
             target: '/the/category/rawdhl9hugdfn9',
         },
     ],
-};
+}

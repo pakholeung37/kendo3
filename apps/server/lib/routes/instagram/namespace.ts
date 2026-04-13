@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Instagram',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 It's highly recommended to deploy with Redis cache enabled.
 :::`,
     lang: 'en',
-};
+}

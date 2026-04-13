@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/shouts/:username',
@@ -25,18 +25,18 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { username } = ctx.req.param();
-    const url = `https://faexport.spangle.org.uk/user/${username}/shouts.json?full=1`;
+    const { username } = ctx.req.param()
+    const url = `https://faexport.spangle.org.uk/user/${username}/shouts.json?full=1`
 
     const data = await ofetch(url, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
     const items = data.map((item) => ({
         title: `${item.name} shout at ${username}`,
@@ -45,7 +45,7 @@ async function handler(ctx) {
         description: `<img src="${item.avatar}"> <br> ${item.name}: ${item.text}`,
         pubDate: new Date(item.posted_at).toUTCString(),
         author: username,
-    }));
+    }))
 
     return {
         allowEmpty: true,
@@ -53,5 +53,5 @@ async function handler(ctx) {
         link: `https://www.furaffinity.net/user/${username}`,
         description: `Fur Affinity ${username}'s Shouts`,
         item: items,
-    };
+    }
 }

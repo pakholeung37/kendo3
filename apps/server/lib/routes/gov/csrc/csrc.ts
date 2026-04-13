@@ -1,33 +1,33 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { id = 'c101972' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { id = 'c101972' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'http://www.csrc.gov.cn';
-    const apiUrl = new URL('getLocalList', rootUrl).href;
-    const currentUrl = new URL(`/csrc/${id}/zfxxgk_zdgk.shtml`, rootUrl).href;
+    const rootUrl = 'http://www.csrc.gov.cn'
+    const apiUrl = new URL('getLocalList', rootUrl).href
+    const currentUrl = new URL(`/csrc/${id}/zfxxgk_zdgk.shtml`, rootUrl).href
 
     const { data: channelResponse } = await got(apiUrl, {
         searchParams: {
             channelCode: id,
         },
-    });
+    })
 
-    const channel = channelResponse.results.channelLevel.find((channel) => channel.channelCode === id);
-    const channelId = channel?.channelId ?? undefined;
-    const channelName = channel?.channelName ?? undefined;
+    const channel = channelResponse.results.channelLevel.find((channel) => channel.channelCode === id)
+    const channelId = channel?.channelId ?? undefined
+    const channelName = channel?.channelName ?? undefined
 
     if (!channelId) {
-        throw new InvalidParameterError(`Invalid channel Id: ${id}`);
+        throw new InvalidParameterError(`Invalid channel Id: ${id}`)
     }
 
-    const apiSearchUrl = new URL(`searchList/${channelId}`, rootUrl).href;
+    const apiSearchUrl = new URL(`searchList/${channelId}`, rootUrl).href
 
     const { data: response } = await got(apiSearchUrl, {
         searchParams: {
@@ -35,12 +35,12 @@ export const handler = async (ctx) => {
             _isJson: true,
             _pageSize: limit,
         },
-    });
+    })
 
     const items = response.data.results.slice(0, limit).map((item) => {
-        const title = item.title;
-        const description = item.contentHtml;
-        const enclosure = item.resList?.[0] ?? undefined;
+        const title = item.title
+        const description = item.contentHtml
+        const enclosure = item.resList?.[0] ?? undefined
 
         return {
             title,
@@ -55,16 +55,16 @@ export const handler = async (ctx) => {
             enclosure_url: enclosure ? new URL(enclosure.filePath, rootUrl).href : undefined,
             enclosure_type: enclosure ? `application/${enclosure.filePath.split(/\./).pop()}` : undefined,
             enclosure_title: enclosure ? enclosure.title : undefined,
-        };
-    });
+        }
+    })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const description = channelName ?? id;
-    const image = new URL($('div.zfxx-logo img').prop('src'), rootUrl).href;
-    const author = $('meta[name="SiteName"]').prop('content');
+    const description = channelName ?? id
+    const image = new URL($('div.zfxx-logo img').prop('src'), rootUrl).href
+    const author = $('meta[name="SiteName"]').prop('content')
 
     return {
         title: `${author} - ${description}`,
@@ -74,8 +74,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/csrc/zfxxgk_zdgk/:id?',
@@ -217,9 +217,9 @@ export const route: Route = {
         {
             source: ['www.csrc.gov.cn/csrc/:id/zfxxgk_zdgk.shtml'],
             target: (params) => {
-                const id = params.id;
+                const id = params.id
 
-                return `/gov/csrc/zfxxgk_zdgk/${id ? `/${id}` : ''}`;
+                return `/gov/csrc/zfxxgk_zdgk/${id ? `/${id}` : ''}`
             },
         },
         {
@@ -538,4 +538,4 @@ export const route: Route = {
             target: '/csrc/zfxxgk_zdgk/c101800',
         },
     ],
-};
+}

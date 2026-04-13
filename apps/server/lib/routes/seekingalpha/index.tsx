@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://seekingalpha.com';
+const baseUrl = 'https://seekingalpha.com'
 
 export const route: Route = {
     path: '/:symbol/:category?',
@@ -27,13 +27,13 @@ export const route: Route = {
     description: `| Analysis | News | Transcripts | Press Releases | Related Analysis |
 | -------- | ---- | ----------- | -------------- | ---------------- |
 | analysis | news | transcripts | press-releases | related-analysis |`,
-};
+}
 
 const getMachineCookie = () =>
     cache.tryGet('seekingalpha:machine_cookie', async () => {
-        const response = await ofetch.raw(baseUrl);
-        return response.headers.getSetCookie().map((c) => c.split(';')[0]);
-    });
+        const response = await ofetch.raw(baseUrl)
+        return response.headers.getSetCookie().map((c) => c.split(';')[0])
+    })
 
 const apiParams = {
     article: {
@@ -48,13 +48,13 @@ const apiParams = {
         slug: '/press_releases',
         include: 'acquireService,primaryTickers',
     },
-};
+}
 
 async function handler(ctx) {
-    const { category = 'news', symbol } = ctx.req.param();
-    const pageUrl = `${baseUrl}/symbol/${symbol.toUpperCase()}/${category === 'transcripts' ? `earnings/${category}` : category}`;
+    const { category = 'news', symbol } = ctx.req.param()
+    const pageUrl = `${baseUrl}/symbol/${symbol.toUpperCase()}/${category === 'transcripts' ? `earnings/${category}` : category}`
 
-    const machineCookie = await getMachineCookie();
+    const machineCookie = await getMachineCookie()
     const response = await ofetch(`${baseUrl}/api/v3/symbols/${symbol.toUpperCase()}/${category}`, {
         headers: {
             cookie: machineCookie.join('; '),
@@ -67,7 +67,7 @@ async function handler(ctx) {
             'page[size]': ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : category === 'news' ? 40 : 20,
             'page[number]': 1,
         },
-    });
+    })
 
     const list = response.data?.map((item) => ({
         title: item.attributes.title,
@@ -76,7 +76,7 @@ async function handler(ctx) {
         author: response.included.find((i) => i.id === item.relationships.author.data.id).attributes.nick,
         id: item.id,
         articleType: item.links.self.split('/')[1],
-    }));
+    }))
 
     const items = list
         ? await Promise.all(
@@ -89,10 +89,10 @@ async function handler(ctx) {
                           query: {
                               include: apiParams[item.articleType].include,
                           },
-                      });
+                      })
 
-                      item.category = response.included.filter((i) => i.type === 'tag').map((i) => (i.attributes.company ? `${i.attributes.company} (${i.attributes.name})` : i.attributes.name));
-                      const summary = response.data.attributes.summary;
+                      item.category = response.included.filter((i) => i.type === 'tag').map((i) => (i.attributes.company ? `${i.attributes.company} (${i.attributes.name})` : i.attributes.name))
+                      const summary = response.data.attributes.summary
                       const summaryDescription = summary?.length
                           ? renderToString(
                                 <>
@@ -102,17 +102,17 @@ async function handler(ctx) {
                                             <li>{entry}</li>
                                         ))}
                                     </ul>
-                                </>
+                                </>,
                             )
-                          : '';
-                      item.description = summaryDescription + response.data.attributes.content;
-                      item.updated = parseDate(response.data.attributes.lastModified);
+                          : ''
+                      item.description = summaryDescription + response.data.attributes.content
+                      item.updated = parseDate(response.data.attributes.lastModified)
 
-                      return item;
-                  })
-              )
+                      return item
+                  }),
+              ),
           )
-        : [];
+        : []
 
     return {
         title: response.meta.page.title,
@@ -122,5 +122,5 @@ async function handler(ctx) {
         item: items,
         allowEmpty: true,
         language: 'en-US',
-    };
+    }
 }

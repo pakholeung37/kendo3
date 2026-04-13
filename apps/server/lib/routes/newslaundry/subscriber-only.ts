@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchCollection } from './utils';
+import { fetchCollection } from './utils'
 
 export const route: Route = {
     path: '/subscriber-only',
@@ -25,8 +25,8 @@ export const route: Route = {
     name: 'Subscriber Only',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    return await fetchCollection('subscriber-only');
+    return await fetchCollection('subscriber-only')
 }

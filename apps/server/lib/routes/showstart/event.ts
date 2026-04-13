@@ -1,9 +1,9 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { HOST, TITLE } from './const';
-import { fetchActivityList, fetchDictionary } from './service';
+import { HOST, TITLE } from './const'
+import { fetchActivityList, fetchDictionary } from './service'
 
 export const route: Route = {
     path: '/event/:cityCode/:showStyle?',
@@ -26,20 +26,20 @@ export const route: Route = {
 
 -   演出风格 \`showStyle\` 查询: \`/showstart/search/style/:keyword\`，如: [https://rsshub.app/showstart/search/style/摇滚](https://rsshub.app/showstart/search/style/摇滚)
 :::`,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const cityCode = Number.parseInt(ctx.req.param('cityCode')).toString();
-    const showStyle = Number.parseInt(ctx.req.param('showStyle')).toString();
+    const cityCode = Number.parseInt(ctx.req.param('cityCode')).toString()
+    const showStyle = Number.parseInt(ctx.req.param('showStyle')).toString()
     const items = await fetchActivityList({
         cityCode,
         showStyle,
-    });
-    const { cityName, showName } = await fetchDictionary(cityCode, showStyle);
-    const tags = [cityName, showName].filter(Boolean).join(' - ');
+    })
+    const { cityName, showName } = await fetchDictionary(cityCode, showStyle)
+    const tags = [cityName, showName].filter(Boolean).join(' - ')
     return {
         title: `${TITLE} - ${tags}`,
         link: HOST,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import type { Tag } from './types';
-import { getTagList, parseList, ProcessFeed } from './utils';
+import type { Tag } from './types'
+import { getTagList, parseList, ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/aicoding/:tag?/:sort?',
@@ -64,21 +64,21 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'aicoding.juejin.cn',
-};
+}
 
 async function handler(ctx) {
-    const { tag, sort } = ctx.req.param();
-    const sortType = sort === 'hot' ? 1 : 2;
+    const { tag, sort } = ctx.req.param()
+    const sortType = sort === 'hot' ? 1 : 2
     let tagList: Array<{
-            tag_id: string;
-            tag: Tag;
+            tag_id: string
+            tag: Tag
         }>,
         currentTag: Tag | undefined,
-        tagId: string | undefined;
+        tagId: string | undefined
     if (tag) {
-        tagList = await getTagList();
-        currentTag = tagList.find((item) => item.tag.tag_name === tag)?.tag;
-        tagId = currentTag?.tag_id;
+        tagList = await getTagList()
+        currentTag = tagList.find((item) => item.tag.tag_name === tag)?.tag
+        tagId = currentTag?.tag_id
     }
 
     const response = await ofetch('https://api.juejin.cn/content_api/v1/aicoding/content', {
@@ -89,15 +89,15 @@ async function handler(ctx) {
             limit: 10,
             tag_ids: tagId ? [tagId] : undefined,
         },
-    });
+    })
 
-    const list = parseList(response.data.map((item) => item.article_pack || item.short_msg_pack));
-    const items = await ProcessFeed(list);
+    const list = parseList(response.data.map((item) => item.article_pack || item.short_msg_pack))
+    const items = await ProcessFeed(list)
 
     return {
         title: `${currentTag ? `${currentTag.tag_name} - ` : ''}AI 编程`,
         link: `https://aicoding.juejin.cn/?contentType=${sortType}${tagId ? `&tagId=${tagId}` : ''}`,
         image: currentTag ? currentTag.icon : 'https://lf-web-assets.juejin.cn/obj/juejin-web/goofy_deploy_edenx/toutiao-fe/xitu_juejin_aicoding/favicon.ico',
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/breaches',
@@ -27,19 +27,19 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'monitor.firefox.com/',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://monitor.firefox.com';
+    const baseUrl = 'https://monitor.firefox.com'
 
-    const response = await got(`${baseUrl}/breaches`);
-    const $ = load(response.data);
+    const response = await got(`${baseUrl}/breaches`)
+    const $ = load(response.data)
 
     const items = $('.breach-card')
         .toArray()
         .map((item) => {
-            item = $(item);
-            item.find('.breach-detail-link').remove();
+            item = $(item)
+            item.find('.breach-detail-link').remove()
             return {
                 title: item.find('h3 span').last().text(),
                 description: item.find('.breach-main').html(),
@@ -51,8 +51,8 @@ async function handler() {
                     .text()
                     .split(',')
                     .map((x) => x.trim()),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
@@ -60,5 +60,5 @@ async function handler() {
         link: response.url,
         item: items,
         image: $('head meta[property=og:image]').attr('content'),
-    };
+    }
 }

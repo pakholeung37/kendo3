@@ -1,7 +1,7 @@
-import type { RouteHandler } from '@hono/zod-openapi';
-import { createRoute } from '@hono/zod-openapi';
+import type { RouteHandler } from '@hono/zod-openapi'
+import { createRoute } from '@hono/zod-openapi'
 
-import { namespaces } from '@/registry';
+import { namespaces } from '@/registry'
 
 const route = createRoute({
     method: 'get',
@@ -13,8 +13,8 @@ const route = createRoute({
             description: 'Namespace registry data for all namespaces',
         },
     },
-});
+})
 
-const handler: RouteHandler<typeof route> = (ctx) => ctx.json(namespaces);
+const handler: RouteHandler<typeof route> = (ctx) => ctx.json(namespaces)
 
-export { handler, route };
+export { handler, route }

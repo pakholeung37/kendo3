@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import crypto from 'node:crypto'
 /*
 const getParams = (ep) => {
     const a1 = 'xkt3a41psizxrh9l';
@@ -126,7 +126,7 @@ const getRandom16 = (len) =>
     crypto
         .randomBytes(Math.ceil(len / 2))
         .toString('hex')
-        .slice(0, len);
+        .slice(0, len)
 
 const decryptUrl = (encryptedUrl) => {
     const o = [
@@ -136,33 +136,33 @@ const decryptUrl = (encryptedUrl) => {
         216, 10, 175, 112, 234, 164, 70, 206, 198, 255, 140, 230, 12, 32, 83, 46, 245, 0, 62, 227, 72, 191, 156, 138, 248, 114, 220, 90, 84, 170, 128, 19, 24, 122, 146, 80, 39, 37, 8, 34, 22, 11, 93, 130, 63, 154, 244, 160, 144, 79,
         23, 133, 92, 54, 102, 210, 65, 67, 27, 196, 201, 106, 143, 52, 74, 100, 217, 179, 48, 233, 126, 117, 184, 226, 85, 171, 167, 86, 2, 147, 17, 135, 228, 252, 105, 30, 192, 129, 178, 120, 36, 145, 51, 163, 77, 205, 73, 4, 188,
         125, 232, 33, 243, 109, 224, 104, 208, 221, 59, 9,
-    ];
+    ]
 
-    const a = [204, 53, 135, 197, 39, 73, 58, 160, 79, 24, 12, 83, 180, 250, 101, 60, 206, 30, 10, 227, 36, 95, 161, 16, 135, 150, 235, 116, 242, 116, 165, 171];
+    const a = [204, 53, 135, 197, 39, 73, 58, 160, 79, 24, 12, 83, 180, 250, 101, 60, 206, 30, 10, 227, 36, 95, 161, 16, 135, 150, 235, 116, 242, 116, 165, 171]
 
-    const padding = '='.repeat((4 - (encryptedUrl.length % 4)) % 4);
-    const encryptedData = Buffer.from(encryptedUrl.replace('_', '/').replace('-', '+') + padding, 'base64');
+    const padding = '='.repeat((4 - (encryptedUrl.length % 4)) % 4)
+    const encryptedData = Buffer.from(encryptedUrl.replace('_', '/').replace('-', '+') + padding, 'base64')
     if (encryptedData.length < 16) {
-        return encryptedUrl;
+        return encryptedUrl
     }
-    const data = encryptedData.subarray(0, -16);
-    const iv = encryptedData.subarray(-16);
-    const decryptedData = new Uint8Array(data);
+    const data = encryptedData.subarray(0, -16)
+    const iv = encryptedData.subarray(-16)
+    const decryptedData = new Uint8Array(data)
     for (let i = 0; i < decryptedData.length; i++) {
-        decryptedData[i] = o[decryptedData[i]];
+        decryptedData[i] = o[decryptedData[i]]
     }
     for (let i = 0; i < decryptedData.length; i += 16) {
-        const block = decryptedData.subarray(i, i + 16);
+        const block = decryptedData.subarray(i, i + 16)
         for (const [j, element] of block.entries()) {
-            decryptedData[i + j] = element ^ iv[j];
+            decryptedData[i + j] = element ^ iv[j]
         }
     }
     for (let i = 0; i < decryptedData.length; i += 32) {
-        const block = decryptedData.subarray(i, i + 32);
+        const block = decryptedData.subarray(i, i + 32)
         for (const [j, element] of block.entries()) {
-            decryptedData[i + j] = element ^ a[j];
+            decryptedData[i + j] = element ^ a[j]
         }
     }
-    return Buffer.from(decryptedData).toString('utf8');
-};
-export { /* getUrl, */ decryptUrl, getRandom16 };
+    return Buffer.from(decryptedData).toString('utf8')
+}
+export { /* getUrl, */ decryptUrl, getRandom16 }

@@ -1,15 +1,15 @@
-import type { CheerioAPI } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const defaultSrc = '_static/ee6af7e.js';
-const defaultToken = 'djflkdsoisknfoklsyhownfrlewfknoiaewf';
+const defaultSrc = '_static/ee6af7e.js'
+const defaultToken = 'djflkdsoisknfoklsyhownfrlewfknoiaewf'
 
-const rootUrl = 'https://top.aibase.com';
-const apiRootUrl = 'https://app.chinaz.com';
+const rootUrl = 'https://top.aibase.com'
+const apiRootUrl = 'https://app.chinaz.com'
 
 /**
  * Converts a string to an array.
@@ -21,10 +21,10 @@ const apiRootUrl = 'https://app.chinaz.com';
  */
 const strToArray = (str: string) => {
     if (str.startsWith('[')) {
-        return JSON.parse(str);
+        return JSON.parse(str)
     }
-    return [str];
-};
+    return [str]
+}
 
 /**
  * Retrieve a token asynchronously using a CheerioAPI instance.
@@ -32,14 +32,14 @@ const strToArray = (str: string) => {
  * @returns A Promise that resolves to a string representing the token.
  */
 const getToken = async ($: CheerioAPI): Promise<string> => {
-    const scriptUrl = new URL($('script[src]').last()?.prop('src') ?? defaultSrc, rootUrl).href;
+    const scriptUrl = new URL($('script[src]').last()?.prop('src') ?? defaultSrc, rootUrl).href
 
     const script = await ofetch(scriptUrl, {
         responseType: 'text',
-    });
+    })
 
-    return script.match(/"\/(\w+)\/ai\/.*?\.aspx"/)?.[1] ?? defaultToken;
-};
+    return script.match(/"\/(\w+)\/ai\/.*?\.aspx"/)?.[1] ?? defaultToken
+}
 
 /**
  * Build API URLs asynchronously using a CheerioAPI instance.
@@ -47,15 +47,15 @@ const getToken = async ($: CheerioAPI): Promise<string> => {
  * @returns An object containing API URLs.
  */
 const buildApiUrl = async ($: CheerioAPI) => {
-    const token = await getToken($);
+    const token = await getToken($)
 
-    const apiRecommListUrl = new URL(`${token}/ai/GetAIProcRecommList.aspx`, apiRootUrl).href;
-    const apiRecommProcUrl = new URL(`${token}/ai/GetAIProcListByRecomm.aspx`, apiRootUrl).href;
-    const apiTagProcUrl = new URL(`${token}/ai/GetAiProductOfTag.aspx`, apiRootUrl).href;
+    const apiRecommListUrl = new URL(`${token}/ai/GetAIProcRecommList.aspx`, apiRootUrl).href
+    const apiRecommProcUrl = new URL(`${token}/ai/GetAIProcListByRecomm.aspx`, apiRootUrl).href
+    const apiTagProcUrl = new URL(`${token}/ai/GetAiProductOfTag.aspx`, apiRootUrl).href
     // AI 资讯列表
-    const apiInfoListUrl = new URL(`${token}/ai/GetAiInfoList.aspx`, apiRootUrl).href;
+    const apiInfoListUrl = new URL(`${token}/ai/GetAiInfoList.aspx`, apiRootUrl).href
     // AI 日报
-    const aILogListUrl = new URL(`${token}/ai/v2/GetAILogList.aspx`, apiRootUrl).href;
+    const aILogListUrl = new URL(`${token}/ai/v2/GetAILogList.aspx`, apiRootUrl).href
 
     return {
         apiRecommListUrl,
@@ -63,8 +63,8 @@ const buildApiUrl = async ($: CheerioAPI) => {
         apiTagProcUrl,
         apiInfoListUrl,
         aILogListUrl,
-    };
-};
+    }
+}
 
 /**
  * Process an array of items to generate a new array of processed items for RSS.
@@ -73,8 +73,8 @@ const buildApiUrl = async ($: CheerioAPI) => {
  */
 const processItems = (items: any[]): any[] =>
     items.map((item) => {
-        const title = item.name;
-        const image = item.imgurl;
+        const title = item.name
+        const image = item.imgurl
         const description = renderDescription({
             images: image
                 ? [
@@ -85,8 +85,8 @@ const processItems = (items: any[]): any[] =>
                   ]
                 : undefined,
             item,
-        });
-        const guid = `aibase-${item.zurl}`;
+        })
+        const guid = `aibase-${item.zurl}`
 
         return {
             title,
@@ -106,10 +106,10 @@ const processItems = (items: any[]): any[] =>
             enclosure_url: item.logo,
             enclosure_type: item.logo ? `image/${item.logo.split(/\./).pop()}` : undefined,
             enclosure_title: title,
-        };
-    });
+        }
+    })
 
-export { buildApiUrl, processItems, rootUrl };
+export { buildApiUrl, processItems, rootUrl }
 
 const renderDescription = ({ images, item }: { images?: Array<{ src?: string; alt?: string }>; item?: any }): string =>
     renderToString(
@@ -119,7 +119,7 @@ const renderDescription = ({ images, item }: { images?: Array<{ src?: string; al
                     <figure key={`${image.src}-${index}`}>
                         <img src={image.src} alt={image.alt} />
                     </figure>
-                ) : null
+                ) : null,
             )}
             {item ? (
                 <table>
@@ -165,18 +165,18 @@ const renderDescription = ({ images, item }: { images?: Array<{ src?: string; al
                     </tbody>
                 </table>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 const renderListText = (value: string | undefined) => {
     if (!value) {
-        return '无';
+        return '无'
     }
 
-    const list = strToArray(value);
+    const list = strToArray(value)
     if (list.length === 1) {
-        return list[0];
+        return list[0]
     }
 
-    return list.map((entry, index) => <li key={`${entry}-${index}`}>{entry}</li>);
-};
+    return list.map((entry, index) => <li key={`${entry}-${index}`}>{entry}</li>)
+}

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getCategoryInfo, getPosts } from './utils';
+import { getCategoryInfo, getPosts } from './utils'
 
 export const route: Route = {
     path: '/cat/:cat?',
@@ -21,18 +21,18 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10);
-    const { cat = '8kasianidol' } = ctx.req.param();
-    const categoryInfo = await getCategoryInfo(cat);
-    const items = await getPosts(limit, { categories: categoryInfo.id });
+    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10)
+    const { cat = '8kasianidol' } = ctx.req.param()
+    const categoryInfo = await getCategoryInfo(cat)
+    const items = await getPosts(limit, { categories: categoryInfo.id })
 
     return {
         title: categoryInfo.title,
         description: categoryInfo.description,
         link: categoryInfo.link,
         item: items,
-    };
+    }
 }

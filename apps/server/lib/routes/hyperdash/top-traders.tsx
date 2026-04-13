@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { fetchTopTraders, formatCurrency, formatPnL } from './utils';
+import { fetchTopTraders, formatCurrency, formatPnL } from './utils'
 
 export const route: Route = {
     path: '/top-traders',
@@ -27,29 +27,29 @@ export const route: Route = {
     maintainers: ['pseudoyu'],
     handler,
     description: 'Get the latest top traders data from HyperDash',
-};
+}
 
 async function handler() {
-    const traders = await fetchTopTraders();
+    const traders = await fetchTopTraders()
 
     const items = traders.map((trader, index) => {
-        const rank = index + 1;
+        const rank = index + 1
 
-        const title = trader.address;
+        const title = trader.address
 
-        const accountValue = formatCurrency(trader.account_value);
+        const accountValue = formatCurrency(trader.account_value)
         const mainPosition = {
             coin: trader.main_position.coin,
             value: formatCurrency(trader.main_position.value),
             side: trader.main_position.side,
-        };
-        const directionBias = trader.direction_bias !== null && trader.direction_bias !== undefined ? trader.direction_bias.toFixed(2) + '%' : 'N/A';
+        }
+        const directionBias = trader.direction_bias !== null && trader.direction_bias !== undefined ? trader.direction_bias.toFixed(2) + '%' : 'N/A'
         const pnl = {
             day: formatPnL(trader.perp_day_pnl),
             week: formatPnL(trader.perp_week_pnl),
             month: formatPnL(trader.perp_month_pnl),
             alltime: formatPnL(trader.perp_alltime_pnl),
-        };
+        }
         const description = renderToString(
             <>
                 <h3>Trader #{rank}</h3>
@@ -95,11 +95,11 @@ async function handler() {
                         <td>{pnl.alltime}</td>
                     </tr>
                 </table>
-            </>
-        );
+            </>,
+        )
 
-        const baseTime = new Date();
-        const orderTimestamp = new Date(baseTime.getTime() - index * 1000); // Each item 1 second apart
+        const baseTime = new Date()
+        const orderTimestamp = new Date(baseTime.getTime() - index * 1000) // Each item 1 second apart
 
         return {
             title,
@@ -107,8 +107,8 @@ async function handler() {
             link: `https://hyperdash.info/trader/${trader.address}`,
             pubDate: parseDate(orderTimestamp.toISOString()),
             guid: trader.address,
-        };
-    });
+        }
+    })
 
     return {
         title: 'HyperDash Top Traders',
@@ -116,5 +116,5 @@ async function handler() {
         description: 'Top performing traders on HyperDash - real-time cryptocurrency derivatives trading analytics',
         item: items,
         language: 'en' as const,
-    };
+    }
 }

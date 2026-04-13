@@ -1,8 +1,8 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/post/popular_recent/:period?',
@@ -35,33 +35,33 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { period = '1d' } = ctx.req.param();
+    const { period = '1d' } = ctx.req.param()
 
     const response = await got({
         url: 'https://yande.re/post/popular_recent.json',
         searchParams: queryString.stringify({
             period,
         }),
-    });
+    })
 
-    const posts = response.data;
+    const posts = response.data
 
     const titles = {
         '1d': 'Last 24 hours',
         '1w': 'Last week',
         '1m': 'Last month',
         '1y': 'Last year',
-    };
+    }
 
     const mime = {
         jpg: 'jpeg',
         png: 'png',
-    };
+    }
 
-    const title = titles[period];
+    const title = titles[period]
 
     return {
         title: `${title} - yande.re`,
@@ -74,14 +74,14 @@ async function handler(ctx) {
             author: post.author,
             pubDate: new Date(post.created_at * 1e3).toUTCString(),
             description: (() => {
-                const result = [`<img src="${post.sample_url}" />`, `<p>Rating:${post.rating}</p> <p>Score:${post.score}</p>`];
+                const result = [`<img src="${post.sample_url}" />`, `<p>Rating:${post.rating}</p> <p>Score:${post.score}</p>`]
                 if (post.source) {
-                    result.push(`<a href="${post.source}">Source</a>`);
+                    result.push(`<a href="${post.source}">Source</a>`)
                 }
                 if (post.parent_id) {
-                    result.push(`<a href="https://yande.re/post/show/${post.parent_id}">Parent</a>`);
+                    result.push(`<a href="https://yande.re/post/show/${post.parent_id}">Parent</a>`)
                 }
-                return result.join('');
+                return result.join('')
             })(),
             media: {
                 content: {
@@ -94,5 +94,5 @@ async function handler(ctx) {
             },
             category: post.tags.split(/\s+/),
         })),
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -17,29 +17,29 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'hkjunkcall.com/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://hkjunkcall.com';
-    const currentUrl = `${rootUrl}/cdpushdash.asp`;
+    const rootUrl = 'https://hkjunkcall.com'
+    const currentUrl = `${rootUrl}/cdpushdash.asp`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.hh15')
         .toArray()
         .map((item) => {
-            item = $(item).parent();
+            item = $(item).parent()
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -47,24 +47,24 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.card').find('div, h2').remove();
+                content('.card').find('div, h2').remove()
 
-                item.guid = item.link.split('/').pop();
-                item.description = content('.card').html();
-                item.pubDate = parseDate(detailResponse.data.match(/<br \/>(\d+-\d+-\d+)<\/div><\/a>/)[1]);
+                item.guid = item.link.split('/').pop()
+                item.description = content('.card').html()
+                item.pubDate = parseDate(detailResponse.data.match(/<br \/>(\d+-\d+-\d+)<\/div><\/a>/)[1])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,40 +1,40 @@
-import type { MiddlewareHandler } from 'hono';
-import { routePath } from 'hono/route';
+import type { MiddlewareHandler } from 'hono'
+import { routePath } from 'hono/route'
 
-import { getDebugInfo, setDebugInfo } from '@/utils/debug-info';
+import { getDebugInfo, setDebugInfo } from '@/utils/debug-info'
 
 const middleware: MiddlewareHandler = async (ctx, next) => {
     {
-        const debug = getDebugInfo();
+        const debug = getDebugInfo()
         if (!debug.paths[ctx.req.path]) {
-            debug.paths[ctx.req.path] = 0;
+            debug.paths[ctx.req.path] = 0
         }
-        debug.paths[ctx.req.path]++;
+        debug.paths[ctx.req.path]++
 
-        debug.request++;
-        setDebugInfo(debug);
+        debug.request++
+        setDebugInfo(debug)
     }
 
-    await next();
+    await next()
 
     {
-        const debug = getDebugInfo();
-        const rPath = routePath(ctx);
-        const hasMatchedRoute = rPath !== '/*';
+        const debug = getDebugInfo()
+        const rPath = routePath(ctx)
+        const hasMatchedRoute = rPath !== '/*'
         if (!debug.routes[rPath] && hasMatchedRoute) {
-            debug.routes[rPath] = 0;
+            debug.routes[rPath] = 0
         }
-        hasMatchedRoute && debug.routes[rPath]++;
+        hasMatchedRoute && debug.routes[rPath]++
 
         if (ctx.res.headers.get('RSSHub-Cache-Status')) {
-            debug.hitCache++;
+            debug.hitCache++
         }
 
         if (ctx.res.status === 304) {
-            debug.etag++;
+            debug.etag++
         }
-        setDebugInfo(debug);
+        setDebugInfo(debug)
     }
-};
+}
 
-export default middleware;
+export default middleware

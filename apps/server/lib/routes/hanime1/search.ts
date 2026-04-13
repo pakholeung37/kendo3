@@ -1,26 +1,26 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 async function handler(ctx) {
-    const { params } = ctx.req.param();
-    const baseUrl = 'https://hanime1.me';
+    const { params } = ctx.req.param()
+    const baseUrl = 'https://hanime1.me'
 
     // 提取参数
-    const searchParams = new URLSearchParams(params);
-    const query = searchParams.get('query') || '';
-    const genre = searchParams.get('genre') || '';
-    const broad = searchParams.get('broad') || '';
-    const tags = searchParams.getAll('tags[]');
-    const sort = searchParams.get('sort') || '';
-    const year = searchParams.get('year') || '';
-    const month = searchParams.get('month') || '';
+    const searchParams = new URLSearchParams(params)
+    const query = searchParams.get('query') || ''
+    const genre = searchParams.get('genre') || ''
+    const broad = searchParams.get('broad') || ''
+    const tags = searchParams.getAll('tags[]')
+    const sort = searchParams.get('sort') || ''
+    const year = searchParams.get('year') || ''
+    const month = searchParams.get('month') || ''
 
-    let link = `${baseUrl}/search?query=${query}&genre=${genre}&broad=${broad}&sort=${sort}&year=${year}&month=${month}`;
+    let link = `${baseUrl}/search?query=${query}&genre=${genre}&broad=${broad}&sort=${sort}&year=${year}&month=${month}`
     for (const tag of tags) {
-        link += `&tags[]=${tag}`;
+        link += `&tags[]=${tag}`
     }
 
     const response = await ofetch(link, {
@@ -28,38 +28,38 @@ async function handler(ctx) {
             referer: baseUrl,
             'user-agent': config.trueUA,
         },
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
-    const target = '.content-padding-new .row.no-gutter';
+    const target = '.content-padding-new .row.no-gutter'
 
     const items = $(target)
         .find('.search-doujin-videos.hidden-xs') // 过滤掉重复的元素
         .toArray()
         .map((item) => {
-            const element = $(item);
-            const title = element.attr('title');
-            const videoLink = element.find('a.overlay').attr('href');
-            const imageSrc = element.find('img[style*="object-fit: cover"]').attr('src'); // 选择缩略图
+            const element = $(item)
+            const title = element.attr('title')
+            const videoLink = element.find('a.overlay').attr('href')
+            const imageSrc = element.find('img[style*="object-fit: cover"]').attr('src') // 选择缩略图
 
             return {
                 title,
                 link: videoLink,
                 description: `<img src="${imageSrc}">`,
-            };
-        });
+            }
+        })
 
     // 最多显示三个标签
-    const maxTagsToShow = 3;
-    const displayedTags = tags.slice(0, maxTagsToShow).join(', ') + (tags.length > maxTagsToShow ? ', ...' : '');
+    const maxTagsToShow = 3
+    const displayedTags = tags.slice(0, maxTagsToShow).join(', ') + (tags.length > maxTagsToShow ? ', ...' : '')
 
-    const feedTitle = `Hanime1 搜索结果` + (genre ? ` | 类型: ${genre}` : '') + (query ? ` | 关键词: ${query}` : '') + (tags.length ? ` | 标签: ${displayedTags}` : '');
+    const feedTitle = `Hanime1 搜索结果` + (genre ? ` | 类型: ${genre}` : '') + (query ? ` | 关键词: ${query}` : '') + (tags.length ? ` | 标签: ${displayedTags}` : '')
 
     return {
         title: feedTitle,
         link,
         item: items,
-    };
+    }
 }
 
 export const route: Route = {
@@ -96,4 +96,4 @@ export const route: Route = {
         nsfw: true,
     },
     handler,
-};
+}

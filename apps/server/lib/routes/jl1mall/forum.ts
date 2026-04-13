@@ -1,21 +1,21 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 type MainIdsResult = {
-    name: string | undefined;
-    racer2: string | undefined;
-    racer3: string | undefined;
-};
+    name: string | undefined
+    racer2: string | undefined
+    racer3: string | undefined
+}
 
 const findMainIds = (data: readonly any[], searchKey: string): MainIdsResult => {
     const recurse = (currentList: readonly any[], parentMainId: string | undefined = undefined, grandParentMainId: string | undefined = undefined): MainIdsResult => {
         for (const item of currentList) {
-            const isMatch = item.mainId === searchKey || item.name === searchKey;
+            const isMatch = item.mainId === searchKey || item.name === searchKey
 
             if (isMatch) {
                 if (grandParentMainId !== undefined) {
@@ -23,22 +23,22 @@ const findMainIds = (data: readonly any[], searchKey: string): MainIdsResult => 
                         name: item.name as string,
                         racer2: grandParentMainId,
                         racer3: item.mainId as string,
-                    };
+                    }
                 } else if (parentMainId !== undefined) {
                     return {
                         name: item.name as string,
                         racer2: item.mainId as string,
                         racer3: undefined,
-                    };
+                    }
                 }
             }
 
-            const nextList = item.nextList;
+            const nextList = item.nextList
 
             if (Array.isArray(nextList) && nextList.length > 0) {
-                const result = recurse(nextList, item.mainId as string | undefined, parentMainId);
+                const result = recurse(nextList, item.mainId as string | undefined, parentMainId)
 
-                return result;
+                return result
             }
         }
 
@@ -46,25 +46,25 @@ const findMainIds = (data: readonly any[], searchKey: string): MainIdsResult => 
             name: undefined,
             racer2: undefined,
             racer3: undefined,
-        };
-    };
+        }
+    }
 
-    return recurse(data);
-};
+    return recurse(data)
+}
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { type = '2', key } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { type = '2', key } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.jl1mall.com';
-    const targetUrl: string = new URL('forum', baseUrl).href;
-    const apiUrl: string = new URL(`postApi/${type === 'recommend' ? 'recommend' : 'post'}/getPostData`, baseUrl).href;
-    const apiRacerUrl: string = new URL('postApi/racer/getRacerList', baseUrl).href;
+    const baseUrl = 'https://www.jl1mall.com'
+    const targetUrl: string = new URL('forum', baseUrl).href
+    const apiUrl: string = new URL(`postApi/${type === 'recommend' ? 'recommend' : 'post'}/getPostData`, baseUrl).href
+    const apiRacerUrl: string = new URL('postApi/racer/getRacerList', baseUrl).href
 
-    const racerResponse = await ofetch(apiRacerUrl);
-    const racerData = racerResponse.data;
+    const racerResponse = await ofetch(apiRacerUrl)
+    const racerData = racerResponse.data
 
-    const { name, ...mainIds } = findMainIds(racerData, key);
+    const { name, ...mainIds } = findMainIds(racerData, key)
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -73,16 +73,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
             type: type === 'recommend' ? undefined : type,
             ...mainIds,
         },
-    });
+    })
 
-    const language = 'zh';
+    const language = 'zh'
 
     const items: DataItem[] = response.data.records.slice(0, limit).map((item): DataItem => {
-        const title: string = item.postTitle;
-        const description: string | undefined = item.contentMarkdown;
-        const pubDate: number | string = item.dateTime;
-        const linkUrl: string | undefined = new URL(`forum/PostDetail?postId=${item.postId}`, baseUrl).href;
-        const categories: string[] = [...new Set([...(item.customTagArray ?? []), ...(item.topic?.split(/,/) ?? []), item.address, item.fromSource, item.typeName].filter(Boolean))];
+        const title: string = item.postTitle
+        const description: string | undefined = item.contentMarkdown
+        const pubDate: number | string = item.dateTime
+        const linkUrl: string | undefined = new URL(`forum/PostDetail?postId=${item.postId}`, baseUrl).href
+        const categories: string[] = [...new Set([...(item.customTagArray ?? []), ...(item.topic?.split(/,/) ?? []), item.address, item.fromSource, item.typeName].filter(Boolean))]
         const authors: DataItem['author'] = item.fromUserName
             ? [
                   {
@@ -91,10 +91,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: item.avatar,
                   },
               ]
-            : undefined;
-        const guid = `jl1mall-${item.postId}`;
-        const image: string | undefined = item.pictureLink;
-        const updated: number | string = pubDate;
+            : undefined
+        const guid = `jl1mall-${item.postId}`
+        const image: string | undefined = item.pictureLink
+        const updated: number | string = pubDate
 
         const processedItem: DataItem = {
             title,
@@ -113,12 +113,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? timezone(parseDate(updated), +8) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
-    const title = '星林社区';
+    const title = '星林社区'
 
     return {
         title: name ? `${title} - ${name}` : title,
@@ -128,8 +128,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/forum/:type?/:key?',
@@ -1278,4 +1278,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

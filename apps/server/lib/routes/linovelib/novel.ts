@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/novel/:id',
@@ -19,17 +19,17 @@ export const route: Route = {
     name: '小说更新',
     maintainers: ['misakicoca'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const response = await got(`https://www.linovelib.com/novel/${ctx.req.param('id')}/catalog`);
-    const $ = load(response.data);
+    const response = await got(`https://www.linovelib.com/novel/${ctx.req.param('id')}/catalog`)
+    const $ = load(response.data)
 
-    const meta = $('.book-meta');
-    const title = meta.children().first().text();
-    const author = meta.find('p > span > a').text();
+    const meta = $('.book-meta')
+    const title = meta.children().first().text()
+    const author = meta.find('p > span > a').text()
 
-    const list = $('.chapter-list');
+    const list = $('.chapter-list')
     const items = list
         .find('li')
         .find('a')
@@ -40,8 +40,8 @@ async function handler(ctx) {
             author,
             description: $(item).text(),
             link: `https://www.linovelib.com${$(item).attr('href')}`,
-        }));
-    items.reverse();
+        }))
+    items.reverse()
 
     return {
         title: `哩哔轻小说 - ${title}`,
@@ -49,5 +49,5 @@ async function handler(ctx) {
         description: title,
         language: 'zh',
         item: items,
-    };
+    }
 }

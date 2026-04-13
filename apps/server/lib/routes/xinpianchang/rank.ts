@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { getData, processItems, rootUrl } from './util';
+import { getData, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/rank/:category?',
@@ -28,34 +28,34 @@ export const route: Route = {
 | 宣传片   | publicity  |
 | 创意     | creative   |
 | 干货教程 | backstage  |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'all' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 60;
+    const { category = 'all' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 60
 
-    const apiRankUrl = new URL(`api/xpc/v2/rank/${category}`, rootUrl).href;
+    const apiRankUrl = new URL(`api/xpc/v2/rank/${category}`, rootUrl).href
 
-    const { data: apiResponse } = await got(apiRankUrl);
+    const { data: apiResponse } = await got(apiRankUrl)
 
-    const current = apiResponse.data.list[0];
-    const currentUrl = current.web_link;
-    const currentName = `${current.code}-${current.year}-${current.index}`;
+    const current = apiResponse.data.list[0]
+    const currentUrl = current.web_link
+    const currentName = `${current.code}-${current.year}-${current.index}`
 
-    const { data, response: currentResponse } = await getData(currentUrl, cache.tryGet);
+    const { data, response: currentResponse } = await getData(currentUrl, cache.tryGet)
 
-    const buildId = currentResponse.match(/\/static\/(\w+)\/_buildManifest\.js/)[1];
+    const buildId = currentResponse.match(/\/static\/(\w+)\/_buildManifest\.js/)[1]
 
-    const apiUrl = new URL(`_next/data/${buildId}/rank/article/${currentName}.json`, rootUrl).href;
+    const apiUrl = new URL(`_next/data/${buildId}/rank/article/${currentName}.json`, rootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
-    let items = response.pageProps.rankList;
+    let items = response.pageProps.rankList
 
-    items = await processItems(items.slice(0, limit), cache.tryGet);
+    items = await processItems(items.slice(0, limit), cache.tryGet)
 
     return {
         ...data,
         item: items,
-    };
+    }
 }

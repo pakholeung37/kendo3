@@ -1,48 +1,48 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { id = 'RPJQWQYZ' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { id = 'RPJQWQYZ' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const ids = id?.split(/\//) ?? [];
-    const titles = [];
+    const ids = id?.split(/\//) ?? []
+    const titles = []
 
-    const rootUrl = 'http://cmdp.ncc-cma.net';
-    const currentUrl = new URL('cn/index.htm', rootUrl).href;
+    const rootUrl = 'http://cmdp.ncc-cma.net'
+    const currentUrl = new URL('cn/index.htm', rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
-    const author = '国家气候中心';
-    const language = 'zh';
+    const author = '国家气候中心'
+    const language = 'zh'
 
     const items = $('ul.img-con-new-con li img[id]')
         .toArray()
         .filter((item) => ids.length === 0 || ids.includes($(item).prop('id')))
         .slice(0, limit)
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const id = item.prop('id');
-            const title = $(`li[data-id="${id}"]`).text() || undefined;
-            const image = new URL(item.prop('src'), currentUrl).href;
+            const id = item.prop('id')
+            const title = $(`li[data-id="${id}"]`).text() || undefined
+            const image = new URL(item.prop('src'), currentUrl).href
             const date =
                 image
                     .match(/_(\d{4})(\d{2})(\d{2})_/)
                     ?.slice(1, 4)
-                    .join('-') ?? new Date().toISOString().slice(0, 10);
+                    .join('-') ?? new Date().toISOString().slice(0, 10)
 
             if (ids.length !== 0 && title) {
-                titles.push(title);
+                titles.push(title)
             }
 
             const description = renderToString(
@@ -50,9 +50,9 @@ export const handler = async (ctx) => {
                     <figure>
                         <img alt={`${title} ${date}`} src={image} />
                     </figure>
-                ) : null
-            );
-            const guid = `ncc-cma#${id}#${date}`;
+                ) : null,
+            )
+            const guid = `ncc-cma#${id}#${date}`
 
             return {
                 title: `${title} ${date}`,
@@ -73,11 +73,11 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: `image/${image.split(/\./).pop()}`,
                 enclosure_title: `${title} ${date}`,
-            };
-        });
+            }
+        })
 
-    const subtitle = $('h1').last().text();
-    const image = $('img.logo').prop('src');
+    const subtitle = $('h1').last().text()
+    const image = $('img.logo').prop('src')
 
     return {
         title: `${author} - ${subtitle}${titles.length === 0 ? '' : ` - ${titles.join('|')}`}`,
@@ -88,8 +88,8 @@ export const handler = async (ctx) => {
         image,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/cmdp/image/:id{.+}?',
@@ -340,4 +340,4 @@ export const route: Route = {
             target: '/cmdp/image/glbraina90_',
         },
     ],
-};
+}

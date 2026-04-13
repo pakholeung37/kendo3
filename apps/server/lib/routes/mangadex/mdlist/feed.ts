@@ -1,15 +1,15 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import getToken from '../_access';
-import constants from '../_constants';
-import { getMangaMetaByIds } from '../_feed';
-import { getFilteredLanguages } from '../_profile';
-import { toQueryString } from '../_utils';
+import getToken from '../_access'
+import constants from '../_constants'
+import { getMangaMetaByIds } from '../_feed'
+import { getFilteredLanguages } from '../_profile'
+import { toQueryString } from '../_utils'
 
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 25
 
 export const route: Route = {
     name: 'MDList Feed',
@@ -63,17 +63,17 @@ export const route: Route = {
         nsfw: true,
     },
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id, lang } = ctx.req.param();
+    const { id, lang } = ctx.req.param()
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : DEFAULT_LIMIT;
-    const isPrivate = !!ctx.req.query('private');
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : DEFAULT_LIMIT
+    const isPrivate = !!ctx.req.query('private')
 
-    const accessToken = isPrivate ? await getToken() : undefined;
+    const accessToken = isPrivate ? await getToken() : undefined
 
-    const languagesQuery = new Set([...(typeof lang === 'string' ? [lang] : lang || []), ...(await getFilteredLanguages())].filter(Boolean));
+    const languagesQuery = new Set([...(typeof lang === 'string' ? [lang] : lang || []), ...(await getFilteredLanguages())].filter(Boolean))
 
     const { listName, listAuthor } = (await cache.tryGet(
         `mangadex:mdlist-info-${id}`,
@@ -87,21 +87,21 @@ async function handler(ctx) {
                         Authorization: String(isPrivate ? `Bearer ${accessToken}` : ''),
                         'User-Agent': config.trueUA,
                     },
-                }
-            );
+                },
+            )
 
-            const mdlistInfo = response?.data?.data;
+            const mdlistInfo = response?.data?.data
             if (!mdlistInfo) {
-                throw new Error('Failed to retrieve user follows from MangaDex API.');
+                throw new Error('Failed to retrieve user follows from MangaDex API.')
             }
 
-            const listName = mdlistInfo.attributes.name;
-            const listAuthor = mdlistInfo.relationships.find((relationship) => relationship.type === 'user')?.attributes.username;
+            const listName = mdlistInfo.attributes.name
+            const listAuthor = mdlistInfo.relationships.find((relationship) => relationship.type === 'user')?.attributes.username
 
-            return { listName, listAuthor };
+            return { listName, listAuthor }
         },
-        config.cache.contentExpire
-    )) as Record<string, any>;
+        config.cache.contentExpire,
+    )) as Record<string, any>
 
     const feed = (await cache.tryGet(
         `mangadex:mdlist-feed-${id}`,
@@ -119,32 +119,32 @@ async function handler(ctx) {
                         Authorization: String(isPrivate ? `Bearer ${accessToken}` : ''),
                         'User-Agent': config.trueUA,
                     },
-                }
-            );
+                },
+            )
 
-            const feed = response?.data?.data;
+            const feed = response?.data?.data
             if (!feed) {
-                throw new Error('Failed to retrieve user follows from MangaDex API.');
+                throw new Error('Failed to retrieve user follows from MangaDex API.')
             }
 
-            return feed;
+            return feed
         },
         config.cache.routeExpire,
-        false
-    )) as Array<Record<string, any>>;
+        false,
+    )) as Array<Record<string, any>>
 
-    const mangaIds = feed.map((chapter) => chapter?.relationships.find((relationship) => relationship.type === 'manga')?.id);
+    const mangaIds = feed.map((chapter) => chapter?.relationships.find((relationship) => relationship.type === 'manga')?.id)
 
-    const mangaMetas = await getMangaMetaByIds(mangaIds);
+    const mangaMetas = await getMangaMetaByIds(mangaIds)
 
     return {
         title: `MDList - ${listName} by ${listAuthor}`,
         link: `https://mangadex.org/list/${id}?tab=feed`,
         description: 'The latest updates of all the manga in a sepcific list',
         item: feed.map((chapter) => {
-            const mangaId = chapter.relationships.find((relationship) => relationship.type === 'manga')?.id;
-            const mangaMeta = mangaMetas.get(mangaId);
-            const chapterTitile = [chapter.attributes.volume ? `Vol. ${chapter.attributes.volume}` : null, chapter.attributes.chapter ? `Ch. ${chapter.attributes.chapter}` : null, chapter.attributes.title].filter(Boolean).join(' ');
+            const mangaId = chapter.relationships.find((relationship) => relationship.type === 'manga')?.id
+            const mangaMeta = mangaMetas.get(mangaId)
+            const chapterTitile = [chapter.attributes.volume ? `Vol. ${chapter.attributes.volume}` : null, chapter.attributes.chapter ? `Ch. ${chapter.attributes.chapter}` : null, chapter.attributes.title].filter(Boolean).join(' ')
 
             return {
                 title: mangaMeta?.title || 'Unknown',
@@ -152,7 +152,7 @@ async function handler(ctx) {
                 pubDate: new Date(chapter.attributes.publishAt),
                 description: chapterTitile,
                 image: mangaMeta?.cover,
-            };
+            }
         }),
-    };
+    }
 }

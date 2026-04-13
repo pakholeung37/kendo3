@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, puppeteerGet } from './utils';
+import { baseUrl, puppeteerGet } from './utils'
 
 export const route: Route = {
     path: '/hot/:category?',
@@ -22,18 +22,18 @@ export const route: Route = {
     name: '精选',
     maintainers: ['zphw'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = '0' } = ctx.req.param();
+    const { category = '0' } = ctx.req.param()
 
-    const url = `${baseUrl}/hot/list/category-${category}`;
+    const url = `${baseUrl}/hot/list/category-${category}`
 
     // use Puppeteer due to the obstacle by cloudflare challenge
-    const html = await puppeteerGet(url, cache);
+    const html = await puppeteerGet(url, cache)
 
-    const $ = load(html);
-    const list = $('div.aw-item');
+    const $ = load(html)
+    const list = $('div.aw-item')
 
     return {
         title: '品葱 - 精选',
@@ -44,5 +44,5 @@ async function handler(ctx) {
             link: baseUrl + $(item).find('div.mod-head h2 a').attr('href'),
             pubDate: parseDate($(item).find('div.mod-footer .aw-small-text').text()),
         })),
-    };
+    }
 }

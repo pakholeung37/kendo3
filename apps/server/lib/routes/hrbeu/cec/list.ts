@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'http://cec.hrbeu.edu.cn';
+const rootUrl = 'http://cec.hrbeu.edu.cn'
 
 export const route: Route = {
     path: '/cec/:id',
@@ -33,52 +33,52 @@ export const route: Route = {
 | 新闻动态 | 通知公告 | 综合办公 | 教务动态 | 科研动态 | 学工动态 |
 | :------: | :------: |:------: | :------: | :------: | :------: |
 |   xwdt   |   tzgg   |  zhbg   |   jxgz   |   kycg   |   xsgz   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
     const response = await got(`${rootUrl}/${id}/list.htm`, {
         headers: {
             Referer: rootUrl,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const bigTitle = $('div.column-news-box').find('h2.column-title').text().replaceAll(/[\s·]/g, '').trim();
+    const bigTitle = $('div.column-news-box').find('h2.column-title').text().replaceAll(/[\s·]/g, '').trim()
 
     const list = $('a.column-news-item')
         .toArray()
         .map((item) => {
-            let link = $(item).attr('href');
+            let link = $(item).attr('href')
             if (link && link.includes('page.htm')) {
-                link = `${rootUrl}${link}`;
+                link = `${rootUrl}${link}`
             }
             return {
                 title: $(item).find('span.column-news-title').text().trim(),
                 pubDate: parseDate($(item).find('span.column-news-date').text()),
                 link,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (item.link.includes('page.htm')) {
-                    const detailResponse = await got(item.link);
-                    const content = load(detailResponse.data);
-                    item.description = content('div.wp_articlecontent').html();
+                    const detailResponse = await got(item.link)
+                    const content = load(detailResponse.data)
+                    item.description = content('div.wp_articlecontent').html()
                 } else {
-                    item.description = '本文需跳转，请点击标题后阅读';
+                    item.description = '本文需跳转，请点击标题后阅读'
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '航天与建筑工程学院 - ' + bigTitle,
         link: `${rootUrl}/${id}/list.htm`,
         item: items,
-    };
+    }
 }

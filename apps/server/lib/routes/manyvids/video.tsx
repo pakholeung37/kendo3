@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { UserProfile, Videos } from './types';
+import type { UserProfile, Videos } from './types'
 
 export const route: Route = {
     path: '/profile/vids/:uid',
@@ -21,31 +21,31 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
-const getProfileById = (uid: string) => cache.tryGet(`manyvids:profile:${uid}`, () => ofetch(`https://www.manyvids.com/bff/profile/profiles/${uid}`)) as Promise<UserProfile>;
+const getProfileById = (uid: string) => cache.tryGet(`manyvids:profile:${uid}`, () => ofetch(`https://www.manyvids.com/bff/profile/profiles/${uid}`)) as Promise<UserProfile>
 
 const render = ({ poster, src }: { poster: string; src: string }) =>
     renderToString(
         <video controls preload="metadata" poster={poster}>
             <source src={src} type="video/mp4" />
-        </video>
-    );
+        </video>,
+    )
 
 async function handler(ctx) {
-    const { uid } = ctx.req.param();
+    const { uid } = ctx.req.param()
 
-    const profile = await getProfileById(uid);
+    const profile = await getProfileById(uid)
     const videos = await ofetch<Videos>(`https://www.manyvids.com/bff/store/videos/${uid}/`, {
         query: { page: 1 },
-    });
+    })
 
     const items = videos.data.map((v) => ({
         title: v.title,
         link: `https://www.manyvids.com/Video/${v.id}/${v.slug}`,
         author: v.creator.stageName,
         description: render({ poster: v.thumbnail.url, src: v.preview.url }),
-    }));
+    }))
 
     return {
         title: `${profile.displayName}'s Profile - Porn vids, Pics & More | ManyVids - ManyVids`,
@@ -53,5 +53,5 @@ async function handler(ctx) {
         image: profile.avatar,
         description: profile.bio,
         item: items,
-    };
+    }
 }

@@ -1,49 +1,49 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const baseUrl = 'https://www.cloudflarestatus.com';
+    const baseUrl = 'https://www.cloudflarestatus.com'
 
-    const response = await ofetch(baseUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(baseUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
-    $('div.incidents-list').remove();
+    $('div.incidents-list').remove()
 
     const items: DataItem[] = $('div.update')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const $actualTitleEl: Cheerio<Element> = $el.parent().parent().find('a');
-            const actualTitle: string = $actualTitleEl.text();
-            const type: string = $el.find('strong').first().text();
-            const text: string = $el.find('span.whitespace-pre-wrap').first().text();
+            const $actualTitleEl: Cheerio<Element> = $el.parent().parent().find('a')
+            const actualTitle: string = $actualTitleEl.text()
+            const type: string = $el.find('strong').first().text()
+            const text: string = $el.find('span.whitespace-pre-wrap').first().text()
 
-            const title = `${type ? `${type} - ` : ''}${text}`;
+            const title = `${type ? `${type} - ` : ''}${text}`
             const description: string | undefined = renderToString(
                 <>
                     {actualTitle ? <h2>{actualTitle}</h2> : null}
                     {$el.html() ? raw($el.html()) : null}
-                </>
-            );
-            const pubDateStr: string | undefined = $el.find('span.ago').attr('data-datetime-unix');
-            const linkUrl: string | undefined = $actualTitleEl.attr('href') ? new URL($actualTitleEl.attr('href') as string, baseUrl).toString() : undefined;
-            const categories: string[] = [type].filter(Boolean);
-            const guid: string = linkUrl ? `${linkUrl}#${pubDateStr}` : '';
-            const upDatedStr: string | undefined = pubDateStr;
+                </>,
+            )
+            const pubDateStr: string | undefined = $el.find('span.ago').attr('data-datetime-unix')
+            const linkUrl: string | undefined = $actualTitleEl.attr('href') ? new URL($actualTitleEl.attr('href') as string, baseUrl).toString() : undefined
+            const categories: string[] = [type].filter(Boolean)
+            const guid: string = linkUrl ? `${linkUrl}#${pubDateStr}` : ''
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -59,10 +59,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: upDatedStr ? parseDate(upDatedStr, 'x') : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -72,8 +72,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         language,
         id: baseUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/',
@@ -101,4 +101,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}

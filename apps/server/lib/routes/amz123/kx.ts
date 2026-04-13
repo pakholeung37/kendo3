@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/kx',
@@ -27,12 +27,12 @@ export const route: Route = {
     handler,
     url: 'amz123.com/kx',
     view: ViewType.Articles,
-};
+}
 
 async function handler() {
-    const limit = 12;
-    const apiRootUrl = 'https://api.amz123.com';
-    const rootUrl = 'https://www.amz123.com';
+    const limit = 12
+    const apiRootUrl = 'https://api.amz123.com'
+    const rootUrl = 'https://www.amz123.com'
 
     const { data: response } = await got.post(`${apiRootUrl}/ugc/v1/user_content/forum_list`, {
         json: {
@@ -46,7 +46,7 @@ async function handler() {
         headers: {
             'content-type': 'application/json',
         },
-    });
+    })
 
     const items = response.data.rows.map((item) => ({
         title: item.title,
@@ -56,11 +56,11 @@ async function handler() {
         author: item.author?.username,
         category: item.tags.map((tag) => tag.name),
         guid: item.resource_id,
-    }));
+    }))
 
     return {
         title: 'AMZ123 快讯',
         link: `${rootUrl}/kx`,
         item: items,
-    };
+    }
 }

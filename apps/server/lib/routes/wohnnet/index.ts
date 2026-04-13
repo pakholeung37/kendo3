@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const FEED_TITLE = 'wohnnet.at' as const;
-const FEED_LOGO = 'https://www.wohnnet.at/media/images/wohnnet/icon_192_192.png' as const;
-const FEED_LANGUAGE = 'de' as const;
-const ROUTE_PATH_PREFIX = '/wohnnet/' as const;
-const BASE_URL = 'https://www.wohnnet.at/immobilien/' as const;
+const FEED_TITLE = 'wohnnet.at' as const
+const FEED_LOGO = 'https://www.wohnnet.at/media/images/wohnnet/icon_192_192.png' as const
+const FEED_LANGUAGE = 'de' as const
+const ROUTE_PATH_PREFIX = '/wohnnet/' as const
+const BASE_URL = 'https://www.wohnnet.at/immobilien/' as const
 
 export const route: Route = {
     name: 'Immobiliensuche',
@@ -61,52 +61,52 @@ Examples:
         supportScihub: false,
     },
     async handler(ctx) {
-        const category = ctx.req.param('category');
-        const region = ctx.req.param('region');
+        const category = ctx.req.param('category')
+        const region = ctx.req.param('region')
 
         // /wohnnet/mietwohnungen/wien/&preis=… -> preis=…&sortierung=neueste-zuerst
         let path =
             ctx.req.path.slice(`${ROUTE_PATH_PREFIX}${category}/${region}/`.length) +
             // provide chronological fallback sort (wohnnet.at will use the first one)
-            '&sortierung=neueste-zuerst';
+            '&sortierung=neueste-zuerst'
         if (path.startsWith('&')) {
-            path = path.slice(1);
+            path = path.slice(1)
         }
 
-        const link = `${BASE_URL}${category}/${region}/?${path}`;
-        const response = await ofetch(link);
-        const $ = load(response);
+        const link = `${BASE_URL}${category}/${region}/?${path}`
+        const response = await ofetch(link)
+        const $ = load(response)
 
         const items = $('a:has(> .realty)')
             .toArray()
             .map((el) => {
-                const $el = $(el);
-                const href = $el.attr('href');
+                const $el = $(el)
+                const href = $el.attr('href')
                 const [title, address] = $el
                     .find('.realty-detail-title-address')
                     .text()
                     .split('\n')
                     .map((p) => p.trim())
-                    .filter((p) => p.length);
-                const price = $el.find('.realty-detail-area-rooms .text-right').text().trim();
+                    .filter((p) => p.length)
+                const price = $el.find('.realty-detail-area-rooms .text-right').text().trim()
                 const details = $el
                     .find('.realty-detail-area-rooms')
                     .text()
                     .split('\n')
                     .map((p) => p.trim())
-                    .filter((p) => p.length);
+                    .filter((p) => p.length)
                 const badges = $el
                     .find('.realty-detail-badges .badge')
                     .toArray()
-                    .map((b) => $(b).text().trim());
-                const agency = $el.find('.realty-detail-agency').text();
-                const imgSrc = $el.find('.realty-image img').attr('src');
+                    .map((b) => $(b).text().trim())
+                const agency = $el.find('.realty-detail-agency').text()
+                const imgSrc = $el.find('.realty-image img').attr('src')
 
-                const itemTitle = `${address} · ${price} | ${title}`;
-                const itemLink = new URL(href ?? '', BASE_URL).href;
-                const itemDescription = `${details.join(' · ')} | ${badges.join(' · ')} | ${agency}`;
-                const itemCategories = badges.filter((b) => !b.endsWith(' Bilder'));
-                const itemImage = imgSrc ? new URL(imgSrc, BASE_URL).href : undefined;
+                const itemTitle = `${address} · ${price} | ${title}`
+                const itemLink = new URL(href ?? '', BASE_URL).href
+                const itemDescription = `${details.join(' · ')} | ${badges.join(' · ')} | ${agency}`
+                const itemCategories = badges.filter((b) => !b.endsWith(' Bilder'))
+                const itemImage = imgSrc ? new URL(imgSrc, BASE_URL).href : undefined
 
                 return {
                     title: itemTitle,
@@ -115,8 +115,8 @@ Examples:
                     category: itemCategories,
                     image: itemImage,
                     // pubDate is not available on wohnnet.at
-                } satisfies DataItem;
-            });
+                } satisfies DataItem
+            })
 
         return {
             title: FEED_TITLE,
@@ -125,6 +125,6 @@ Examples:
             allowEmpty: true,
             item: items,
             link,
-        } satisfies Data;
+        } satisfies Data
     },
-};
+}

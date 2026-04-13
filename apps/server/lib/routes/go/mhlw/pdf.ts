@@ -1,29 +1,29 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const handler = async (ctx) => {
-    const { category = 'stf/seisakunitsuite/bunya/houkokusuunosuii' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'stf/seisakunitsuite/bunya/houkokusuunosuii' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.mhlw.go.jp';
-    const currentUrl = new URL(category.endsWith('.html') ? category : `${category}.html`, rootUrl).href;
+    const rootUrl = 'https://www.mhlw.go.jp'
+    const currentUrl = new URL(category.endsWith('.html') ? category : `${category}.html`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     const items = $('a[data-icon="pdf"]')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('font').text() || item.text();
-            const link = new URL(item.prop('href'), rootUrl).href;
+            const title = item.find('font').text() || item.text()
+            const link = new URL(item.prop('href'), rootUrl).href
 
             return {
                 title,
@@ -32,10 +32,10 @@ export const handler = async (ctx) => {
                 enclosure_url: link,
                 enclosure_type: link ? 'application/pdf' : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
-    const image = new URL($('div.m-headerLogo img').first().prop('src'), rootUrl).href;
+    const image = new URL($('div.m-headerLogo img').first().prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -46,8 +46,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/mhlw/pdf/:category{.+}?',
@@ -78,10 +78,10 @@ export const route: Route = {
         {
             source: ['www.mhlw.go.jp'],
             target: (_, url) => {
-                const category = new URL(url).href.match(/mhlw\.go\.jp\/(.*)$/)?.[1] ?? undefined;
+                const category = new URL(url).href.match(/mhlw\.go\.jp\/(.*)$/)?.[1] ?? undefined
 
-                return `/mhlw/pdf${category ? `/${category}` : ''}`;
+                return `/mhlw/pdf${category ? `/${category}` : ''}`
             },
         },
     ],
-};
+}

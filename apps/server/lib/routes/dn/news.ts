@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/:language/news/:category?',
@@ -38,26 +38,26 @@ export const route: Route = {
 | Industry Information | 行业资讯 | category-1  |
 | Knowledge            | 域名知识 | category-2  |
 | Investment           | 域名投资 | category-3  |`,
-};
+}
 
 async function handler(ctx) {
-    const { language, category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { language, category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://dn.com';
-    const currentUrl = new URL(`/${language}/news/${category}`, rootUrl).href;
+    const rootUrl = 'https://dn.com'
+    const currentUrl = new URL(`/${language}/news/${category}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a.list-item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const image = item.find('div.img img');
+            const image = item.find('div.img img')
 
             return {
                 title: item.find('h2.ellipse2').text(),
@@ -76,39 +76,39 @@ async function handler(ctx) {
                     .toArray()
                     .map((c) => $(c).text()),
                 pubDate: timezone(parseDate(item.find('span.time').text()), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = content('h1.tit').text();
+                item.title = content('h1.tit').text()
                 item.description = renderDescription({
                     abstracts: content('div.abstract').html(),
                     description: content('div.detail').html(),
-                });
+                })
                 item.author = content('span.author')
                     .text()
-                    .replace(/(By|作者)\s/, '');
+                    .replace(/(By|作者)\s/, '')
                 item.category = [
                     ...item.category,
                     ...content('div.tags p a')
                         .toArray()
                         .map((c) => content(c).text()),
-                ];
-                item.pubDate = timezone(parseDate(content('span.date').text()), +8);
+                ]
+                item.pubDate = timezone(parseDate(content('span.date').text()), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('a.logo img').prop('alt');
-    const icon = $('link[rel="icon"]').prop('href');
+    const title = $('a.logo img').prop('alt')
+    const icon = $('link[rel="icon"]').prop('href')
 
     return {
         item: items,
@@ -121,5 +121,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('title').text(),
         author: title,
-    };
+    }
 }

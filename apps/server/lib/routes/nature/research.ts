@@ -12,12 +12,12 @@
 // nchem:            Nature Chemistry
 // nmat:             Nature Materials
 // natmachintell:    Nature Machine Intelligence
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { baseUrl, cookieJar, getArticle, getArticleList, getDataLayer } from './utils';
+import { baseUrl, cookieJar, getArticle, getArticleList, getDataLayer } from './utils'
 
 export const route: Route = {
     path: '/research/:journal?',
@@ -57,25 +57,25 @@ export const route: Route = {
       If the \`:journal\` parameter is blank, then latest research of Nature will return.
   -   The journals from NPG are run by different group of people, and the website of may not be consitent for all the journals
   -   Only abstract is rendered in some researches`,
-};
+}
 
 async function handler(ctx) {
-    const journal = ctx.req.param('journal') ?? 'nature';
-    const pageURL = `${baseUrl}/${journal}/research-articles`;
+    const journal = ctx.req.param('journal') ?? 'nature'
+    const pageURL = `${baseUrl}/${journal}/research-articles`
 
-    const pageResponse = await got(pageURL, { cookieJar });
-    const pageCapture = load(pageResponse.data);
+    const pageResponse = await got(pageURL, { cookieJar })
+    const pageCapture = load(pageResponse.data)
 
-    const pageTitle = getDataLayer(pageCapture).content.journal.title;
+    const pageTitle = getDataLayer(pageCapture).content.journal.title
 
-    let items = getArticleList(pageCapture);
+    let items = getArticleList(pageCapture)
 
-    items = await Promise.all(items.map((item) => getArticle(item)));
+    items = await Promise.all(items.map((item) => getArticle(item)))
 
     return {
         title: `Nature (${pageTitle}) | Latest Research`,
         description: pageCapture('meta[name="description"]').attr('content') || `Nature, a nature research journal`,
         link: pageURL,
         item: items,
-    };
+    }
 }

@@ -1,21 +1,21 @@
-import { decode } from 'entities';
+import { decode } from 'entities'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 interface MediaItem {
-    ID: string;
-    TITLE: string;
-    PUBLISH_DATE: string;
-    META_DESCRIPTION: string;
-    MEDIA_CD: string;
-    MEDIA_TYPES: string;
+    ID: string
+    TITLE: string
+    PUBLISH_DATE: string
+    META_DESCRIPTION: string
+    MEDIA_CD: string
+    MEDIA_TYPES: string
 }
 
 interface TagItem {
-    TAG_ID: string;
-    TAG_NAME: string;
+    TAG_ID: string
+    TAG_NAME: string
 }
 
 export const route: Route = {
@@ -40,20 +40,20 @@ export const route: Route = {
     name: 'News',
     maintainers: ['catyyy'],
     handler: async (ctx) => {
-        const { lang = 'ja' } = ctx.req.param();
-        const mediaResponse = await ofetch(`https://www.isct.ac.jp/expansion/get_media_list_json.php?lang_cd=${lang}`);
-        const tagResponse = await ofetch(`https://www.isct.ac.jp/expansion/get_tag_list_json.php?lang_cd=${lang}`);
+        const { lang = 'ja' } = ctx.req.param()
+        const mediaResponse = await ofetch(`https://www.isct.ac.jp/expansion/get_media_list_json.php?lang_cd=${lang}`)
+        const tagResponse = await ofetch(`https://www.isct.ac.jp/expansion/get_tag_list_json.php?lang_cd=${lang}`)
 
-        const mediaData = JSON.parse(decode(mediaResponse));
-        const tagData = JSON.parse(decode(tagResponse));
+        const mediaData = JSON.parse(decode(mediaResponse))
+        const tagData = JSON.parse(decode(tagResponse))
 
-        const itemsArray: MediaItem[] = Object.values(mediaData);
-        const tagArray: TagItem[] = Object.values(tagData);
+        const itemsArray: MediaItem[] = Object.values(mediaData)
+        const tagArray: TagItem[] = Object.values(tagData)
 
-        const tagIdNameMapping: { [key: string]: string } = {};
+        const tagIdNameMapping: { [key: string]: string } = {}
 
         for (const item of Object.values(tagArray)) {
-            tagIdNameMapping[item.TAG_ID] = item.TAG_NAME;
+            tagIdNameMapping[item.TAG_ID] = item.TAG_NAME
         }
 
         const items = itemsArray.map((item) => ({
@@ -69,7 +69,7 @@ export const route: Route = {
             // author: item.user.login,
             // 如果有的话，文章分类
             category: item.MEDIA_TYPES ? [tagIdNameMapping[Number.parseInt(item.MEDIA_TYPES.replaceAll('"', ''), 10)]] : [],
-        }));
+        }))
         return {
             // 源标题
             title: `ISCT News - ${lang}`,
@@ -77,6 +77,6 @@ export const route: Route = {
             link: `https://www.isct.ac.jp/${lang}/news`,
             // 源文章
             item: items,
-        };
+        }
     },
-};
+}

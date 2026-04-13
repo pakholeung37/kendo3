@@ -1,14 +1,14 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
+import timezone from '@/utils/timezone'
 
-import weiboUtils from './utils';
+import weiboUtils from './utils'
 
 export const route: Route = {
     path: '/keyword/:keyword/:routeParams?',
@@ -33,10 +33,10 @@ export const route: Route = {
     name: '关键词',
     maintainers: ['DIYgod', 'Rongronggg9'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
+    const keyword = ctx.req.param('keyword')
 
     const data = await weiboUtils.tryWithCookies((cookies, verifier) =>
         cache.tryGet(
@@ -50,16 +50,16 @@ async function handler(ctx) {
                         Cookie: cookies,
                         ...weiboUtils.apiHeaders,
                     },
-                });
-                verifier(_r);
-                return _r.data.data.cards;
+                })
+                verifier(_r)
+                return _r.data.data.cards
             },
             config.cache.routeExpire,
-            false
-        )
-    );
+            false,
+        ),
+    )
 
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
 
     return weiboUtils.sinaimgTvax({
         title: `又有人在微博提到${keyword}了`,
@@ -68,14 +68,14 @@ async function handler(ctx) {
         item: data
             .filter((i) => i.mblog)
             .map((item) => {
-                item.mblog.created_at = timezone(item.mblog.created_at, +8);
+                item.mblog.created_at = timezone(item.mblog.created_at, +8)
                 if (item.mblog.retweeted_status && item.mblog.retweeted_status.created_at) {
-                    item.mblog.retweeted_status.created_at = timezone(item.mblog.retweeted_status.created_at, +8);
+                    item.mblog.retweeted_status.created_at = timezone(item.mblog.retweeted_status.created_at, +8)
                 }
                 return weiboUtils.formatExtended(ctx, item.mblog, undefined, {
                     showAuthorInTitle: fallback(undefined, queryToBoolean(routeParams.showAuthorInTitle), true),
                     showAuthorInDesc: fallback(undefined, queryToBoolean(routeParams.showAuthorInDesc), true),
-                });
+                })
             }),
-    });
+    })
 }

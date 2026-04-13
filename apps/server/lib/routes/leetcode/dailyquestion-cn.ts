@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { renderQuestionDescription } from './templates/question-description';
+import { renderQuestionDescription } from './templates/question-description'
 
-const host = 'https://leetcode.cn';
+const host = 'https://leetcode.cn'
 
 export const route: Route = {
     path: '/dailyquestion/cn',
@@ -16,7 +16,7 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'leetcode.cn/',
-};
+}
 
 async function handler() {
     const question = {
@@ -27,8 +27,8 @@ async function handler() {
         frontedId: '',
         difficulty: '',
         tags: '',
-    };
-    const url = host + '/graphql';
+    }
+    const url = host + '/graphql'
     const dailyQuestionPayload = {
         query: /* GraphQL */ `
             query questionOfToday {
@@ -42,7 +42,7 @@ async function handler() {
             }
         `,
         variables: {},
-    };
+    }
     const dailyQuestionResponse = await got({
         method: 'post',
         url,
@@ -50,11 +50,11 @@ async function handler() {
             'content-type': 'application/json',
         },
         body: JSON.stringify(dailyQuestionPayload),
-    });
-    const data = dailyQuestionResponse.data.data.todayRecord[0];
-    question.date = data.date;
-    question.titleSlug = data.question.titleSlug;
-    question.link = host + '/problems/' + question.titleSlug;
+    })
+    const data = dailyQuestionResponse.data.data.todayRecord[0]
+    question.date = data.date
+    question.titleSlug = data.question.titleSlug
+    question.link = host + '/problems/' + question.titleSlug
 
     const detailsPayload = {
         operationName: 'questionData',
@@ -82,7 +82,7 @@ async function handler() {
         variables: {
             titleSlug: question.titleSlug,
         },
-    };
+    }
     const detailsResponse = await got({
         method: 'post',
         url,
@@ -90,25 +90,25 @@ async function handler() {
             'content-type': 'application/json',
         },
         body: JSON.stringify(detailsPayload),
-    });
+    })
     const emoji = {
         Medium: '🟡',
         Easy: '🟢',
         Hard: '🔴',
-    };
+    }
 
-    const details = detailsResponse.data.data.question;
-    question.content = details.translatedContent;
-    question.frontedId = details.questionFrontendId;
-    question.difficulty = emoji[details.difficulty];
+    const details = detailsResponse.data.data.question
+    question.content = details.translatedContent
+    question.frontedId = details.questionFrontendId
+    question.difficulty = emoji[details.difficulty]
 
-    let topicTags = details.topicTags;
+    let topicTags = details.topicTags
     topicTags = topicTags.map((item) => {
-        let slug = '#' + item.slug;
-        slug = slug.replaceAll('-', '_');
-        return slug;
-    });
-    question.tags = topicTags.join(' ');
+        let slug = '#' + item.slug
+        slug = slug.replaceAll('-', '_')
+        return slug
+    })
+    question.tags = topicTags.join(' ')
 
     const rssData = {
         title: question.frontedId + '.' + question.titleSlug,
@@ -116,7 +116,7 @@ async function handler() {
             question,
         }),
         link: question.link,
-    };
+    }
 
     return {
         title: 'LeetCode 每日一题',
@@ -129,5 +129,5 @@ async function handler() {
                 link: rssData.link,
             },
         ],
-    };
+    }
 }

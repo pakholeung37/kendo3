@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/models',
@@ -32,15 +32,15 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'modelscope.cn/models',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://modelscope.cn';
-    const link = `${baseUrl}/models`;
+    const baseUrl = 'https://modelscope.cn'
+    const link = `${baseUrl}/models`
 
     const { data } = await got.put(`${baseUrl}/api/v1/dolphin/models`, {
         json: { PageSize: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 36, PageNumber: 1, SortBy: 'GmtModified', Target: '', SingleCriterion: [] },
-    });
+    })
 
     const models = data.Data.Model.Models.map((model) => ({
         title: model.ChineseName,
@@ -50,19 +50,19 @@ async function handler(ctx) {
         pubDate: parseDate(model.CreatedTime, 'X'),
         category: [...new Set([...model.Tasks.map((task) => task.ChineseName), ...model.Tags])],
         slug: `/${model.Path}/${model.Name}`,
-    }));
+    }))
 
     const items = await Promise.all(
         models.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${baseUrl}/api/v1/models${item.slug}`);
+                const { data } = await got(`${baseUrl}/api/v1/models${item.slug}`)
 
-                const content = data.Data.ReadMeContent.replaceAll(/img src="(?!http)(.*?)"/g, `img src="${baseUrl}/api/v1/models${item.slug}/repo?Revision=master&FilePath=$1&View=true"`);
-                item.description = md.render(content);
-                return item;
-            })
-        )
-    );
+                const content = data.Data.ReadMeContent.replaceAll(/img src="(?!http)(.*?)"/g, `img src="${baseUrl}/api/v1/models${item.slug}/repo?Revision=master&FilePath=$1&View=true"`)
+                item.description = md.render(content)
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '模型库首页 · 魔搭社区',
@@ -70,5 +70,5 @@ async function handler(ctx) {
         image: 'https://g.alicdn.com/sail-web/maas/0.8.10/favicon/128.ico',
         link,
         item: items,
-    };
+    }
 }

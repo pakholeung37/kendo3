@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/vod/:id',
@@ -20,34 +20,34 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const urlBase = 'https://www.olevod.one';
-    const id = ctx.req.param('id');
-    const url = `${urlBase}/vod/${id}`;
+    const urlBase = 'https://www.olevod.one'
+    const id = ctx.req.param('id')
+    const url = `${urlBase}/vod/${id}`
 
-    const response = await ofetch(url);
-    const $ = load(response);
+    const response = await ofetch(url)
+    const $ = load(response)
 
-    const title = $('.title.scookie').text().trim();
-    const image = $('.vodlist_thumb.lazyload').attr('data-original');
+    const title = $('.title.scookie').text().trim()
+    const image = $('.vodlist_thumb.lazyload').attr('data-original')
     const items = $('.content_playlist.clearfix a')
         .toArray()
         .map((item) => {
-            const tmp = $(item);
-            const href = urlBase + tmp.attr('href');
+            const tmp = $(item)
+            const href = urlBase + tmp.attr('href')
 
             return {
                 title: `${title}  ${tmp.text()}`,
                 link: href,
-            };
-        });
+            }
+        })
 
     return {
         title,
         link: url,
         item: items,
         image: urlBase + image,
-    };
+    }
 }

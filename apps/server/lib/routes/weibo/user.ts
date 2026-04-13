@@ -1,15 +1,15 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
+import timezone from '@/utils/timezone'
 
-import weiboUtils from './utils';
+import weiboUtils from './utils'
 
 export const route: Route = {
     path: '/user/:uid/:routeParams?',
@@ -51,25 +51,25 @@ export const route: Route = {
     description: `::: warning
   部分博主仅登录可见，未提供 Cookie 的情况下不支持订阅，可以通过打开 \`https://m.weibo.cn/u/:uid\` 验证
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    let displayVideo = '1';
-    let displayArticle = '0';
-    let displayComments = '0';
-    let showRetweeted = '1';
-    let showBloggerIcons = '0';
+    const uid = ctx.req.param('uid')
+    let displayVideo = '1'
+    let displayArticle = '0'
+    let displayComments = '0'
+    let showRetweeted = '1'
+    let showBloggerIcons = '0'
     if (ctx.req.param('routeParams')) {
         if (ctx.req.param('routeParams') === '1' || ctx.req.param('routeParams') === '0') {
-            displayVideo = ctx.req.param('routeParams');
+            displayVideo = ctx.req.param('routeParams')
         } else {
-            const routeParams = querystring.parse(ctx.req.param('routeParams'));
-            displayVideo = fallback(undefined, queryToBoolean(routeParams.displayVideo), true) ? '1' : '0';
-            displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false) ? '1' : '0';
-            displayComments = fallback(undefined, queryToBoolean(routeParams.displayComments), false) ? '1' : '0';
-            showRetweeted = fallback(undefined, queryToBoolean(routeParams.showRetweeted), false) ? '1' : '0';
-            showBloggerIcons = fallback(undefined, queryToBoolean(routeParams.showBloggerIcons), false) ? '1' : '0';
+            const routeParams = querystring.parse(ctx.req.param('routeParams'))
+            displayVideo = fallback(undefined, queryToBoolean(routeParams.displayVideo), true) ? '1' : '0'
+            displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false) ? '1' : '0'
+            displayComments = fallback(undefined, queryToBoolean(routeParams.displayComments), false) ? '1' : '0'
+            showRetweeted = fallback(undefined, queryToBoolean(routeParams.showRetweeted), false) ? '1' : '0'
+            showBloggerIcons = fallback(undefined, queryToBoolean(routeParams.showBloggerIcons), false) ? '1' : '0'
         }
     }
 
@@ -85,19 +85,19 @@ async function handler(ctx) {
                         Cookie: cookies,
                         ...weiboUtils.apiHeaders,
                     },
-                });
-                verifier(_r);
-                return _r.data;
+                })
+                verifier(_r)
+                return _r.data
             },
             config.cache.routeExpire,
-            false
-        )
-    );
+            false,
+        ),
+    )
 
-    const name = containerData.data.userInfo.screen_name;
-    const description = containerData.data.userInfo.description;
-    const profileImageUrl = containerData.data.userInfo.profile_image_url;
-    const containerId = containerData.data.tabsInfo.tabs.find((item) => item.tab_type === 'weibo').containerid;
+    const name = containerData.data.userInfo.screen_name
+    const description = containerData.data.userInfo.description
+    const profileImageUrl = containerData.data.userInfo.profile_image_url
+    const containerId = containerData.data.tabsInfo.tabs.find((item) => item.tab_type === 'weibo').containerid
 
     const cards = await weiboUtils.tryWithCookies((cookies, verifier) =>
         cache.tryGet(
@@ -111,100 +111,100 @@ async function handler(ctx) {
                         Cookie: cookies,
                         ...weiboUtils.apiHeaders,
                     },
-                });
-                verifier(_r);
-                return _r.data.data.cards;
+                })
+                verifier(_r)
+                return _r.data.data.cards
             },
             config.cache.routeExpire,
-            false
-        )
-    );
+            false,
+        ),
+    )
 
     let resultItems = await Promise.all(
         cards
             .filter((item) => {
                 if (item.mblog === undefined) {
-                    return false;
+                    return false
                 }
                 if (showRetweeted === '0' && item.mblog.retweeted_status) {
-                    return false;
+                    return false
                 }
-                return true;
+                return true
             })
             .map(async (item) => {
                 // TODO: unify cache key and let weiboUtils.getShowData() handle the cache? It seems safe to do so.
                 //       Need more investigation, pending for now since the current version works fine.
                 // TODO: getShowData() on demand? The API seems to return most things we need since 2022/05/21.
                 //       Need more investigation, pending for now since the current version works fine.
-                let { bid } = item.mblog;
-                const { retweeted_status, created_at } = item.mblog;
+                let { bid } = item.mblog
+                const { retweeted_status, created_at } = item.mblog
                 if (bid === '') {
-                    const url = new URL(item.scheme);
-                    bid = url.searchParams.get('mblogid');
-                    item.mblog.bid = bid;
+                    const url = new URL(item.scheme)
+                    bid = url.searchParams.get('mblogid')
+                    item.mblog.bid = bid
                 }
-                const key = `weibo:user:${bid}`;
-                const data = await cache.tryGet(key, () => weiboUtils.getShowData(uid, bid));
+                const key = `weibo:user:${bid}`
+                const data = await cache.tryGet(key, () => weiboUtils.getShowData(uid, bid))
 
                 if (data && data.text) {
-                    item.mblog.text = data.text;
-                    item.mblog.created_at = parseDate(data.created_at);
-                    item.mblog.pics = data.pics;
+                    item.mblog.text = data.text
+                    item.mblog.created_at = parseDate(data.created_at)
+                    item.mblog.pics = data.pics
                     if (retweeted_status && data.retweeted_status) {
-                        retweeted_status.created_at = data.retweeted_status.created_at;
+                        retweeted_status.created_at = data.retweeted_status.created_at
                     }
                 } else {
-                    item.mblog.created_at = timezone(created_at, +8);
+                    item.mblog.created_at = timezone(created_at, +8)
                 }
 
                 // 转发的长微博处理
-                const retweet = retweeted_status;
+                const retweet = retweeted_status
                 if (retweet && retweet.isLongText) {
                     // TODO: unify cache key and ...
-                    const retweetData = await cache.tryGet(`weibo:retweeted:${retweet.user.id}:${retweet.bid}`, () => weiboUtils.getShowData(retweet.user.id, retweet.bid));
+                    const retweetData = await cache.tryGet(`weibo:retweeted:${retweet.user.id}:${retweet.bid}`, () => weiboUtils.getShowData(retweet.user.id, retweet.bid))
                     if (retweetData !== undefined && retweetData.text) {
-                        retweeted_status.text = retweetData.text;
+                        retweeted_status.text = retweetData.text
                     }
                 }
 
-                const formatExtended = weiboUtils.formatExtended(ctx, item.mblog, uid);
-                let description = formatExtended.description;
+                const formatExtended = weiboUtils.formatExtended(ctx, item.mblog, uid)
+                let description = formatExtended.description
 
                 // 视频的处理
                 if (displayVideo === '1') {
                     // 含被转发微博时需要从被转发微博中获取视频
-                    description = retweeted_status ? weiboUtils.formatVideo(description, retweeted_status) : weiboUtils.formatVideo(description, item.mblog);
+                    description = retweeted_status ? weiboUtils.formatVideo(description, retweeted_status) : weiboUtils.formatVideo(description, item.mblog)
                 }
 
                 // 评论的处理
                 if (displayComments === '1') {
-                    description = await weiboUtils.formatComments(ctx, description, item.mblog, showBloggerIcons);
+                    description = await weiboUtils.formatComments(ctx, description, item.mblog, showBloggerIcons)
                 }
 
                 // 文章的处理
                 if (displayArticle === '1') {
                     // 含被转发微博时需要从被转发微博中获取文章
-                    description = await (retweeted_status ? weiboUtils.formatArticle(ctx, description, retweeted_status) : weiboUtils.formatArticle(ctx, description, item.mblog));
+                    description = await (retweeted_status ? weiboUtils.formatArticle(ctx, description, retweeted_status) : weiboUtils.formatArticle(ctx, description, item.mblog))
                 }
 
                 return {
                     ...formatExtended,
                     description,
                     isPinned: item.profile_type_id?.startsWith('proweibotop'),
-                };
-            })
-    );
+                }
+            }),
+    )
 
     // remove pinned weibo if they are posted before the earliest **ordinary** weibo
     // there may be multiple pinned weibo at the same time, only remove the ones that meet the above condition
-    const pinnedItems = resultItems.filter((item) => item.isPinned);
-    const ordinaryItems = resultItems.filter((item) => !item.isPinned);
+    const pinnedItems = resultItems.filter((item) => item.isPinned)
+    const ordinaryItems = resultItems.filter((item) => !item.isPinned)
     if (pinnedItems.length > 0 && ordinaryItems.length > 0) {
-        const earliestOrdinaryPostTime = Math.min(...ordinaryItems.map((i) => i.pubDate).filter(Boolean));
-        resultItems = ordinaryItems;
+        const earliestOrdinaryPostTime = Math.min(...ordinaryItems.map((i) => i.pubDate).filter(Boolean))
+        resultItems = ordinaryItems
         for (const item of pinnedItems) {
             if (item.pubDate > earliestOrdinaryPostTime) {
-                resultItems.unshift(item);
+                resultItems.unshift(item)
             }
         }
     }
@@ -216,5 +216,5 @@ async function handler(ctx) {
         image: profileImageUrl,
         item: resultItems,
         allowEmpty: true,
-    });
+    })
 }

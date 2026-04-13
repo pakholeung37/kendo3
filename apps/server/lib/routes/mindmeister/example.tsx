@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const baseUrl = 'https://www.mindmeister.com';
+const baseUrl = 'https://www.mindmeister.com'
 
 export const route: Route = {
     path: '/:category?/:language?',
@@ -51,35 +51,35 @@ export const route: Route = {
 | 简体中文   | zh        |
 | 한국어     | ko        |
 | Other      | other     |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'mind-map-examples', language = 'en' } = ctx.req.param();
-    const link = `${baseUrl}${language === 'en' || language === 'other' ? '' : `/${language}`}/${category === 'mind-map-examples' ? category : `mind-maps/${category}?language=${language}`}`;
-    const respsonse = await got(link);
+    const { category = 'mind-map-examples', language = 'en' } = ctx.req.param()
+    const link = `${baseUrl}${language === 'en' || language === 'other' ? '' : `/${language}`}/${category === 'mind-map-examples' ? category : `mind-maps/${category}?language=${language}`}`
+    const respsonse = await got(link)
 
-    const $ = load(respsonse.data);
+    const $ = load(respsonse.data)
 
     const items = $('#public-listing .map-tile-wrapper')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             const imageUrl = new URL(
                 item
                     .find('.map-wrapper')
                     .attr('style')
-                    .match(/url\('(.*)'\);/)[1]
-            ).href;
+                    .match(/url\('(.*)'\);/)[1],
+            ).href
 
-            const title = item.find('.title').text();
+            const title = item.find('.title').text()
             return {
                 title,
                 description: renderToString(<img src={imageUrl.split('?')[0]} alt={title.trim()} />),
                 link: item.find('.title').attr('href'),
                 author: item.find('.author').text().trim().replace(/^by/, ''),
                 category: item.find('.fw-bold').text(),
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text(),
@@ -87,5 +87,5 @@ async function handler(ctx) {
         link,
         item: items,
         language,
-    };
+    }
 }

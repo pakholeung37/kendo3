@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { fetchItems, rootUrl } from './util';
+import { fetchItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/top/:category?',
@@ -22,13 +22,13 @@ export const route: Route = {
     description: `| [周点击榜](https://www.56kog.com/top/weekvisit.html) | [总收藏榜](https://www.56kog.com/top/goodnum.html) | [最新 入库](https://www.56kog.com/top/postdate.html) |
 | ---------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
 | weekvisit                                            | goodnum                                            | postdate                                             |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'weekvisit' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'weekvisit' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const currentUrl = new URL(`top/${category.split(/_/)[0]}_1.html`, rootUrl).href;
+    const currentUrl = new URL(`top/${category.split(/_/)[0]}_1.html`, rootUrl).href
 
-    return await fetchItems(limit, currentUrl, cache.tryGet);
+    return await fetchItems(limit, currentUrl, cache.tryGet)
 }

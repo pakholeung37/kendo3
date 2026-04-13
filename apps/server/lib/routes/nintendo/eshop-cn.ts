@@ -1,12 +1,12 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import util from './utils';
+import util from './utils'
 
-const software_url = 'https://www.nintendoswitch.com.cn/software/';
+const software_url = 'https://www.nintendoswitch.com.cn/software/'
 
 export const route: Route = {
     path: '/eshop/cn',
@@ -19,13 +19,13 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'nintendoswitch.com.cn/software',
-};
+}
 
 async function handler() {
-    const response = await got(software_url);
+    const response = await got(software_url)
 
     // 获取Nuxt对象
-    const result = await util.nuxtReader(response.data);
+    const result = await util.nuxtReader(response.data)
 
     /* expectedReleaseNS[]
         coverImageUrl: "//switch-cn.gtgres.com/global-images/c50e3390-14e5-11ea-9b40-236e671bca9e.png"
@@ -41,7 +41,7 @@ async function handler() {
         title: "附带导航！一做就上手 第一次的游戏程序设计"
     */
     if (!result.recentSoftwareList) {
-        throw new InvalidParameterError('软件信息不存在，请报告这个问题');
+        throw new InvalidParameterError('软件信息不存在，请报告这个问题')
     }
 
     let data = result.recentSoftwareList.map((item) => ({
@@ -49,14 +49,14 @@ async function handler() {
         description: util.generateImageLink(item.imgUrl),
         link: item.jumpUrl.startsWith('http') ? item.jumpUrl : `${software_url}${item.jumpUrl}`,
         pubDate: parseDate(item.publishTime, 'YYYY.MM.DD'),
-    }));
+    }))
 
-    data = await util.ProcessItemChina(data, cache);
+    data = await util.ProcessItemChina(data, cache)
 
     return {
         title: 'Nintendo eShop（国服）新游戏',
         link: 'https://www.nintendoswitch.com.cn/software',
         description: 'Nintendo（国服）新上架的游戏',
         item: data,
-    };
+    }
 }

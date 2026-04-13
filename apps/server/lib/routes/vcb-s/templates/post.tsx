@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type Media = {
     media_details?: {
-        width?: string | number;
-        height?: string | number;
-    };
-    source_url?: string;
-};
+        width?: string | number
+        height?: string | number
+    }
+    source_url?: string
+}
 
 type DescriptionData = {
-    medias?: Media[];
-    post?: string;
-};
+    medias?: Media[]
+    post?: string
+}
 
 const VcbPostDescription = ({ medias, post }: DescriptionData) => (
     <>
@@ -23,6 +23,6 @@ const VcbPostDescription = ({ medias, post }: DescriptionData) => (
         ))}
         {post ? raw(post) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<VcbPostDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<VcbPostDescription {...data} />)

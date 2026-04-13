@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { ProcessFeed } from './utils';
+import { ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/items/work/:id/:order?',
@@ -34,8 +34,8 @@ export const route: Route = {
     name: '作品周边',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    return await ProcessFeed('work', ctx.req.param('id'), ctx.req.param('order'));
+    return await ProcessFeed('work', ctx.req.param('id'), ctx.req.param('order'))
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/news',
@@ -26,38 +26,38 @@ export const route: Route = {
     maintainers: ['Shinanory'],
     handler,
     url: 'bmkg.go.id/',
-};
+}
 
 async function handler() {
-    const url = 'https://www.bmkg.go.id';
-    const response = await got(url);
-    const $ = load(response.data);
+    const url = 'https://www.bmkg.go.id'
+    const response = await got(url)
+    const $ = load(response.data)
     const list = $('div .ms-slide')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
-            const img = item.find('img');
+            item = $(item)
+            const a = item.find('a')
+            const img = item.find('img')
 
             return {
                 title: a.text(),
                 link: `${url}/${a.attr('href')}`,
                 itunes_item_image: img.attr('data-src'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await got(item.link);
-                const $ = load(response.data);
-                const p = $('div .blog-grid').find('p');
-                item.description = p.text();
+                const response = await got(item.link)
+                const $ = load(response.data)
+                const p = $('div .blog-grid').find('p')
+                item.description = p.text()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
@@ -65,5 +65,5 @@ async function handler() {
         description: '印尼气象气候和地球物理局 新闻 | BMKG news',
         item: items,
         language: 'in',
-    };
+    }
 }

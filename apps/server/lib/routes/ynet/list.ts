@@ -1,78 +1,78 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const defaultCategory = 'news';
-const defaultId = '2121t76';
+const defaultCategory = 'news'
+const defaultId = '2121t76'
 
 async function getFinalContentAndUrl(url: string, redirects: number = 0, maxRedirects: number = 5): Promise<[string, string]> {
     if (redirects > maxRedirects) {
-        const finalResponse = await ofetch(url);
-        return [finalResponse, url];
+        const finalResponse = await ofetch(url)
+        return [finalResponse, url]
     }
 
-    const responseContent = await ofetch(url);
+    const responseContent = await ofetch(url)
 
-    const jsRedirectMatch = responseContent.match(/(?:location\.href|window\.location\.replace)\s*=\s*['"](.*?)['"];/i);
-    const nextUrl = jsRedirectMatch?.[1];
+    const jsRedirectMatch = responseContent.match(/(?:location\.href|window\.location\.replace)\s*=\s*['"](.*?)['"];/i)
+    const nextUrl = jsRedirectMatch?.[1]
 
     if (nextUrl) {
-        const newRedirects = redirects + 1;
+        const newRedirects = redirects + 1
 
-        return getFinalContentAndUrl(nextUrl, newRedirects, maxRedirects);
+        return getFinalContentAndUrl(nextUrl, newRedirects, maxRedirects)
     } else {
-        return [responseContent, url];
+        return [responseContent, url]
     }
 }
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const params = ctx.req.param();
-    let category: string;
-    let id: string;
+    const params = ctx.req.param()
+    let category: string
+    let id: string
 
-    const paramKeys = Object.keys(params);
+    const paramKeys = Object.keys(params)
 
     if (paramKeys.length === 2) {
-        category = params[paramKeys[0]];
-        id = params[paramKeys[1]];
+        category = params[paramKeys[0]]
+        id = params[paramKeys[1]]
     } else if (paramKeys.length === 1) {
-        category = '';
-        id = params[paramKeys[0]];
+        category = ''
+        id = params[paramKeys[0]]
     } else {
-        category = defaultCategory;
-        id = defaultId;
+        category = defaultCategory
+        id = defaultId
     }
 
-    category = category.replaceAll(/[^a-zA-Z0-9-]/g, '');
+    category = category.replaceAll(/[^a-zA-Z0-9-]/g, '')
 
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = `https://${category ? `${category}.` : ''}ynet.com`;
-    const targetUrl: string = new URL(`list/${id}.html`, baseUrl).href;
+    const baseUrl = `https://${category ? `${category}.` : ''}ynet.com`
+    const targetUrl: string = new URL(`list/${id}.html`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('li.cfix')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('h2 a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('h2 a')
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('em.fRight').text() || undefined;
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('em.fRight').text() || undefined
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -80,29 +80,29 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl,
                 updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const [detailResponse, finalUrl] = await getFinalContentAndUrl(item.link);
+                const [detailResponse, finalUrl] = await getFinalContentAndUrl(item.link)
 
-                const $$: CheerioAPI = load(detailResponse);
+                const $$: CheerioAPI = load(detailResponse)
 
-                item.link = finalUrl;
+                item.link = finalUrl
 
-                const title: string = $$('div.articleTitle h1').text();
-                const description: string | undefined = $$('div#articleBox').html() ?? undefined;
-                const pubDateStr: string | undefined = $$('span.yearMsg').text() && $$('span.timeMsg').text() ? `${$$('span.yearMsg').text()} ${$$('span.timeMsg').text()}` : undefined;
-                const authors: DataItem['author'] = $$('spna.sourceMsg').text();
-                const upDatedStr: string | undefined = pubDateStr;
+                const title: string = $$('div.articleTitle h1').text()
+                const description: string | undefined = $$('div#articleBox').html() ?? undefined
+                const pubDateStr: string | undefined = $$('span.yearMsg').text() && $$('span.timeMsg').text() ? `${$$('span.yearMsg').text()} ${$$('span.timeMsg').text()}` : undefined
+                const authors: DataItem['author'] = $$('spna.sourceMsg').text()
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -115,15 +115,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -135,8 +135,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/list/:category?/:id?',
@@ -171,24 +171,24 @@ export const route: Route = {
         {
             source: ['ynet.com'],
             target: (_, url) => {
-                const urlObj = new URL(url);
+                const urlObj = new URL(url)
 
-                const domainParts = urlObj.hostname.split('.');
-                let category = '';
+                const domainParts = urlObj.hostname.split('.')
+                let category = ''
 
                 if (domainParts.length > 2) {
-                    const subdomains = domainParts.slice(0, -2).filter((part) => part !== 'www');
+                    const subdomains = domainParts.slice(0, -2).filter((part) => part !== 'www')
                     if (subdomains.length > 0) {
-                        category = subdomains[0];
+                        category = subdomains[0]
                     }
                 }
 
-                const idMatch = urlObj.pathname.match(/\/list\/(.+)\.html/);
-                const id = idMatch ? idMatch[1] : '';
+                const idMatch = urlObj.pathname.match(/\/list\/(.+)\.html/)
+                const id = idMatch ? idMatch[1] : ''
 
-                return `/ynet/list${category ? `/${category}` : ''}${id ? `/${id}` : ''}`;
+                return `/ynet/list${category ? `/${category}` : ''}${id ? `/${id}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

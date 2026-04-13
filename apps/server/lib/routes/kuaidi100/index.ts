@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/track/:number/:id/:phone?',
@@ -25,24 +25,24 @@ export const route: Route = {
   2.  正常查询的订单在未签收状态下不会被缓存：请控制查询频率
   3.  订单完成后请尽快取消订阅，避免资源浪费
 :::`,
-};
+}
 
 async function handler(ctx) {
     // number is shorthand for company
     // id is ticket number
     // phone for shunfeng :)
-    const { number, id, phone } = ctx.req.param();
+    const { number, id, phone } = ctx.req.param()
 
     // I am doing these to avoid invaild request.
     // First, check if code is vaild
-    const { status, message, company } = await utils.checkCode(number, id, phone);
+    const { status, message, company } = await utils.checkCode(number, id, phone)
 
-    let data;
-    let query;
-    const time = new Date().toString();
+    let data
+    let query
+    const time = new Date().toString()
 
     if (status) {
-        query = await utils.getQuery(number, id, phone);
+        query = await utils.getQuery(number, id, phone)
         data =
             query.status === '200'
                 ? query.data
@@ -51,9 +51,9 @@ async function handler(ctx) {
                           context: query.message,
                           time,
                       },
-                  ];
+                  ]
     } else {
-        throw new Error(`[本地]信息有误，请检查后重试：${message}`);
+        throw new Error(`[本地]信息有误，请检查后重试：${message}`)
     }
 
     // Maybe we can look into isCheck, condition, and state :)
@@ -69,5 +69,5 @@ async function handler(ctx) {
             pubDate: new Date(item.time || item.ftime).toUTCString(),
             link: 'https://www.kuaidi100.com',
         })),
-    };
+    }
 }

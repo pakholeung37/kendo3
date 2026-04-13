@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import type { Position, PublicProfile } from './types';
-import { DATA_API, GAMMA_API } from './types';
+import type { Position, PublicProfile } from './types'
+import { DATA_API, GAMMA_API } from './types'
 
 export const route: Route = {
     path: '/positions/:address',
@@ -23,19 +23,19 @@ export const route: Route = {
     url: 'polymarket.com',
     maintainers: ['heqi201255'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const address = ctx.req.param('address');
+    const address = ctx.req.param('address')
 
     // Fetch profile and positions
-    let profile: PublicProfile | null = null;
-    let positions: Position[] = [];
+    let profile: PublicProfile | null = null
+    let positions: Position[] = []
 
     try {
         profile = await ofetch<PublicProfile>(`${GAMMA_API}/public-profile`, {
             query: { address },
-        });
+        })
     } catch {
         // Profile not found, continue without it
     }
@@ -48,12 +48,12 @@ async function handler(ctx) {
                 sortBy: 'CURRENT',
                 sortDirection: 'DESC',
             },
-        });
+        })
     } catch {
         // Positions not found, continue with empty array
     }
 
-    const displayName = profile?.name || profile?.pseudonym || address;
+    const displayName = profile?.name || profile?.pseudonym || address
 
     const items = positions.map((pos) => ({
         title: pos.title || `Position #${pos.conditionId.slice(0, 8)}`,
@@ -68,11 +68,11 @@ async function handler(ctx) {
         `,
         link: pos.eventSlug ? `https://polymarket.com/event/${pos.eventSlug}` : pos.slug ? `https://polymarket.com/event/${pos.slug}` : 'https://polymarket.com',
         author: displayName,
-    }));
+    }))
 
     return {
         title: `Polymarket Positions - ${displayName}`,
         link: `https://polymarket.com/portfolio?address=${address}`,
         item: items,
-    };
+    }
 }

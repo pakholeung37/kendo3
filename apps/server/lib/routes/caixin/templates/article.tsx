@@ -1,23 +1,23 @@
-import type { CheerioAPI } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ArticleData = {
-    item: any;
-    $: CheerioAPI;
-};
+    item: any
+    $: CheerioAPI
+}
 
 export const renderArticle = ({ item, $ }: ArticleData) => {
-    const subhead = $('.article .subhead').length ? $('.article .subhead').html() : null;
-    const media = $('.article .media').length ? $('.article .media').html() : null;
+    const subhead = $('.article .subhead').length ? $('.article .subhead').html() : null
+    const media = $('.article .media').length ? $('.article .media').html() : null
     const contentVideo = $('.article .content_video').length
         ? $('script')
               .text()
               .match(/initPlayer\('(.*?)','(.*?)'\)/)
-        : null;
-    const mainContent = $('div#Main_Content_Val.text').length ? $('div#Main_Content_Val.text').html() : null;
-    const picsValue = item.pics;
-    const picsList = typeof picsValue === 'string' && picsValue.includes('#') ? picsValue.split('#') : null;
+        : null
+    const mainContent = $('div#Main_Content_Val.text').length ? $('div#Main_Content_Val.text').html() : null
+    const picsValue = item.pics
+    const picsList = typeof picsValue === 'string' && picsValue.includes('#') ? picsValue.split('#') : null
 
     return renderToString(
         <>
@@ -76,6 +76,6 @@ export const renderArticle = ({ item, $ }: ArticleData) => {
                     )}
                 </>
             )}
-        </>
-    );
-};
+        </>,
+    )
+}

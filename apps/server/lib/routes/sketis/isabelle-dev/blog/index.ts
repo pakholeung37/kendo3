@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const source = [
     'isabelle-dev.sketis.net/phame/',
@@ -10,7 +10,7 @@ const source = [
     'isabelle-dev.sketis.net/phame/blog/view/:blog/',
     'isabelle-dev.sketis.net/phame/post/',
     'isabelle-dev.sketis.net/phame/post/view/:post_id/:post_title/',
-];
+]
 
 export const route: Route = {
     path: '/isabelle-dev/blog/:blog',
@@ -43,20 +43,20 @@ export const route: Route = {
     url: 'isabelle-dev.sketis.net',
     maintainers: ['Ritsuka314'],
     handler: async (ctx) => {
-        const baseUrl = 'https://isabelle-dev.sketis.net';
-        const { blog } = ctx.req.param();
-        const blogName = blog === '1' ? 'News' : blog === '2' ? 'Release' : 'UNKNOWN';
-        const url = `${baseUrl}/phame/blog/view/${blog}/`;
-        const response = await ofetch(url);
-        const $ = load(response);
+        const baseUrl = 'https://isabelle-dev.sketis.net'
+        const { blog } = ctx.req.param()
+        const blogName = blog === '1' ? 'News' : blog === '2' ? 'Release' : 'UNKNOWN'
+        const url = `${baseUrl}/phame/blog/view/${blog}/`
+        const response = await ofetch(url)
+        const $ = load(response)
 
         const items = $('.phui-document-summary-view')
             .toArray()
             .map((item_) => {
-                const item = $(item_);
-                const title = item.find('.remarkup-header').first();
-                const subtitle = item.find('.phui-document-summary-subtitle').first();
-                const date = subtitle.find('strong').first()[0].nextSibling.data.slice(4); // parse starts after ' on '
+                const item = $(item_)
+                const title = item.find('.remarkup-header').first()
+                const subtitle = item.find('.phui-document-summary-subtitle').first()
+                const date = subtitle.find('strong').first()[0].nextSibling.data.slice(4) // parse starts after ' on '
                 return {
                     title: title.text(),
                     // We need an absolute URL for `link`, but `a.attr('href')` returns a relative URL.
@@ -64,8 +64,8 @@ export const route: Route = {
                     description: item.find('.phui-document-summary-body').html(),
                     pubDate: parseDate(date),
                     author: subtitle.find('strong').text(),
-                };
-            });
+                }
+            })
 
         return {
             title: `Isabelle ${blogName}`,
@@ -73,6 +73,6 @@ export const route: Route = {
             link: url,
             // each feed item
             item: items,
-        };
+        }
     },
-};
+}

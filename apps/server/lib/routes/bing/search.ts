@@ -1,13 +1,13 @@
-import 'dayjs/locale/zh-cn.js';
+import 'dayjs/locale/zh-cn.js'
 
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat.js';
+import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat.js'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
-dayjs.extend(localizedFormat);
+dayjs.extend(localizedFormat)
 
 export const route: Route = {
     path: '/search/:keyword',
@@ -32,17 +32,17 @@ export const route: Route = {
     maintainers: ['CaoMeiYouRen'],
     handler,
     url: 'cn.bing.com/',
-};
+}
 
 async function handler(ctx) {
-    const q = ctx.req.param('keyword');
+    const q = ctx.req.param('keyword')
     const searchParams = new URLSearchParams({
         format: 'rss',
         q,
-    });
-    const url = new URL('https://cn.bing.com/search');
-    url.search = searchParams.toString();
-    const data = await parser.parseURL(url.toString());
+    })
+    const url = new URL('https://cn.bing.com/search')
+    url.search = searchParams.toString()
+    const data = await parser.parseURL(url.toString())
     return {
         title: data.title,
         link: data.link,
@@ -53,5 +53,5 @@ async function handler(ctx) {
             description: e.content,
             pubDate: parseDate(e.pubDate, 'dddd, DD MMM YYYY HH:mm:ss [GMT]', 'zh-cn'),
         })),
-    };
+    }
 }

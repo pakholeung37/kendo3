@@ -1,17 +1,17 @@
 export interface ContentsResponse {
-    code: number;
-    msg: string;
+    code: number
+    msg: string
     data: {
         contents: Array<{
-            id: number;
-            subject: string;
-            author: string;
-            publish_time: string;
-        }>;
+            id: number
+            subject: string
+            author: string
+            publish_time: string
+        }>
         current_term: {
-            id: number;
-            title: string;
-            type: string;
-        };
-    };
+            id: number
+            title: string
+            type: string
+        }
+    }
 }

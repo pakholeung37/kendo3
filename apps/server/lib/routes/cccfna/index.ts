@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:category/:type?',
@@ -46,39 +46,39 @@ export const route: Route = {
     name: '资讯信息',
     maintainers: ['hualiong'],
     handler: async (ctx) => {
-        const { category, type } = ctx.req.param();
-        const baseURL = `https://www.cccfna.org.cn/${category}${type ? '/' + type : ''}`;
+        const { category, type } = ctx.req.param()
+        const baseURL = `https://www.cccfna.org.cn/${category}${type ? '/' + type : ''}`
 
-        const response = await ofetch(baseURL);
-        const $ = load(response);
+        const response = await ofetch(baseURL)
+        const $ = load(response)
 
         const list: DataItem[] = $('body > script')
             .last()
             .text()
             .match(new RegExp(`https://www.cccfna.org.cn/${category}/.+?.html`, 'g'))!
             .slice(0, 15)
-            .map((link) => ({ title: '', link }));
+            .map((link) => ({ title: '', link }))
 
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link!, async () => {
-                    const html = await ofetch(item.link!);
-                    const $ = load(html);
-                    const content = $('.list_cont');
+                    const html = await ofetch(item.link!)
+                    const $ = load(html)
+                    const content = $('.list_cont')
 
-                    item.title = content.find('.title').text();
-                    item.pubDate = timezone(parseDate(content.find('.tip > .time').text(), '发布时间：YYYY-MM-DD'), +8);
-                    item.description = content.find('#article-content').html()!;
+                    item.title = content.find('.title').text()
+                    item.pubDate = timezone(parseDate(content.find('.tip > .time').text(), '发布时间：YYYY-MM-DD'), +8)
+                    item.description = content.find('#article-content').html()!
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: $('head > title').text(),
             link: baseURL,
             item: items as DataItem[],
-        };
+        }
     },
-};
+}

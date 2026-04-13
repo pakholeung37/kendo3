@@ -1,7 +1,7 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/firmware/:device/:type?/:region?',
@@ -19,13 +19,13 @@ export const route: Route = {
 | China  | cn     |
 | Global | global |`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'release', device, region = 'cn' } = ctx.req.param();
-    const releaseType = type === 'release' ? 'F' : 'X';
-    const localeTypeName = type === 'release' ? '稳定版' : '开发版';
-    const regionName = region === 'global' ? 'global' : 'cn';
+    const { type = 'release', device, region = 'cn' } = ctx.req.param()
+    const releaseType = type === 'release' ? 'F' : 'X'
+    const localeTypeName = type === 'release' ? '稳定版' : '开发版'
+    const regionName = region === 'global' ? 'global' : 'cn'
 
     const response = await got({
         method: 'get',
@@ -37,9 +37,9 @@ async function handler(ctx) {
             l: 'zh_CN',
             n: '',
         }),
-    });
+    })
 
-    const responseData = response.data;
+    const responseData = response.data
 
     return {
         title: `MIUI 更新 - ${device} - ${type === 'release' ? '稳定版' : '开发版'}`,
@@ -52,5 +52,5 @@ async function handler(ctx) {
                 link: responseData.LatestFullRom.descriptionUrl,
             },
         ],
-    };
+    }
 }

@@ -1,38 +1,38 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://www.ifanr.com';
-    const apiBaseUrl = 'https://sso.ifanr.com';
-    const targetUrl: string = new URL('digest', baseUrl).href;
-    const apiUrl: string = new URL('api/v5/wp/buzz', apiBaseUrl).href;
+    const baseUrl = 'https://www.ifanr.com'
+    const apiBaseUrl = 'https://sso.ifanr.com'
+    const targetUrl: string = new URL('digest', baseUrl).href
+    const apiUrl: string = new URL('api/v5/wp/buzz', apiBaseUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
             limit,
             offset: 0,
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language: string = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language: string = $('html').attr('lang') ?? 'zh-CN'
 
     const items: DataItem[] = response.objects.slice(0, limit).map((item): DataItem => {
-        const title: string = item.post_title;
-        const description: string = item.post_content;
-        const pubDate: number | string = item.created_at;
-        const linkUrl = `digest/${item.post_id}`;
-        const guid = `ifanr-digest-${item.post_id}`;
-        const updated: number | string = item.updated_at ?? pubDate;
+        const title: string = item.post_title
+        const description: string = item.post_content
+        const pubDate: number | string = item.created_at
+        const linkUrl = `digest/${item.post_id}`
+        const guid = `ifanr-digest-${item.post_id}`
+        const updated: number | string = item.updated_at ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -56,12 +56,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                 ],
             },
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -73,8 +73,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/digest',
@@ -102,4 +102,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

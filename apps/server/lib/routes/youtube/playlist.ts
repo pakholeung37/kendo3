@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { getDataByPlaylistId as getDataByPlaylistIdGoogle } from './api/google';
-import { getDataByPlaylistId as getDataByPlaylistIdYoutubei } from './api/youtubei';
-import { callApi } from './utils';
+import { getDataByPlaylistId as getDataByPlaylistIdGoogle } from './api/google'
+import { getDataByPlaylistId as getDataByPlaylistIdYoutubei } from './api/youtubei'
+import { callApi } from './utils'
 
 export const route: Route = {
     path: '/playlist/:id/:embed?',
@@ -28,18 +28,18 @@ export const route: Route = {
     name: 'Playlist',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const embed = !ctx.req.param('embed');
-    const isJsonFeed = ctx.req.query('format') === 'json';
+    const id = ctx.req.param('id')
+    const embed = !ctx.req.param('embed')
+    const isJsonFeed = ctx.req.query('format') === 'json'
 
     const data = await callApi({
         googleApi: getDataByPlaylistIdGoogle,
         youtubeiApi: getDataByPlaylistIdYoutubei,
         params: { playlistId: id, embed, isJsonFeed },
-    });
+    })
 
-    return data;
+    return data
 }

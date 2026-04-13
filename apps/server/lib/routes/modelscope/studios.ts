@@ -1,16 +1,16 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/desc';
+import { renderDescription } from './templates/desc'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/studios',
@@ -34,11 +34,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'modelscope.cn/studios',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://modelscope.cn';
-    const link = `${baseUrl}/studios`;
+    const baseUrl = 'https://modelscope.cn'
+    const link = `${baseUrl}/studios`
 
     const { data } = await got.put(`${baseUrl}/api/v1/studios`, {
         json: {
@@ -46,7 +46,7 @@ async function handler(ctx) {
             PageNumber: 1,
             SortBy: 'gmt_modified',
         },
-    });
+    })
 
     const studios = data.Data.Studios.map((studio) => ({
         title: studio.ChineseName || studio.Name,
@@ -57,24 +57,24 @@ async function handler(ctx) {
         category: studio.Tags,
         slug: `/${studio.Path}/${studio.Name}`,
         coverImage: studio.CoverImage.startsWith('https://img.alicdn.com/') ? undefined : studio.CoverImage,
-    }));
+    }))
 
     const items = await Promise.all(
         studios.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${baseUrl}/api/v1/studio${item.slug}`);
+                const { data } = await got(`${baseUrl}/api/v1/studio${item.slug}`)
 
-                const content = data.Data.ReadMeContent;
+                const content = data.Data.ReadMeContent
                 item.description = renderDescription({
                     coverImage: item.coverImage,
                     description: item.description,
                     md: md.render(content),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '创空间首页 · 魔搭社区',
@@ -82,5 +82,5 @@ async function handler(ctx) {
         image: 'https://g.alicdn.com/sail-web/maas/0.8.10/favicon/128.ico',
         link,
         item: items,
-    };
+    }
 }

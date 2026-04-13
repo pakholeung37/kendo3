@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { commonHandler } from './category';
+import { commonHandler } from './category'
 
 export const route: Route = {
     path: '/most-viewed',
@@ -16,13 +16,13 @@ export const route: Route = {
     maintainers: ['Rjnishant530'],
     handler,
     url: 'insider.finology.in/most-viewed',
-};
+}
 
 async function handler() {
     const extra = {
         description: (topic: string) => `Check out the most talked-about articles among our readers! ${topic}`,
         date: false,
         selector: `div.card`,
-    };
-    return await commonHandler('https://insider.finology.in', '/most-viewed', extra);
+    }
+    return await commonHandler('https://insider.finology.in', '/most-viewed', extra)
 }

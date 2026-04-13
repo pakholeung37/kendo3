@@ -172,7 +172,7 @@ export const getProfileProjectsAndSelectionsQuery = /* GraphQL */ `
         projectCount
         userId
     }
-`;
+`
 
 export const getAppreciatedQuery = /* GraphQL */ `
     query GetAppreciatedProjects($username: String, $after: String) {
@@ -249,7 +249,7 @@ export const getAppreciatedQuery = /* GraphQL */ `
             initialSubscriptionDate
         }
     }
-`;
+`
 
 export const getProjectPageQuery = /* GraphQL */ `
     query ProjectPage($projectId: ProjectId!, $projectPassword: String) {
@@ -1018,4 +1018,4 @@ export const getProjectPageQuery = /* GraphQL */ `
             }
         }
     }
-`;
+`

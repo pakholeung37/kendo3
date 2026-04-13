@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { ProcessItems, rootUrl } from './utils';
+import { ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -25,12 +25,12 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: '95mm.org/',
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
+    const tag = ctx.req.param('tag')
 
-    const currentUrl = `${rootUrl}/tag-${tag}/page-1/index.html`;
+    const currentUrl = `${rootUrl}/tag-${tag}/page-1/index.html`
 
-    return await ProcessItems(ctx, tag, currentUrl);
+    return await ProcessItems(ctx, tag, currentUrl)
 }

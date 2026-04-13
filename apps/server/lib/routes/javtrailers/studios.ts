@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, getItem, parseList, puppeteerFetch } from './utils';
+import { baseUrl, getItem, parseList, puppeteerFetch } from './utils'
 
 export const route: Route = {
     path: '/studios/:studio',
@@ -21,24 +21,24 @@ export const route: Route = {
         nsfw: true,
         requirePuppeteer: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { studio } = ctx.req.param();
+    const { studio } = ctx.req.param()
 
-    const browser = await puppeteer();
-    const response = await puppeteerFetch(`${baseUrl}/api/studios/${studio}?page=0`, browser);
+    const browser = await puppeteer()
+    const response = await puppeteerFetch(`${baseUrl}/api/studios/${studio}?page=0`, browser)
 
-    const list = parseList(response.videos);
+    const list = parseList(response.videos)
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item, browser))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item, browser))))
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: `${response.studio.hotDvdIds?.join(' ') ?? response.studio.name} Jav Online | Japanese Adult Video - JavTrailers.com`,
         description: 'Watch Jav made by Prestige free, with high definition, we have over 4,000 studios available for free streaming.',
         link: `${baseUrl}/studios/${studio}`,
         item: items,
-    };
+    }
 }

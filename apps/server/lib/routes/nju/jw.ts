@@ -1,9 +1,9 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/jw/:type',
@@ -29,10 +29,10 @@ export const route: Route = {
     description: `| 公告通知 | 教学动态 |
 | -------- | -------- |
 | ggtz     | jxdt     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
     const type_dict = {
         ggtz: [
             26263, // columnID
@@ -48,7 +48,7 @@ async function handler(ctx) {
             '[{"field":"title","name":"title"},{"field":"publishTime","pattern":[{"name":"d","value":"yyyy-MM-dd HH:mm:ss"}],"name":"publishTime"},{"field":"link","name":"link"}]',
             'https://jw.nju.edu.cn/_s414/24774/list.psp',
         ],
-    };
+    }
     const { data } = await got({
         method: 'post',
         url: 'https://jw.nju.edu.cn/_wp3services/generalQuery?queryObj=articles',
@@ -65,7 +65,7 @@ async function handler(ctx) {
             Referer: 'https://jw.nju.edu.cn/main.htm',
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-    });
+    })
 
     return {
         title: `本科生院-${type_dict[type][1]}`,
@@ -79,11 +79,11 @@ async function handler(ctx) {
                     author: item.publisher,
                     pubDate: timezone(parseDate(item.publishTime, 'YYYY-MM-DD HH:mm:ss'), +8),
                     link: item.url,
-                };
-                if (type === 'ggtz') {
-                    ret.category = item.f1;
                 }
-                return ret;
+                if (type === 'ggtz') {
+                    ret.category = item.f1
+                }
+                return ret
             }),
-    };
+    }
 }

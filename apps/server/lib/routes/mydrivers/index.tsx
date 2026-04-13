@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { categories, convertToQueryString, getInfo, processItems, rootUrl, title } from './util';
+import { categories, convertToQueryString, getInfo, processItems, rootUrl, title } from './util'
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -48,34 +48,34 @@ export const route: Route = {
 | --------- | ---------- | -------- | -------- | -------- |
 | icid/7318 | icid/12947 | icid/429 | icid/461 | icid/481 |
 `,
-};
+}
 
 async function handler(ctx) {
-    let { category = 'new' } = ctx.req.param();
+    let { category = 'new' } = ctx.req.param()
 
-    let newTitle = '';
+    let newTitle = ''
 
     if (!/^(\w+\/\w+)$/.test(category)) {
-        newTitle = `${title} - ${Object.hasOwn(categories, category) ? categories[category] : categories[Object.keys(categories)[0]]}`;
-        category = `ac/${category}`;
+        newTitle = `${title} - ${Object.hasOwn(categories, category) ? categories[category] : categories[Object.keys(categories)[0]]}`
+        category = `ac/${category}`
     }
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const queryString = convertToQueryString(category);
-    const currentUrl = new URL(`newsclass.aspx${queryString}`, rootUrl).href;
+    const queryString = convertToQueryString(category)
+    const currentUrl = new URL(`newsclass.aspx${queryString}`, rootUrl).href
 
-    const apiUrl = new URL(`m/newslist.ashx${queryString}`, rootUrl).href;
+    const apiUrl = new URL(`m/newslist.ashx${queryString}`, rootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('li[data-id]')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('div.news_title').text(),
@@ -87,20 +87,20 @@ async function handler(ctx) {
                                 <img src={item.find('a.newsimg img').prop('src')} />
                             </figure>
                         ) : null}
-                    </>
+                    </>,
                 ),
                 author: item.find('p.tname').text(),
                 guid: item.prop('data-id'),
                 pubDate: timezone(parseDate(item.find('p.ttime').text()), +8),
                 comments: item.find('a.tpinglun').text() ? Number.parseInt(item.find('a.tpinglun').text(), 10) : 0,
-            };
-        });
+            }
+        })
 
-    items = await processItems(items);
+    items = await processItems(items)
 
     return {
         ...(await getInfo(currentUrl)),
         ...(newTitle ? { title: newTitle } : {}),
         item: items,
-    };
+    }
 }

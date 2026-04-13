@@ -1,23 +1,23 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type LinkItem = {
-    title?: string;
-    link?: string;
-};
+    title?: string
+    link?: string
+}
 
 type DescriptionData = {
-    image?: string;
-    nameZh?: string;
-    nameEn?: string;
-    alias?: string[];
-    update?: string;
-    links?: LinkItem[];
-    categories?: string[];
-    downLinks?: LinkItem[];
-};
+    image?: string
+    nameZh?: string
+    nameEn?: string
+    alias?: string[]
+    update?: string
+    links?: LinkItem[]
+    categories?: string[]
+    downLinks?: LinkItem[]
+}
 
 export const renderDescription = ({ image, nameZh, nameEn, alias, update, links, categories, downLinks }: DescriptionData) => {
-    const alt = `${nameZh ?? ''}${nameEn ? ` - ${nameEn}` : ''}`;
+    const alt = `${nameZh ?? ''}${nameEn ? ` - ${nameEn}` : ''}`
 
     return renderToString(
         <>
@@ -80,6 +80,6 @@ export const renderDescription = ({ image, nameZh, nameEn, alias, update, links,
                         : null}
                 </tbody>
             </table>
-        </>
-    );
-};
+        </>,
+    )
+}

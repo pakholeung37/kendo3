@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    description?: string;
-    enclosure_url?: string;
-    enclosure_type?: string;
-};
+    description?: string
+    enclosure_url?: string
+    enclosure_type?: string
+}
 
 const RadioDescription = ({ description, enclosure_url, enclosure_type }: DescriptionData) => (
     <>
@@ -15,6 +15,6 @@ const RadioDescription = ({ description, enclosure_url, enclosure_type }: Descri
             </audio>
         ) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<RadioDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<RadioDescription {...data} />)

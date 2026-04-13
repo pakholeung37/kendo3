@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -28,10 +28,10 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'qbittorrent.org/news.php',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.qbittorrent.org';
+    const baseUrl = 'https://www.qbittorrent.org'
 
     const response = await cache.tryGet(
         `${baseUrl}/news.php`,
@@ -44,41 +44,41 @@ async function handler(ctx) {
                 })
             ).data,
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const $ = load(response);
+    const $ = load(response)
 
     const item = $('.stretcher')
         .find('h3')
         .toArray()
         // oxlint-disable-next-line array-callback-return
         .map((item) => {
-            item = $(item);
+            item = $(item)
             const pubDate = item
                 .text()
                 .split(' - ')[0]
-                .replace(/\w{3,6}day/, '');
-            const title = item.text().split(' - ')[1];
-            let description = '';
+                .replace(/\w{3,6}day/, '')
+            const title = item.text().split(' - ')[1]
+            let description = ''
             // nextUntil() does not work here
             while (item.next().length && item.next().get(0).tagName !== 'h3') {
-                item = item.next();
-                description += item.html();
+                item = item.next()
+                description += item.html()
             }
             return {
                 title,
                 description,
                 pubDate: parseDate(pubDate, 'MMMM D YYYY'),
-            };
-        });
+            }
+        })
 
     const ret = {
         title: 'qBittorrent News',
         link: `${baseUrl}/news.php`,
         item,
-    };
+    }
 
-    ctx.set('json', ret);
-    return ret;
+    ctx.set('json', ret)
+    return ret
 }

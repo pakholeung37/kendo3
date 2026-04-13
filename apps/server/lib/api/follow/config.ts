@@ -1,8 +1,8 @@
-import type { RouteHandler } from '@hono/zod-openapi';
-import { createRoute } from '@hono/zod-openapi';
+import type { RouteHandler } from '@hono/zod-openapi'
+import { createRoute } from '@hono/zod-openapi'
 
-import { config } from '@/config';
-import { gitDate, gitHash } from '@/utils/git-hash';
+import { config } from '@/config'
+import { gitDate, gitHash } from '@/utils/git-hash'
 
 const route = createRoute({
     method: 'get',
@@ -14,7 +14,7 @@ const route = createRoute({
             description: 'Follow configuration for the current instance',
         },
     },
-});
+})
 
 const handler: RouteHandler<typeof route> = (ctx) =>
     ctx.json({
@@ -25,6 +25,6 @@ const handler: RouteHandler<typeof route> = (ctx) =>
         cacheTime: config.cache.routeExpire,
         gitHash,
         gitDate: gitDate?.getTime(),
-    });
+    })
 
-export { handler, route };
+export { handler, route }

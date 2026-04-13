@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:language?/:category?/:type?',
@@ -45,29 +45,29 @@ export const route: Route = {
 | All Server | fembed(Full DL) | streamsb(Full DL) | doodstream | streamtape(Full DL) | avgle | embedgram | videovard(Full DL) |
 | ---------- | --------------- | ----------------- | ---------- | ------------------- | ----- | --------- | ------------------ |
 | all        | 21              | 30                | 28         | 29                  | 17    | 34        | 33                 |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? 'en';
-    const category = ctx.req.param('category') ?? 'censored_list';
-    const type = ctx.req.param('type') ?? 'all';
+    const language = ctx.req.param('language') ?? 'en'
+    const category = ctx.req.param('category') ?? 'censored_list'
+    const type = ctx.req.param('type') ?? 'all'
 
-    const rootUrl = 'https://7mmtv.sx';
-    const currentUrl = `${rootUrl}/${language}/${category}/${type}/1.html`;
+    const rootUrl = 'https://7mmtv.sx'
+    const currentUrl = `${rootUrl}/${language}/${category}/${type}/1.html`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.video')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('.video-title a');
+            const title = item.find('.video-title a')
             return {
                 title: title.text(),
                 author: item.find('.video-channel').text(),
@@ -75,8 +75,8 @@ async function handler(ctx) {
                 link: title.attr('href'),
                 poster: item.find('img').attr('data-src'),
                 video: item.find('video').attr('data-src'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -84,18 +84,18 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const cover = content('.content_main_cover img').attr('src');
+                const cover = content('.content_main_cover img').attr('src')
                 const images = content('.owl-lazy')
                     .toArray()
-                    .map((i) => content(i).attr('data-src'));
-                const description = content('.video-introduction-images-text').html();
-                const poster = item.poster ?? '';
-                const video = item.video;
-                const videoMarkup = video ? `<video mute loop="loop" autoplay="autoplay" poster="${poster}"><source src="${video}"></video>` : '';
+                    .map((i) => content(i).attr('data-src'))
+                const description = content('.video-introduction-images-text').html()
+                const poster = item.poster ?? ''
+                const video = item.video
+                const videoMarkup = video ? `<video mute loop="loop" autoplay="autoplay" poster="${poster}"><source src="${video}"></video>` : ''
 
                 item.description = renderToString(
                     <>
@@ -109,20 +109,20 @@ async function handler(ctx) {
                         ) : null}
                         {description ? raw(description) : null}
                         {images.map((image) => (image ? <img src={image} /> : null))}
-                    </>
-                );
+                    </>,
+                )
 
                 item.category = content('.categories a')
                     .toArray()
-                    .map((a) => content(a).text());
+                    .map((a) => content(a).text())
 
-                delete item.poster;
-                delete item.video;
+                delete item.poster
+                delete item.video
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title')
@@ -131,5 +131,5 @@ async function handler(ctx) {
         link: currentUrl,
         item: items,
         description: $('meta[name="description"]').attr('content'),
-    };
+    }
 }

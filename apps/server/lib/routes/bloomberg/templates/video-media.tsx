@@ -1,12 +1,12 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type VideoMediaData = {
-    stream?: string;
-    mp4?: string;
-    coverUrl?: string;
-    caption?: string;
-};
+    stream?: string
+    mp4?: string
+    coverUrl?: string
+    caption?: string
+}
 
 export const renderVideoMedia = ({ stream, mp4, coverUrl, caption }: VideoMediaData) =>
     renderToString(
@@ -31,5 +31,5 @@ export const renderVideoMedia = ({ stream, mp4, coverUrl, caption }: VideoMediaD
                     <div class="caption">{raw(caption)}</div>
                 </figcaption>
             ) : null}
-        </figure>
-    );
+        </figure>,
+    )

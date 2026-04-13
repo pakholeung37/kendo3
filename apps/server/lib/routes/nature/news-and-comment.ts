@@ -11,12 +11,12 @@
 // nchem:            Nature Chemistry
 // nmat:             Nature Materials
 // natmachintell:    Nature Machine Intelligence
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { baseUrl, cookieJar, getArticle, getArticleList } from './utils';
+import { baseUrl, cookieJar, getArticle, getArticleList } from './utils'
 
 export const route: Route = {
     path: '/news-and-comment/:journal?',
@@ -30,24 +30,24 @@ export const route: Route = {
     maintainers: ['y9c', 'TonyRL'],
     handler,
     url: 'nature.com/latest-news',
-};
+}
 
 async function handler(ctx) {
-    const journal = ctx.req.param('journal');
-    const pageURL = `${baseUrl}/${journal}/news-and-comment`;
+    const journal = ctx.req.param('journal')
+    const pageURL = `${baseUrl}/${journal}/news-and-comment`
 
-    const pageResponse = await got(pageURL, { cookieJar });
-    const pageCapture = load(pageResponse.data);
-    const pageDescription = pageCapture('meta[name=description]').attr('content') || 'Nature, a nature research journal';
+    const pageResponse = await got(pageURL, { cookieJar })
+    const pageCapture = load(pageResponse.data)
+    const pageDescription = pageCapture('meta[name=description]').attr('content') || 'Nature, a nature research journal'
 
-    let items = getArticleList(pageCapture);
+    let items = getArticleList(pageCapture)
 
-    items = await Promise.all(items.map((item) => getArticle(item)));
+    items = await Promise.all(items.map((item) => getArticle(item)))
 
     return {
         title: pageCapture('title').text(),
         description: pageDescription,
         link: pageURL,
         item: items,
-    };
+    }
 }

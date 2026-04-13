@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { getItemInfo, getItems, processItems, rootUrl } from './util';
+import { getItemInfo, getItems, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/:id?/:downLinkType?',
@@ -32,27 +32,27 @@ export const route: Route = {
     description: `::: tip
   [雪国列车 (剧版)](https://nzmz.xyz/details-qEzRyY3v.html) 的下载页 URL 为 \`https://v.ys99.xyz/view/qEzRyY3v.html\`，即剧集 id 为 \`qEzRyY3v\`
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { id = '1', downLinkType = '磁力链' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { id = '1', downLinkType = '磁力链' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
     // If the id is not composed solely of digits,
     // then consider it as the id of a movie or TV show;
     // otherwise, consider it as the id for the category.
 
-    const isCategory = !Number.isNaN(id);
+    const isCategory = !Number.isNaN(id)
 
-    const currentUrl = new URL(isCategory ? 'index.html' : `details-${id}.html`, rootUrl).href;
+    const currentUrl = new URL(isCategory ? 'index.html' : `details-${id}.html`, rootUrl).href
 
     const response = await cache.tryGet(currentUrl, async () => {
-        const { data: response } = await got(currentUrl);
+        const { data: response } = await got(currentUrl)
 
-        return response;
-    });
+        return response
+    })
 
-    const $ = load(response);
+    const $ = load(response)
 
     // If a category id is specified,
     // retrieve all movies and TV shows from that category
@@ -66,20 +66,20 @@ async function handler(ctx) {
               {
                   link: currentUrl,
               },
-          ];
+          ]
 
-    items = await Promise.all(items.slice(0, limit).map((item) => getItemInfo(cache.tryGet, item.link)));
+    items = await Promise.all(items.slice(0, limit).map((item) => getItemInfo(cache.tryGet, item.link)))
 
     // If the link of the entry is "#",
     // it indicates that there are currently no relevant resources available for that specific item.
 
-    items = await Promise.all(items.filter((item) => item.link !== '#').map((i) => processItems(i, downLinkType, 'div.team-con-area', 'div.item-label a', 'ul.team-icons li')));
+    items = await Promise.all(items.filter((item) => item.link !== '#').map((i) => processItems(i, downLinkType, 'div.team-con-area', 'div.item-label a', 'ul.team-icons li')))
 
-    items = items.flat();
+    items = items.flat()
 
-    const headerTitle = isCategory ? $('div.rowMod').eq(Number.parseInt(id, 10)).find('h2.row-header-title').text() : '';
-    const title = `${$('title').text()}${headerTitle ? ` - ${headerTitle}` : ''}`;
-    const icon = $('link[rel="shortcut icon"]').prop('href');
+    const headerTitle = isCategory ? $('div.rowMod').eq(Number.parseInt(id, 10)).find('h2.row-header-title').text() : ''
+    const title = `${$('title').text()}${headerTitle ? ` - ${headerTitle}` : ''}`
+    const icon = $('link[rel="shortcut icon"]').prop('href')
 
     return {
         item: isCategory ? items : items.slice(0, limit),
@@ -93,5 +93,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author: title,
         allowEmpty: true,
-    };
+    }
 }

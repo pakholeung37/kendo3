@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.ccreports.com.cn';
+const rootUrl = 'https://www.ccreports.com.cn'
 
 export const route: Route = {
     path: '/article',
@@ -30,11 +30,11 @@ export const route: Route = {
     maintainers: ['EsuRt', 'Fatpandac'],
     handler,
     url: 'www.ccreports.com.cn/',
-};
+}
 
 async function handler() {
-    const listData = await got.get(rootUrl);
-    const $ = load(listData.data);
+    const listData = await got.get(rootUrl)
+    const $ = load(listData.data)
     const list = $('div.index-four-content > div.article-box')
         .find('div.new-child')
         .toArray()
@@ -45,24 +45,24 @@ async function handler() {
                 .find('p.new-desc')
                 .text()
                 .match(/作者：(.*?)\s/)[1],
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailData = await got.get(item.link);
-                const $ = load(detailData.data);
-                item.description = $('div.pdbox').html();
-                item.pubDate = timezone(parseDate($('div.newbox > div.newtit > p').text(), 'YYYY-MM-DD HH:mm:ss'), +8);
+                const detailData = await got.get(item.link)
+                const $ = load(detailData.data)
+                item.description = $('div.pdbox').html()
+                item.pubDate = timezone(parseDate($('div.newbox > div.newtit > p').text(), 'YYYY-MM-DD HH:mm:ss'), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '消费者报道',
         link: rootUrl,
         item: items,
-    };
+    }
 }

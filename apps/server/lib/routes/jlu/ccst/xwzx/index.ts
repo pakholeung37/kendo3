@@ -1,7 +1,7 @@
-import { load } from 'cheerio'; // HTML parser with jQuery-like API
+import { load } from 'cheerio' // HTML parser with jQuery-like API
 
-import type { Route } from '@/types';
-import got from '@/utils/got'; // Custom got instance
+import type { Route } from '@/types'
+import got from '@/utils/got' // Custom got instance
 
 export const route: Route = {
     path: '/ccst/xwzx/:category',
@@ -16,16 +16,16 @@ export const route: Route = {
     maintainers: ['mayouxi'],
     handler,
     url: 'ccst.jlu.edu.cn',
-};
+}
 
 async function handler(ctx: any) {
-    const category = ctx.req.param('category');
-    const baseUrl = 'https://ccst.jlu.edu.cn';
-    const url = `${baseUrl}/xwzx/${category}.htm`;
-    const response = await got(url);
-    const $ = load(response.body);
+    const category = ctx.req.param('category')
+    const baseUrl = 'https://ccst.jlu.edu.cn'
+    const url = `${baseUrl}/xwzx/${category}.htm`
+    const response = await got(url)
+    const $ = load(response.body)
 
-    const list = $('.section.container .main .list3 ul li');
+    const list = $('.section.container .main .list3 ul li')
 
     const titles: { [key: string]: string } = {
         gsl: '公示栏',
@@ -33,9 +33,9 @@ async function handler(ctx: any) {
         xytz: '学院通知',
         xyxw: '学院新闻',
         zsjy: '招生就业',
-    };
+    }
 
-    const titleSuffix = titles[category] || '新闻中心'; // Fallback to '新闻中心' if category is not found
+    const titleSuffix = titles[category] || '新闻中心' // Fallback to '新闻中心' if category is not found
 
     return {
         title: `吉林大学计算机科学与技术学院 - 新闻中心${titleSuffix}`,
@@ -43,22 +43,22 @@ async function handler(ctx: any) {
         description: `吉林大学计算机科学与技术学院 - 新闻中心${titleSuffix}`,
 
         item: list.toArray().map((item) => {
-            const el = $(item);
+            const el = $(item)
 
-            const linkEl = el.find('a');
-            const dateEl = el.find('.date');
-            const dateStr = dateEl.text().trim();
-            const title = linkEl.text().trim();
-            const rawLink = linkEl.attr('href')!.replaceAll('..', ''); // Replace all occurrences of '..'
-            const link = `${baseUrl}${encodeURI(rawLink)}`; // Encode the URL properly
+            const linkEl = el.find('a')
+            const dateEl = el.find('.date')
+            const dateStr = dateEl.text().trim()
+            const title = linkEl.text().trim()
+            const rawLink = linkEl.attr('href')!.replaceAll('..', '') // Replace all occurrences of '..'
+            const link = `${baseUrl}${encodeURI(rawLink)}` // Encode the URL properly
 
-            const newsDate = new Date(dateStr);
+            const newsDate = new Date(dateStr)
 
             return {
                 title,
                 link,
                 pubDate: newsDate,
-            };
+            }
         }),
-    };
+    }
 }

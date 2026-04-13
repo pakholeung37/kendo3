@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.txrjy.com';
+const rootUrl = 'https://www.txrjy.com'
 
 export const route: Route = {
     path: '/fornumtopic/:channel?',
@@ -30,17 +30,17 @@ export const route: Route = {
     description: `| 最新 500 个主题帖 | 最新 500 个回复帖 | 最新精华帖 | 最新精华帖 | 一周热帖 | 本月热帖 |
 | :---------------: | :---------------: | :--------: | :--------: | :------: | :------: |
 |         1         |         2         |      3     |      4     |     5    |     6    |`,
-};
+}
 
 async function handler(ctx) {
-    const channel = ctx.req.param('channel') ?? '1';
-    const url = `${rootUrl}/c114-listnewtopic.php?typeid=${channel}`;
+    const channel = ctx.req.param('channel') ?? '1'
+    const url = `${rootUrl}/c114-listnewtopic.php?typeid=${channel}`
 
     const response = await got(url, {
         responseType: 'buffer',
-    });
-    const $ = load(iconv.decode(response.data, 'gbk'));
-    const title = $('div.z > a').last().text();
+    })
+    const $ = load(iconv.decode(response.data, 'gbk'))
+    const title = $('div.z > a').last().text()
     const list = $('tbody > tr')
         .slice(0, 25)
         .toArray()
@@ -51,15 +51,15 @@ async function handler(ctx) {
             pubDate: timezone(parseDate($(item).find('td.dateline').text(), 'YYYY-M-D HH:mm'), +8),
             category: $(item).find('td.forum').text(),
         }))
-        .filter((item) => item.title);
+        .filter((item) => item.title)
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const detailResponse = await got(item.link, {
                     responseType: 'buffer',
-                });
-                const content = load(iconv.decode(detailResponse.data, 'gbk'));
+                })
+                const content = load(iconv.decode(detailResponse.data, 'gbk'))
 
                 item.description = content('div.c_table')
                     .toArray()
@@ -71,13 +71,13 @@ async function handler(ctx) {
                             .end()
                             .html()
                             ?.replaceAll(/(<img.*?) src=".*?"(.*?>)/g, '$1$2')
-                            .replaceAll(/(<img.*?)zoomfile(.*?>)/g, '$1src$2');
+                            .replaceAll(/(<img.*?)zoomfile(.*?>)/g, '$1src$2')
                         const pattlHtml = content(item)
                             .find('div.pattl')
                             .html()
                             ?.replaceAll(/(<img.*?) src=".*?"(.*?>)/g, '$1$2')
-                            .replaceAll(/(<img.*?)zoomfile(.*?>)/g, '$1src$2');
-                        const author = content(item).find('a.xw1').text().trim();
+                            .replaceAll(/(<img.*?)zoomfile(.*?>)/g, '$1src$2')
+                        const author = content(item).find('a.xw1').text().trim()
 
                         return renderToString(
                             <>
@@ -85,19 +85,19 @@ async function handler(ctx) {
                                 {contentHtml ? raw(contentHtml) : null}
                                 {pattlHtml ? raw(pattlHtml) : null}
                                 <hr />
-                            </>
-                        );
+                            </>,
+                        )
                     })
-                    .join('\n');
+                    .join('\n')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `通信人家园 - 论坛 ${title}`,
         link: url,
         item: items,
-    };
+    }
 }

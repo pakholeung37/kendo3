@@ -1,8 +1,8 @@
-import gPlay from 'google-play-scraper';
-import type { Context } from 'hono';
+import gPlay from 'google-play-scraper'
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     name: 'Play Store Update',
@@ -35,7 +35,7 @@ export const route: Route = {
     ],
     maintainers: ['surwall'],
     handler,
-};
+}
 
 // check more language codes on https://support.google.com/googleplay/android-developer/table/4419860?hl=en
 const keywords = {
@@ -67,32 +67,32 @@ const keywords = {
         'en-us': 'Offered by',
         'zh-cn': '提供方',
     },
-};
+}
 
 async function handler(ctx: Context) {
-    const id = ctx.req.param('id');
-    const lang = ctx.req.param('lang') ?? 'en-us';
-    const baseurl = 'https://play.google.com/store/apps';
-    const hl = lang.split('-')[0].toLowerCase();
-    const gl = lang.split('-')[1].toLowerCase();
-    const link = `${baseurl}/details?id=${id}&hl=${hl}&gl=${gl}`;
+    const id = ctx.req.param('id')
+    const lang = ctx.req.param('lang') ?? 'en-us'
+    const baseurl = 'https://play.google.com/store/apps'
+    const hl = lang.split('-')[0].toLowerCase()
+    const gl = lang.split('-')[1].toLowerCase()
+    const link = `${baseurl}/details?id=${id}&hl=${hl}&gl=${gl}`
 
-    const appInfo = await gPlay.app({ appId: id, lang: hl, country: gl });
+    const appInfo = await gPlay.app({ appId: id, lang: hl, country: gl })
 
-    const appName = appInfo.title;
-    const appImage = appInfo.icon;
+    const appName = appInfo.title
+    const appImage = appInfo.icon
 
-    const version = appInfo.version;
-    const offeredBy = appInfo.developer || appInfo.developerLegalName;
+    const version = appInfo.version
+    const offeredBy = appInfo.developer || appInfo.developerLegalName
 
-    const updatedDate = parseDate(appInfo.updated);
+    const updatedDate = parseDate(appInfo.updated)
 
-    const whatsNew = appInfo.recentChanges;
+    const whatsNew = appInfo.recentChanges
 
     const feedContent = `
             <h2>${keywords.whatsNew[lang]}</h2>
             <p>${whatsNew ?? 'No release notes'}</p>
-        `;
+        `
 
     return {
         title: appName + ' - Google Play',
@@ -108,16 +108,16 @@ async function handler(ctx: Context) {
                 author: offeredBy,
             },
         ],
-    };
+    }
 }
 
 function formatVersion(version: string, updatedDate: Date) {
     // some apps show version as "VARY"
     // https://play.google.com/store/apps/details?id=com.adobe.reader&hl=en-us
-    const isVersion = /^\d/.test(version);
-    return isVersion ? version : updatedDate.toISOString().slice(0, 10);
+    const isVersion = /^\d/.test(version)
+    return isVersion ? version : updatedDate.toISOString().slice(0, 10)
 }
 
 function formatGuid(version: string, updatedDate: Date) {
-    return updatedDate.getTime().toString() + '-' + version;
+    return updatedDate.getTime().toString() + '-' + version
 }

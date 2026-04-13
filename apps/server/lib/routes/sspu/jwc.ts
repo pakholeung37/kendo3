@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/jwc/:listId',
@@ -16,44 +16,44 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const listId = ctx.req.param('listId');
-    const baseUrl = 'https://jwc.sspu.edu.cn';
+    const listId = ctx.req.param('listId')
+    const baseUrl = 'https://jwc.sspu.edu.cn'
 
-    const { data: response, url: link } = await got(`${baseUrl}/${listId}/list.htm`);
-    const $ = load(response);
+    const { data: response, url: link } = await got(`${baseUrl}/${listId}/list.htm`)
+    const $ = load(response)
 
     const list = $('.news_list .news')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 15)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const title = item.find('.news_title a');
+            item = $(item)
+            const title = item.find('.news_title a')
             return {
                 title: title.attr('title'),
                 link: `${baseUrl}${title.attr('href')}`,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
+                const { data: response } = await got(item.link)
+                const $ = load(response)
 
-                item.description = $('.wp_articlecontent').html();
-                item.pubDate = timezone(parseDate($('.arti_update').text(), 'YYYY-MM-DD HH:mm:ss'), +8);
+                item.description = $('.wp_articlecontent').html()
+                item.pubDate = timezone(parseDate($('.arti_update').text(), 'YYYY-MM-DD HH:mm:ss'), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         link,
         item: items,
-    };
+    }
 }

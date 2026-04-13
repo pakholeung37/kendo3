@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export async function loadDetailPage(link) {
     const response = await got.get(link, {
         responseType: 'buffer',
-    });
-    response.data = iconv.decode(response.data, 'gb2312');
+    })
+    response.data = iconv.decode(response.data, 'gb2312')
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     return {
         title: $('title')
@@ -26,38 +26,38 @@ export async function loadDetailPage(link) {
                 magnet: $(e).find('a').attr('href'),
             }))
             .filter((item) => item.magnet?.includes('magnet')),
-    };
+    }
 }
 
 export async function processItems(ctx, baseURL, exclude) {
     const response = await got.get(baseURL, {
         responseType: 'buffer',
-    });
-    response.data = iconv.decode(response.data, 'gb2312');
+    })
+    response.data = iconv.decode(response.data, 'gb2312')
 
-    const $ = load(response.data);
-    const list = $('ul.list')[0].children;
+    const $ = load(response.data)
+    const list = $('ul.list')[0].children
 
     const process = await Promise.all(
         list.map((item) => {
-            const link = $(item).find('a');
-            const href = link.attr('href');
-            const pubDate = timezone(parseDate($(item).find('span').text().replaceAll(/[[\]]/g, ''), 'MM-DD'), +8);
-            const text = link.text();
+            const link = $(item).find('a')
+            const href = link.attr('href')
+            const pubDate = timezone(parseDate($(item).find('span').text().replaceAll(/[[\]]/g, ''), 'MM-DD'), +8)
+            const text = link.text()
 
             if (href === undefined) {
-                return;
+                return
             }
 
             if (exclude && exclude.some((e) => e.test(text))) {
                 // 过滤掉满足正则的标题条目
-                return;
+                return
             }
 
-            const itemUrl = 'https://www.hao6v.cc' + link.attr('href');
+            const itemUrl = 'https://www.hao6v.cc' + link.attr('href')
 
             return cache.tryGet(itemUrl, async () => {
-                const detailInfo = await loadDetailPage(itemUrl);
+                const detailInfo = await loadDetailPage(itemUrl)
 
                 if (detailInfo.enclosure_urls.length > 1) {
                     return detailInfo.enclosure_urls.map((url) => ({
@@ -68,7 +68,7 @@ export async function processItems(ctx, baseURL, exclude) {
                         pubDate,
                         link: itemUrl,
                         guid: `${itemUrl}#${url.title}`,
-                    }));
+                    }))
                 }
 
                 return {
@@ -78,10 +78,10 @@ export async function processItems(ctx, baseURL, exclude) {
                     description: detailInfo.description,
                     pubDate,
                     link: itemUrl,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    return process.filter((item) => item !== undefined).flat();
+    return process.filter((item) => item !== undefined).flat()
 }

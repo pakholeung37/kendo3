@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/subscription/:parameters?',
@@ -37,31 +37,31 @@ export const route: Route = {
     name: 'Subscriptions',
     maintainers: ['emdoe', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const instance = config.miniflux.instance;
-    const token = config.miniflux.token;
+    const instance = config.miniflux.instance
+    const token = config.miniflux.token
 
     if (!token) {
-        throw new ConfigNotFoundError('This RSS feed is disabled due to its incorrect configuration: the token is missing.');
+        throw new ConfigNotFoundError('This RSS feed is disabled due to its incorrect configuration: the token is missing.')
     }
 
     function set(item) {
         if (item.search('=') === -1) {
-            return '';
+            return ''
         }
-        const filter = item.slice(0, item.indexOf('='));
-        const option = item.slice(item.lastIndexOf('=') + 1);
+        const filter = item.slice(0, item.indexOf('='))
+        const option = item.slice(item.lastIndexOf('=') + 1)
         if (filter.search('categor') !== -1) {
-            option.split(',').map((item) => categories.push(item.toString().toLowerCase()));
-            return filter;
+            option.split(',').map((item) => categories.push(item.toString().toLowerCase()))
+            return filter
         }
         if (filter.search('feed') === -1) {
-            return '';
+            return ''
         } else {
-            option.split(',').map((item) => feeds.push(item.toString().toLowerCase()));
-            return filter;
+            option.split(',').map((item) => feeds.push(item.toString().toLowerCase()))
+            return filter
         }
     }
 
@@ -71,51 +71,51 @@ async function handler(ctx) {
             link: item.site_url,
             pubData: item.last_modified_header,
             description: `Feed URL: <a href=${item.feed_url}>${item.feed_url}</a>`,
-        });
+        })
     }
 
     const response = await got.get(`${instance}/v1/feeds`, {
         headers: { 'X-Auth-Token': token },
-    });
+    })
 
-    const subscription = [];
-    const categories = [];
-    const feeds = [];
-    const feedsList = response.data;
+    const subscription = []
+    const categories = []
+    const feeds = []
+    const feedsList = response.data
 
     const parameters = ctx.req
         .param('parameters')
         ?.split('&')
         .map((parameter) => set(parameter))
-        .join('');
+        .join('')
 
     if (parameters) {
         for (const item of feedsList) {
             if (categories.length && feeds.length) {
-                const categoryTitle = item.category.title.toLowerCase();
-                const categoryID = item.category.id.toString();
-                const feedID = item.id.toString();
-                const feedTitle = item.title.toLowerCase();
+                const categoryTitle = item.category.title.toLowerCase()
+                const categoryID = item.category.id.toString()
+                const feedID = item.id.toString()
+                const feedTitle = item.title.toLowerCase()
                 if ((categories.includes(categoryID) || categories.includes(categoryTitle)) && (feeds.includes(feedID) || feeds.includes(feedTitle))) {
-                    addFeed(item);
+                    addFeed(item)
                 }
             } else if (categories.length) {
-                const categoryTitle = item.category.title.toLowerCase();
-                const categoryID = item.category.id.toString();
+                const categoryTitle = item.category.title.toLowerCase()
+                const categoryID = item.category.id.toString()
                 if (categories.includes(categoryID) || categories.includes(categoryTitle)) {
-                    addFeed(item);
+                    addFeed(item)
                 }
             } else if (feeds.length) {
-                const feedID = item.id.toString();
-                const feedTitle = item.title.toLowerCase();
+                const feedID = item.id.toString()
+                const feedTitle = item.title.toLowerCase()
                 if (feeds.includes(feedID) || feeds.includes(feedTitle)) {
-                    addFeed(item);
+                    addFeed(item)
                 }
             }
         }
     } else {
         for (const item of feedsList) {
-            addFeed(item);
+            addFeed(item)
         }
     }
 
@@ -125,5 +125,5 @@ async function handler(ctx) {
         description: `A subscription tracking feed.`,
         item: subscription,
         allowEmpty: true,
-    };
+    }
 }

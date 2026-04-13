@@ -1,25 +1,25 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { renderVideoMedia } from './video-media';
+import { renderVideoMedia } from './video-media'
 
 type LedeMedia = {
-    kind?: string;
-    src?: string;
-    description?: string;
-    caption?: string;
-    credit?: string;
+    kind?: string
+    src?: string
+    description?: string
+    caption?: string
+    credit?: string
     video?: {
-        stream?: string;
-        mp4?: string;
-        coverUrl?: string;
-        caption?: string;
-    };
-};
+        stream?: string
+        mp4?: string
+        coverUrl?: string
+        caption?: string
+    }
+}
 
 export const renderLedeMedia = (media: LedeMedia) => {
     if (media?.kind === 'video') {
-        return renderVideoMedia(media.video ?? {});
+        return renderVideoMedia(media.video ?? {})
     }
 
     if (media?.kind === 'image') {
@@ -32,9 +32,9 @@ export const renderLedeMedia = (media: LedeMedia) => {
                         <div class="credit">{media.credit ? raw(media.credit) : null}</div>
                     </figcaption>
                 ) : null}
-            </figure>
-        );
+            </figure>,
+        )
     }
 
-    return '';
-};
+    return ''
+}

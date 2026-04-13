@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import { getSubPath } from '@/utils/common-utils';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { getSubPath } from '@/utils/common-utils'
+import ofetch from '@/utils/ofetch'
 
-const FEED_LANGUAGE = 'de' as const;
-const FEED_LOGO = 'https://www.wiensued.at/wp-content/uploads/logo_wiensued_ohneclaim.svg';
-const BASE_URL = 'https://www.wiensued.at/' as const;
+const FEED_LANGUAGE = 'de' as const
+const FEED_LOGO = 'https://www.wiensued.at/wp-content/uploads/logo_wiensued_ohneclaim.svg'
+const BASE_URL = 'https://www.wiensued.at/' as const
 
 export const route: Route = {
     name: 'Objekte',
@@ -21,21 +21,21 @@ leading up to the listing (e.g. \`wohnen/sofort-verfuegbar\`)
 
     async handler(ctx) {
         // ['', 'wohnen', 'sofort-verfuegbar', 'city=Wien']
-        const parts = getSubPath(ctx).split('/');
-        const subPaths = parts.filter((p) => p.length && !p.includes('='));
+        const parts = getSubPath(ctx).split('/')
+        const subPaths = parts.filter((p) => p.length && !p.includes('='))
         if (subPaths.length === 0) {
-            subPaths.push('wohnen');
+            subPaths.push('wohnen')
         }
 
-        let params = parts.at(-1).includes('=') ? parts.at(-1) : '';
+        let params = parts.at(-1).includes('=') ? parts.at(-1) : ''
         if (params.startsWith('&')) {
-            params = params.slice(1);
+            params = params.slice(1)
         }
 
-        const link = `${BASE_URL}${subPaths.join('/')}?${params}`;
-        const response = await ofetch(link);
-        const $ = load(response);
-        const title = $('title').text();
+        const link = `${BASE_URL}${subPaths.join('/')}?${params}`
+        const response = await ofetch(link)
+        const $ = load(response)
+        const title = $('title').text()
 
         const items = $('#search-results') // element: 'SUCHERGEBNISSE'
             .next() // sort controls
@@ -43,13 +43,13 @@ leading up to the listing (e.g. \`wohnen/sofort-verfuegbar\`)
             .find('.object-box')
             .toArray()
             .map((el) => {
-                const $el = $(el);
-                const $image = $el.find('.image img');
-                const link = $el.find('.link a').attr('href');
-                const image = $image.attr('data-lazy-src') || $image.attr('src');
-                const title = $el.find('.address h4').first().text().trim();
-                const subtitle = $el.find('.address p').first().text().trim();
-                const $text = $el.find('.text');
+                const $el = $(el)
+                const $image = $el.find('.image img')
+                const link = $el.find('.link a').attr('href')
+                const image = $image.attr('data-lazy-src') || $image.attr('src')
+                const title = $el.find('.address h4').first().text().trim()
+                const subtitle = $el.find('.address p').first().text().trim()
+                const $text = $el.find('.text')
                 const description = $text
                     .find('.labtxtline')
                     .toArray()
@@ -58,9 +58,9 @@ leading up to the listing (e.g. \`wohnen/sofort-verfuegbar\`)
                             .children()
                             .toArray()
                             .map((c) => $(c).text().trim())
-                            .join(': ')
+                            .join(': '),
                     )
-                    .join(', ');
+                    .join(', ')
 
                 return {
                     title: `${title}, ${subtitle}`,
@@ -69,8 +69,8 @@ leading up to the listing (e.g. \`wohnen/sofort-verfuegbar\`)
                     image,
                     content: { html: $text.html() ?? $text.text(), text: $text.text() },
                     // no pubDate :(
-                } satisfies DataItem;
-            });
+                } satisfies DataItem
+            })
 
         return {
             title,
@@ -79,6 +79,6 @@ leading up to the listing (e.g. \`wohnen/sofort-verfuegbar\`)
             allowEmpty: true,
             item: items,
             link,
-        } satisfies Data;
+        } satisfies Data
     },
-};
+}

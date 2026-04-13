@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/bookmarks/:slug',
@@ -23,11 +23,11 @@ export const route: Route = {
     name: '用户收藏',
     maintainers: ['curly210102'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const slug = ctx.req.param('slug');
-    const link = `https://sspai.com/u/${slug}/bookmark_posts`;
+    const slug = ctx.req.param('slug')
+    const link = `https://sspai.com/u/${slug}/bookmark_posts`
 
     const articleList = (
         await got({
@@ -37,7 +37,7 @@ async function handler(ctx) {
                 Referer: link,
             },
         })
-    ).data.data;
+    ).data.data
 
     const user = (
         await got({
@@ -47,9 +47,9 @@ async function handler(ctx) {
                 Referer: link,
             },
         })
-    ).data.data;
+    ).data.data
 
-    const { nickname } = user;
+    const { nickname } = user
     return {
         title: `${nickname} 的全部收藏 - 少数派`,
         link,
@@ -61,5 +61,5 @@ async function handler(ctx) {
             pubDate: parseDate(article.released_time * 1000),
             author: article.author.nickname,
         })),
-    };
+    }
 }

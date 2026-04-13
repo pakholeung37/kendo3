@@ -1,7 +1,7 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/exchangesys/:type',
@@ -22,22 +22,22 @@ export const route: Route = {
     description: `| 新闻通知 | 交换生项目 |
 | -------- | ---------- |
 | news     | proj       |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
     const type_dict = {
         news: ['http://elite.nju.edu.cn/exchangesystem/index/moreList', 'http://elite.nju.edu.cn/exchangesystem/index/more?type=xw', '新闻通知'],
         proj: ['http://elite.nju.edu.cn/exchangesystem/index/moreXmList', 'http://elite.nju.edu.cn/exchangesystem/index/more?type=xm', '交换生项目'],
-    };
+    }
 
-    const url = type_dict[type][0] + '?page=1&limit=20&.me=c3lzLmluZGV4';
+    const url = type_dict[type][0] + '?page=1&limit=20&.me=c3lzLmluZGV4'
     const { data } = await got({
         url,
         headers: {
             Referer: type_dict[type][1],
         },
-    });
+    })
 
     return {
         title: `本科生交换生管理系统-${type_dict[type][2]}`,
@@ -52,7 +52,7 @@ async function handler(ctx) {
                         description: item.mc,
                         pubDate: dayjs(item.cjsj),
                         link: item.sqyq,
-                    };
+                    }
                 }
                 if (type === 'news') {
                     return {
@@ -61,9 +61,9 @@ async function handler(ctx) {
                         description: item.nr,
                         pubDate: dayjs(item.createDate),
                         link: `http://elite.nju.edu.cn/exchangesystem/index/detail?pid=${item.pid}`,
-                    };
+                    }
                 }
-                return null;
+                return null
             }),
-    };
+    }
 }

@@ -1,18 +1,18 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import timezone from '@/utils/timezone';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import timezone from '@/utils/timezone'
 
 async function handler(ctx: Context): Promise<Data> {
-    const catagory = ctx.req.param('category') ?? 'all';
-    const url = `https://www.cs.nycu.edu.tw/announcements/${catagory === 'all' ? '' : catagory}`;
+    const catagory = ctx.req.param('category') ?? 'all'
+    const url = `https://www.cs.nycu.edu.tw/announcements/${catagory === 'all' ? '' : catagory}`
 
     const $ = await ofetch<CheerioAPI>(url, {
         parseResponse: load,
-    });
+    })
 
     const item = $('.announcement-item')
         .toArray()
@@ -20,7 +20,7 @@ async function handler(ctx: Context): Promise<Data> {
             title: $('header a', e).text().trim(),
             link: $('a', e).attr('href'),
             pubDate: $('time', e).attr('datetime') ? timezone($('time', e).attr('datetime') || '', 8) : undefined,
-        }));
+        }))
 
     return {
         title: `陽明交大資工系公告 - ${catagory}`,
@@ -28,7 +28,7 @@ async function handler(ctx: Context): Promise<Data> {
         language: 'zh-TW',
         link: url,
         item,
-    };
+    }
 }
 
 export const route: Route = {
@@ -53,4 +53,4 @@ export const route: Route = {
     parameters: { category: 'categories, see below' },
     example: '/nycu/cs/all',
     handler,
-};
+}

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: ['/bbs/:id?/:order?', '/bxj/:id?/:order?'],
@@ -32,36 +32,36 @@ export const route: Route = {
     description: `::: tip
   更多社区参见 [社区](https://bbs.hupu.com)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '34';
-    const order = ctx.req.param('order') ?? '1';
+    const id = ctx.req.param('id') ?? '34'
+    const order = ctx.req.param('order') ?? '1'
 
-    const rootUrl = 'https://bbs.hupu.com';
-    const apiRootUrl = 'https://games.mobileapi.hupu.com';
-    const currentUrl = `${rootUrl}/${id}${order === '1' ? `-postdate` : ''}`;
+    const rootUrl = 'https://bbs.hupu.com'
+    const apiRootUrl = 'https://games.mobileapi.hupu.com'
+    const currentUrl = `${rootUrl}/${id}${order === '1' ? `-postdate` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    $('.page-icon').remove();
+    $('.page-icon').remove()
 
     let items = $('.bbs-sl-web-post-layout .post-title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${item.attr('href')}`,
                 pubDate: timezone(parseDate(item.parent().parent().find('.post-time').text(), 'MM-DD HH:mm'), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -70,24 +70,24 @@ async function handler(ctx) {
                     let detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    content('.seo-dom').remove();
+                    content('.seo-dom').remove()
 
-                    item.author = content('.post-user-comp-info-top-name').first().text();
-                    item.description = content('.main-thread').first().html();
+                    item.author = content('.post-user-comp-info-top-name').first().text()
+                    item.description = content('.main-thread').first().html()
 
-                    const matches = detailResponse.data.match(/matchId=(\d+)-BATTLE_REPORT/);
+                    const matches = detailResponse.data.match(/matchId=(\d+)-BATTLE_REPORT/)
 
                     if (matches) {
                         detailResponse = await got({
                             method: 'get',
                             url: `${apiRootUrl}/1/7.5.36/basketballapi/news/battleReport?relationId=${matches[1]}&relationType=BATTLE_REPORT`,
-                        });
+                        })
 
-                        const result = detailResponse.data.result;
+                        const result = detailResponse.data.result
 
                         item.description = renderToString(
                             <>
@@ -112,22 +112,22 @@ async function handler(ctx) {
                                         <img src={result.playerScoreImg} />
                                     </>
                                 ) : null}
-                            </>
-                        );
+                            </>,
+                        )
                     }
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `虎扑社区 - ${$('.bbs-sl-web-intro-detail-title').text()}`,
         link: currentUrl,
         item: items,
         description: $('.bbs-sl-web-intro-detail-desc-text').first().text(),
-    };
+    }
 }

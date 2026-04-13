@@ -1,27 +1,27 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 type WordpressPost = {
-    id: number;
-    date: string;
-    date_gmt?: string;
-    link: string;
-    title?: { rendered?: string };
-    excerpt?: { rendered?: string };
-    content?: { rendered?: string };
+    id: number
+    date: string
+    date_gmt?: string
+    link: string
+    title?: { rendered?: string }
+    excerpt?: { rendered?: string }
+    content?: { rendered?: string }
     _embedded?: {
-        author?: Array<{ name?: string }>;
-        'wp:term'?: Array<Array<{ name?: string }>>;
-    };
-};
+        author?: Array<{ name?: string }>
+        'wp:term'?: Array<Array<{ name?: string }>>
+    }
+}
 
-const ROOT_URL = 'https://baselang.com';
-const API_BASE = `${ROOT_URL}/wp-json/wp/v2`;
+const ROOT_URL = 'https://baselang.com'
+const API_BASE = `${ROOT_URL}/wp-json/wp/v2`
 
 // Supported categories and their WP IDs
 const CATEGORY_SLUG_TO_ID: Record<string, number> = {
@@ -39,9 +39,9 @@ const CATEGORY_SLUG_TO_ID: Record<string, number> = {
     travel: 13,
     uncategorized: 1,
     vocabulary: 12,
-};
+}
 
-const CATEGORY_OPTIONS = Object.keys(CATEGORY_SLUG_TO_ID).map((slug) => ({ label: slug, value: slug }));
+const CATEGORY_OPTIONS = Object.keys(CATEGORY_SLUG_TO_ID).map((slug) => ({ label: slug, value: slug }))
 
 export const route: Route = {
     path: '/blog/:category?',
@@ -70,27 +70,27 @@ export const route: Route = {
     name: 'Blog',
     maintainers: ['johan456789'],
     handler,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const categoryParam = (ctx.req.param('category') ?? '').toLowerCase();
-    logger.debug(`BaseLang: received request, category='${categoryParam || 'all'}'`);
+    const categoryParam = (ctx.req.param('category') ?? '').toLowerCase()
+    logger.debug(`BaseLang: received request, category='${categoryParam || 'all'}'`)
 
     if (categoryParam && !Object.hasOwn(CATEGORY_SLUG_TO_ID, categoryParam)) {
-        logger.debug(`BaseLang: invalid category '${categoryParam}'`);
-        throw new InvalidParameterError(`Invalid category: ${categoryParam}. Valid categories are: ${Object.keys(CATEGORY_SLUG_TO_ID).join(', ')}`);
+        logger.debug(`BaseLang: invalid category '${categoryParam}'`)
+        throw new InvalidParameterError(`Invalid category: ${categoryParam}. Valid categories are: ${Object.keys(CATEGORY_SLUG_TO_ID).join(', ')}`)
     }
 
-    const searchParams: string[] = ['per_page=20', '_embed=author,wp:term'];
+    const searchParams: string[] = ['per_page=20', '_embed=author,wp:term']
     if (categoryParam) {
-        const id = CATEGORY_SLUG_TO_ID[categoryParam];
-        searchParams.push(`categories=${id}`);
+        const id = CATEGORY_SLUG_TO_ID[categoryParam]
+        searchParams.push(`categories=${id}`)
     }
 
-    const apiUrl = `${API_BASE}/posts?${searchParams.join('&')}`;
+    const apiUrl = `${API_BASE}/posts?${searchParams.join('&')}`
 
-    const data = await ofetch<WordpressPost[]>(apiUrl);
-    logger.debug(`BaseLang: fetched ${data.length} posts`);
+    const data = await ofetch<WordpressPost[]>(apiUrl)
+    logger.debug(`BaseLang: fetched ${data.length} posts`)
 
     const items = data.map((post) => ({
         title: post.title?.rendered,
@@ -104,15 +104,15 @@ async function handler(ctx: Context): Promise<Data> {
                   .map((term: any) => term?.name)
                   .filter(Boolean)
             : undefined,
-    }));
+    }))
 
-    const titleSuffix = categoryParam ? ` - ${categoryParam}` : '';
-    const link = categoryParam ? `${ROOT_URL}/blog/${categoryParam}/` : `${ROOT_URL}/blog/`;
+    const titleSuffix = categoryParam ? ` - ${categoryParam}` : ''
+    const link = categoryParam ? `${ROOT_URL}/blog/${categoryParam}/` : `${ROOT_URL}/blog/`
 
     return {
         title: `BaseLang Blog${titleSuffix}`,
         link,
         language: 'en',
         item: items,
-    } as Data;
+    } as Data
 }

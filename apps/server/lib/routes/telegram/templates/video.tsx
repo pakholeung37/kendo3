@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type VideoData = {
-    source?: string;
-    poster?: string;
-};
+    source?: string
+    poster?: string
+}
 
 export const renderVideo = ({ source, poster }: VideoData): string =>
     renderToString(
@@ -19,5 +19,5 @@ export const renderVideo = ({ source, poster }: VideoData): string =>
             <blockquote>
                 <b>Video is too big</b>
             </blockquote>
-        )
-    );
+        ),
+    )

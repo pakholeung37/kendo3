@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/artists/:lang?',
@@ -29,16 +29,16 @@ export const route: Route = {
     maintainers: ['NeverBehave'],
     handler,
     url: 'furstar.jp/',
-};
+}
 
 async function handler(ctx) {
-    const base = utils.langBase(ctx.req.param('lang'));
-    const res = await got(base);
-    const $ = load(res.data);
+    const base = utils.langBase(ctx.req.param('lang'))
+    const res = await got(base)
+    const $ = load(res.data)
     const artists = $('.filter-item')
         .toArray()
-        .map((e) => utils.authorDetail(e));
-    artists.shift(); // the first one is "show all"
+        .map((e) => utils.authorDetail(e))
+    artists.shift() // the first one is "show all"
 
     return {
         title: 'furstar 所有画家',
@@ -52,5 +52,5 @@ async function handler(ctx) {
             pubDate: parseDate(new Date().toISOString()), // No Time for now
             link: `${base}/${e.link}`,
         })),
-    };
+    }
 }

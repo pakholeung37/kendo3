@@ -1,38 +1,38 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { type = '1' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { type = '1' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://www.lhratings.com';
-    const targetUrl: string = new URL(`research.html?type=${type}`, baseUrl).href;
+    const baseUrl = 'https://www.lhratings.com'
+    const targetUrl: string = new URL(`research.html?type=${type}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     const items: DataItem[] = $('table.list-table tbody tr')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a').first();
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a').first()
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $aEl.parent().next().next().text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = [$aEl.parent().next()].filter(Boolean);
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const image: string | undefined = $el.find('img').attr('src');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $aEl.parent().next().next().text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = [$aEl.parent().next()].filter(Boolean)
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const image: string | undefined = $el.find('img').attr('src')
+            const upDatedStr: string | undefined = pubDateStr
 
             let processedItem: DataItem = {
                 title,
@@ -43,9 +43,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            const enclosureUrl: string | undefined = linkUrl;
+            const enclosureUrl: string | undefined = linkUrl
 
             if (enclosureUrl) {
                 processedItem = {
@@ -53,13 +53,13 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     enclosure_url: enclosureUrl,
                     enclosure_type: `application/${enclosureUrl.split(/\./).pop()}`,
                     enclosure_title: title,
-                };
+                }
             }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
-    const author: string = $('title').text();
+    const author: string = $('title').text()
 
     return {
         title: `${author} - ${$('li.active').text()}`,
@@ -71,8 +71,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/research/:type?',
@@ -106,10 +106,10 @@ export const route: Route = {
         {
             source: ['www.lhratings.com/research.html'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const type: string | undefined = urlObj.searchParams.get('type') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const type: string | undefined = urlObj.searchParams.get('type') ?? undefined
 
-                return `/lhratings/research/${type ? `/${type}` : ''}`;
+                return `/lhratings/research/${type ? `/${type}` : ''}`
             },
         },
         {
@@ -144,4 +144,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { topic } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10);
+    const { topic } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10)
 
-    const baseUrl = 'https://www.pixelstech.net';
-    const targetUrl: string = new URL(`feed/${topic ?? ''}`, baseUrl).href;
+    const baseUrl = 'https://www.pixelstech.net'
+    const targetUrl: string = new URL(`feed/${topic ?? ''}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('div.feed-item')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a.feed-item-link');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a.feed-item-link')
 
-            const title: string = $aEl.text();
-            const image: string | undefined = $el.attr('data-bg-image');
+            const title: string = $aEl.text()
+            const image: string | undefined = $el.attr('data-bg-image')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -41,11 +41,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       ]
                     : undefined,
                 intro: $el.find('div.feed-item-description').text(),
-            });
-            const pubDateStr: string | undefined = $el.parent().find('h2.section-heading').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const guid: string = $el.attr('data-feed-id') ? `pixelstech-feed#${$el.attr('data-feed-id')}` : '';
-            const upDatedStr: string | undefined = $el.find('.time').text() || pubDateStr;
+            })
+            const pubDateStr: string | undefined = $el.parent().find('h2.section-heading').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const guid: string = $el.attr('data-feed-id') ? `pixelstech-feed#${$el.attr('data-feed-id')}` : ''
+            const upDatedStr: string | undefined = $el.find('.time').text() || pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -62,31 +62,31 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
                 try {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    $$('div.login-prompt').remove();
+                    $$('div.login-prompt').remove()
 
-                    const title: string = $$('h1').text();
+                    const title: string = $$('h1').text()
                     const description: string | undefined =
                         (item.description ?? '') +
                         renderDescription({
                             description: $$('article.content-article').html() ?? undefined,
-                        });
-                    const linkUrl: string | undefined = $$('span.source-text a').attr('href');
+                        })
+                    const linkUrl: string | undefined = $$('span.source-text a').attr('href')
 
                     const processedItem: DataItem = {
                         title,
@@ -97,18 +97,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             text: description,
                         },
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
+                    }
                 } catch {
-                    return item;
+                    return item
                 }
-            });
-        })
-    );
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -120,8 +120,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="author"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/feed/:topic?',
@@ -345,4 +345,4 @@ To subscribe to [AI](https://www.pixelstech.net/feed/ai), where the source URL i
         },
     ],
     view: ViewType.Articles,
-};
+}

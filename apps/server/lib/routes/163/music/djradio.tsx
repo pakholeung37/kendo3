@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/music/djradio/:id/:info?',
@@ -22,7 +22,7 @@ export const route: Route = {
     name: '电台节目',
     maintainers: ['magic-akari'],
     handler,
-};
+}
 
 const renderDescription = (pg, description, itunes_duration, info) =>
     renderToString(
@@ -42,8 +42,8 @@ const renderDescription = (pg, description, itunes_duration, info) =>
                     </p>
                 </div>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 const ProcessFeed = (id, limit, offset) =>
     cache.tryGet(
@@ -60,31 +60,31 @@ const ProcessFeed = (id, limit, offset) =>
                 },
             }),
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const info = !ctx.req.param('info');
+    const id = ctx.req.param('id')
+    const info = !ctx.req.param('info')
 
-    const response = await ProcessFeed(id, 1, 0);
+    const response = await ProcessFeed(id, 1, 0)
 
-    const programs = response.data.programs || [];
-    const { radio, dj } = programs[0] || { radio: {}, dj: {} };
-    const count = response.data.count || 0;
+    const programs = response.data.programs || []
+    const { radio, dj } = programs[0] || { radio: {}, dj: {} }
+    const count = response.data.count || 0
 
-    const countPage = Array.from({ length: Math.ceil(count / 500) }, (_, i) => i);
+    const countPage = Array.from({ length: Math.ceil(count / 500) }, (_, i) => i)
 
     const items = await Promise.all(
         countPage.map(async (item) => {
-            const response = await ProcessFeed(id, 500, item * 500);
-            const programs = response.data.programs || [];
+            const response = await ProcessFeed(id, 500, item * 500)
+            const programs = response.data.programs || []
             const list = programs.map((pg) => {
-                const description = (pg.description || '').split('\n').map((p) => p);
-                const duration = Math.trunc(pg.duration / 1000);
-                const mm_ss_duration = `${(duration / 60).toFixed(0).padStart(2, '0')}:${(duration % 60).toFixed(0).padStart(2, '0')}`;
+                const description = (pg.description || '').split('\n').map((p) => p)
+                const duration = Math.trunc(pg.duration / 1000)
+                const mm_ss_duration = `${(duration / 60).toFixed(0).padStart(2, '0')}:${(duration % 60).toFixed(0).padStart(2, '0')}`
 
-                const html = renderDescription(pg, description, mm_ss_duration, info);
+                const html = renderDescription(pg, description, mm_ss_duration, info)
 
                 return {
                     title: pg.name,
@@ -98,11 +98,11 @@ async function handler(ctx) {
                     enclosure_url: `https://music.163.com/song/media/outer/url?id=${pg.mainTrackId}.mp3`,
                     enclosure_type: 'audio/mpeg',
                     itunes_duration: duration,
-                };
-            });
-            return list;
-        })
-    );
+                }
+            })
+            return list
+        }),
+    )
 
     return {
         title: radio.name,
@@ -116,5 +116,5 @@ async function handler(ctx) {
         itunes_author: dj.nickname,
         itunes_category: radio.category,
         item: items.flat(),
-    };
+    }
 }

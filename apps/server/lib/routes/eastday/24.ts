@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const categories = {
     社会: 'shehui',
@@ -22,7 +22,7 @@ const categories = {
     情感: 'qinggan',
     人文: 'renwen',
     教育: 'jiaoyu',
-};
+}
 
 export const route: Route = {
     path: '/24/:category?',
@@ -55,23 +55,23 @@ export const route: Route = {
 
 | 科技 | 国内 | 宠物 | 情感 | 人文 | 教育 |
 | ---- | ---- | ---- | ---- | ---- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '社会';
+    const category = ctx.req.param('category') ?? '社会'
 
-    const rootUrl = 'https://mini.eastday.com';
-    const currentUrl = `${rootUrl}/ns/api/detail/trust/trust-news-${categories[category]}.json`;
+    const rootUrl = 'https://mini.eastday.com'
+    const currentUrl = `${rootUrl}/ns/api/detail/trust/trust-news-${categories[category]}.json`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
     const list = JSON.parse(response.data.match(/\((.*)\)/)[1]).data.trust.map((item) => ({
         title: item.topic,
         link: `${rootUrl}${item.url}`,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -79,20 +79,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const pageNumber = Number.parseInt(detailResponse.data.match(/var page_num = '(\d+)'/)[1]);
+                const pageNumber = Number.parseInt(detailResponse.data.match(/var page_num = '(\d+)'/)[1])
 
-                item.description = content('#J-contain_detail_cnt').html();
-                item.pubDate = timezone(parseDate(content('meta[property="og:release_date"]').attr('content')), +8);
+                item.description = content('#J-contain_detail_cnt').html()
+                item.pubDate = timezone(parseDate(content('meta[property="og:release_date"]').attr('content')), +8)
 
                 if (pageNumber > 1) {
-                    const links = [];
+                    const links = []
 
                     for (let i = 2; i <= pageNumber; i++) {
-                        links.push(item.link.replace(/\.html/, `-${i}.html`));
+                        links.push(item.link.replace(/\.html/, `-${i}.html`))
                     }
 
                     for (const link of links) {
@@ -100,26 +100,26 @@ async function handler(ctx) {
                             const pageResponse = await got({
                                 method: 'get',
                                 url: link,
-                            });
-                            const subContent = load(pageResponse.data);
+                            })
+                            const subContent = load(pageResponse.data)
 
                             subContent('img').each(function () {
-                                subContent(this).attr('src', subContent(this).attr('data-url'));
-                            });
+                                subContent(this).attr('src', subContent(this).attr('data-url'))
+                            })
 
-                            item.description += subContent('#J-contain_detail_cnt').html();
-                        });
+                            item.description += subContent('#J-contain_detail_cnt').html()
+                        })
                     }
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `24小时${category}热闻 - 东方资讯`,
         link: `${rootUrl}/#${categories[category]}`,
         item: items,
-    };
+    }
 }

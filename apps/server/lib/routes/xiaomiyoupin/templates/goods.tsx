@@ -1,24 +1,24 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type Goods = {
-    pic_url?: string;
-    img_square?: string;
-    imgs?: { img800?: string };
-    alt?: string;
-    videos_url?: string[];
-    name?: string;
-    summary?: string;
-    market_price?: number;
-    price_min?: number;
-    flash_price?: number;
-};
+    pic_url?: string
+    img_square?: string
+    imgs?: { img800?: string }
+    alt?: string
+    videos_url?: string[]
+    name?: string
+    summary?: string
+    market_price?: number
+    price_min?: number
+    flash_price?: number
+}
 
 const GoodsFigure = (goods: Goods) => {
-    const imageUrl = goods.pic_url || goods.img_square || goods.imgs?.img800;
-    const marketPrice = goods.market_price ? goods.market_price / 100 : undefined;
-    const salePrice = goods.price_min ?? goods.flash_price;
-    const finalPrice = salePrice ? salePrice / 100 : undefined;
+    const imageUrl = goods.pic_url || goods.img_square || goods.imgs?.img800
+    const marketPrice = goods.market_price ? goods.market_price / 100 : undefined
+    const salePrice = goods.price_min ?? goods.flash_price
+    const finalPrice = salePrice ? salePrice / 100 : undefined
 
     return (
         <figure>
@@ -48,7 +48,7 @@ const GoodsFigure = (goods: Goods) => {
                 </figcaption>
             ) : null}
         </figure>
-    );
-};
+    )
+}
 
-export const renderGoods = (goods: Goods): string => renderToString(<GoodsFigure {...goods} />);
+export const renderGoods = (goods: Goods): string => renderToString(<GoodsFigure {...goods} />)

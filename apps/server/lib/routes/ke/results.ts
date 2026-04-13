@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/researchResults',
@@ -24,7 +24,7 @@ export const route: Route = {
     maintainers: ['shaomingbo'],
     handler,
     url: 'www.research.ke.com/researchResults',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -37,14 +37,14 @@ async function handler() {
             pageIndex: 1,
             pageSize: 9,
         },
-    });
+    })
 
-    const { status, statusMessage, data } = response;
+    const { status, statusMessage, data } = response
     if (status !== 200) {
-        throw new Error(statusMessage);
+        throw new Error(statusMessage)
     }
 
-    const { list } = data.data;
+    const { list } = data.data
 
     return {
         title: '房地产行业研究报告',
@@ -57,5 +57,5 @@ async function handler() {
             description: item.guideReading,
             pubDate: parseDate(item.publishTime),
         })),
-    };
+    }
 }

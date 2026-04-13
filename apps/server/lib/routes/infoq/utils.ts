@@ -1,14 +1,14 @@
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const ProcessFeed = async (list, cache) => {
-    const detailUrl = 'https://www.infoq.cn/public/v1/article/getDetail';
+    const detailUrl = 'https://www.infoq.cn/public/v1/article/getDetail'
 
     const items = await Promise.all(
         list.map(async (e) => {
-            const uuid = e.uuid;
+            const uuid = e.uuid
             const single = await cache.tryGet(uuid, async () => {
-                const link = `https://www.infoq.cn/article/${uuid}`;
+                const link = `https://www.infoq.cn/article/${uuid}`
                 const resp = await got.post(detailUrl, {
                     headers: {
                         Referer: link,
@@ -16,13 +16,13 @@ const ProcessFeed = async (list, cache) => {
                     json: {
                         uuid,
                     },
-                });
+                })
 
-                const data = resp.data.data;
-                const author = data.author ? data.author.map((p) => p.nickname).join(',') : data.no_author;
-                const category = [...e.topic.map((t) => t.name), ...e.label.map((l) => l.name)];
-                const content = data.content_url ? (await got(data.content_url)).body : data.content;
-                const description = addCoverToDescription(parseContent(content), data.article_cover);
+                const data = resp.data.data
+                const author = data.author ? data.author.map((p) => p.nickname).join(',') : data.no_author
+                const category = [...e.topic.map((t) => t.name), ...e.label.map((l) => l.name)]
+                const content = data.content_url ? (await got(data.content_url)).body : data.content
+                const description = addCoverToDescription(parseContent(content), data.article_cover)
 
                 return {
                     title: data.article_title,
@@ -31,17 +31,17 @@ const ProcessFeed = async (list, cache) => {
                     category,
                     author,
                     link,
-                };
-            });
+                }
+            })
 
-            return single;
-        })
-    );
+            return single
+        }),
+    )
 
-    return items;
-};
+    return items
+}
 
-const parseToSimpleText = (content) => parseToSimpleTexts(content).join('');
+const parseToSimpleText = (content) => parseToSimpleTexts(content).join('')
 const parseToSimpleTexts = (content) =>
     content.map((i) => {
         const funcMaps = {
@@ -52,63 +52,63 @@ const parseToSimpleTexts = (content) =>
             text: () => i.text,
             heading: () => {
                 if (i.content) {
-                    const level = i.attrs.level;
-                    const text = parseToSimpleText(i.content);
-                    return `<h${level}>${text}</h${level}>`;
+                    const level = i.attrs.level
+                    const text = parseToSimpleText(i.content)
+                    return `<h${level}>${text}</h${level}>`
                 } else {
-                    return '';
+                    return ''
                 }
             },
             blockquote: () => {
                 if (i.content) {
-                    const text = parseToSimpleText(i.content);
-                    return `<blockquote>${text}</blockquote>`;
+                    const text = parseToSimpleText(i.content)
+                    return `<blockquote>${text}</blockquote>`
                 } else {
-                    return '';
+                    return ''
                 }
             },
             image: () => {
-                const img = i.attrs.src;
-                return `<img src="${img}"></img>`;
+                const img = i.attrs.src
+                return `<img src="${img}"></img>`
             },
             codeblock: () => {
                 if (i.content) {
-                    const lang = i.attrs.lang;
-                    const code = parseToSimpleText(i.content);
-                    return `<code lang="${lang}">${code}</code>`;
+                    const lang = i.attrs.lang
+                    const code = parseToSimpleText(i.content)
+                    return `<code lang="${lang}">${code}</code>`
                 } else {
-                    return '';
+                    return ''
                 }
             },
             link: () => {
-                const href = i.attrs.href;
-                const text = i.content ? parseToSimpleText(i.content) : '';
-                return `<a href="${href}">${text}</a>"`;
+                const href = i.attrs.href
+                const text = i.content ? parseToSimpleText(i.content) : ''
+                return `<a href="${href}">${text}</a>"`
             },
-        };
+        }
 
         if (i.type in funcMaps) {
-            return funcMaps[i.type]();
+            return funcMaps[i.type]()
         }
 
         if (!i.content) {
-            return '';
+            return ''
         }
 
-        return parseToSimpleText(i.content);
-    });
+        return parseToSimpleText(i.content)
+    })
 
 function addCoverToDescription(content, cover) {
-    return `<p><img src="${cover}"></p>${content}`;
+    return `<p><img src="${cover}"></p>${content}`
 }
 
 function parseContent(content) {
-    const isRichContent = content.startsWith(`{"`);
+    const isRichContent = content.startsWith(`{"`)
     if (!isRichContent) {
-        return content;
+        return content
     }
 
-    return parseToSimpleText([JSON.parse(content)]);
+    return parseToSimpleText([JSON.parse(content)])
 }
 
-export default { ProcessFeed };
+export default { ProcessFeed }

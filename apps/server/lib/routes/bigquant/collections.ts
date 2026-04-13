@@ -1,13 +1,13 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/collections',
@@ -32,11 +32,11 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'bigquant.com/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://bigquant.com';
-    const currentUrl = `${rootUrl}/wiki/api/documents.list`;
+    const rootUrl = 'https://bigquant.com'
+    const currentUrl = `${rootUrl}/wiki/api/documents.list`
 
     const response = await got({
         method: 'post',
@@ -48,18 +48,18 @@ async function handler() {
             offset: 0,
             sort: 'publishedAt',
         },
-    });
+    })
 
     const items = response.data.data.map((item) => ({
         title: item.title,
         link: `${rootUrl}/wiki${item.url}`,
         description: md.render(item.text),
         pubDate: parseDate(item.publishedAt),
-    }));
+    }))
 
     return {
         title: '专题报告 - AI量化知识库 - BigQuant',
         link: `${rootUrl}/wiki/collections/c6874e5d-7f45-4e90-8cd9-5e43df3b44ef`,
         item: items,
-    };
+    }
 }

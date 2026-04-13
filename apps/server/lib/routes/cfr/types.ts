@@ -1,30 +1,30 @@
 export interface LinkData {
-    '@context': string;
+    '@context': string
     '@graph': Array<{
-        '@type': string;
-        headline: string;
-        name: string;
-        about: string;
-        description: string;
+        '@type': string
+        headline: string
+        name: string
+        about: string
+        description: string
         image: {
-            '@type': string;
-            representativeOfPage: string;
-            url: string;
-        };
-        datePublished: string;
-        dateModified: string;
+            '@type': string
+            representativeOfPage: string
+            url: string
+        }
+        datePublished: string
+        dateModified: string
         author: {
-            '@type': string;
-            name: string;
-            url: string;
-        };
-    }>;
+            '@type': string
+            name: string
+            url: string
+        }
+    }>
 }
 
 export interface VideoSetup {
-    techOrder: string[];
+    techOrder: string[]
     sources: Array<{
-        type: string;
-        src: string;
-    }>;
+        type: string
+        src: string
+    }>
 }

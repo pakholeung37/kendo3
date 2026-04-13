@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/cs/:category?',
@@ -39,48 +39,48 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://cs.hrbust.edu.cn/';
-    const { category = 3709 } = ctx.req.param();
-    const columnUrl = `${rootUrl}${category}/list.htm`;
-    const response = await ofetch(columnUrl);
-    const $ = load(response);
-    const bigTitle = $('li.col_title').text();
+    const rootUrl = 'https://cs.hrbust.edu.cn/'
+    const { category = 3709 } = ctx.req.param()
+    const columnUrl = `${rootUrl}${category}/list.htm`
+    const response = await ofetch(columnUrl)
+    const $ = load(response)
+    const bigTitle = $('li.col_title').text()
 
     const list = $('div.col_news_con li.news')
         .toArray()
         .map((item) => {
-            const element = $(item);
-            const link = new URL(element.find('a').attr('href'), rootUrl).href;
-            const pubDateText = element.find('span.news_meta').text().trim();
-            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null;
+            const element = $(item)
+            const link = new URL(element.find('a').attr('href'), rootUrl).href
+            const pubDateText = element.find('span.news_meta').text().trim()
+            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null
             return {
                 title: element.find('a').text().trim(),
                 pubDate,
                 link,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.startsWith(rootUrl)) {
-                    item.description = '本文需跳转，请点击原文链接后阅读';
-                    return item;
+                    item.description = '本文需跳转，请点击原文链接后阅读'
+                    return item
                 }
 
-                const response = await ofetch(item.link);
-                const $ = load(response);
-                const content = $('div.wp_articlecontent');
+                const response = await ofetch(item.link)
+                const $ = load(response)
+                const content = $('div.wp_articlecontent')
 
-                content.find('[style]').removeAttr('style');
-                content.find('font').contents().unwrap();
-                content.html(content.html()?.replaceAll('&nbsp;', ''));
-                content.find('[align]').removeAttr('align');
+                content.find('[style]').removeAttr('style')
+                content.find('font').contents().unwrap()
+                content.html(content.html()?.replaceAll('&nbsp;', ''))
+                content.find('[align]').removeAttr('align')
 
-                const author = $('span.arti_publisher').text().replace('发布者：', '').trim();
+                const author = $('span.arti_publisher').text().replace('发布者：', '').trim()
 
                 return {
                     title: item.title,
@@ -88,15 +88,15 @@ async function handler(ctx) {
                     pubDate: item.pubDate,
                     description: content.html(),
                     author,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: `${bigTitle} - 哈尔滨理工大学计算机学院`,
         link: columnUrl,
         language: 'zh-CN',
         item: items,
-    };
+    }
 }

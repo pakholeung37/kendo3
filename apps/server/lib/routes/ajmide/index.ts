@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:id',
@@ -20,14 +20,14 @@ export const route: Route = {
     name: '播客',
     maintainers: ['Fatpandac'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.param('limit') ?? 25;
-    const playListAPI = `https://a.ajmide.com/v3/getBrandContentList.php?brandId=${id}&c=${limit}&i=0`;
-    const response = await got.get(playListAPI);
-    const data = response.data.data.filter((item) => !item.contentType);
+    const id = ctx.req.param('id')
+    const limit = ctx.req.param('limit') ?? 25
+    const playListAPI = `https://a.ajmide.com/v3/getBrandContentList.php?brandId=${id}&c=${limit}&i=0`
+    const response = await got.get(playListAPI)
+    const data = response.data.data.filter((item) => !item.contentType)
 
     const items = data.map((item) => ({
         title: item.subject,
@@ -38,7 +38,7 @@ async function handler(ctx) {
         enclosure_url: item.audioAttach[0].liveUrl,
         itunes_duration: item.audioAttach[0].audioTime,
         enclosure_type: 'audio/x-m4a',
-    }));
+    }))
 
     return {
         title: data[0].brandName,
@@ -46,5 +46,5 @@ async function handler(ctx) {
         itunes_author: data[0].author_info.nick,
         image: data[0].brandImgPath,
         item: items,
-    };
+    }
 }

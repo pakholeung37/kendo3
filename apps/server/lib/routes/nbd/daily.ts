@@ -1,4 +1,4 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
 export const route: Route = {
     path: '/daily',
@@ -22,8 +22,8 @@ export const route: Route = {
     maintainers: ['yuuow'],
     handler,
     url: 'nbd.com.cn/',
-};
+}
 
 function handler(ctx) {
-    ctx.set('redirect', '/nbd/332');
+    ctx.set('redirect', '/nbd/332')
 }

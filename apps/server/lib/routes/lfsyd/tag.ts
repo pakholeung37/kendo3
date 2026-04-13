@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { ProcessFeed, ProcessForm } from './utils';
+import { ProcessFeed, ProcessForm } from './utils'
 
 export const route: Route = {
     path: '/tag/:tagId?',
@@ -16,10 +16,10 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['auto-bot-ty'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const tagId = ctx.req.param('tagId');
+    const tagId = ctx.req.param('tagId')
     const tagList = {
         17: '炉石传说',
         18: '万智牌',
@@ -34,17 +34,17 @@ async function handler(ctx) {
         102: '卡牌游戏',
         23: '玩家杂谈',
         117: '二次元',
-    };
-    const tagName = tagList[tagId];
-    const rootUrl = 'https://www.iyingdi.com';
-    const tagUrl = 'https://api.iyingdi.com/web/feed/tag-content-list';
+    }
+    const tagName = tagList[tagId]
+    const rootUrl = 'https://www.iyingdi.com'
+    const tagUrl = 'https://api.iyingdi.com/web/feed/tag-content-list'
     const form = {
         page: 1,
         size: 30,
         tag_id: tagId,
         timestamp: '',
         version: 0,
-    };
+    }
 
     const response = await got({
         method: 'post',
@@ -57,10 +57,10 @@ async function handler(ctx) {
             Referer: `${rootUrl}/`,
         },
         form: ProcessForm(form),
-    });
+    })
 
-    const { list } = response.data;
-    const tagJson = JSON.parse(list[0].feed.tag_json);
+    const { list } = response.data
+    const tagJson = JSON.parse(list[0].feed.tag_json)
 
     const articleList = list.map((item) => ({
         title: item.feed.title,
@@ -68,13 +68,13 @@ async function handler(ctx) {
         link: `${rootUrl}/tz/post/${item.feed.source_id}`,
         guid: item.feed.title,
         postId: item.feed.source_id,
-    }));
+    }))
 
-    const items = await ProcessFeed(cache, articleList);
+    const items = await ProcessFeed(cache, articleList)
 
     return {
         title: `${tagName || tagJson[0].tag} - 旅法师营地 `,
         link: `${rootUrl}/tz/tag/${tagId}`,
         item: items,
-    };
+    }
 }

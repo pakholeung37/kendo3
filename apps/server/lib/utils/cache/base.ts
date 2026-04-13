@@ -1,18 +1,18 @@
-import type Redis from 'ioredis';
-import type { LRUCache } from 'lru-cache';
+import type Redis from 'ioredis'
+import type { LRUCache } from 'lru-cache'
 
 type CacheModule = {
-    init: () => void;
-    get: (key: string, refresh?: boolean) => Promise<string | null> | string | null;
-    has: (key: string) => Promise<boolean> | boolean;
-    set: (key: string, value?: string | Record<string, any>, maxAge?: number) => any;
+    init: () => void
+    get: (key: string, refresh?: boolean) => Promise<string | null> | string | null
+    has: (key: string) => Promise<boolean> | boolean
+    set: (key: string, value?: string | Record<string, any>, maxAge?: number) => any
     status: {
-        available: boolean;
-    };
+        available: boolean
+    }
     clients: {
-        redisClient?: Redis;
-        memoryCache?: LRUCache<any, any>;
-    };
-};
+        redisClient?: Redis
+        memoryCache?: LRUCache<any, any>
+    }
+}
 
-export default CacheModule;
+export default CacheModule

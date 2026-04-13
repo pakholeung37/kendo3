@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    thumb?: string;
-    description?: string;
-};
+    thumb?: string
+    description?: string
+}
 
 const SouthcnDescription = ({ thumb, description }: DescriptionData) => (
     <>
@@ -14,6 +14,6 @@ const SouthcnDescription = ({ thumb, description }: DescriptionData) => (
             </blockquote>
         ) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<SouthcnDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<SouthcnDescription {...data} />)

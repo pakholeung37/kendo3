@@ -1,9 +1,9 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/user/:name?',
@@ -22,16 +22,16 @@ export const route: Route = {
     name: 'User',
     maintainers: ['hondajojo', 'nczitzk', 'LucunJi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const name = ctx.req.param('name') ?? 'i';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : '50';
+    const name = ctx.req.param('name') ?? 'i'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : '50'
     if (!isValidHost(name)) {
-        throw new InvalidParameterError('Invalid name');
+        throw new InvalidParameterError('Invalid name')
     }
 
-    const rootUrl = `${name}.lofter.com`;
+    const rootUrl = `${name}.lofter.com`
 
     const response = await got({
         method: 'post',
@@ -47,10 +47,10 @@ async function handler(ctx) {
             postdigestnew: '1',
             supportposttypes: '1,2,3,4,5,6',
         }),
-    });
+    })
 
     if (!response.data.response || response.data.response.posts.length === 0) {
-        throw new Error('Blog Not Found');
+        throw new Error('Blog Not Found')
     }
 
     const items = response.data.response.posts.map((item) => ({
@@ -60,9 +60,9 @@ async function handler(ctx) {
             JSON.parse(item.post.photoLinks || `[]`)
                 .map((photo) => {
                     if (photo.raw?.match(/\/\/nos\.netease\.com\//)) {
-                        photo.raw = `https://${photo.raw.match(/(imglf\d)/)[0]}.lf127.net${photo.raw.match(/\/\/nos\.netease\.com\/imglf\d(.*)/)[1]}`;
+                        photo.raw = `https://${photo.raw.match(/(imglf\d)/)[0]}.lf127.net${photo.raw.match(/\/\/nos\.netease\.com\/imglf\d(.*)/)[1]}`
                     }
-                    return `<img src="${photo.raw || photo.orign}">`;
+                    return `<img src="${photo.raw || photo.orign}">`
                 })
                 .join('') +
             JSON.parse(item.post.embed ? `[${item.post.embed}]` : `[]`)
@@ -72,12 +72,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.post.publishTime),
         author: item.post.blogInfo.blogNickName,
         category: item.post.tag.split(','),
-    }));
+    }))
 
     return {
         title: `${items[0].author} | LOFTER`,
         link: `https://${rootUrl}`,
         item: items,
         description: response.data.response.posts[0].post.blogInfo.selfIntro,
-    };
+    }
 }

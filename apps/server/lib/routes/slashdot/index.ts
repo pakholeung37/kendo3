@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/:section?',
@@ -43,25 +43,25 @@ export const route: Route = {
     name: 'News',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { section } = ctx.req.param();
+    const { section } = ctx.req.param()
 
     if (section && !isValidHost(section)) {
-        throw new InvalidParameterError('Invalid section name');
+        throw new InvalidParameterError('Invalid section name')
     }
 
-    const link = section ? `https://${section}.slashdot.org` : 'https://slashdot.org';
-    const response = await ofetch(link);
-    const $ = load(response);
+    const link = section ? `https://${section}.slashdot.org` : 'https://slashdot.org'
+    const response = await ofetch(link)
+    const $ = load(response)
 
     const list = $('.article')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const a = $item.find('.story-title a').first();
-            const details = $item.find('.details');
+            const $item = $(item)
+            const a = $item.find('.story-title a').first()
+            const details = $item.find('.details')
 
             return {
                 title: a.text(),
@@ -73,15 +73,15 @@ async function handler(ctx) {
                         .attr('datetime')
                         ?.replace(/on\s\w+?day\s/, '')
                         ?.replace('@', '')
-                        ?.replace(/(\d{2}:\d{2})(\w{2})$/, '$1 $2')
+                        ?.replace(/(\d{2}:\d{2})(\w{2})$/, '$1 $2'),
                 ),
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text(),
         description: $('meta[name="description"]').attr('content'),
         link,
         item: list,
-    };
+    }
 }

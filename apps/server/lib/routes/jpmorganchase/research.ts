@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const base = 'https://www.jpmorganchase.com';
-const frontPageUrl = `${base}/institute/all-topics`;
-const indexUrl = `${base}/services/json/v1/dynamic-grid.service/parent=jpmorganchase/global/US/en/home/institute/all-topics&comp=root/content-parsys/dynamic_grid&page=p1.json`;
+const base = 'https://www.jpmorganchase.com'
+const frontPageUrl = `${base}/institute/all-topics`
+const indexUrl = `${base}/services/json/v1/dynamic-grid.service/parent=jpmorganchase/global/US/en/home/institute/all-topics&comp=root/content-parsys/dynamic_grid&page=p1.json`
 
 export const route: Route = {
     path: '/',
@@ -31,58 +31,58 @@ export const route: Route = {
     maintainers: ['dousha'],
     handler,
     url: 'www.jpmorganchase.com/institute/all-topics',
-};
+}
 
 type PartitionMeta = {
-    'total-items': number;
-    page: number;
-    'page-size': number;
-    'max-pages': number;
-    'partition-size': string;
-};
+    'total-items': number
+    page: number
+    'page-size': number
+    'max-pages': number
+    'partition-size': string
+}
 
 type IndexEntry = {
-    title: string;
-    date: string;
-    hideDate: boolean;
-    description: string;
-    type: string;
-    link: string;
-    linkText: string;
-    image: string;
-};
+    title: string
+    date: string
+    hideDate: boolean
+    description: string
+    type: string
+    link: string
+    linkText: string
+    image: string
+}
 
 async function fetchIndexEntires(): Promise<IndexEntry[]> {
-    const response = await ofetch(indexUrl);
+    const response = await ofetch(indexUrl)
     if (!('meta' in response)) {
-        return [];
+        return []
     }
 
-    const meta = response.meta as PartitionMeta;
-    const maxItemCount = Number(meta['partition-size']);
+    const meta = response.meta as PartitionMeta
+    const maxItemCount = Number(meta['partition-size'])
 
-    return (response.items as IndexEntry[]).slice(0, maxItemCount);
+    return (response.items as IndexEntry[]).slice(0, maxItemCount)
 }
 
 function fetchDataItem(entry: IndexEntry): Promise<DataItem> {
-    const url = `${base}${entry.link}`;
+    const url = `${base}${entry.link}`
 
     return cache.tryGet(url, async () => {
-        let authors: string[] = [];
-        let description = '';
-        let category: string[] = [];
-        let articleDate: string = entry.date;
-        const pageContent: string = await ofetch(url);
+        let authors: string[] = []
+        let description = ''
+        let category: string[] = []
+        let articleDate: string = entry.date
+        const pageContent: string = await ofetch(url)
 
         if (pageContent.length > 0) {
-            const $ = load(pageContent);
+            const $ = load(pageContent)
 
-            category = [$('.eyebrow').text()];
+            category = [$('.eyebrow').text()]
             authors = $('.author-name')
                 .toArray()
-                .map((el) => $(el).text().trim());
-            articleDate = $('.date').text().trim() || entry.date;
-            description = $('.root').children('div').children('div:eq(1)').html() || '';
+                .map((el) => $(el).text().trim())
+            articleDate = $('.date').text().trim() || entry.date
+            description = $('.root').children('div').children('div:eq(1)').html() || ''
         }
 
         return {
@@ -92,17 +92,17 @@ function fetchDataItem(entry: IndexEntry): Promise<DataItem> {
             description,
             link: url,
             pubDate: parseDate(articleDate),
-        } satisfies DataItem;
-    }) as Promise<DataItem>;
+        } satisfies DataItem
+    }) as Promise<DataItem>
 }
 
 async function handler(): Promise<Data> {
-    const entires = await fetchIndexEntires();
-    const items = await Promise.all(entires.map((it) => fetchDataItem(it)));
+    const entires = await fetchIndexEntires()
+    const items = await Promise.all(entires.map((it) => fetchDataItem(it)))
 
     return {
         title: 'All Topics - JPMorganChase Institute',
         link: frontPageUrl,
         item: items,
-    };
+    }
 }

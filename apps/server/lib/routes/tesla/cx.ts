@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/cx/:category?/:city?',
@@ -99,30 +99,30 @@ export const route: Route = {
 | 曲阜 | 郴州 | 济源 | 兴义 |
 | ---- | ---- | ---- | ---- |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { category, city } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category, city } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://cx.tesla.cn';
-    const rootApiUrl = 'https://community-api.tesla.cn';
-    const rootMediaApi = 'https://china-community-app.tesla.cn';
+    const rootUrl = 'https://cx.tesla.cn'
+    const rootApiUrl = 'https://community-api.tesla.cn'
+    const rootMediaApi = 'https://china-community-app.tesla.cn'
 
-    const currentUrl = new URL(`user-right/list${category ? `/${category}` : ''}`, rootUrl).href;
-    const apiUrl = new URL('api/voucherpackage/merchant', rootApiUrl).href;
-    const apiCategoryUrl = new URL('api/category', rootApiUrl).href;
+    const currentUrl = new URL(`user-right/list${category ? `/${category}` : ''}`, rootUrl).href
+    const apiUrl = new URL('api/voucherpackage/merchant', rootApiUrl).href
+    const apiCategoryUrl = new URL('api/category', rootApiUrl).href
 
-    const categoryToUrl = (category) => new URL(`user-right/list/${category}`, rootUrl).href;
-    const mediaToUrl = (media) => new URL(`community-media/${media}`, rootMediaApi).href;
+    const categoryToUrl = (category) => new URL(`user-right/list/${category}`, rootUrl).href
+    const mediaToUrl = (media) => new URL(`community-media/${media}`, rootMediaApi).href
 
     const { data: categoryResponse } = await got(apiCategoryUrl, {
         searchParams: {
             type: 2,
         },
-    });
+    })
 
-    const categoryObject = categoryResponse.data.findLast((c) => c.name === category);
+    const categoryObject = categoryResponse.data.findLast((c) => c.name === category)
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -132,7 +132,7 @@ async function handler(ctx) {
             category: categoryObject ? undefined : category === '充电免停' ? 2 : undefined,
             city,
         },
-    });
+    })
 
     let items = response.data.pageDatas.slice(0, limit).map((item) => ({
         title: item.venueName ?? item.title,
@@ -159,47 +159,47 @@ async function handler(ctx) {
         guid: item.id,
         pubDate: parseDate(item.publishedAt),
         parkingLocationId: item.parkingLocationId,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (item.parkingLocationId) {
-                    item.guid = `tesla-user-right#${item.guid}`;
+                    item.guid = `tesla-user-right#${item.guid}`
 
-                    delete item.parkingLocationId;
+                    delete item.parkingLocationId
 
-                    return item;
+                    return item
                 }
 
-                const apiItemUrl = new URL(`api/voucherpackage/merchant/${item.guid}`, rootApiUrl).href;
+                const apiItemUrl = new URL(`api/voucherpackage/merchant/${item.guid}`, rootApiUrl).href
 
-                const { data: detailResponse } = await got(apiItemUrl);
+                const { data: detailResponse } = await got(apiItemUrl)
 
-                const data = detailResponse.data;
+                const data = detailResponse.data
 
-                item.title = data.title ?? item.title;
+                item.title = data.title ?? item.title
                 item.description = renderDescription({
                     data,
                     categoryToUrl,
                     mediaToUrl,
-                });
-                item.author = data.merchants ? data.merchants.map((a) => a.name).join('/') : undefined;
-                item.category = [...new Set([...item.category, ...data.categories])].filter(Boolean);
-                item.guid = `tesla-user-right#${item.guid}`;
+                })
+                item.author = data.merchants ? data.merchants.map((a) => a.name).join('/') : undefined
+                item.category = [...new Set([...item.category, ...data.categories])].filter(Boolean)
+                item.guid = `tesla-user-right#${item.guid}`
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = $('title').text();
-    const description = `${city ?? ''}${category ?? ''}`;
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const author = $('title').text()
+    const description = `${city ?? ''}${category ?? ''}`
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -213,5 +213,5 @@ async function handler(ctx) {
         subtitle: description,
         author,
         allowEmpty: true,
-    };
+    }
 }

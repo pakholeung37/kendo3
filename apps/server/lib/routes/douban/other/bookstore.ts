@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/bookstore',
@@ -17,19 +17,19 @@ export const route: Route = {
     name: '豆瓣书店',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler() {
-    const link = 'https://market.douban.com/book/';
+    const link = 'https://market.douban.com/book/'
     const response = await got({
         method: 'get',
         url: 'https://market.douban.com/api/freyr/books?page=1&page_size=20&type=book',
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const data = response.data.data;
+    const data = response.data.data
 
     return {
         title: '豆瓣书店',
@@ -45,5 +45,5 @@ async function handler() {
         <strong>价格:</strong> ${price}元
       `,
         })),
-    };
+    }
 }

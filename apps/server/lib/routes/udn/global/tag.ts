@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/global/tag/:tag?',
@@ -29,19 +29,19 @@ export const route: Route = {
     handler,
     description: `| 過去 24 小時 | 鏡頭背後 | 深度專欄 | 重磅廣播 |
 | ------------ | -------- | -------- | -------- |`,
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag') ?? '過去24小時';
+    const tag = ctx.req.param('tag') ?? '過去24小時'
 
-    const rootUrl = 'https://global.udn.com';
-    const currentUrl = `${rootUrl}/search/tagging/1020/${tag}`;
-    const apiUrl = `${rootUrl}/global_vision/load/article/newest/tag:${tag}`;
+    const rootUrl = 'https://global.udn.com'
+    const currentUrl = `${rootUrl}/search/tagging/1020/${tag}`
+    const apiUrl = `${rootUrl}/global_vision/load/article/newest/tag:${tag}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     let items = response.data.lists.map((item) => ({
         title: item.title,
@@ -49,7 +49,7 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.time?.dateTime), +8),
         link: item.url,
         category: item.hash?.map((h) => h.title),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -57,27 +57,27 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const mainImage = content('.article-content__focus').html();
+                const mainImage = content('.article-content__focus').html()
                 const articleBodyHtml = content('.article-content__editor')
                     .find('p, figure, h2, .video-container')
                     .toArray()
                     .map((e) => content.html(e))
-                    .join('');
+                    .join('')
 
-                item.description = mainImage + articleBodyHtml;
+                item.description = mainImage + articleBodyHtml
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `轉角國際 udn Global - ${tag}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

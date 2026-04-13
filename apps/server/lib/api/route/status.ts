@@ -1,8 +1,8 @@
-import type { RouteHandler } from '@hono/zod-openapi';
-import { createRoute, z } from '@hono/zod-openapi';
-import xxhash from 'xxhash-wasm';
+import type { RouteHandler } from '@hono/zod-openapi'
+import { createRoute, z } from '@hono/zod-openapi'
+import xxhash from 'xxhash-wasm'
 
-import cacheModule from '@/utils/cache/index';
+import cacheModule from '@/utils/cache/index'
 
 const QuerySchema = z.object({
     requestPath: z.string().openapi({
@@ -13,12 +13,12 @@ const QuerySchema = z.object({
         example: '/github/comments/DIYgod/RSSHub/20768',
         description: 'The route path to check cache status for',
     }),
-});
+})
 
 const ResponseSchema = z.object({
     cached: z.boolean(),
     lastBuildDate: z.string().nullable(),
-});
+})
 
 const route = createRoute({
     method: 'get',
@@ -54,35 +54,35 @@ const route = createRoute({
             description: 'Cache module unavailable',
         },
     },
-});
+})
 
 const handler: RouteHandler<typeof route> = async (ctx) => {
     if (!cacheModule.status.available) {
-        return ctx.json({ cached: false, lastBuildDate: null }, 503);
+        return ctx.json({ cached: false, lastBuildDate: null }, 503)
     }
 
-    const { requestPath } = ctx.req.valid('query');
-    const { h64ToString } = await xxhash();
-    const key = 'rsshub:koa-redis-cache:' + h64ToString(requestPath + ':rss');
-    const cached = await cacheModule.globalCache.has(key);
+    const { requestPath } = ctx.req.valid('query')
+    const { h64ToString } = await xxhash()
+    const key = 'rsshub:koa-redis-cache:' + h64ToString(requestPath + ':rss')
+    const cached = await cacheModule.globalCache.has(key)
 
     if (!cached) {
-        return ctx.json({ cached: false, lastBuildDate: null }, 404);
+        return ctx.json({ cached: false, lastBuildDate: null }, 404)
     }
 
-    let lastBuildDate: string | null = null;
+    let lastBuildDate: string | null = null
 
     try {
-        const cachedData = await cacheModule.globalCache.get(key);
+        const cachedData = await cacheModule.globalCache.get(key)
         if (cachedData) {
-            const parsed = JSON.parse(cachedData);
-            lastBuildDate = parsed.lastBuildDate || null;
+            const parsed = JSON.parse(cachedData)
+            lastBuildDate = parsed.lastBuildDate || null
         }
     } catch {
         //
     }
 
-    return ctx.json({ cached, lastBuildDate }, 200);
-};
+    return ctx.json({ cached, lastBuildDate }, 200)
+}
 
-export { handler, route };
+export { handler, route }

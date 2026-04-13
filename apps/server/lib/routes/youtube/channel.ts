@@ -1,9 +1,9 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
 
-import { getDataByChannelId as getDataByChannelIdGoogle } from './api/google';
-import { getDataByChannelId as getDataByChannelIdYoutubei } from './api/youtubei';
-import utils, { callApi } from './utils';
+import { getDataByChannelId as getDataByChannelIdGoogle } from './api/google'
+import { getDataByChannelId as getDataByChannelIdYoutubei } from './api/youtubei'
+import utils, { callApi } from './utils'
 
 export const route: Route = {
     path: '/channel/:id/:routeParams?',
@@ -46,33 +46,33 @@ YouTube provides official RSS feeds for channels, for instance [https://www.yout
         supportPodcast: false,
         supportScihub: false,
     },
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     // Parse route parameters
-    const routeParams = ctx.req.param('routeParams');
-    const params = new URLSearchParams(routeParams);
+    const routeParams = ctx.req.param('routeParams')
+    const params = new URLSearchParams(routeParams)
 
     // Get embed parameter
-    const embed = !params.get('embed');
+    const embed = !params.get('embed')
 
     // Get filterShorts parameter (default to true if not specified)
-    const filterShortsStr = params.get('filterShorts');
-    const filterShorts = filterShortsStr === null || filterShortsStr === '' || filterShortsStr === 'true';
+    const filterShortsStr = params.get('filterShorts')
+    const filterShorts = filterShortsStr === null || filterShortsStr === '' || filterShortsStr === 'true'
 
     if (!utils.isYouTubeChannelId(id)) {
-        throw new InvalidParameterError(`Invalid YouTube channel ID. \nYou may want to use <code>/youtube/user/:id</code> instead.`);
+        throw new InvalidParameterError(`Invalid YouTube channel ID. \nYou may want to use <code>/youtube/user/:id</code> instead.`)
     }
 
-    const isJsonFeed = ctx.req.query('format') === 'json';
+    const isJsonFeed = ctx.req.query('format') === 'json'
 
     const data = await callApi({
         googleApi: getDataByChannelIdGoogle,
         youtubeiApi: getDataByChannelIdYoutubei,
         params: { channelId: id, embed, filterShorts, isJsonFeed },
-    });
+    })
 
-    return data;
+    return data
 }

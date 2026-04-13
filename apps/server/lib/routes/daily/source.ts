@@ -1,18 +1,18 @@
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, getBuildId, getData, getList } from './utils';
+import { baseUrl, getBuildId, getData, getList } from './utils'
 
 interface Source {
-    id: string;
-    name: string;
-    handle: string;
-    image: string;
-    permalink: string;
-    description: string;
-    type: string;
+    id: string
+    name: string
+    handle: string
+    image: string
+    permalink: string
+    description: string
+    type: string
 }
 
 const sourceFeedQuery = `
@@ -123,7 +123,7 @@ fragment UserPost on Post {
   commented
   bookmarked
   downvoted
-}`;
+}`
 
 export const route: Route = {
     path: '/source/:sourceId/:innerSharedContent?',
@@ -148,20 +148,20 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'app.daily.dev',
-};
+}
 
 async function handler(ctx) {
-    const sourceId = ctx.req.param('sourceId');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
-    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false;
+    const sourceId = ctx.req.param('sourceId')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
+    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false
 
-    const link = `${baseUrl}/sources/${sourceId}`;
-    const buildId = await getBuildId();
+    const link = `${baseUrl}/sources/${sourceId}`
+    const buildId = await getBuildId()
 
     const userData = (await cache.tryGet(`daily:source:${sourceId}`, async () => {
-        const response = await ofetch(`${baseUrl}/_next/data/${buildId}/en/sources/${sourceId}.json`);
-        return response.pageProps.source;
-    })) as Source;
+        const response = await ofetch(`${baseUrl}/_next/data/${buildId}/en/sources/${sourceId}.json`)
+        return response.pageProps.source
+    })) as Source
 
     const items = await cache.tryGet(
         `daily:source:${sourceId}:posts`,
@@ -176,12 +176,12 @@ async function handler(ctx) {
                     after: '',
                     loggedIn: false,
                 },
-            });
-            return getList(edges, innerSharedContent, true);
+            })
+            return getList(edges, innerSharedContent, true)
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     return {
         title: `${userData.name} posts on daily.dev`,
@@ -192,5 +192,5 @@ async function handler(ctx) {
         logo: userData.image,
         icon: userData.image,
         language: 'en-us',
-    };
+    }
 }

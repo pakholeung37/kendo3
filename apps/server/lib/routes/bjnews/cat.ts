@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { fetchArticle } from './utils';
+import { fetchArticle } from './utils'
 
 export const route: Route = {
     path: '/cat/:cat',
@@ -21,12 +21,12 @@ export const route: Route = {
     maintainers: ['dzx-dzx'],
     handler,
     url: 'www.bjnews.com.cn',
-};
+}
 
 async function handler(ctx) {
-    const url = `https://www.bjnews.com.cn/${ctx.req.param('cat')}`;
-    const res = await ofetch(url);
-    const $ = load(res);
+    const url = `https://www.bjnews.com.cn/${ctx.req.param('cat')}`
+    const res = await ofetch(url)
+    const $ = load(res)
     const list = $('#waterfall-container .pin_demo > a')
         .toArray()
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 15)
@@ -34,12 +34,12 @@ async function handler(ctx) {
             title: $(a).text(),
             link: $(a).attr('href'),
             category: $(a).parent().find('.source').text().trim(),
-        }));
+        }))
 
-    const out = await pMap(list, (item) => fetchArticle(item), { concurrency: 2 });
+    const out = await pMap(list, (item) => fetchArticle(item), { concurrency: 2 })
     return {
         title: `新京报 - 分类 - ${$('.cur').text().trim()}`,
         link: url,
         item: out,
-    };
+    }
 }

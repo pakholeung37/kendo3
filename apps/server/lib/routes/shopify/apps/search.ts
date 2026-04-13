@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
 
-import { baseURL } from './const';
+import { baseURL } from './const'
 
 export const route: Route = {
     path: '/apps/search/:q',
@@ -17,18 +17,18 @@ export const route: Route = {
         {
             source: ['apps.shopify.com/search'],
             target: (_params, url) => {
-                const searchParams = new URL(url).searchParams;
+                const searchParams = new URL(url).searchParams
                 if (!searchParams.has('q')) {
-                    return '';
+                    return ''
                 }
-                return `/shopify/apps/search/${searchParams.get('q')}`;
+                return `/shopify/apps/search/${searchParams.get('q')}`
             },
         },
     ],
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { q = '' } = ctx.req.param();
+    const { q = '' } = ctx.req.param()
     const response = await got.get(`${baseURL}/search`, {
         searchParams: {
             q,
@@ -40,25 +40,25 @@ async function handler(ctx: Context): Promise<Data> {
             referer: baseURL,
             dnt: '1',
         },
-    });
+    })
 
-    const htmlContent = await response.data;
-    const $ = load(htmlContent);
+    const htmlContent = await response.data
+    const $ = load(htmlContent)
 
     const items = $('.search-results-component div[data-controller="app-card"]')
         .toArray()
         .map((item) => {
-            const handle = $(item).attr('data-app-card-handle-value');
+            const handle = $(item).attr('data-app-card-handle-value')
 
-            const appInfo = $(item).find('div.tw-self-stretch').clone();
+            const appInfo = $(item).find('div.tw-self-stretch').clone()
 
             const rattingMatch = appInfo
                 .find('span')
                 .text()
-                .match(/\d\.\d/);
-            const rattingCountMatch = appInfo.find('span + span.tw-sr-only').text().match(/\d+/);
+                .match(/\d\.\d/)
+            const rattingCountMatch = appInfo.find('span + span.tw-sr-only').text().match(/\d+/)
 
-            const description = $(item).find(`div.tw-text-fg-secondary:not(.tw-mb-md)`).eq(1).text().trim();
+            const description = $(item).find(`div.tw-text-fg-secondary:not(.tw-mb-md)`).eq(1).text().trim()
 
             const result: DataItem = {
                 title: $(item).attr('data-app-card-name-value') ?? '',
@@ -72,10 +72,10 @@ async function handler(ctx: Context): Promise<Data> {
                     ratting: rattingMatch ? Number.parseFloat(rattingMatch[0]) : 0,
                     ratting_count: rattingCountMatch ? Number(rattingCountMatch[0]) : 0,
                 },
-            };
+            }
 
-            return result;
-        });
+            return result
+        })
 
     return {
         title: `Search results for "${q}" – Shopify App Store`,
@@ -84,5 +84,5 @@ async function handler(ctx: Context): Promise<Data> {
         allowEmpty: true,
         language: 'en-us',
         item: items,
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/cse',
@@ -25,7 +25,7 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'cse.sysu.edu.cn/',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -34,8 +34,8 @@ async function handler() {
         headers: {
             Referer: `http://cse.sysu.edu.cn/`,
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     // 首页有多个板块，每个板块的css选择器不同，而且每个板块的信息分类也不一样
     const block_index = [
@@ -87,7 +87,7 @@ async function handler() {
             index: 12,
             description_header: '社会工作',
         },
-    ];
+    ]
 
     function getDetail(item, description_header) {
         return {
@@ -95,28 +95,28 @@ async function handler() {
             description: description_header + ': ' + item.attribs.title,
             link: item.attribs.href,
             category: description_header,
-        };
+        }
     }
 
-    const item_data = [];
+    const item_data = []
     for (const element of block_index) {
-        const block_news = $('#block-views-homepage-block-' + element.index + '> div > div.view-content > div > ul > li > a');
+        const block_news = $('#block-views-homepage-block-' + element.index + '> div > div.view-content > div > ul > li > a')
         for (const block_new of block_news) {
-            item_data.push(getDetail(block_new, element.description_header));
+            item_data.push(getDetail(block_new, element.description_header))
         }
     }
 
     function compareLink(a, b) {
-        let a_str = a.link;
-        a_str = a_str.slice(-4, a_str.length - 4 + 4);
-        const a_int = Number.parseInt(a_str);
-        let b_str = b.link;
-        b_str = b_str.slice(-4, b_str.length - 4 + 4);
-        const b_int = Number.parseInt(b_str);
-        return b_int - a_int;
+        let a_str = a.link
+        a_str = a_str.slice(-4, a_str.length - 4 + 4)
+        const a_int = Number.parseInt(a_str)
+        let b_str = b.link
+        b_str = b_str.slice(-4, b_str.length - 4 + 4)
+        const b_int = Number.parseInt(b_str)
+        return b_int - a_int
     }
     // 使得新的通知排在前面，假设通知的发布和链接地址是相关的，而且链接地址都是"/content/4961"这样，只有四位数的。
-    item_data.sort(compareLink);
+    item_data.sort(compareLink)
     // console.log(item_data);
 
     return {
@@ -125,5 +125,5 @@ async function handler() {
         description: `中山大学 - 数据科学与计算机学院`,
         language: `zh-cn`,
         item: item_data,
-    };
+    }
 }

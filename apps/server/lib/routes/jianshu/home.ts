@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import util from './utils';
+import util from './utils'
 
 export const route: Route = {
     path: '/home',
@@ -30,7 +30,7 @@ export const route: Route = {
     maintainers: ['DIYgod', 'HenryQW', 'JimenezLi'],
     handler,
     url: 'www.jianshu.com/',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -39,19 +39,19 @@ async function handler() {
         headers: {
             Referer: 'https://www.jianshu.com',
         },
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
-    const list = $('.note-list li').toArray();
+    const $ = load(data)
+    const list = $('.note-list li').toArray()
 
-    const result = await util.ProcessFeed(list, cache);
+    const result = await util.ProcessFeed(list, cache)
 
     return {
         title: '简书首页',
         link: 'https://www.jianshu.com',
         description: $('meta[name="description"]').attr('content'),
         item: result,
-    };
+    }
 }

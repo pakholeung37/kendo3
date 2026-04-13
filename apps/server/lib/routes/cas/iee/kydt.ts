@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/iee/kydt',
@@ -28,27 +28,27 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'www.iee.cas.cn/xwzx/kydt',
-};
+}
 
 async function handler() {
-    const rootUrl = 'http://www.iee.cas.cn/xwzx/kydt/';
+    const rootUrl = 'http://www.iee.cas.cn/xwzx/kydt/'
     const response = await got({
         method: 'get',
         url: rootUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const list = $('li.entry .entry-content-title')
         .slice(0, 15)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            item = $(item)
+            const a = item.find('a')
             return {
                 title: a.text(),
                 link: a.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -56,20 +56,20 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.description = content('.article-content').html();
-                item.pubDate = timezone(parseDate(content('time').text().split('：')[1]), 8);
+                item.description = content('.article-content').html()
+                item.pubDate = timezone(parseDate(content('time').text().split('：')[1]), 8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '科研成果 - 中国科学院电工研究所',
         link: rootUrl,
         item: items,
-    };
+    }
 }

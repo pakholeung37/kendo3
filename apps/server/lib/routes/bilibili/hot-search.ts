@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/hot-search',
@@ -29,22 +29,22 @@ export const route: Route = {
     maintainers: ['CaoMeiYouRen'],
     handler,
     url: 'www.bilibili.com/',
-};
+}
 
 async function handler() {
-    const wbiVerifyString = await cache.getWbiVerifyString();
-    const params = utils.addWbiVerifyInfo('limit=10&platform=web', wbiVerifyString);
-    const url = `https://api.bilibili.com/x/web-interface/wbi/search/square?${params}`;
+    const wbiVerifyString = await cache.getWbiVerifyString()
+    const params = utils.addWbiVerifyInfo('limit=10&platform=web', wbiVerifyString)
+    const url = `https://api.bilibili.com/x/web-interface/wbi/search/square?${params}`
     const response = await got({
         method: 'get',
         url,
         headers: {
             Referer: `https://api.bilibili.com`,
         },
-    });
-    const trending = response?.data?.data?.trending;
-    const title = trending?.title;
-    const list = trending?.list || [];
+    })
+    const trending = response?.data?.data?.trending
+    const title = trending?.title
+    const list = trending?.list || []
     return {
         title,
         link: url,
@@ -54,5 +54,5 @@ async function handler() {
             description: `${item.keyword}<br>${item.icon ? `<img src="${item.icon}">` : ''}`,
             link: item.link || item.goto || `https://search.bilibili.com/all?${new URLSearchParams({ keyword: item.keyword })}&from_source=webtop_search`,
         })),
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { namespace } from './namespace';
-import { apiBaseUrl, baseUrl, parseList, processItems } from './utils';
+import { namespace } from './namespace'
+import { apiBaseUrl, baseUrl, parseList, processItems } from './utils'
 
 export const route: Route = {
     path: '/',
@@ -17,19 +17,19 @@ export const route: Route = {
     maintainers: ['Geraldxm'],
     handler,
     url: 'www.foodtalks.cn',
-};
+}
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 15;
-    const url = `${apiBaseUrl}/news/news/page?current=1&size=${limit}&isLatest=1&language=ZH`;
+    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 15
+    const url = `${apiBaseUrl}/news/news/page?current=1&size=${limit}&isLatest=1&language=ZH`
     const response = await ofetch(url, {
         headers: {
             referer: `${baseUrl}/`,
         },
-    });
-    const list = parseList(response.data.records);
+    })
+    const list = parseList(response.data.records)
 
-    const items = await processItems(list);
+    const items = await processItems(list)
 
     return {
         title: namespace.name,
@@ -37,5 +37,5 @@ async function handler(ctx) {
         link: 'https://' + namespace.url,
         item: items,
         image: `${baseUrl}/favicon.ico`,
-    };
+    }
 }

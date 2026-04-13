@@ -1,13 +1,13 @@
-import { CookieJar } from 'tough-cookie';
+import { CookieJar } from 'tough-cookie'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { renderItems } from '../common-utils';
-import { baseUrl, checkLogin, COOKIE_URL, getTagsFeed, getUserFeedItems, getUserInfo, renderGuestItems } from './utils';
+import { renderItems } from '../common-utils'
+import { baseUrl, checkLogin, COOKIE_URL, getTagsFeed, getUserFeedItems, getUserInfo, renderGuestItems } from './utils'
 
 export const route: Route = {
     path: '/2/:category/:key',
@@ -33,83 +33,83 @@ You may need to setup cookie for a less restrictive rate limit and private profi
 | User timeline | Hashtag |
 | ------------- | ------- |
 | user          | tags    |`,
-};
+}
 
 async function handler(ctx) {
     // if (!config.instagram || !config.instagram.cookie) {
     //     throw new ConfigNotFoundError('Instagram RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
     // }
-    const availableCategories = ['user', 'tags'];
-    const { category, key } = ctx.req.param();
-    const { cookie } = config.instagram;
+    const availableCategories = ['user', 'tags']
+    const { category, key } = ctx.req.param()
+    const { cookie } = config.instagram
     if (!availableCategories.includes(category)) {
-        throw new InvalidParameterError('Such feed is not supported.');
+        throw new InvalidParameterError('Such feed is not supported.')
     }
 
-    let cookieJar = await cache.get('instagram:cookieJar');
+    let cookieJar = await cache.get('instagram:cookieJar')
     // const wwwClaimV2 = await cache.get('instagram:wwwClaimV2');
-    const cacheMiss = !cookieJar;
+    const cacheMiss = !cookieJar
 
     if (cacheMiss) {
-        cookieJar = new CookieJar();
+        cookieJar = new CookieJar()
         if (cookie) {
             for await (const c of cookie.split('; ')) {
-                await cookieJar.setCookie(c, COOKIE_URL);
+                await cookieJar.setCookie(c, COOKIE_URL)
             }
         }
     } else {
-        cookieJar = CookieJar.fromJSON(cookieJar);
+        cookieJar = CookieJar.fromJSON(cookieJar)
     }
 
     if (/* !wwwClaimV2 &&*/ cookie && !(await checkLogin(cookieJar))) {
-        throw new ConfigNotFoundError('Invalid cookie');
+        throw new ConfigNotFoundError('Invalid cookie')
     }
 
-    let feedTitle, feedLink, feedDescription, feedLogo;
-    let items;
+    let feedTitle, feedLink, feedDescription, feedLogo
+    let items
     switch (category) {
         case 'user': {
-            const userInfo = await getUserInfo(key, cookieJar);
+            const userInfo = await getUserInfo(key, cookieJar)
 
             // User feed metadata
-            const biography = userInfo.biography;
-            const fullName = userInfo.full_name;
-            const id = userInfo.id;
-            const username = userInfo.username;
-            feedTitle = `${fullName} (@${username}) - Instagram`;
-            feedDescription = biography;
+            const biography = userInfo.biography
+            const fullName = userInfo.full_name
+            const id = userInfo.id
+            const username = userInfo.username
+            feedTitle = `${fullName} (@${username}) - Instagram`
+            feedDescription = biography
             // exists in web api ?? exist in private api ?? exist in both
-            feedLogo = userInfo.profile_pic_url_hd ?? userInfo.hd_profile_pic_url_info?.url ?? userInfo.profile_pic_url;
-            feedLink = `${baseUrl}/${username}`;
+            feedLogo = userInfo.profile_pic_url_hd ?? userInfo.hd_profile_pic_url_info?.url ?? userInfo.profile_pic_url
+            feedLink = `${baseUrl}/${username}`
 
-            items = cookie ? await getUserFeedItems(id, username, cookieJar) : [...userInfo.edge_felix_video_timeline.edges, ...userInfo.edge_owner_to_timeline_media.edges];
+            items = cookie ? await getUserFeedItems(id, username, cookieJar) : [...userInfo.edge_felix_video_timeline.edges, ...userInfo.edge_owner_to_timeline_media.edges]
 
-            break;
+            break
         }
         case 'tags': {
             if (!config.instagram || !config.instagram.cookie) {
-                throw new ConfigNotFoundError('Instagram RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+                throw new ConfigNotFoundError('Instagram RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
             }
-            const tag = key;
+            const tag = key
 
-            feedTitle = `#${tag} - Instagram`;
-            feedLink = `${baseUrl}/explore/search/keyword/?q=%23${tag}`;
+            feedTitle = `#${tag} - Instagram`
+            feedLink = `${baseUrl}/explore/search/keyword/?q=%23${tag}`
 
-            const feedData = await getTagsFeed(tag, cookieJar);
+            const feedData = await getTagsFeed(tag, cookieJar)
 
-            feedLogo = feedData.profile_pic_url;
+            feedLogo = feedData.profile_pic_url
             items = feedData.top.sections.flatMap((section) =>
                 // either media or clips
-                (section.feed_type === 'media' ? section.layout_content.medias : [...section.layout_content.one_by_two_item.clips.items, ...section.layout_content.fill_items]).map((item) => item.media)
-            );
+                (section.feed_type === 'media' ? section.layout_content.medias : [...section.layout_content.one_by_two_item.clips.items, ...section.layout_content.fill_items]).map((item) => item.media),
+            )
 
-            break;
+            break
         }
         default:
-            break;
+            break
     }
 
-    await cache.set('instagram:cookieJar', cookieJar.toJSON(), 31_536_000);
+    await cache.set('instagram:cookieJar', cookieJar.toJSON(), 31_536_000)
 
     return {
         title: feedTitle,
@@ -120,5 +120,5 @@ async function handler(ctx) {
         logo: feedLogo,
         image: feedLogo,
         allowEmpty: true,
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/phy/:category/:column/:subcolumn?',
@@ -29,28 +29,28 @@ export const route: Route = {
     maintainers: ['tsurumi-yizhou'],
     url: 'phy.jlu.edu.cn',
     handler: async (ctx) => {
-        const { category, column, subcolumn } = ctx.req.param();
-        const query = subcolumn ? `${column}/${subcolumn}` : column;
-        const response = await got(`https://phy.jlu.edu.cn/${category}/${query}.htm`);
-        const $ = load(response.body);
-        const list = $('.tit-list ul li');
+        const { category, column, subcolumn } = ctx.req.param()
+        const query = subcolumn ? `${column}/${subcolumn}` : column
+        const response = await got(`https://phy.jlu.edu.cn/${category}/${query}.htm`)
+        const $ = load(response.body)
+        const list = $('.tit-list ul li')
 
         return {
             title: '吉林大学物理学院',
             link: 'https://phy.jlu.edu.cn/',
             description: '吉林大学物理学院',
             item: list.toArray().map((item) => {
-                const element = $(item).find('a');
-                const title = element.find('.tl-top').find('h3').text().trim();
-                const link = element.attr('href')!.replaceAll('../', 'https://phy.jlu.edu.cn/');
-                const date = element.find('.tl-top').find('.tl-date');
-                const pubDate = date.find('span').text().replaceAll('/', '').trim() + '-' + date.find('b').text();
+                const element = $(item).find('a')
+                const title = element.find('.tl-top').find('h3').text().trim()
+                const link = element.attr('href')!.replaceAll('../', 'https://phy.jlu.edu.cn/')
+                const date = element.find('.tl-top').find('.tl-date')
+                const pubDate = date.find('span').text().replaceAll('/', '').trim() + '-' + date.find('b').text()
                 return {
                     title,
                     link,
                     pubDate: new Date(pubDate),
-                };
+                }
             }),
-        };
+        }
     },
-};
+}

@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/message/reply/:uid',
@@ -34,69 +34,69 @@ export const route: Route = {
     description: `:::warning
   用户消息需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 interface ReplyItem {
-    id: number;
+    id: number
     user: {
-        mid: number;
-        fans: number;
-        nickname: string;
-        avatar: string;
-        mid_link: string;
-        follow: boolean;
-    };
+        mid: number
+        fans: number
+        nickname: string
+        avatar: string
+        mid_link: string
+        follow: boolean
+    }
     item: {
-        subject_id: number;
-        root_id: number;
-        source_id: number;
-        target_id: number;
-        type: string;
-        business_id: number;
-        business: string;
-        title: string;
-        desc: string;
-        image: string;
-        uri: string;
-        native_uri: string;
-        detail_title: string;
-        root_reply_content: string;
-        source_content: string;
-        target_reply_content: string;
-        at_details: unknown[];
-        hide_reply_button: boolean;
-        hide_like_button: boolean;
-        like_state: number;
-        danmu: unknown;
-        message: string;
-    };
-    counts: number;
-    is_multi: number;
-    reply_time: number;
+        subject_id: number
+        root_id: number
+        source_id: number
+        target_id: number
+        type: string
+        business_id: number
+        business: string
+        title: string
+        desc: string
+        image: string
+        uri: string
+        native_uri: string
+        detail_title: string
+        root_reply_content: string
+        source_content: string
+        target_reply_content: string
+        at_details: unknown[]
+        hide_reply_button: boolean
+        hide_like_button: boolean
+        like_state: number
+        danmu: unknown
+        message: string
+    }
+    counts: number
+    is_multi: number
+    reply_time: number
 }
 
 interface ReplyResponse {
-    code: number;
-    message: string;
-    ttl: number;
+    code: number
+    message: string
+    ttl: number
     data: {
         cursor: {
-            is_end: boolean;
-            id: number;
-            time: number;
-        };
-        items: ReplyItem[];
-        last_view_at: number;
-    };
+            is_end: boolean
+            id: number
+            time: number
+        }
+        items: ReplyItem[]
+        last_view_at: number
+    }
 }
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const name = await cache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await ofetch<ReplyResponse>('https://api.bilibili.com/x/msgfeed/reply', {
@@ -109,40 +109,40 @@ async function handler(ctx) {
             Referer: 'https://message.bilibili.com/',
             Cookie: cookie,
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message ?? `Error code ${response.code}`);
+        throw new Error(response.message ?? `Error code ${response.code}`)
     }
 
     const items: DataItem[] = (response.data.items || []).map((item) => {
-        const replyUser = item.user;
-        const replyItem = item.item;
-        const sourceContent = replyItem.source_content;
-        const targetContent = replyItem.target_reply_content;
-        const rootContent = replyItem.root_reply_content;
+        const replyUser = item.user
+        const replyItem = item.item
+        const sourceContent = replyItem.source_content
+        const targetContent = replyItem.target_reply_content
+        const rootContent = replyItem.root_reply_content
 
-        let description = `<p><strong>${replyUser.nickname}</strong> 回复了你：</p>`;
-        description += `<blockquote>${sourceContent}</blockquote>`;
+        let description = `<p><strong>${replyUser.nickname}</strong> 回复了你：</p>`
+        description += `<blockquote>${sourceContent}</blockquote>`
 
         if (targetContent) {
-            description += `<p>你的评论：</p><blockquote>${targetContent}</blockquote>`;
+            description += `<p>你的评论：</p><blockquote>${targetContent}</blockquote>`
         } else if (rootContent) {
-            description += `<p>你的评论：</p><blockquote>${rootContent}</blockquote>`;
+            description += `<p>你的评论：</p><blockquote>${rootContent}</blockquote>`
         }
 
         if (replyItem.image) {
-            description += `<p><img src="${replyItem.image.replace('http://', 'https://')}" /></p>`;
+            description += `<p><img src="${replyItem.image.replace('http://', 'https://')}" /></p>`
         }
 
-        description += `<p>来自：${replyItem.business} - ${replyItem.title}</p>`;
+        description += `<p>来自：${replyItem.business} - ${replyItem.title}</p>`
 
         // Generate comment link with root_id for direct navigation to the comment
-        let link = replyItem.uri;
+        let link = replyItem.uri
         if (replyItem.root_id && replyItem.uri) {
-            link = `${replyItem.uri}/#reply${replyItem.root_id}`;
+            link = `${replyItem.uri}/#reply${replyItem.root_id}`
         } else if (replyItem.source_id && replyItem.uri) {
-            link = `${replyItem.uri}/#reply${replyItem.source_id}`;
+            link = `${replyItem.uri}/#reply${replyItem.source_id}`
         }
 
         return {
@@ -151,8 +151,8 @@ async function handler(ctx) {
             link,
             pubDate: parseDate(item.reply_time * 1000),
             author: replyUser.nickname,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} 的 B站消息 - 回复我的`,
@@ -160,5 +160,5 @@ async function handler(ctx) {
         description: `${name} 的 B站消息 - 回复我的`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

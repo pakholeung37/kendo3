@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
-const baseUrl = 'https://www.cde.org.cn';
+const baseUrl = 'https://www.cde.org.cn'
 const xxgkMap = {
     xxgk: {
         priorityApproval: {
@@ -46,7 +46,7 @@ const xxgkMap = {
             },
         },
     },
-};
+}
 
 export const route: Route = {
     path: '/xxgk/:category',
@@ -67,10 +67,10 @@ export const route: Route = {
     description: `|   优先审评公示   |  突破性治疗公示  | 临床试验默示许可 |
 | :--------------: | :--------------: | :--------------: |
 | priorityApproval | breakthroughCure |     cliniCal     |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
     const { data } = await got.post(`${baseUrl}/main${xxgkMap.xxgk[category].endPoint}`, {
         form: xxgkMap.xxgk[category].form,
@@ -78,22 +78,22 @@ async function handler(ctx) {
             referer: xxgkMap.xxgk[category].url,
             cookie: await utils.getCookie(ctx),
         },
-    });
+    })
 
     const items = data.data.records.map((item) => {
-        let description: string;
+        let description: string
         switch (category) {
             case 'priorityApproval':
-                description = renderToString(<PriorityApprovalTable item={item} />);
-                break;
+                description = renderToString(<PriorityApprovalTable item={item} />)
+                break
             case 'breakthroughCure':
-                description = renderToString(<BreakthroughCureTable item={item} />);
-                break;
+                description = renderToString(<BreakthroughCureTable item={item} />)
+                break
             case 'cliniCal':
-                description = renderToString(<CliniCalTable item={item} />);
-                break;
+                description = renderToString(<CliniCalTable item={item} />)
+                break
             default:
-                description = '';
+                description = ''
         }
 
         return {
@@ -102,14 +102,14 @@ async function handler(ctx) {
             pubDate: item.endNoticeDate ? parseDate(item.endNoticeDate) : null,
             description,
             link: xxgkMap.xxgk[category].url,
-        };
-    });
+        }
+    })
 
     return {
         title: `${xxgkMap.xxgk[category].title} - 国家药品监督管理局药品审评中心`,
         link: xxgkMap.xxgk[category].url,
         item: items,
-    };
+    }
 }
 
 const PriorityApprovalTable = ({ item }: { item: any }) => (
@@ -131,7 +131,7 @@ const PriorityApprovalTable = ({ item }: { item: any }) => (
             <td>{item.noticeDate}</td>
         </tr>
     </table>
-);
+)
 
 const BreakthroughCureTable = ({ item }: { item: any }) => (
     <table>
@@ -152,7 +152,7 @@ const BreakthroughCureTable = ({ item }: { item: any }) => (
             <td>{item.endNoticeDate}</td>
         </tr>
     </table>
-);
+)
 
 const CliniCalTable = ({ item }: { item: any }) => (
     <table>
@@ -171,4 +171,4 @@ const CliniCalTable = ({ item }: { item: any }) => (
             <td>{item.lcmsxkRegisterkind}</td>
         </tr>
     </table>
-);
+)

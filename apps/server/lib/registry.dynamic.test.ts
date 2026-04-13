@@ -1,21 +1,21 @@
-import { Hono } from 'hono';
-import { describe, expect, it, vi } from 'vitest';
+import { Hono } from 'hono'
+import { describe, expect, it, vi } from 'vitest'
 
 describe('registry dynamic loading', () => {
     it('loads production namespaces from build', async () => {
-        const originalEnv = process.env.NODE_ENV;
-        process.env.NODE_ENV = 'production';
-        vi.resetModules();
+        const originalEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        vi.resetModules()
 
-        const { namespaces } = await import('@/registry');
-        expect(Object.keys(namespaces).length).toBeGreaterThan(0);
+        const { namespaces } = await import('@/registry')
+        expect(Object.keys(namespaces).length).toBeGreaterThan(0)
 
-        process.env.NODE_ENV = originalEnv;
-    });
+        process.env.NODE_ENV = originalEnv
+    })
 
     it('builds namespaces from directory import and resolves module handlers', async () => {
-        const originalEnv = process.env.NODE_ENV;
-        process.env.NODE_ENV = 'development';
+        const originalEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'development'
 
         const modules = {
             '/nsEmpty/namespace.ts': {
@@ -86,49 +86,49 @@ describe('registry dynamic loading', () => {
                     name: 'ApiIndex',
                 },
             },
-        };
+        }
 
-        const directoryImportMock = vi.fn(() => modules);
+        const directoryImportMock = vi.fn(() => modules)
         vi.doMock('@/utils/directory-import', () => ({
             directoryImport: directoryImportMock,
-        }));
-        vi.resetModules();
-        const { namespaces, default: registry } = await import('@/registry');
+        }))
+        vi.resetModules()
+        const { namespaces, default: registry } = await import('@/registry')
 
-        expect(directoryImportMock).toHaveBeenCalled();
-        expect(namespaces.nsRoute.routes['/single']).toBeDefined();
-        expect(namespaces.nsApi.apiRoutes['/single']).toBeDefined();
+        expect(directoryImportMock).toHaveBeenCalled()
+        expect(namespaces.nsRoute.routes['/single']).toBeDefined()
+        expect(namespaces.nsApi.apiRoutes['/single']).toBeDefined()
 
-        const app = new Hono();
+        const app = new Hono()
         app.use(async (ctx, next) => {
-            const response = await next();
-            const apiData = ctx.get('apiData');
+            const response = await next()
+            const apiData = ctx.get('apiData')
             if (apiData) {
-                return ctx.json(apiData);
+                return ctx.json(apiData)
             }
-            const data = ctx.get('data');
+            const data = ctx.get('data')
             if (data) {
-                return ctx.json(data);
+                return ctx.json(data)
             }
-            return response;
-        });
-        app.route('/', registry);
+            return response
+        })
+        app.route('/', registry)
 
-        const routeResponse = await app.request('/nsModule/module');
-        expect(await routeResponse.text()).toBe('module');
-        await app.request('/api/nsApi/module');
+        const routeResponse = await app.request('/nsModule/module')
+        expect(await routeResponse.text()).toBe('module')
+        await app.request('/api/nsApi/module')
 
-        process.env.NODE_ENV = 'test';
-        const apiTestResponse = await app.request('/api/test');
-        expect(await apiTestResponse.json()).toEqual({ code: 0 });
+        process.env.NODE_ENV = 'test'
+        const apiTestResponse = await app.request('/api/test')
+        expect(await apiTestResponse.json()).toEqual({ code: 0 })
 
-        process.env.NODE_ENV = originalEnv;
-    });
+        process.env.NODE_ENV = originalEnv
+    })
 
     // https://github.com/DIYgod/RSSHub/pull/18002
     it('prioritizes literal segments over parameter segments in route matching', async () => {
-        const originalEnv = process.env.NODE_ENV;
-        process.env.NODE_ENV = 'development';
+        const originalEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'development'
 
         const modules = {
             '/specificity/param-route.ts': {
@@ -167,37 +167,37 @@ describe('registry dynamic loading', () => {
                     }),
                 },
             },
-        };
+        }
 
-        const directoryImportMock = vi.fn(() => modules);
+        const directoryImportMock = vi.fn(() => modules)
         vi.doMock('@/utils/directory-import', () => ({
             directoryImport: directoryImportMock,
-        }));
-        vi.resetModules();
-        const { default: registry } = await import('@/registry');
+        }))
+        vi.resetModules()
+        const { default: registry } = await import('@/registry')
 
-        const app = new Hono();
+        const app = new Hono()
         app.use(async (ctx, next) => {
-            await next();
-            const data = ctx.get('data');
+            await next()
+            const data = ctx.get('data')
             if (data) {
-                return ctx.json(data);
+                return ctx.json(data)
             }
-        });
-        app.route('/', registry);
+        })
+        app.route('/', registry)
 
         // /news/sports should match /news/:channel (literal "news" wins over :category)
-        const literalResponse = await app.request('/specificity/news/sports');
-        expect((await literalResponse.json()).title).toBe('literal');
+        const literalResponse = await app.request('/specificity/news/sports')
+        expect((await literalResponse.json()).title).toBe('literal')
 
         // /news should match /news (literal wins over :category)
-        const newsResponse = await app.request('/specificity/news');
-        expect((await newsResponse.json()).title).toBe('news');
+        const newsResponse = await app.request('/specificity/news')
+        expect((await newsResponse.json()).title).toBe('news')
 
         // /products should match /:category
-        const paramResponse = await app.request('/specificity/products');
-        expect((await paramResponse.json()).title).toBe('param');
+        const paramResponse = await app.request('/specificity/products')
+        expect((await paramResponse.json()).title).toBe('param')
 
-        process.env.NODE_ENV = originalEnv;
-    });
-});
+        process.env.NODE_ENV = originalEnv
+    })
+})

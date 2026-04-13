@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const renderDescription = ({ images, description }) =>
     renderToString(
@@ -17,56 +17,56 @@ const renderDescription = ({ images, description }) =>
                           <figure key={image.src}>
                               <img src={image.src} alt={image.alt} />
                           </figure>
-                      ) : null
+                      ) : null,
                   )
                 : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )
 export const handler = async (ctx) => {
-    const { category = 'fgw_zxxxgk' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { category = 'fgw_zxxxgk' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://fgw.sh.gov.cn';
-    const currentUrl = new URL(`${category}/index.html`, rootUrl).href;
+    const rootUrl = 'https://fgw.sh.gov.cn'
+    const currentUrl = new URL(`${category}/index.html`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.nowrapli li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('a').prop('title'),
                 pubDate: parseDate(item.find('span.time').text()),
                 link: new URL(item.find('a').prop('href'), rootUrl).href,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.endsWith('.html')) {
-                    item.enclosure_url = item.link;
-                    item.enclosure_type = item.link ? `application/${item.link.split(/\./).pop()}` : undefined;
-                    item.enclosure_title = item.title;
+                    item.enclosure_url = item.link
+                    item.enclosure_type = item.link ? `application/${item.link.split(/\./).pop()}` : undefined
+                    item.enclosure_title = item.title
 
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('meta[name="ArticleTitle"]').prop('content');
-                const image = $$('div.pdf-content img').first().prop('src');
+                const title = $$('meta[name="ArticleTitle"]').prop('content')
+                const image = $$('div.pdf-content img').first().prop('src')
                 const description = renderDescription({
                     images: image
                         ? [
@@ -77,34 +77,34 @@ export const handler = async (ctx) => {
                           ]
                         : undefined,
                     description: $$('div#ivs_content').html(),
-                });
+                })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8);
-                item.category = [...new Set([$$('meta[name="ColumnName"]').prop('content'), $$('meta[name="ColumnKeywords"]').prop('content')])].filter(Boolean);
-                item.author = $$('meta[name="ContentSource"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8)
+                item.category = [...new Set([$$('meta[name="ColumnName"]').prop('content'), $$('meta[name="ColumnKeywords"]').prop('content')])].filter(Boolean)
+                item.author = $$('meta[name="ContentSource"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div#ivs_content').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                const enclosureUrl = $$('div.pdf-content a, div.xgfj a').first().prop('href');
+                const enclosureUrl = $$('div.pdf-content a, div.xgfj a').first().prop('href')
 
-                item.enclosure_url = enclosureUrl ? new URL(enclosureUrl, rootUrl).href : undefined;
-                item.enclosure_type = enclosureUrl ? `application/${enclosureUrl.split(/\./).pop()}` : undefined;
-                item.enclosure_title = title;
+                item.enclosure_url = enclosureUrl ? new URL(enclosureUrl, rootUrl).href : undefined
+                item.enclosure_type = enclosureUrl ? `application/${enclosureUrl.split(/\./).pop()}` : undefined
+                item.enclosure_title = title
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = $('meta[name="SiteName"]').prop('content');
-    const image = $('span.logo-icon img').prop('src');
+    const author = $('meta[name="SiteName"]').prop('content')
+    const image = $('span.logo-icon img').prop('src')
 
     return {
         title: `${author} - ${$('meta[name="ColumnName"]').prop('content')}`,
@@ -115,8 +115,8 @@ export const handler = async (ctx) => {
         image,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: ['/sh/fgw/:category{.+}?', '/shanghai/fgw/:category{.+}?'],
@@ -149,9 +149,9 @@ export const route: Route = {
         {
             source: ['fgw.sh.gov.cn/:category'],
             target: (params) => {
-                const category = params.category.replace(/\/index\.html/, '');
+                const category = params.category.replace(/\/index\.html/, '')
 
-                return `/gov/sh/fgw${category ? `/${category}` : ''}`;
+                return `/gov/sh/fgw${category ? `/${category}` : ''}`
             },
         },
         {
@@ -165,4 +165,4 @@ export const route: Route = {
             target: '/sh/fgw/fgw_fzggdt',
         },
     ],
-};
+}

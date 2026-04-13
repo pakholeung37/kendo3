@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import auth from './auth';
+import auth from './auth'
 
 export const route: Route = {
     path: '/xhu/people/posts/:hexId',
@@ -20,13 +20,13 @@ export const route: Route = {
     name: 'xhu - 用户文章',
     maintainers: ['JimenezLi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const xhuCookie = await auth.getCookie();
-    const hexId = ctx.req.param('hexId');
-    const link = `https://www.zhihu.com/people/${hexId}/posts`;
-    const url = `https://api.zhihuvvv.workers.dev/people/${hexId}/articles?limit=20&offset=0`;
+    const xhuCookie = await auth.getCookie()
+    const hexId = ctx.req.param('hexId')
+    const link = `https://www.zhihu.com/people/${hexId}/posts`
+    const url = `https://api.zhihuvvv.workers.dev/people/${hexId}/articles?limit=20&offset=0`
 
     const response = await got({
         method: 'get',
@@ -35,8 +35,8 @@ async function handler(ctx) {
             Referer: 'https://api.zhihuvvv.workers.dev',
             Cookie: xhuCookie,
         },
-    });
-    const data = response.data.data;
+    })
+    const data = response.data.data
 
     return {
         title: `${data[0].author.name} 的知乎文章`,
@@ -50,5 +50,5 @@ async function handler(ctx) {
             link: `https://zhuanlan.zhihu.com/p/${item.id}`,
             author: item.author.name,
         })),
-    };
+    }
 }

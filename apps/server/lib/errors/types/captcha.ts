@@ -1,5 +1,5 @@
 class CaptchaError extends Error {
-    name = 'CaptchaError';
+    name = 'CaptchaError'
 }
 
-export default CaptchaError;
+export default CaptchaError

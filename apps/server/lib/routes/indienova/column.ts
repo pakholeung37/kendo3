@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { baseUrl, parseItem, parseList } from './utils';
+import { baseUrl, parseItem, parseList } from './utils'
 
 export const route: Route = {
     path: '/column/:columnId',
@@ -66,21 +66,21 @@ export const route: Route = {
 | ---------- | --------------- |
 | 31         | 13              |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const columnId = ctx.req.param('columnId');
+    const columnId = ctx.req.param('columnId')
 
-    const { data: response, url: link } = await got(`${baseUrl}/column/${columnId}`);
-    const $ = load(response);
+    const { data: response, url: link } = await got(`${baseUrl}/column/${columnId}`)
+    const $ = load(response)
 
-    const list = parseList($);
+    const list = parseList($)
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))))
 
     return {
         title: $('head title').text(),
         link,
         item: items,
-    };
+    }
 }

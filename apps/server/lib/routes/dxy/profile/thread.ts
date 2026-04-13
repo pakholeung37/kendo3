@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { generateNonce, getPost, sign, webBaseUrl } from '../utils';
+import { generateNonce, getPost, sign, webBaseUrl } from '../utils'
 
 export const route: Route = {
     path: '/bbs/profile/thread/:userId',
@@ -27,11 +27,11 @@ export const route: Route = {
     name: '个人帖子',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const userId = ctx.req.param('userId');
-    const { limit = '30' } = ctx.req.query();
+    const userId = ctx.req.param('userId')
+    const { limit = '30' } = ctx.req.query()
 
     const userInfo = await cache.tryGet(`dxy:user-info:${userId}`, async () => {
         const userInfoParams = {
@@ -39,20 +39,20 @@ async function handler(ctx) {
             serverTimestamp: Date.now(),
             timestamp: Date.now(),
             noncestr: generateNonce(8, 'number'),
-        };
+        }
 
         const { data: userInfo } = await got(`${webBaseUrl}/bbs/newweb/personal-page/user-info`, {
             searchParams: {
                 ...userInfoParams,
                 sign: sign(userInfoParams),
             },
-        });
+        })
         if (userInfo.code !== 'success') {
-            throw new Error(userInfo.message);
+            throw new Error(userInfo.message)
         }
 
-        return userInfo.data;
-    });
+        return userInfo.data
+    })
 
     const postList = await cache.tryGet(
         `dxy:user:post:${userId}`,
@@ -65,26 +65,26 @@ async function handler(ctx) {
                 serverTimestamp: Date.now(),
                 timestamp: Date.now(),
                 noncestr: generateNonce(8, 'number'),
-            };
+            }
 
             const { data: postList } = await got(`${webBaseUrl}/bbs/newweb/user/post/page`, {
                 searchParams: {
                     ...postListParams,
                     sign: sign(postListParams),
                 },
-            });
+            })
             if (postList.code !== 'success') {
-                throw new Error(postList.message);
+                throw new Error(postList.message)
             }
 
-            return postList.data;
+            return postList.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const list = postList.result.map((item) => {
-        const { postInfo, createdTime, entityId } = item;
+        const { postInfo, createdTime, entityId } = item
         return {
             title: postInfo.subject,
             description: postInfo.simpleBody,
@@ -93,10 +93,10 @@ async function handler(ctx) {
             category: [postInfo.boardInfo.title],
             link: `${webBaseUrl}/bbs/newweb/pc/post/${entityId}`,
             postId: entityId,
-        };
-    });
+        }
+    })
 
-    const items = await Promise.all(list.map((item) => getPost(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => getPost(item, cache.tryGet)))
 
     return {
         title: `${userInfo.nickname} 的个人主页 - 丁香园论坛 - 专业医生社区，医学、药学、生命科学、科研学术交流`,
@@ -104,5 +104,5 @@ async function handler(ctx) {
         link: `${webBaseUrl}/bbs/newweb/pc/profile/${userId}/threads`,
         image: userInfo.avatar,
         item: items,
-    };
+    }
 }

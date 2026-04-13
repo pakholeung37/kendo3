@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const allowDomain = new Set(['2btjia.com', '88btbtt.com', 'btbtt15.com', 'btbtt20.com']);
+const allowDomain = new Set(['2btjia.com', '88btbtt.com', 'btbtt15.com', 'btbtt20.com'])
 
 const renderTorrents = (torrents) =>
     renderToString(
@@ -19,8 +19,8 @@ const renderTorrents = (torrents) =>
                     <td>{torrent}</td>
                 </tr>
             ))}
-        </table>
-    );
+        </table>,
+    )
 
 export const route: Route = {
     path: '/:category?',
@@ -75,45 +75,45 @@ export const route: Route = {
 
   目前，你可以选择的域名有 \`btbtt10-20.com\` 共 10 个，或 \`88btbbt.com\`，该站也提供了专用网址查询工具。详见 [此贴](https://www.btbtt20.com/thread-index-fid-2-tid-4550191.htm)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    let category = ctx.req.param('category') ?? '';
-    let domain = ctx.req.query('domain') ?? 'btbtt15.com';
+    let category = ctx.req.param('category') ?? ''
+    let domain = ctx.req.query('domain') ?? 'btbtt15.com'
     if (!config.feature.allow_user_supply_unsafe_domain && !allowDomain.has(new URL(`http://${domain}/`).hostname)) {
-        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
     }
 
     if (category === 'base') {
-        category = '';
-        domain = '88btbtt.com';
+        category = ''
+        domain = '88btbtt.com'
     } else if (category === 'govern') {
-        category = '';
-        domain = '2btjia.com';
+        category = ''
+        domain = '2btjia.com'
     }
 
-    const rootUrl = `https://www.${domain}`;
-    const currentUrl = `${rootUrl}${category ? `/${category}.htm` : ''}`;
+    const rootUrl = `https://www.${domain}`
+    const currentUrl = `${rootUrl}${category ? `/${category}.htm` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    $('.bg2').prevAll('table').remove();
+    $('.bg2').prevAll('table').remove()
 
     let items = $('#threadlist table')
         .toArray()
         .map((item) => {
-            const a = $(item).find('.subject_link');
+            const a = $(item).find('.subject_link')
 
             return {
                 title: a.text(),
                 link: `${rootUrl}/${a.attr('href')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -121,42 +121,42 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('h2, .message').remove();
+                content('h2, .message').remove()
 
                 content('.attachlist')
                     .find('a')
                     .each(function () {
                         content(this)
                             .children('img')
-                            .attr('src', `${rootUrl}${content(this).children('img').attr('src')}`);
+                            .attr('src', `${rootUrl}${content(this).children('img').attr('src')}`)
                         content(this).attr(
                             'href',
                             `${rootUrl}/${content(this)
                                 .attr('href')
-                                .replace(/^attach-dialog/, 'attach-download')}`
-                        );
-                    });
+                                .replace(/^attach-dialog/, 'attach-download')}`,
+                        )
+                    })
 
-                const torrents = content('.attachlist').find('a');
+                const torrents = content('.attachlist').find('a')
 
-                item.description = content('.post').html();
-                item.author = content('.purple, .grey').first().prev().text();
-                item.pubDate = timezone(parseDate(content('.bg2 b').first().text()), +8);
+                item.description = content('.post').html()
+                item.author = content('.purple, .grey').first().prev().text()
+                item.pubDate = timezone(parseDate(content('.bg2 b').first().text()), +8)
 
                 if (torrents.length > 0) {
-                    item.description += renderTorrents(torrents.toArray().map((t) => content(t).parent().html()));
-                    item.enclosure_type = 'application/x-bittorrent';
-                    item.enclosure_url = torrents.first().attr('href');
+                    item.description += renderTorrents(torrents.toArray().map((t) => content(t).parent().html()))
+                    item.enclosure_type = 'application/x-bittorrent'
+                    item.enclosure_url = torrents.first().attr('href')
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('#menu, #threadtype')
@@ -167,5 +167,5 @@ async function handler(ctx) {
             .join('|')} - BT之家`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

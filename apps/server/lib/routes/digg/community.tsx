@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { PostNode } from './types';
+import type { PostNode } from './types'
 
 export const route: Route = {
     path: '/community/:community',
@@ -31,17 +31,17 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'digg.com/',
-};
+}
 
-const baseUrl = 'https://digg.com';
-const graphqlUrl = 'https://apineapple-prod.digg.com/graphql';
+const baseUrl = 'https://digg.com'
+const graphqlUrl = 'https://apineapple-prod.digg.com/graphql'
 
 const DiggDescription = ({ node }) => {
     if (!node) {
-        return null;
+        return null
     }
 
-    const children = Array.isArray(node.content) ? node.content : [];
+    const children = Array.isArray(node.content) ? node.content : []
 
     switch (node.type) {
         case 'bulletList':
@@ -51,7 +51,7 @@ const DiggDescription = ({ node }) => {
                         <DiggDescription node={element} key={index} />
                     ))}
                 </ul>
-            );
+            )
         case 'listItem':
             return (
                 <li>
@@ -59,7 +59,7 @@ const DiggDescription = ({ node }) => {
                         <DiggDescription node={element} key={index} />
                     ))}
                 </li>
-            );
+            )
 
         case 'diggImagesBlock':
             if (node.attrs && Array.isArray(node.attrs.images)) {
@@ -69,9 +69,9 @@ const DiggDescription = ({ node }) => {
                             <img src={img.url} alt="" width={img.width} height={img.height} key={index} />
                         ))}
                     </div>
-                );
+                )
             }
-            return null;
+            return null
 
         case 'diggLinkBlock':
             return (
@@ -83,7 +83,7 @@ const DiggDescription = ({ node }) => {
                     </a>
                     {node.attrs.tldr}
                 </>
-            );
+            )
 
         case 'diggTextBlock':
         case 'doc':
@@ -93,20 +93,20 @@ const DiggDescription = ({ node }) => {
                         <DiggDescription node={element} key={index} />
                     ))}
                 </>
-            );
+            )
 
         case 'diggTitleBlock':
-            return null;
+            return null
 
         case 'hardBreak':
-            return <br />;
+            return <br />
 
         case 'mention':
-            return <a href={`${baseUrl}/${node.attrs.label}`}>/{node.attrs.label}</a>;
+            return <a href={`${baseUrl}/${node.attrs.label}`}>/{node.attrs.label}</a>
 
         case 'paragraph':
             if (children.length === 0) {
-                return null;
+                return null
             }
             return (
                 <p>
@@ -115,19 +115,19 @@ const DiggDescription = ({ node }) => {
                     ))}
                     <br />
                 </p>
-            );
+            )
 
         case 'text':
-            return node.text || '';
+            return node.text || ''
 
         default:
-            throw new Error(`Unknown node type: ${node.type}`);
+            throw new Error(`Unknown node type: ${node.type}`)
     }
-};
+}
 
 async function handler(ctx) {
-    const { community } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') ?? 30, 10);
+    const { community } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') ?? 30, 10)
 
     const communityData = await cache.tryGet(`digg:community:${community}`, async () => {
         const {
@@ -222,10 +222,10 @@ fragment ImageFragment on Image {
 }`,
                 variables: { slug: community },
             },
-        });
+        })
 
-        return communityData;
-    });
+        return communityData
+    })
 
     const {
         data: { posts },
@@ -376,7 +376,7 @@ fragment PostsNodeFragment on Post {
 }`,
             variables: { first: limit, where: { community: { slug_EQ: community } }, sort: 'RECENT' },
         },
-    });
+    })
 
     const items = posts.edges.map(({ node }: { node: PostNode }) => ({
         title: node.title,
@@ -384,7 +384,7 @@ fragment PostsNodeFragment on Post {
         link: `${baseUrl}/${node._id.replaceAll('-', '/')}/${node.slug}`,
         pubDate: parseDate(node.createdDate),
         author: node.author.username,
-    }));
+    }))
 
     return {
         title: `${communityData.name} Community | Digg | Digg`,
@@ -392,5 +392,5 @@ fragment PostsNodeFragment on Post {
         image: communityData.iconUrl,
         link: `${baseUrl}/${community}`,
         item: items,
-    };
+    }
 }

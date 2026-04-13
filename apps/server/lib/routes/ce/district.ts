@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/district/:category?',
@@ -43,51 +43,51 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'http://district.ce.cn/';
-    const { category = 'roll' } = ctx.req.param();
-    const url = `${rootUrl}newarea/${category}/index.shtml`;
-    const GB2312Response = await ofetch(url, { responseType: 'arrayBuffer' });
+    const rootUrl = 'http://district.ce.cn/'
+    const { category = 'roll' } = ctx.req.param()
+    const url = `${rootUrl}newarea/${category}/index.shtml`
+    const GB2312Response = await ofetch(url, { responseType: 'arrayBuffer' })
 
     // originally site use gb2312 encoding
-    const response = new TextDecoder('gb2312').decode(new Uint8Array(GB2312Response));
-    const $ = load(response);
+    const response = new TextDecoder('gb2312').decode(new Uint8Array(GB2312Response))
+    const $ = load(response)
 
-    const bigTitle = $('div.channl a').eq(1).attr('title');
+    const bigTitle = $('div.channl a').eq(1).attr('title')
 
     const list = $('div.sec_left li')
         .toArray()
         .map((e) => {
-            const element = $(e);
-            const title = element.find('a').text().trim();
-            const link = new URL(element.find('a').attr('href'), url).href;
+            const element = $(e)
+            const title = element.find('a').text().trim()
+            const link = new URL(element.find('a').attr('href'), url).href
             return {
                 title,
                 link,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const GB2312Response = await ofetch(item.link, { responseType: 'arrayBuffer' });
-                const response = new TextDecoder('gb2312').decode(new Uint8Array(GB2312Response));
-                const $ = load(response);
+                const GB2312Response = await ofetch(item.link, { responseType: 'arrayBuffer' })
+                const response = new TextDecoder('gb2312').decode(new Uint8Array(GB2312Response))
+                const $ = load(response)
 
-                const pubDateText = $('span#articleTime').text().trim();
-                item.pubDate = timezone(parseDate(pubDateText, 'YYYY年MM月DD日 HH:mm'), +8);
+                const pubDateText = $('span#articleTime').text().trim()
+                item.pubDate = timezone(parseDate(pubDateText, 'YYYY年MM月DD日 HH:mm'), +8)
 
-                item.description = $('div.TRS_Editor').html();
-                return item;
-            })
-        )
-    );
+                item.description = $('div.TRS_Editor').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `中国经济网地方经济 - ${bigTitle}`,
         link: url,
         item: items,
-    };
+    }
 }

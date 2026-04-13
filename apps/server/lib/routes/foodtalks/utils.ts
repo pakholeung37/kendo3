@@ -1,11 +1,11 @@
-import type { DataItem } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-export const apiBaseUrl = 'https://api-we.foodtalks.cn';
-export const baseUrl = 'https://www.foodtalks.cn';
+export const apiBaseUrl = 'https://api-we.foodtalks.cn'
+export const baseUrl = 'https://www.foodtalks.cn'
 
 export const parseList = (records): DataItem[] =>
     records.map((item) => ({
@@ -16,7 +16,7 @@ export const parseList = (records): DataItem[] =>
         author: item.author || item.sourceName,
         id: item.id,
         image: item.coverImg,
-    }));
+    }))
 
 export const processItems = (list: DataItem[]) =>
     Promise.all(
@@ -26,9 +26,9 @@ export const processItems = (list: DataItem[]) =>
                     headers: {
                         referer: `${baseUrl}/`,
                     },
-                });
-                item.description = response.data.content;
-                return item;
-            })
-        )
-    );
+                })
+                item.description = response.data.content
+                return item
+            }),
+        ),
+    )

@@ -1,65 +1,65 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
-let baseTitle = '日本郵便';
-const baseUrl = 'https://trackings.post.japanpost.jp/services/srv/search/direct?';
+let baseTitle = '日本郵便'
+const baseUrl = 'https://trackings.post.japanpost.jp/services/srv/search/direct?'
 
 export async function track(ctx) {
-    const reqCode = ctx.req.param('reqCode');
-    const reqReqCode = 'reqCodeNo1=' + reqCode;
+    const reqCode = ctx.req.param('reqCode')
+    const reqReqCode = 'reqCodeNo1=' + reqCode
 
-    let locale = 'ja';
+    let locale = 'ja'
     if (ctx.req.param('locale') === 'en') {
-        locale = 'en';
-        baseTitle = 'Japanpost';
+        locale = 'en'
+        baseTitle = 'Japanpost'
     }
-    const reqLocale = '&locale=' + locale;
+    const reqLocale = '&locale=' + locale
 
-    const link = baseUrl + reqReqCode + reqLocale;
+    const link = baseUrl + reqReqCode + reqLocale
 
     const response = await got({
         method: 'get',
         url: link,
-    });
+    })
 
-    const $ = load(response.data);
-    utils.expandEven($);
-    utils.expandOdd($);
+    const $ = load(response.data)
+    utils.expandEven($)
+    utils.expandOdd($)
 
-    const list = $('.tableType01').eq(1).find('tr').slice(2);
-    const officeList = $('.tableType03').eq(0).find('tr').slice(1);
-    let officeItemList;
+    const list = $('.tableType01').eq(1).find('tr').slice(2)
+    const officeList = $('.tableType03').eq(0).find('tr').slice(1)
+    let officeItemList
 
     if (officeList.length) {
         officeItemList = officeList.toArray().map((e) => {
-            const eTd = $(e).find('td');
+            const eTd = $(e).find('td')
             return {
                 officeType: eTd.eq(0).text().trim(),
                 officeName: eTd.eq(1).html().trim(),
                 officeTel: eTd.eq(2).html().trim(),
-            };
-        });
+            }
+        })
     }
 
     if (!list.length) {
-        const resErrorText = $('.tableType01').eq(0).find('tr').eq(2).find('td').eq(1).text().trim();
-        throw new Error(resErrorText);
+        const resErrorText = $('.tableType01').eq(0).find('tr').eq(2).find('td').eq(1).text().trim()
+        throw new Error(resErrorText)
     }
 
-    const listEven = list.even();
-    const listOdd = list.odd();
+    const listEven = list.even()
+    const listOdd = list.odd()
 
-    const packageType = $('.tableType01').eq(0).find('tr').eq(1).find('td').eq(1).text().trim();
-    const packageService = $('.tableType01').eq(0).find('tr').eq(1).find('td').eq(2).text().trim();
-    const serviceText = locale === 'ja' ? '付加サービス：' : 'Additional services: ';
+    const packageType = $('.tableType01').eq(0).find('tr').eq(1).find('td').eq(1).text().trim()
+    const packageService = $('.tableType01').eq(0).find('tr').eq(1).find('td').eq(2).text().trim()
+    const serviceText = locale === 'ja' ? '付加サービス：' : 'Additional services: '
 
-    let lastItemTimeStamp;
-    let tz;
+    let lastItemTimeStamp
+    let tz
 
     return {
         title: `${baseTitle} ${reqCode} ${packageType}`,
@@ -69,13 +69,13 @@ export async function track(ctx) {
         icon: 'https://www.post.japanpost.jp/favicon.ico',
         logo: 'https://www.post.japanpost.jp/favicon.ico',
         item: listEven.toArray().map((item, index) => {
-            const itemTd = $(item).find('td');
-            const packageStatus = itemTd.eq(1).text().trim();
-            const packageRegion = itemTd.eq(4).text().trim();
-            const packageOffice = itemTd.eq(3).text().trim();
-            const packageOfficeZipCode = listOdd.eq(index).find('td').eq(0).text().trim();
-            const itemTitle = `${packageStatus} ${packageOffice} ${packageRegion}`;
-            const packageTrackRecord = itemTd.eq(2).text().trim();
+            const itemTd = $(item).find('td')
+            const packageStatus = itemTd.eq(1).text().trim()
+            const packageRegion = itemTd.eq(4).text().trim()
+            const packageOffice = itemTd.eq(3).text().trim()
+            const packageOfficeZipCode = listOdd.eq(index).find('td').eq(0).text().trim()
+            const itemTitle = `${packageStatus} ${packageOffice} ${packageRegion}`
+            const packageTrackRecord = itemTd.eq(2).text().trim()
             const itemDescription = renderToString(
                 <>
                     {packageStatus}
@@ -111,18 +111,18 @@ export async function track(ctx) {
                             ) : null}
                         </>
                     ) : null}
-                </>
-            );
+                </>,
+            )
 
-            const itemPubDateText = itemTd.eq(0).text().trim();
-            const itemGuid = utils.generateGuid(reqCode + itemTitle + itemDescription + itemPubDateText);
+            const itemPubDateText = itemTd.eq(0).text().trim()
+            const itemGuid = utils.generateGuid(reqCode + itemTitle + itemDescription + itemPubDateText)
 
-            let thisItemTimeStamp;
-            [thisItemTimeStamp, tz] = utils.parseDatetime(itemPubDateText, packageOffice, packageRegion, tz, locale);
+            let thisItemTimeStamp
+            ;[thisItemTimeStamp, tz] = utils.parseDatetime(itemPubDateText, packageOffice, packageRegion, tz, locale)
             if (lastItemTimeStamp && thisItemTimeStamp <= lastItemTimeStamp) {
-                thisItemTimeStamp = lastItemTimeStamp + 1000;
+                thisItemTimeStamp = lastItemTimeStamp + 1000
             }
-            lastItemTimeStamp = thisItemTimeStamp;
+            lastItemTimeStamp = thisItemTimeStamp
 
             return {
                 title: itemTitle,
@@ -130,7 +130,7 @@ export async function track(ctx) {
                 pubDate: new Date(thisItemTimeStamp),
                 link,
                 guid: itemGuid.slice(0, 32),
-            };
+            }
         }),
-    };
+    }
 }

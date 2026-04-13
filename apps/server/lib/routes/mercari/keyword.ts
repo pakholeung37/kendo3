@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { fetchItemDetail, fetchSearchItems, formatItemDetail, MercariOrder, MercariSort, MercariStatus } from './util';
+import { fetchItemDetail, fetchSearchItems, formatItemDetail, MercariOrder, MercariSort, MercariStatus } from './util'
 
 export const route: Route = {
     path: '/:sort/:order/:status/:keyword',
@@ -52,18 +52,18 @@ export const route: Route = {
     maintainers: ['yana9i'],
     url: 'jp.mercari.com',
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { sort, order, status, keyword } = ctx.req.param();
-    const statusArray = MercariStatus[status] ? [MercariStatus[status]] : [];
-    const searchItems = (await fetchSearchItems(MercariSort[sort], MercariOrder[order], statusArray, keyword)).items;
-    const items = await Promise.all(searchItems.map((item) => cache.tryGet(`mercari:${item.id}:${item.updated}`, async () => await fetchItemDetail(item.id, item.itemType).then((detail) => formatItemDetail(detail)))));
+    const { sort, order, status, keyword } = ctx.req.param()
+    const statusArray = MercariStatus[status] ? [MercariStatus[status]] : []
+    const searchItems = (await fetchSearchItems(MercariSort[sort], MercariOrder[order], statusArray, keyword)).items
+    const items = await Promise.all(searchItems.map((item) => cache.tryGet(`mercari:${item.id}:${item.updated}`, async () => await fetchItemDetail(item.id, item.itemType).then((detail) => formatItemDetail(detail)))))
 
     return {
         title: `${keyword} の検索結果`,
         link: `https://jp.mercari.com/search?sort=${MercariSort[sort]}&order=${MercariOrder[order]}&status=${MercariStatus[status]}&keyword=${encodeURIComponent(keyword)}`,
         description: `Search results for keyword: ${keyword}`,
         item: items,
-    };
+    }
 }

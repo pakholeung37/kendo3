@@ -1,31 +1,31 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://download.lineageos.org';
-    const targetUrl: string = new URL('changes', baseUrl).href;
-    const apiUrl: string = new URL('api/v2/changes', baseUrl).href;
+    const baseUrl = 'https://download.lineageos.org'
+    const targetUrl: string = new URL('changes', baseUrl).href
+    const apiUrl: string = new URL('api/v2/changes', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'en';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'en'
 
-    const response = await ofetch(apiUrl);
+    const response = await ofetch(apiUrl)
 
     const items: DataItem[] = response.slice(0, limit).map((item): DataItem => {
-        const title: string = item.subject;
-        const pubDate: number | string = item.submitted;
-        const linkUrl: string | undefined = item.url;
-        const categories: string[] = [item.type, item.branch, item.repository];
-        const updated: number | string = item.updated;
+        const title: string = item.subject
+        const pubDate: number | string = item.submitted
+        const linkUrl: string | undefined = item.url
+        const categories: string[] = [item.type, item.branch, item.repository]
+        const updated: number | string = item.updated
 
         const processedItem: DataItem = {
             title,
@@ -34,10 +34,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
             category: categories,
             updated: updated ? parseDate(updated, 'X') : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     return {
         title: `${$('title').text()} - Downloads`,
@@ -48,8 +48,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('title').text(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/changes',
@@ -77,4 +77,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}

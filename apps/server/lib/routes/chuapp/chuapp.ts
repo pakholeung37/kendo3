@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -42,9 +42,9 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
-const baseUrl = 'https://www.chuapp.com';
+const baseUrl = 'https://www.chuapp.com'
 const pathLut: Record<string, { title: string; suffix: string }> = {
     daily: {
         title: '每日聚焦',
@@ -68,63 +68,63 @@ const pathLut: Record<string, { title: string; suffix: string }> = {
         title: '动态资讯',
         suffix: '/category/zsyx',
     },
-};
+}
 
 type InvalidArticle = {
-    title?: string;
-    link?: string;
-};
+    title?: string
+    link?: string
+}
 
 type ValidArticle = {
-    title: string;
-    link: string;
-};
+    title: string
+    link: string
+}
 
-type RawArticle = InvalidArticle | ValidArticle;
+type RawArticle = InvalidArticle | ValidArticle
 
 function isValidArticle(article: RawArticle): article is ValidArticle {
-    return 'title' in article && 'link' in article && article.title !== null && article.link !== null;
+    return 'title' in article && 'link' in article && article.title !== null && article.link !== null
 }
 
 function toJavaScriptTimestamp(x: string | number | null | undefined): number {
-    return x ? Number(x) * 1000 : 0;
+    return x ? Number(x) * 1000 : 0
 }
 
 async function handler(ctx: Context): Promise<Data | null> {
-    const { category = 'night' } = ctx.req.param();
-    const subpath = pathLut[category];
+    const { category = 'night' } = ctx.req.param()
+    const subpath = pathLut[category]
     if (!subpath) {
-        return null;
+        return null
     }
 
-    const targetUrl = `${baseUrl}${subpath.suffix}`;
-    const response = await ofetch(targetUrl);
-    const $ = load(response);
+    const targetUrl = `${baseUrl}${subpath.suffix}`
+    const response = await ofetch(targetUrl)
+    const $ = load(response)
 
     const articles: RawArticle[] = $('a.fn-clear')
         .toArray()
         .map((element) => ({
             title: $(element).attr('title'),
             link: $(element).attr('href'),
-        }));
+        }))
 
     const processedItems: Array<Promise<DataItem>> = articles
         .filter((article: RawArticle): article is ValidArticle => isValidArticle(article))
         .map((article: ValidArticle) => {
             if (article.link.startsWith('/')) {
-                return article;
+                return article
             }
 
             return {
                 title: article.title,
                 link: `/${article.link}`,
-            };
+            }
         })
         .map((article: ValidArticle) => {
-            const fullArticleUrl = `${baseUrl}${article.link}`;
+            const fullArticleUrl = `${baseUrl}${article.link}`
             return cache.tryGet(fullArticleUrl, async () => {
-                const res = await ofetch(fullArticleUrl);
-                const s = load(res);
+                const res = await ofetch(fullArticleUrl)
+                const s = load(res)
 
                 const item: DataItem = {
                     title: article.title,
@@ -132,17 +132,17 @@ async function handler(ctx: Context): Promise<Data | null> {
                     description: s('.content .the-content').html() || '',
                     pubDate: parseDate(toJavaScriptTimestamp(s('.friendly_time').attr('data-time'))),
                     author: s('.author-time .fn-left').text() || '',
-                };
+                }
 
-                return item;
-            }) as Promise<DataItem>;
-        });
+                return item
+            }) as Promise<DataItem>
+        })
 
-    const items = await Promise.all(processedItems);
+    const items = await Promise.all(processedItems)
 
     return {
         title: `触乐 - ${subpath.title}`,
         link: targetUrl,
         item: items,
-    };
+    }
 }

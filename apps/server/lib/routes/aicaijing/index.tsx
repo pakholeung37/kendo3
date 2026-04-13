@@ -1,20 +1,20 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?/:id?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'latest';
-    const id = ctx.req.param('id') ?? 14;
+    const category = ctx.req.param('category') ?? 'latest'
+    const id = ctx.req.param('id') ?? 14
 
     const titles = {
         14: '热点 - 最新',
@@ -32,7 +32,7 @@ async function handler(ctx) {
         34: '深度 - 更多',
         8: '深度 - 地产',
         6: '深度 - 文娱',
-    };
+    }
 
     const categories = {
         latest: {
@@ -51,16 +51,16 @@ async function handler(ctx) {
             url: `&categoryId=${id}`,
             title: titles[id],
         },
-    };
+    }
 
-    const rootUrl = 'https://www.aicaijing.com.cn';
-    const apiRootUrl = 'https://api.aicaijing.com.cn';
-    const apiUrl = `${apiRootUrl}/article/detail/list?size=${ctx.req.query('limit') ?? 50}&page=1${categories[category].url}`;
+    const rootUrl = 'https://www.aicaijing.com.cn'
+    const apiRootUrl = 'https://api.aicaijing.com.cn'
+    const apiUrl = `${apiRootUrl}/article/detail/list?size=${ctx.req.query('limit') ?? 50}&page=1${categories[category].url}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = response.data.data.items.map((item) => ({
         title: item.title,
@@ -72,13 +72,13 @@ async function handler(ctx) {
             <>
                 {item.cover ? <img src={item.cover} /> : null}
                 {item.content ? raw(item.content) : null}
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `AI 财经社 - ${categories[category].title}`,
         link: rootUrl,
         item: items,
-    };
+    }
 }

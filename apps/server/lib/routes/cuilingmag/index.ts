@@ -1,35 +1,35 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12;
+    const { category } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12
 
-    const rootUrl = 'https://www.cuilingmag.com';
-    const currentUrl = new URL(category ? `category/${category}` : '', rootUrl).href;
+    const rootUrl = 'https://www.cuilingmag.com'
+    const currentUrl = new URL(category ? `category/${category}` : '', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.new-list-div, div.item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h3.new-list-h3, h3.title-font').first().text().trim();
+            const title = item.find('h3.new-list-h3, h3.title-font').first().text().trim()
 
-            const src = item.find('img').first().prop('src');
-            const image = src ? new URL(src, rootUrl).href : undefined;
+            const src = item.find('img').first().prop('src')
+            const image = src ? new URL(src, rootUrl).href : undefined
 
             const description = renderDescription({
                 images: image
@@ -40,7 +40,7 @@ export const handler = async (ctx) => {
                           },
                       ]
                     : undefined,
-            });
+            })
 
             return {
                 title,
@@ -53,20 +53,20 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: image ? `image/${image.split(/\./).pop()}` : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = `${$$('p.title-font').text().trim()} ${$$('p.subtitle-font').text().trim()}`;
+                const title = `${$$('p.title-font').text().trim()} ${$$('p.subtitle-font').text().trim()}`
 
-                const src = $$('div.banner img').first().prop('src');
-                const banner = src ? new URL(src, rootUrl).href : undefined;
+                const src = $$('div.banner img').first().prop('src')
+                const banner = src ? new URL(src, rootUrl).href : undefined
 
                 const description =
                     item.description +
@@ -80,11 +80,11 @@ export const handler = async (ctx) => {
                               ]
                             : undefined,
                         description: $$('div.article-content').html(),
-                    });
+                    })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('p.time').first().text());
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('p.time').first().text())
                 item.category = [
                     ...new Set([
                         ...$$('p.sort a')
@@ -94,28 +94,28 @@ export const handler = async (ctx) => {
                             .toArray()
                             .map((c) => $$(c).text().trim()),
                     ]),
-                ].filter(Boolean);
+                ].filter(Boolean)
                 item.author = $$('p.author a')
                     .toArray()
                     .map((a) => $$(a).contents().first().text().trim())
-                    .join('/');
+                    .join('/')
                 item.content = {
                     html: description,
                     text: $$('div.article-content').text(),
-                };
-                item.banner = banner;
-                item.language = language;
-                item.enclosure_url = banner ?? item.enclosure_url;
-                item.enclosure_type = banner ? `image/${banner.split(/\./).pop()}` : item.enclosure_type;
-                item.enclosure_title = title;
+                }
+                item.banner = banner
+                item.language = language
+                item.enclosure_url = banner ?? item.enclosure_url
+                item.enclosure_type = banner ? `image/${banner.split(/\./).pop()}` : item.enclosure_type
+                item.enclosure_title = title
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text().trim();
-    const image = new URL($('div.nav-logo a img').prop('src'), rootUrl).href;
+    const title = $('title').text().trim()
+    const image = new URL($('div.nav-logo a img').prop('src'), rootUrl).href
 
     return {
         title,
@@ -126,8 +126,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/).pop(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -165,9 +165,9 @@ export const route: Route = {
         {
             source: ['cuilingmag.com/category/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/cuilingmag${category ? `/${category}` : ''}`;
+                return `/cuilingmag${category ? `/${category}` : ''}`
             },
         },
         {
@@ -206,4 +206,4 @@ export const route: Route = {
             target: '/selected_noema',
         },
     ],
-};
+}

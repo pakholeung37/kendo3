@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/show/:id',
@@ -36,20 +36,20 @@ export const route: Route = {
     name: 'Show/Podcasts',
     maintainers: ['caiohsramos', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const token = await utils.getPublicToken();
-    const id = ctx.req.param('id');
+    const token = await utils.getPublicToken()
+    const id = ctx.req.param('id')
 
     const meta = await ofetch(`https://api.spotify.com/v1/shows/${id}?market=US`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
+    })
 
-    const episodes = meta.episodes.items;
+    const episodes = meta.episodes.items
 
     return {
         title: meta.name,
@@ -71,5 +71,5 @@ async function handler(ctx) {
             enclosure_type: 'audio/mpeg',
         })),
         image: meta.images.length ? meta.images[0].url : undefined,
-    };
+    }
 }

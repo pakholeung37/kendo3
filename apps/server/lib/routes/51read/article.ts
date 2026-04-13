@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/article/:id',
@@ -31,24 +31,24 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id } = ctx.req.param();
-    const link = `https://m.51read.org/xiaoshuo/${id}`;
-    const bookHtml = await ofetch(link);
-    const $book = load(bookHtml);
+    const { id } = ctx.req.param()
+    const link = `https://m.51read.org/xiaoshuo/${id}`
+    const bookHtml = await ofetch(link)
+    const $book = load(bookHtml)
 
-    const chapter = `https://m.51read.org/zhangjiemulu/${id}`;
-    const chapterHtml = await ofetch(chapter);
-    const $chapter = load(chapterHtml);
+    const chapter = `https://m.51read.org/zhangjiemulu/${id}`
+    const chapterHtml = await ofetch(chapter)
+    const $chapter = load(chapterHtml)
 
     const pageLength = $chapter('.ml-page select')
         .find('option')
         .toArray()
-        .map((option) => option.attribs.value).length;
+        .map((option) => option.attribs.value).length
 
-    const item = await createItem(chapter, pageLength);
+    const item = await createItem(chapter, pageLength)
 
     return {
         title: $book('h1').text(),
@@ -58,30 +58,30 @@ async function handler(ctx) {
         image: $book('.bi-img img').attr('src'),
         author: $book('.bi-wt a').text(),
         language: 'zh-cn',
-    };
+    }
 }
 
 const createItem = async (baseUrl: string, page: number) => {
-    const url = `${baseUrl}/${page}`;
-    const html = await ofetch(url);
-    const $latest = load(html);
+    const url = `${baseUrl}/${page}`
+    const html = await ofetch(url)
+    const $latest = load(html)
     const item = await Promise.all(
         $latest('.kb-jp li>a')
             .toArray()
             .map((chapter) => buildItem(chapter.attribs.href))
-            .toReversed()
-    );
-    return item;
-};
+            .toReversed(),
+    )
+    return item
+}
 
 const buildItem = (url: string) =>
     cache.tryGet(url, async () => {
-        const html = await ofetch(url);
-        const $ = load(html);
+        const html = await ofetch(url)
+        const $ = load(html)
 
         return {
             title: $('h1').text(),
             description: $('.kb-cot').html() || '',
             link: url,
-        };
-    }) as Promise<DataItem>;
+        }
+    }) as Promise<DataItem>

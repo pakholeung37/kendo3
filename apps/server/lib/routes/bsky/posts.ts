@@ -1,12 +1,12 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderPost } from './templates/post';
-import { getAuthorFeed, getProfile, resolveHandle } from './utils';
+import { renderPost } from './templates/post'
+import { getAuthorFeed, getProfile, resolveHandle } from './utils'
 
 export const route: Route = {
     path: '/profile/:handle/:routeParams?',
@@ -45,16 +45,16 @@ Default value for filter is \`posts_and_author_threads\` if not specified.
 
 Example:
 - \`/bsky/profile/bsky.app/filter=posts_with_replies\``,
-};
+}
 
 async function handler(ctx) {
-    const handle = ctx.req.param('handle');
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
-    const filter = routeParams.filter || 'posts_and_author_threads';
+    const handle = ctx.req.param('handle')
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
+    const filter = routeParams.filter || 'posts_and_author_threads'
 
-    const DID = await resolveHandle(handle, cache.tryGet);
-    const profile = await getProfile(DID, cache.tryGet);
-    const authorFeed = await getAuthorFeed(DID, filter, cache.tryGet);
+    const DID = await resolveHandle(handle, cache.tryGet)
+    const profile = await getProfile(DID, cache.tryGet)
+    const authorFeed = await getAuthorFeed(DID, filter, cache.tryGet)
 
     const items = authorFeed.feed.map(({ post }) => ({
         title: post.record.text.split('\n')[0],
@@ -68,13 +68,13 @@ async function handler(ctx) {
         link: `https://bsky.app/profile/${post.author.handle}/post/${post.uri.split('app.bsky.feed.post/')[1]}`,
         upvotes: post.likeCount,
         comments: post.replyCount,
-    }));
+    }))
 
     ctx.set('json', {
         DID,
         profile,
         authorFeed,
-    });
+    })
 
     return {
         title: `${profile.displayName} (@${profile.handle}) — Bluesky`,
@@ -85,5 +85,5 @@ async function handler(ctx) {
         logo: profile.avatar,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

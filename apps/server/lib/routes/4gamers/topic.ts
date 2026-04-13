@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { parseItem, parseList } from './utils';
+import { parseItem, parseList } from './utils'
 
 export const route: Route = {
     path: '/topic/:topic',
@@ -26,24 +26,24 @@ export const route: Route = {
     maintainers: ['bestpika'],
     handler,
     url: 'www.4gamers.com.tw/news',
-};
+}
 
 async function handler(ctx) {
-    const topic = ctx.req.param('topic');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25;
+    const topic = ctx.req.param('topic')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25
 
     const { data: response } = await got(`https://www.4gamers.com.tw/site/api/news/option-cfg/${topic}`, {
         searchParams: {
             pageSize: limit,
         },
-    });
-    const list = parseList(response.data.results);
+    })
+    const list = parseList(response.data.results)
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))))
 
     return {
         title: `4Gamers - ${topic}`,
         link: `https://www.4gamers.com.tw/news/option-cfg/${topic}`,
         item: items,
-    };
+    }
 }

@@ -1,62 +1,62 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { type = 'news', id } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { type = 'news', id } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'http://cpcaauto.com';
-    const currentUrl = new URL(`news.php${type ? `?types=${type}${id ? `&anid=${id}` : ''}` : ''}`, rootUrl).href;
+    const rootUrl = 'http://cpcaauto.com'
+    const currentUrl = new URL(`news.php${type ? `?types=${type}${id ? `&anid=${id}` : ''}` : ''}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = 'zh';
+    const language = 'zh'
 
     let items = $('div.list_d ul li.q')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('a').text(),
                 pubDate: parseDate(item.find('span').text().trim()),
                 link: new URL(item.find('a').prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.tit').text();
-                const description = $$('div.text').html();
+                const title = $$('div.tit').text()
+                const description = $$('div.text').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('div.view span').first().text().split(/：/).pop()), +8);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('div.view span').first().text().split(/：/).pop()), +8)
                 item.content = {
                     html: description,
                     text: $$('div.text').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('meta[property="og:image"]').prop('content'), rootUrl).href;
+    const image = new URL($('meta[property="og:image"]').prop('content'), rootUrl).href
 
     return {
         title: `${$('title').text()} - ${$('span.main_color')
@@ -70,8 +70,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="keywords"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:type?/:id?',
@@ -134,11 +134,11 @@ export const route: Route = {
         {
             source: ['cpcaauto.com/news.php'],
             target: (_, url) => {
-                url = new URL(url);
-                const types = url.searchParams.get('types');
-                const id = url.searchParams.get('id');
+                url = new URL(url)
+                const types = url.searchParams.get('types')
+                const id = url.searchParams.get('id')
 
-                return types ? `/${types}${id ? `/${id}` : ''}` : '';
+                return types ? `/${types}${id ? `/${id}` : ''}` : ''
             },
         },
         {
@@ -252,4 +252,4 @@ export const route: Route = {
             target: '/news/yjsy/113',
         },
     ],
-};
+}

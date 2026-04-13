@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Nyaa',
@@ -14,4 +14,4 @@ The 'Nyaa' includes several routes to access different parts of the site:
 6. \`/nyaa/sukebei/user/:username/search/:query?\` - Search within a specific user's adult content submissions, e.g., \`/nyaa/sukebei/user/milannews/search/hentai\`.
 :::`,
     lang: 'en',
-};
+}

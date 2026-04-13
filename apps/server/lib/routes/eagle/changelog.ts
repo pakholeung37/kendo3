@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/changelog/:language?',
@@ -25,22 +25,22 @@ export const route: Route = {
 | Simplified Chinese | Traditional Chinese | English |
 | ------------------ | ------------------- | ------- |
 | cn                 | tw                  | en      |`,
-};
+}
 
 async function handler(ctx) {
-    let language = ctx.req.param('language');
-    let changelog = '';
+    let language = ctx.req.param('language')
+    let changelog = ''
 
     // 如果为空或选项以外的值，则设置默认值
     if (language === undefined || !(language === 'tw' || language === 'en')) {
-        language = 'cn';
-        changelog = '更新日志';
+        language = 'cn'
+        changelog = '更新日志'
     }
     if (language === 'tw') {
-        changelog = '更新日誌';
+        changelog = '更新日誌'
     }
     if (language === 'en') {
-        changelog = 'Release Notes';
+        changelog = 'Release Notes'
     }
 
     // 发起 HTTP GET 请求
@@ -50,13 +50,13 @@ async function handler(ctx) {
         headers: {
             Referer: `https://${language}.eagle.cool/`,
         },
-    });
+    })
 
     // 使用 cheerio 加载返回的 HTML
-    const data = response.data;
-    const $ = load(data);
+    const data = response.data
+    const $ = load(data)
 
-    const list = $('.version');
+    const list = $('.version')
 
     return {
         // 源标题
@@ -68,22 +68,22 @@ async function handler(ctx) {
 
         // 遍历此前获取的数据
         item: list.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
             // 对获取的日期进行格式化处理
             function getDate() {
-                const str = item.find('.date').text();
-                let date = '';
+                const str = item.find('.date').text()
+                let date = ''
                 if (language === 'cn' || language === 'tw') {
-                    const patt = /\d+/g;
-                    let result;
+                    const patt = /\d+/g
+                    let result
                     while ((result = patt.exec(str)) !== null) {
-                        date += result + '-';
+                        date += result + '-'
                     }
-                    date = date.replaceAll(/-$/g, '');
+                    date = date.replaceAll(/-$/g, '')
                 } else if (language === 'en') {
-                    date = str.replaceAll('RELEASED', '');
+                    date = str.replaceAll('RELEASED', '')
                 }
-                return date;
+                return date
             }
 
             return {
@@ -92,7 +92,7 @@ async function handler(ctx) {
                 link: `https://${language}.eagle.cool/changelog`,
                 pubDate: parseDate(getDate()),
                 guid: item.find('.ver').text(),
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import winston from 'winston';
+import winston from 'winston'
 
-import { config } from '@/config';
+import { config } from '@/config'
 
-let transports: Array<typeof winston.transports.File> = [];
+let transports: Array<typeof winston.transports.File> = []
 if (!config.noLogfiles) {
     transports = [
         new winston.transports.File({
@@ -12,7 +12,7 @@ if (!config.noLogfiles) {
             level: 'error',
         }),
         new winston.transports.File({ filename: path.resolve('logs/combined.log') }),
-    ];
+    ]
 }
 const logger = winston.createLogger({
     level: config.loggerLevel,
@@ -23,11 +23,11 @@ const logger = winston.createLogger({
                 timestamp: info.timestamp,
                 level: info.level,
                 message: info.message,
-            })
-        )
+            }),
+        ),
     ),
     transports,
-});
+})
 
 //
 // If we're not in production then log to the `console` with the format:
@@ -37,12 +37,12 @@ if (!config.isPackage) {
     logger.add(
         new winston.transports.Console({
             format: winston.format.printf((info) => {
-                const infoLevel = winston.format.colorize().colorize(info.level, config.showLoggerTimestamp ? `[${info.timestamp}] ${info.level}` : info.level);
-                return `${infoLevel}: ${info.message}`;
+                const infoLevel = winston.format.colorize().colorize(info.level, config.showLoggerTimestamp ? `[${info.timestamp}] ${info.level}` : info.level)
+                return `${infoLevel}: ${info.message}`
             }),
             silent: process.env.NODE_ENV === 'test',
-        })
-    );
+        }),
+    )
 }
 
-export default logger;
+export default logger

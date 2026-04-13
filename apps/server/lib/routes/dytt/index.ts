@@ -1,44 +1,44 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import iconv from 'iconv-lite';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import iconv from 'iconv-lite'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const domain = 'www.dydytt.net';
-const baseUrl = `https://${domain}`;
+const domain = 'www.dydytt.net'
+const baseUrl = `https://${domain}`
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'gndy/dyzz' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '25', 10);
+    const { category = 'gndy/dyzz' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '25', 10)
 
-    const targetUrl: string = new URL(`html/${category.replace(/^html\//, '')}`, baseUrl).href;
+    const targetUrl: string = new URL(`html/${category.replace(/^html\//, '')}`, baseUrl).href
 
     const response = await ofetch(targetUrl, {
         responseType: 'arrayBuffer',
-    });
-    const $: CheerioAPI = load(iconv.decode(Buffer.from(response), 'gb2312'));
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    })
+    const $: CheerioAPI = load(iconv.decode(Buffer.from(response), 'gb2312'))
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     let items: DataItem[] = $('div.co_content8 ul table')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const $aEl: Cheerio<Element> = $el.find('a.ulink');
+            const $aEl: Cheerio<Element> = $el.find('a.ulink')
 
-            const title: string = $aEl.text();
-            const description: string = $el.find('td').last().text();
-            const pubDateStr: string | undefined = $el.find('font').last().text().split(/：/).pop();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const description: string = $el.find('td').last().text()
+            const pubDateStr: string | undefined = $el.find('font').last().text().split(/：/).pop()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -52,34 +52,34 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
                     const detailResponse = await ofetch(item.link, {
                         responseType: 'arrayBuffer',
-                    });
-                    const $$: CheerioAPI = load(iconv.decode(Buffer.from(detailResponse), 'gb2312'));
+                    })
+                    const $$: CheerioAPI = load(iconv.decode(Buffer.from(detailResponse), 'gb2312'))
 
-                    const title: string = $$('div.title_all h1 font').text();
+                    const title: string = $$('div.title_all h1 font').text()
 
-                    const $descriptionEl: Cheerio<Element> = $$('div#Zoom span').first();
-                    const childEls = $descriptionEl.contents().toArray();
-                    const centerIdx = childEls.findIndex((node) => node.type === 'tag' && node.name === 'center');
-                    const description: string = (centerIdx === -1 ? childEls : childEls.slice(0, centerIdx)).map((node) => $.html(node)).join('');
+                    const $descriptionEl: Cheerio<Element> = $$('div#Zoom span').first()
+                    const childEls = $descriptionEl.contents().toArray()
+                    const centerIdx = childEls.findIndex((node) => node.type === 'tag' && node.name === 'center')
+                    const description: string = (centerIdx === -1 ? childEls : childEls.slice(0, centerIdx)).map((node) => $.html(node)).join('')
 
-                    const pubDateStr: string | undefined = item.pubDate ? undefined : $descriptionEl.prev().text().split(/：/).pop();
-                    const image: string | undefined = $descriptionEl.find('img').first().attr('src');
-                    const upDatedStr: string | undefined = pubDateStr;
+                    const pubDateStr: string | undefined = item.pubDate ? undefined : $descriptionEl.prev().text().split(/：/).pop()
+                    const image: string | undefined = $descriptionEl.find('img').first().attr('src')
+                    const upDatedStr: string | undefined = pubDateStr
 
                     let processedItem: DataItem = {
                         title,
@@ -93,14 +93,14 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
-                    const $enclosureEl: Cheerio<Element> = $descriptionEl.find('a[href^="magnet:"]').last();
-                    const enclosureUrl: string | undefined = $enclosureEl.attr('href');
+                    const $enclosureEl: Cheerio<Element> = $descriptionEl.find('a[href^="magnet:"]').last()
+                    const enclosureUrl: string | undefined = $enclosureEl.attr('href')
 
                     if (enclosureUrl) {
-                        const enclosureType = 'application/x-bittorrent';
-                        const enclosureTitle: string = $enclosureEl.text();
+                        const enclosureType = 'application/x-bittorrent'
+                        const enclosureTitle: string = $enclosureEl.text()
 
                         processedItem = {
                             ...processedItem,
@@ -110,19 +110,19 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             enclosure_length: undefined,
                             itunes_duration: undefined,
                             itunes_item_image: image,
-                        };
+                        }
                     }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -134,8 +134,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/_/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -242,9 +242,9 @@ export const route: Route = {
         {
             source: ['${domain}/index.htm', `${domain}/html/:category`],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/dytt/html${category ? `/${category}` : ''}`;
+                return `/dytt/html${category ? `/${category}` : ''}`
             },
         },
         {
@@ -314,4 +314,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getRollNewsList, parseArticle, parseRollNewsList } from './utils';
+import { getRollNewsList, parseArticle, parseRollNewsList } from './utils'
 
-const link = 'https://tech.sina.com.cn/discovery/';
+const link = 'https://tech.sina.com.cn/discovery/'
 const map = new Map([
     ['zx', { title: '最新', id: '1795' }],
     ['twhk', { title: '天文航空', id: '1796' }],
@@ -13,7 +13,7 @@ const map = new Map([
     ['smyx', { title: '生命医学', id: '1800' }],
     ['shbk', { title: '生活百科', id: '1801' }],
     ['kjqy', { title: '科技前沿', id: '1802' }],
-]);
+])
 
 export const route: Route = {
     path: '/discovery/:type',
@@ -34,23 +34,23 @@ export const route: Route = {
     description: `| 最新 | 天文航空 | 动物植物 | 自然地理 | 历史考古 | 生命医学 | 生活百科 | 科技前沿 |
 | ---- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | zx   | twhk     | dwzw     | zrdl     | lskg     | smyx     | shbk     | kjqy     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    const lid = map.get(type).id;
-    const title = map.get(type).title;
-    const pageid = '207';
-    const { limit = '50' } = ctx.req.query();
+    const type = ctx.req.param('type')
+    const lid = map.get(type).id
+    const title = map.get(type).title
+    const pageid = '207'
+    const { limit = '50' } = ctx.req.query()
 
-    const response = await getRollNewsList(pageid, lid, limit);
-    const list = parseRollNewsList(response.data.result.data);
+    const response = await getRollNewsList(pageid, lid, limit)
+    const list = parseRollNewsList(response.data.result.data)
 
-    const out = await Promise.all(list.map((item) => parseArticle(item, cache.tryGet)));
+    const out = await Promise.all(list.map((item) => parseArticle(item, cache.tryGet)))
 
     return {
         title: `${title}-新浪科技科学探索`,
         link,
         item: out,
-    };
+    }
 }

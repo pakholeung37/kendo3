@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { ProcessItems, rootUrl } from './utils';
+import { ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/ac/rank/:type?/:time?',
@@ -30,7 +30,7 @@ export const route: Route = {
 ::: tip
   \`time\` 参数仅在 \`type\` 参数选为 **月票榜** 的时候生效。
 :::`,
-};
+}
 
 async function handler(ctx) {
     const titles = {
@@ -41,12 +41,12 @@ async function handler(ctx) {
         top: 'TOP100',
         male: '男生榜',
         female: '女生榜',
-    };
+    }
 
-    const type = ctx.req.param('type') ?? 'mt';
-    const time = ctx.req.param('time') ?? 'cur';
+    const type = ctx.req.param('type') ?? 'mt'
+    const time = ctx.req.param('time') ?? 'cur'
 
-    const currentUrl = `${rootUrl}/Rank/comicRank/type/${type}`;
+    const currentUrl = `${rootUrl}/Rank/comicRank/type/${type}`
 
-    return await ProcessItems(ctx, currentUrl, time, titles[type]);
+    return await ProcessItems(ctx, currentUrl, time, titles[type])
 }

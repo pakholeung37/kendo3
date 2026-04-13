@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.plurk.com';
+const baseUrl = 'https://www.plurk.com'
 
 /**
  *
@@ -16,9 +16,9 @@ const fetchFriends = async (userIds) => {
             ids: JSON.stringify(userIds),
             r: 'gp',
         },
-    });
-    return data;
-};
+    })
+    return data
+}
 
 /**
  *
@@ -30,15 +30,15 @@ const fetchFriends = async (userIds) => {
  */
 const getPlurk = (plurkGuid, item, author, tryGet) =>
     tryGet(plurkGuid, () => {
-        const $ = load(item.content || item.rendered, null, false);
+        const $ = load(item.content || item.rendered, null, false)
         $('img').each((_, e) => {
-            e = $(e);
-            e.removeAttr('height').removeAttr('width');
+            e = $(e)
+            e.removeAttr('height').removeAttr('width')
             if (e.attr('alt') && e.attr('alt').startsWith('http')) {
-                e.attr('src', e.attr('alt'));
-                e.removeAttr('alt');
+                e.attr('src', e.attr('alt'))
+                e.removeAttr('alt')
             }
-        });
+        })
 
         return {
             title: item.content_raw ?? ($.text() || plurkGuid),
@@ -47,7 +47,7 @@ const getPlurk = (plurkGuid, item, author, tryGet) =>
             link: item.rendered ? item.link_url : null,
             author,
             pubDate: parseDate(item.posted),
-        };
-    });
+        }
+    })
 
-export { baseUrl, fetchFriends, getPlurk };
+export { baseUrl, fetchFriends, getPlurk }

@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/recent-actions/:minrating?',
@@ -26,29 +26,29 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'codeforces.com/recent-actions',
-};
+}
 
 async function handler(ctx) {
-    const minRating = ctx.req.param('minrating') || 1;
+    const minRating = ctx.req.param('minrating') || 1
 
-    const rsp = await ofetch('https://codeforces.com/api/recentActions?maxCount=100');
+    const rsp = await ofetch('https://codeforces.com/api/recentActions?maxCount=100')
 
     const actions = rsp.result.map((action) => {
-        const pubDate = new Date(action.timeSeconds * 1000);
+        const pubDate = new Date(action.timeSeconds * 1000)
 
-        const blog = action.blogEntry;
-        const blogId = blog.id;
-        const blogTitle = load(blog.title).text();
+        const blog = action.blogEntry
+        const blogId = blog.id
+        const blogTitle = load(blog.title).text()
 
         if (action.comment) {
-            const c = action.comment;
+            const c = action.comment
             return {
                 title: `@${c.commentatorHandle} commented on "${blogTitle}"`,
                 description: load(c.text).text(),
                 pubDate,
                 link: `https://codeforces.com/blog/entry/${blogId}?#comment-${c.id}`,
                 rating: c.rating,
-            };
+            }
         }
         return {
             title: `@${blog.authorHandle} posted "${blogTitle}"`,
@@ -56,8 +56,8 @@ async function handler(ctx) {
             pubDate,
             link: `https://codeforces.com/blog/entry/${blogId}`,
             rating: blog.rating,
-        };
-    });
+        }
+    })
 
     return {
         title: 'Codeforces - Recent actions',
@@ -70,5 +70,5 @@ async function handler(ctx) {
                 pubDate: a.pubDate,
                 link: a.link,
             })),
-    };
+    }
 }

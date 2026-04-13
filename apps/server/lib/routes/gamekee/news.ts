@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -20,11 +20,11 @@ export const route: Route = {
     maintainers: ['ueiu'],
     handler,
     url: 'gamekee.com/news',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.gamekee.com';
-    const url = `${rootUrl}/v1/index/newsList`;
+    const rootUrl = 'https://www.gamekee.com'
+    const url = `${rootUrl}/v1/index/newsList`
     const { data } = await ofetch(url, {
         headers: {
             'game-alias': 'www',
@@ -35,31 +35,31 @@ async function handler() {
             page_no: 1,
             limit: 20,
         },
-    });
+    })
     const list = data.map((item) => {
-        const link = new URL(`${item.id}.html`, rootUrl).href;
-        const title = item.title;
-        const pubDate = parseDate(item.created_at, 'X');
+        const link = new URL(`${item.id}.html`, rootUrl).href
+        const title = item.title
+        const pubDate = parseDate(item.created_at, 'X')
         return {
             link,
             title,
             pubDate,
-        };
-    });
+        }
+    })
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await ofetch(item.link);
-                const $ = load(response);
-                item.description = $('div.content').html();
-                return item;
-            })
-        )
-    );
+                const response = await ofetch(item.link)
+                const $ = load(response)
+                item.description = $('div.content').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         link: `${rootUrl}/news`,
         title: '游戏情报|Gamekee',
         item: items,
-    };
+    }
 }

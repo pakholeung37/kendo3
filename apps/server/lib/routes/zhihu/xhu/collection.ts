@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { generateData } from '../pin/utils';
-import auth from './auth';
+import { generateData } from '../pin/utils'
+import auth from './auth'
 
 export const route: Route = {
     path: '/xhu/collection/:id',
@@ -26,12 +26,12 @@ export const route: Route = {
     name: 'xhu - 收藏夹',
     maintainers: ['JimenezLi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const xhuCookie = await auth.getCookie();
-    const id = ctx.req.param('id');
-    const link = `https://www.zhihu.com/collection/${id}`;
+    const xhuCookie = await auth.getCookie()
+    const id = ctx.req.param('id')
+    const link = `https://www.zhihu.com/collection/${id}`
 
     const titleResponse = await got({
         method: 'get',
@@ -40,7 +40,7 @@ async function handler(ctx) {
             Referer: 'https://api.zhihuvvv.workers.dev',
             Cookie: xhuCookie,
         },
-    });
+    })
 
     const contentResponse = await got({
         method: 'get',
@@ -49,43 +49,43 @@ async function handler(ctx) {
             Referer: 'https://api.zhihuvvv.workers.dev',
             Cookie: xhuCookie,
         },
-    });
-    const listRes = contentResponse.data.data;
+    })
+    const listRes = contentResponse.data.data
 
     return {
         title: `知乎收藏夹-${titleResponse.data.title}`,
         description: titleResponse.data.description,
         link,
         item: listRes.map((item) => {
-            const link = item.url;
-            const author = item.author.name;
-            const pubDate = parseDate(item.collect_time * 1000);
-            let title: string;
-            let description: string;
+            const link = item.url
+            const author = item.author.name
+            const pubDate = parseDate(item.collect_time * 1000)
+            let title: string
+            let description: string
 
             // This API gets only article, answer and pin, not zvideo
             switch (item.type) {
                 case 'article':
-                    title = item.title;
-                    description = item.excerpt;
+                    title = item.title
+                    description = item.excerpt
 
-                    break;
+                    break
 
                 case 'answer':
-                    title = item.question.title;
-                    description = item.excerpt;
+                    title = item.question.title
+                    description = item.excerpt
 
-                    break;
+                    break
 
                 case 'pin': {
-                    const pinItem = generateData([item])[0];
-                    title = pinItem.title;
-                    description = pinItem.description;
+                    const pinItem = generateData([item])[0]
+                    title = pinItem.title
+                    description = pinItem.description
 
-                    break;
+                    break
                 }
                 default:
-                    throw new Error(`Unknown type: ${item.type}`);
+                    throw new Error(`Unknown type: ${item.type}`)
             }
 
             return {
@@ -95,7 +95,7 @@ async function handler(ctx) {
                 pubDate,
                 guid: link,
                 link,
-            };
+            }
         }),
-    };
+    }
 }

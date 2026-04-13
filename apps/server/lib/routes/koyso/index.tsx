@@ -1,18 +1,18 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 const renderDescription = (images?: DescriptionImage[]) =>
     renderToString(
@@ -22,30 +22,30 @@ const renderDescription = (images?: DescriptionImage[]) =>
                     <figure>
                         <img src={image.src} alt={image.alt ?? undefined} />
                     </figure>
-                ) : null
+                ) : null,
             )}
-        </>
-    );
+        </>,
+    )
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = '0', sort = 'latest' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = '0', sort = 'latest' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://koyso.to';
-    const targetUrl: string = new URL(`?${category === '0' ? '' : `category=${category}&`}sort=${sort}`, baseUrl).href;
+    const baseUrl = 'https://koyso.to'
+    const targetUrl: string = new URL(`?${category === '0' ? '' : `category=${category}&`}sort=${sort}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('a.game_item')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('div.game_info').text();
-            const image: string | undefined = $el.find('div.game_media img').attr('data-src');
+            const title: string = $el.find('div.game_info').text()
+            const image: string | undefined = $el.find('div.game_media img').attr('data-src')
             const description: string | undefined = renderDescription(
                 image
                     ? [
@@ -54,9 +54,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                               alt: title,
                           },
                       ]
-                    : undefined
-            );
-            const linkUrl: string | undefined = $el.attr('href');
+                    : undefined,
+            )
+            const linkUrl: string | undefined = $el.attr('href')
 
             const processedItem: DataItem = {
                 title,
@@ -69,29 +69,29 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                $$('div.ind').remove();
-                $$('div.download_div').remove();
+                $$('div.ind').remove()
+                $$('div.download_div').remove()
 
-                const title: string = $$('h1.content_title').text();
+                const title: string = $$('h1.content_title').text()
 
-                $$('h1.content_title').remove();
+                $$('h1.content_title').remove()
 
-                const description: string | undefined = item.description + ($$('div.game_content').html() || '');
+                const description: string | undefined = item.description + ($$('div.game_content').html() || '')
 
                 const processedItem: DataItem = {
                     title,
@@ -101,18 +101,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         text: description,
                     },
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const categoryName: string = $(`ul.category li#category_${category}`).text();
-    const sortName: string = $(`div.genres_content ul li.${sort}`).text();
+    const categoryName: string = $(`ul.category li#category_${category}`).text()
+    const sortName: string = $(`div.genres_content ul li.${sort}`).text()
 
     return {
         title: `${$('title').text()} - ${categoryName} - ${sortName}`,
@@ -122,8 +122,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?/:sort?',
@@ -263,11 +263,11 @@ export const route: Route = {
         {
             source: ['koyso.to'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const category: string | undefined = urlObj.searchParams.get('category') ?? undefined;
-                const sort: string | undefined = urlObj.searchParams.get('sort') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const category: string | undefined = urlObj.searchParams.get('category') ?? undefined
+                const sort: string | undefined = urlObj.searchParams.get('sort') ?? undefined
 
-                return `/koyso${category ? `/${category}` : '0'}${sort ? `/${sort}` : ''}`;
+                return `/koyso${category ? `/${category}` : '0'}${sort ? `/${sort}` : ''}`
             },
         },
         {
@@ -352,4 +352,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

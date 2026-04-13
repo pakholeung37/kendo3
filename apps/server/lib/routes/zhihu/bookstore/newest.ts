@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/bookstore/newest',
@@ -17,21 +17,21 @@ export const route: Route = {
     name: '知乎书店 - 新书',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler() {
     const response = await got({
         method: 'get',
         url: 'https://api.zhihu.com/books/features/new',
-    });
+    })
 
-    const data = response.data.data;
+    const data = response.data.data
 
     return {
         title: '知乎书店-新书抢鲜',
         link: 'https://www.zhihu.com/pub/features/new',
         item: data.map((item) => {
-            const authors = item.authors.map((author) => author.name).join('、');
+            const authors = item.authors.map((author) => author.name).join('、')
 
             return {
                 title: item.title,
@@ -43,7 +43,7 @@ async function handler() {
           ${item.description}<br><br>
           价格: ${item.promotion.price / 100}元
         `,
-            };
+            }
         }),
-    };
+    }
 }

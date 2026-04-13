@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/top_news/:id?',
@@ -30,34 +30,34 @@ export const route: Route = {
     description: `| 头条 | 深度 | 闲情 | D 站 | 中超 | 国际 | 英超 | 西甲 | 意甲 | 德甲 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | 1    | 55   | 37   | 219  | 56   | 120  | 3    | 5    | 4    | 6    |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 1;
-    const { data } = await got(`https://api.dongqiudi.com/app/tabs/web/${id}.json`);
-    const articles = data.articles;
-    const label = data.label;
+    const id = ctx.req.param('id') ?? 1
+    const { data } = await got(`https://api.dongqiudi.com/app/tabs/web/${id}.json`)
+    const articles = data.articles
+    const label = data.label
 
     const list = articles.map((item) => ({
         title: item.title,
         link: `https://www.dongqiudi.com/articles/${item.id}.html`,
         category: [item.category, ...(item.secondary_category ?? [])],
         pubDate: parseDate(item.show_time),
-    }));
+    }))
 
     const out = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                utils.ProcessFeedType2(item, response);
-                return item;
-            })
-        )
-    );
+                const { data: response } = await got(item.link)
+                utils.ProcessFeedType2(item, response)
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `懂球帝 - ${label}`,
         link: `https://www.dongqiudi.com/articlesList/${id}`,
         item: out.filter((e) => e !== undefined),
-    };
+    }
 }

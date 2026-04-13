@@ -1,12 +1,12 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const renderDescription = (description, images) =>
     renderToString(
@@ -18,43 +18,43 @@ const renderDescription = (description, images) =>
                           <figure key={image.src}>
                               <img src={image.src} alt={image.alt} />
                           </figure>
-                      ) : null
+                      ) : null,
                   )
                 : null}
-        </>
-    );
+        </>,
+    )
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const baseUrl = 'https://tf.121.com.cn';
-    const imgBaseUrl = 'https://wx.121.com.cn';
-    const targetUrl: string = new URL('web/weatherLive/', baseUrl).href;
-    const apiUrl: string = new URL('weather/weibo/message.js', baseUrl).href;
+    const baseUrl = 'https://tf.121.com.cn'
+    const imgBaseUrl = 'https://wx.121.com.cn'
+    const targetUrl: string = new URL('web/weatherLive/', baseUrl).href
+    const apiUrl: string = new URL('weather/weibo/message.js', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
-    const response = await ofetch(apiUrl);
-    const messages = await response.text();
+    const response = await ofetch(apiUrl)
+    const messages = await response.text()
 
     const items: DataItem[] = JSON.parse(messages.split(/var\smessage=/).pop())
         .slice(0, limit)
         .map((item): DataItem => {
-            const title: string = item.Title;
+            const title: string = item.Title
             const description: string | undefined = renderDescription(
                 item.Content,
                 item.Img?.map((img: string) => ({
                     src: new URL(`WeChat/data/weiweb/images/lwspic/${img}`, imgBaseUrl).href,
                     alt: title,
-                }))
-            );
-            const pubDate: number | string = item.DDatetime;
-            const linkUrl: string | undefined = targetUrl;
-            const guid = `121-${title}-${pubDate}`;
-            const image: string | undefined = item.Img?.length > 0 ? new URL(`WeChat/data/weiweb/images/lwspic/${item.Img[0]}`, imgBaseUrl).href : undefined;
-            const updated: number | string = pubDate;
+                })),
+            )
+            const pubDate: number | string = item.DDatetime
+            const linkUrl: string | undefined = targetUrl
+            const guid = `121-${title}-${pubDate}`
+            const image: string | undefined = item.Img?.length > 0 ? new URL(`WeChat/data/weiweb/images/lwspic/${item.Img[0]}`, imgBaseUrl).href : undefined
+            const updated: number | string = pubDate
 
             const processedItem: DataItem = {
                 title,
@@ -71,12 +71,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: updated ? parseDate(updated) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -88,8 +88,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('div#webnameDiv').text(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/weatherLive',
@@ -117,4 +117,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}

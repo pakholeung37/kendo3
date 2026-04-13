@@ -1,33 +1,33 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import iconv from 'iconv-lite'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.56kog.com';
+const rootUrl = 'https://www.56kog.com'
 
 const fetchItems = async (limit, currentUrl, tryGet) => {
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
     let items = $('p.line')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
                 link: new URL(a.prop('href'), rootUrl).href,
                 author: item.find('span').last().text(),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -35,15 +35,15 @@ const fetchItems = async (limit, currentUrl, tryGet) => {
                 try {
                     const { data: detailResponse } = await got(item.link, {
                         responseType: 'buffer',
-                    });
+                    })
 
-                    const content = load(iconv.decode(detailResponse, 'gbk'));
+                    const content = load(iconv.decode(detailResponse, 'gbk'))
 
                     const details = content('div.mohe-content p')
                         .toArray()
                         .map((detail) => {
-                            detail = content(detail);
-                            const as = detail.find('a');
+                            detail = content(detail)
+                            const as = detail.find('a')
 
                             return {
                                 label: detail.find('span.c-l-depths').text().split(/：/)[0],
@@ -53,7 +53,7 @@ const fetchItems = async (limit, currentUrl, tryGet) => {
                                               detail
                                                   .contents()
                                                   .toArray()
-                                                  .find((c) => c.nodeType === 3)
+                                                  .find((c) => c.nodeType === 3),
                                           )
                                               .text()
                                               .trim()
@@ -61,12 +61,12 @@ const fetchItems = async (limit, currentUrl, tryGet) => {
                                               href: new URL(as.first().prop('href'), rootUrl).href,
                                               text: as.first().text().trim(),
                                           },
-                            };
-                        });
+                            }
+                        })
 
-                    const pubDate = details.find((detail) => detail.label === '更新').value;
+                    const pubDate = details.find((detail) => detail.label === '更新').value
 
-                    item.title = content('h1').contents().first().text();
+                    item.title = content('h1').contents().first().text()
                     item.description = renderDescription({
                         images: [
                             {
@@ -75,21 +75,21 @@ const fetchItems = async (limit, currentUrl, tryGet) => {
                             },
                         ],
                         details,
-                    });
-                    item.author = details.find((detail) => detail.label === '作者').value;
-                    item.category = [details.find((detail) => detail.label === '状态').value, details.find((detail) => detail.label === '类型').value.text].filter(Boolean);
-                    item.guid = `56kog-${item.link.match(/\/(\d+)\.html$/)[1]}#${pubDate}`;
-                    item.pubDate = timezone(parseDate(pubDate), +8);
+                    })
+                    item.author = details.find((detail) => detail.label === '作者').value
+                    item.category = [details.find((detail) => detail.label === '状态').value, details.find((detail) => detail.label === '类型').value.text].filter(Boolean)
+                    item.guid = `56kog-${item.link.match(/\/(\d+)\.html$/)[1]}#${pubDate}`
+                    item.pubDate = timezone(parseDate(pubDate), +8)
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items.filter((item) => item.description).slice(0, limit),
@@ -102,8 +102,8 @@ const fetchItems = async (limit, currentUrl, tryGet) => {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author: $('div.uni_footer a').text(),
         allowEmpty: true,
-    };
-};
+    }
+}
 
 const renderDescription = ({ images, details }: { images?: Array<{ src?: string; alt?: string }>; details?: Array<{ label: string; value: any }> }): string =>
     renderToString(
@@ -113,7 +113,7 @@ const renderDescription = ({ images, details }: { images?: Array<{ src?: string;
                     <figure key={`${image.src}-${index}`}>
                         <img src={image.src} alt={image.alt} />
                     </figure>
-                ) : null
+                ) : null,
             )}
             {details ? (
                 <table>
@@ -127,7 +127,7 @@ const renderDescription = ({ images, details }: { images?: Array<{ src?: string;
                     </tbody>
                 </table>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
-export { fetchItems, rootUrl };
+export { fetchItems, rootUrl }

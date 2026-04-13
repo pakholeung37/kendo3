@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjsy/zhaosheng/:id?',
@@ -30,32 +30,32 @@ export const route: Route = {
 | 通知公告 | 博士招生 | 硕士招生 | 推免生招生 | 招生宣传 |
 | -------- | -------- | -------- | ---------- | -------- |
 | tzgg     | bszs     | sszs     | tms        | zsxc     |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'tzgg';
+    const id = ctx.req.param('id') ?? 'tzgg'
 
-    const rootUrl = 'https://yjsy.sdust.edu.cn';
-    const currentUrl = `${rootUrl}/zhaosheng/${id}.htm`;
+    const rootUrl = 'https://yjsy.sdust.edu.cn'
+    const currentUrl = `${rootUrl}/zhaosheng/${id}.htm`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.pageUl ul li a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.attr('title'),
                 link: new URL(item.attr('href'), currentUrl).href,
                 pubDate: parseDate(item.find('span').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -63,20 +63,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.txt, .v_news_content').html();
+                item.description = content('.txt, .v_news_content').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

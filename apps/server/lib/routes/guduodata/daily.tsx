@@ -1,11 +1,11 @@
-import dayjs from 'dayjs';
-import { renderToString } from 'hono/jsx/dom/server';
+import dayjs from 'dayjs'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const host = 'http://d.guduodata.com';
+const host = 'http://d.guduodata.com'
 
 const types = {
     collect: {
@@ -26,7 +26,7 @@ const types = {
             anime: '国漫',
         },
     },
-};
+}
 
 export const route: Route = {
     path: '/daily',
@@ -50,21 +50,21 @@ export const route: Route = {
     maintainers: ['Gem1ni'],
     handler,
     url: 'guduodata.com/',
-};
+}
 
 async function handler() {
-    const now = dayjs().valueOf();
+    const now = dayjs().valueOf()
     // yestoday
-    const yestoday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-    const renderRows = (rows) => renderToString(<GuduodataDailyTable rows={rows} />);
+    const yestoday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
+    const renderRows = (rows) => renderToString(<GuduodataDailyTable rows={rows} />)
     const items = Object.keys(types).flatMap((key) =>
         Object.keys(types[key].categories).map((category) => ({
             type: key,
             name: `[${yestoday}] ${types[key].name} - ${types[key].categories[category]}`,
             category: category.toUpperCase(),
             url: `${host}/m/v3/billboard/list?type=DAILY&category=${category.toUpperCase()}&date=${yestoday}`,
-        }))
-    );
+        })),
+    )
     return {
         title: `骨朵数据 - 日榜`,
         link: host,
@@ -74,18 +74,18 @@ async function handler() {
                 cache.tryGet(item.url, async () => {
                     const response = await got.get(`${item.url}&t=${now}`, {
                         headers: { Referer: `http://guduodata.com/` },
-                    });
-                    const data = response.data.data;
+                    })
+                    const data = response.data.data
                     return {
                         title: item.name,
                         pubDate: yestoday,
                         link: item.url,
                         description: renderRows(data),
-                    };
-                })
-            )
+                    }
+                }),
+            ),
         ),
-    };
+    }
 }
 
 const GuduodataDailyTable = ({ rows }: { rows: any[] }) => (
@@ -115,4 +115,4 @@ const GuduodataDailyTable = ({ rows }: { rows: any[] }) => (
             ))}
         </tbody>
     </table>
-);
+)

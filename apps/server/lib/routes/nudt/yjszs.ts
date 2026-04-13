@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 /* 研究生院 */
-const host = 'http://yjszs.nudt.edu.cn';
+const host = 'http://yjszs.nudt.edu.cn'
 
 // 目前研究生院最近仍在更新的链接
 const yjszs = new Map([
@@ -28,7 +28,7 @@ const yjszs = new Map([
     ['23', { title: '国防科技大学研究生院 - 院所发文' }],
     // http://yjszs.nudt.edu.cn/pubweb/homePageList/recruitStudents.view?keyId=25
     ['25', { title: '国防科技大学研究生院 - 数据统计' }],
-]);
+])
 
 export const route: Route = {
     path: '/yjszs/:keyId?',
@@ -55,35 +55,35 @@ export const route: Route = {
     description: `| 通知公告 | 首页 | 招生简章 | 学校政策 | 硕士招生 | 博士招生 | 院所发文 | 数据统计 |
 | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | 2     | 1     | 8     | 12     | 16     | 17     | 23     | 25     |`,
-};
+}
 
 async function handler(ctx) {
-    const keyId = ctx.req.param('keyId') ?? '2';
-    const info = yjszs.get(keyId);
+    const keyId = ctx.req.param('keyId') ?? '2'
+    const info = yjszs.get(keyId)
     if (!info) {
-        throw new InvalidParameterError('invalid keyId');
+        throw new InvalidParameterError('invalid keyId')
     }
-    let link = `${host}/pubweb/homePageList`;
-    link += keyId === '2' ? `/searchContent.view` : `/recruitStudents.view?keyId=${keyId}`;
+    let link = `${host}/pubweb/homePageList`
+    link += keyId === '2' ? `/searchContent.view` : `/recruitStudents.view?keyId=${keyId}`
     const response = await got({
         method: 'get',
         url: link,
-    });
+    })
 
-    const $ = load(response.data);
-    const content = $('.news-list li');
+    const $ = load(response.data)
+    const content = $('.news-list li')
     const items = content.toArray().map((elem) => {
-        elem = $(elem);
+        elem = $(elem)
         return {
             link: new URL(elem.find('a').attr('href'), host).href,
             title: elem.find('h3').text().trim(),
             pubDate: timezone(parseDate(elem.find('.time').text(), 'YYYY-MM-DD'), -8),
-        };
-    });
+        }
+    })
 
     return {
         title: info.title,
         link,
         item: items,
-    };
+    }
 }

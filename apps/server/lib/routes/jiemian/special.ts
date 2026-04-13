@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     path: '/special/1192',
@@ -9,4 +9,4 @@ export const route: Route = {
     example: '/jiemian/special/1192',
     maintainers: ['nczitzk', 'pseudoyu'],
     handler,
-};
+}

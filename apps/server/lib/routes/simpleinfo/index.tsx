@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:category?',
@@ -41,50 +41,50 @@ export const route: Route = {
 | 科學大探索 | 環境與健康         | ACG 快樂聊 | 好書籍分享   | 其它主題     |
 | ---------- | ------------------ | ---------- | ------------ | ------------ |
 | science    | environment-health | acg        | book-sharing | other-topics |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const rootUrl = 'https://blog.simpleinfo.cc';
-    const link = `${rootUrl}${category ? (category === 'work' || category === 'talk' ? `/blog/${category}` : `/shasha77?category=${category}`) : '/shasha77'}`;
-    const response = await got(link);
-    const $ = load(response.data);
-    const title = `${$('.-active').text()} - 簡訊設計`;
-    $('.-ad').remove();
+    const category = ctx.req.param('category')
+    const rootUrl = 'https://blog.simpleinfo.cc'
+    const link = `${rootUrl}${category ? (category === 'work' || category === 'talk' ? `/blog/${category}` : `/shasha77?category=${category}`) : '/shasha77'}`
+    const response = await got(link)
+    const $ = load(response.data)
+    const title = `${$('.-active').text()} - 簡訊設計`
+    $('.-ad').remove()
 
     const list = $('.article-item')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.title').text(),
                 link: item.find('a').first().attr('href'),
                 category: item.find('.category').text(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const result = await got(item.link);
-                const content = load(result.data);
-                item.author = content('meta[property="article:author"]').attr('content');
-                item.pubDate = timezone(parseDate(content('meta[property="article:published_time"]').attr('content')), +8);
+                const result = await got(item.link)
+                const content = load(result.data)
+                item.author = content('meta[property="article:author"]').attr('content')
+                item.pubDate = timezone(parseDate(content('meta[property="article:published_time"]').attr('content')), +8)
                 item.description = renderDescription({
                     image: content('meta[property="og:image"]').attr('content'),
                     description: content('.article-content').first().html(),
-                });
-                return item;
-            })
-        )
-    );
+                })
+                return item
+            }),
+        ),
+    )
 
     return {
         title,
         link,
         language: 'zh-tw',
         item: items,
-    };
+    }
 }
 
 const renderDescription = ({ image, description }: { image?: string; description?: string }): string =>
@@ -92,5 +92,5 @@ const renderDescription = ({ image, description }: { image?: string; description
         <>
             {image ? <img src={image} /> : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )

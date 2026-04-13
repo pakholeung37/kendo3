@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
 export const route: Route = {
     path: '/:id',
@@ -29,90 +29,90 @@ export const route: Route = {
     maintainers: ['SettingDust', 'Halcao'],
     handler,
     url: 'uraaka-joshi.com/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const link = `https://www.uraaka-joshi.com/user/${id}`;
+    const id = ctx.req.param('id')
+    const link = `https://www.uraaka-joshi.com/user/${id}`
 
     const response = await cache.tryGet(
         link,
         async () => {
-            const browser = await puppeteer();
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
+            const browser = await puppeteer()
+            const page = await browser.newPage()
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'fetch' ? request.continue() : request.abort();
-            });
+                request.resourceType() === 'document' || request.resourceType() === 'script' || request.resourceType() === 'fetch' ? request.continue() : request.abort()
+            })
             page.on('requestfinished', async (request) => {
                 if (request.url() === link && request.response().status() === 403) {
-                    await page.close();
+                    await page.close()
                 }
-            });
+            })
 
-            let html: string;
+            let html: string
             try {
                 await page.goto(link, {
                     waitUntil: 'domcontentloaded',
-                });
-                await page.waitForSelector('#pickup03 .grid-cell');
-                await page.waitForSelector('#pickup04 .grid-cell');
-                await page.waitForSelector('#main-block .grid-cell');
+                })
+                await page.waitForSelector('#pickup03 .grid-cell')
+                await page.waitForSelector('#pickup04 .grid-cell')
+                await page.waitForSelector('#main-block .grid-cell')
 
-                html = await page.evaluate(() => document.documentElement.innerHTML);
+                html = await page.evaluate(() => document.documentElement.innerHTML)
             } catch {
-                throw new Error('Access denied (403)');
+                throw new Error('Access denied (403)')
             }
-            await browser.close();
-            return html;
+            await browser.close()
+            return html
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const $ = load(response);
+    const $ = load(response)
     const items = $('#main-block .grid .grid-cell')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             // remove event and styles
-            item.find('*').removeAttr('onclick');
-            item.find('*').removeAttr('onerror');
-            item.find('*').removeAttr('style');
+            item.find('*').removeAttr('onclick')
+            item.find('*').removeAttr('onerror')
+            item.find('*').removeAttr('style')
 
             // format account style
-            const account = item.find('.account-group-link-row');
-            account.html(account.text());
+            const account = item.find('.account-group-link-row')
+            account.html(account.text())
 
             // extract video tag from its player
             item.find('.plyr--video').each((_, player) => {
-                player = $(player);
+                player = $(player)
 
-                const v = player.find('video');
-                player.replaceWith(v);
-                v.attr('poster', 'https:' + v.attr('data-poster'));
-                v.find('source').attr('src', 'https:' + v.find('source').attr('src'));
-            });
+                const v = player.find('video')
+                player.replaceWith(v)
+                v.attr('poster', 'https:' + v.attr('data-poster'))
+                v.find('source').attr('src', 'https:' + v.find('source').attr('src'))
+            })
 
             // correct src of img tags
             item.find('img').each((_, i) => {
-                i = $(i);
-                i.attr('src', 'https:' + i.attr('data-src').split('?resize')[0]);
-                i.removeAttr('data-src');
-            });
+                i = $(i)
+                i.attr('src', 'https:' + i.attr('data-src').split('?resize')[0])
+                i.removeAttr('data-src')
+            })
 
-            const author = item.find('.account-group').text();
+            const author = item.find('.account-group').text()
             const categories = item
                 .find('.hashtag-item .hashtag')
                 .toArray()
-                .map((c) => $(c).text().trim());
-            const link = item.find('.account-group-link-row').attr('href');
-            const date = parseDate(item.find('.profile-char').attr('datetime'));
-            const guid = item.find('a.tap-image').attr('data-tweet-id') || item.find('video[class^="js-player-"]').attr('data-tweet-id');
+                .map((c) => $(c).text().trim())
+            const link = item.find('.account-group-link-row').attr('href')
+            const date = parseDate(item.find('.profile-char').attr('datetime'))
+            const guid = item.find('a.tap-image').attr('data-tweet-id') || item.find('video[class^="js-player-"]').attr('data-tweet-id')
 
-            item.find('.grow-room').remove();
-            item.find('div.profile-group.mt10.prl2').eq(1).remove();
+            item.find('.grow-room').remove()
+            item.find('div.profile-group.mt10.prl2').eq(1).remove()
 
             return {
                 title: item.find('.profile-text').text(),
@@ -122,13 +122,13 @@ async function handler(ctx) {
                 guid,
                 category: categories,
                 author,
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         description: $('meta[name="description"]').attr('content'),
         link,
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/events',
@@ -24,10 +24,10 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler() {
-    const url = 'https://api.cyberconnect.dev/profile/';
+    const url = 'https://api.cyberconnect.dev/profile/'
 
     const response = await ofetch(url, {
         method: 'POST',
@@ -61,7 +61,7 @@ async function handler() {
             
             `,
         },
-    });
+    })
 
     const items = response.data.trendingEvents.list.map((event) => ({
         title: event.title,
@@ -72,7 +72,7 @@ async function handler() {
         pubDate: parseDate(event.startTimestamp * 1000),
         itunes_item_image: event.posterUrl,
         itunes_duration: event.endTimestamp - event.startTimestamp,
-    }));
+    }))
 
     return {
         title: 'Link3 Events',
@@ -82,5 +82,5 @@ async function handler() {
         logo: 'https://link3.to/logo.svg',
         author: 'Link3',
         item: items,
-    };
+    }
 }

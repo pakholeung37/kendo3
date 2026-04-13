@@ -1,13 +1,13 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { gdgov } from '../general/general';
+import { gdgov } from '../general/general'
 
 export const route: Route = {
     path: '/dianbai/*',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
     const info = {
@@ -22,6 +22,6 @@ async function handler(ctx) {
         pubDate_element: 'publishtime',
         pubDate_match: '(.*)',
         pubDate_format: undefined,
-    };
-    await gdgov(info, ctx);
+    }
+    await gdgov(info, ctx)
 }

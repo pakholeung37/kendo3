@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
 export const route: Route = {
     path: '/home/:tag?',
@@ -37,15 +37,15 @@ export const route: Route = {
     description: `| 推荐            | 股票  | 基金 | 新股       | 研报     |
 | --------------- | ----- | ---- | ---------- | -------- |
 | web_home_page | stock | fund | new_stock | research |`,
-};
+}
 
 async function handler(ctx) {
-    const { tag = 'web_home_page' } = ctx.req.param();
-    const apiUrl = `https://www.gelonghui.com/api/channels/${tag}/articles/v8`;
-    const { data } = await got(apiUrl);
+    const { tag = 'web_home_page' } = ctx.req.param()
+    const apiUrl = `https://www.gelonghui.com/api/channels/${tag}/articles/v8`
+    const { data } = await got(apiUrl)
 
     const list = data.result.map((article) => {
-        article = article.data;
+        article = article.data
         return {
             title: article.title,
             description: article.summary,
@@ -53,10 +53,10 @@ async function handler(ctx) {
             author: article.nick,
             category: article.source,
             pubDate: parseDate(article.timestamp, 'X'),
-        };
-    });
+        }
+    })
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)))
 
     return {
         title: '格隆汇-财经资讯动态-股市行情',
@@ -64,5 +64,5 @@ async function handler(ctx) {
         image: 'https://cdn.gelonghui.com/static/web/www.ico.la.ico',
         link: 'https://www.gelonghui.com',
         item: items,
-    };
+    }
 }

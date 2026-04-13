@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
-import { getRadarDomin, headers, parseItems } from './utils';
+import { getRadarDomin, headers, parseItems } from './utils'
 
 export const route: Route = {
     path: '/users/:username/:language?/:img?',
@@ -25,21 +25,21 @@ export const route: Route = {
     name: 'Users',
     maintainers: ['I2IMk', 'queensferryme'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { language = 'www', username, img } = ctx.req.param();
-    const link = `https://${language}.pornhub.com/users/${username}/videos`;
+    const { language = 'www', username, img } = ctx.req.param()
+    const link = `https://${language}.pornhub.com/users/${username}/videos`
     if (!isValidHost(language)) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
 
-    const { data: response } = await got(link, { headers });
-    const $ = load(response);
-    const showImages = img === 'img=1';
+    const { data: response } = await got(link, { headers })
+    const $ = load(response)
+    const showImages = img === 'img=1'
     const items = $('.videoUList .videoBox')
         .toArray()
-        .map((e) => parseItems($(e), showImages));
+        .map((e) => parseItems($(e), showImages))
 
     return {
         title: $('.profileUserName a').text(),
@@ -49,5 +49,5 @@ async function handler(ctx): Promise<Data> {
         language: $('html').attr('lang') as any,
         allowEmpty: true,
         item: items,
-    };
+    }
 }

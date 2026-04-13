@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/zw/projectList',
@@ -30,12 +30,12 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'zw.cdzjryb.com/lottery/accept/projectList',
-};
+}
 
 async function handler() {
-    const url = 'https://zw.cdzjryb.com/lottery/accept/projectList';
-    const { data: response } = await got(url);
-    const $ = load(response);
+    const url = 'https://zw.cdzjryb.com/lottery/accept/projectList'
+    const { data: response } = await got(url)
+    const $ = load(response)
 
     const list = $('#_projectInfo tr')
         .toArray()
@@ -43,8 +43,8 @@ async function handler() {
             $(item)
                 .find('td')
                 .toArray()
-                .map((td) => $(td).text().trim())
-        );
+                .map((td) => $(td).text().trim()),
+        )
 
     const items = await Promise.all(
         list.map((item) =>
@@ -53,27 +53,27 @@ async function handler() {
                     form: {
                         projectUuid: item[0],
                     },
-                });
+                })
                 return {
                     title: item[3],
                     description: renderToString(<ProjectListDescription item={item} notice={notice.message} />),
                     link: url,
                     guid: `cdzjryb:zw:projectList:${item[0]}`,
                     pubDate: timezone(parseDate(item[8]), 8),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         link: url,
         item: items,
-    };
+    }
 }
 
 const ProjectListDescription = ({ item, notice }: { item: string[]; notice: string }) => {
-    const details = item.slice(2, -1);
+    const details = item.slice(2, -1)
 
     return (
         <>
@@ -101,5 +101,5 @@ const ProjectListDescription = ({ item, notice }: { item: string[]; notice: stri
             <h2 style="text-align: center;">登记规则</h2>
             {raw(notice)}
         </>
-    );
-};
+    )
+}

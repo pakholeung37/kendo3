@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/announce/:owner?/:province?/:office?',
@@ -20,65 +20,65 @@ export const route: Route = {
     name: 'e-LandsAnnouncement',
     maintainers: ['itpcc'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://announce.dol.go.th';
-    const { owner, province, office } = ctx.req.param();
+    const baseUrl = 'https://announce.dol.go.th'
+    const { owner, province, office } = ctx.req.param()
     const queryParams = {
         searchprovince: '',
         searchoffice: '',
         searchtype: '',
         searchconcerned: owner ?? '',
-    };
+    }
 
     const result = {
         title: `ประกาศสำนักงานที่ดิน${province ? 'จังหวัด' + province + ' ' : ''}${office ? 'สำนักงานที่ดิน' + office : ''}${owner ? 'ชื่อผู้ถือกรรมสิทธิ/ผู้ขอ ' + owner : ''}`,
         link: `${baseUrl}/index.php`,
         item: [],
-    };
+    }
 
     // If office/province provided, fetch index page to lookup province/office code
     if (province || office) {
-        const { data: response } = await got(`${baseUrl}/index.php`);
-        const $ = load(response);
+        const { data: response } = await got(`${baseUrl}/index.php`)
+        const $ = load(response)
 
         if (province) {
-            const slcProvince = $(`select#searchprovince option:contains('${province}')`);
+            const slcProvince = $(`select#searchprovince option:contains('${province}')`)
 
             if (!slcProvince.length) {
-                return result;
+                return result
             }
 
-            queryParams.searchprovince = slcProvince.attr('value');
+            queryParams.searchprovince = slcProvince.attr('value')
         }
 
         if (office) {
-            const slcOffice = $(`select#searchoffice option:contains('${office}')`);
+            const slcOffice = $(`select#searchoffice option:contains('${office}')`)
 
             if (!slcOffice.length) {
-                return result;
+                return result
             }
 
-            queryParams.searchoffice = slcOffice.attr('value');
+            queryParams.searchoffice = slcOffice.attr('value')
         }
     }
 
-    result.link = `${baseUrl}/index.php?${new URLSearchParams(queryParams).toString()}`;
+    result.link = `${baseUrl}/index.php?${new URLSearchParams(queryParams).toString()}`
 
-    const { data: response } = await got(result.link);
-    const $ = load(response);
+    const { data: response } = await got(result.link)
+    const $ = load(response)
 
     result.item = $('div#div table tbody tr:not([class])')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             /** @type cheerio.Cheerio<th>[] */
             const [, topic, requester, reqType, anceBegDate, anceEndDate, officeName, anceFile] = item
                 .find('th')
                 .toArray()
-                .map((item) => $(item));
-            const dateList = anceBegDate.text().split('-');
+                .map((item) => $(item))
+            const dateList = anceBegDate.text().split('-')
             return {
                 title: `${topic.text()} (ผู้ถือกรรมสิทธิ/ผู้ขอ ${requester.text()})`,
                 // Template text from Form ท.ด.๒๕
@@ -93,14 +93,14 @@ async function handler(ctx) {
                         // The date is in Buddish year
                         Number.parseInt(dateList[2]) - 543,
                         Number.parseInt(dateList[1]) - 1,
-                        Number.parseInt(dateList[0])
+                        Number.parseInt(dateList[0]),
                     ),
-                    +7
+                    +7,
                 ),
                 author: officeName.text(),
                 category: [reqType.text()],
-            };
-        });
+            }
+        })
 
-    return result;
+    return result
 }

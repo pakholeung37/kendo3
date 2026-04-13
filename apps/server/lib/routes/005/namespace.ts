@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '幻之羁绊动漫网',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     categories: ['anime'],
     description: '',
     lang: 'zh-CN',
-};
+}

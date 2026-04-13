@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '虚词',
@@ -11,4 +11,4 @@ p-articles provides some official RSS feeds:
 -   contributors: \`https://p-articles.com/contributors/:author\`
 :::`,
     lang: 'en',
-};
+}

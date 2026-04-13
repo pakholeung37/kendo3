@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/playlist/:id',
@@ -39,18 +39,18 @@ Due to [limitations by Spotify](https://developer.spotify.com/blog/2024-11-27-ch
     name: 'Playlist',
     maintainers: ['outloudvi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const token = await utils.getPublicToken();
-    const id = ctx.req.param('id');
+    const token = await utils.getPublicToken()
+    const id = ctx.req.param('id')
     const meta = await ofetch(`https://api.spotify.com/v1/playlists/${id}`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
-    const tracks = meta.tracks.items;
+    })
+    const tracks = meta.tracks.items
 
     return {
         title: meta.name,
@@ -62,5 +62,5 @@ async function handler(ctx) {
             pubDate: parseDate(x.added_at),
         })),
         image: meta.images.length ? meta.images[0].url : undefined,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
-const baseIndexUrl = 'https://www.auto.uestc.edu.cn/index/tzgg1.htm';
-const host = 'https://www.auto.uestc.edu.cn/';
+const baseIndexUrl = 'https://www.auto.uestc.edu.cn/index/tzgg1.htm'
+const host = 'https://www.auto.uestc.edu.cn/'
 
 export const route: Route = {
     path: '/auto',
@@ -29,44 +29,44 @@ export const route: Route = {
     maintainers: ['talengu', 'mobyw'],
     handler,
     url: 'auto.uestc.edu.cn/',
-};
+}
 
 async function handler() {
-    const browser = await puppeteer();
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
+    const browser = await puppeteer()
+    const page = await browser.newPage()
+    await page.setRequestInterception(true)
     page.on('request', (request) => {
-        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
-    });
+        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort()
+    })
     await page.goto(baseIndexUrl, {
         waitUntil: 'networkidle2',
-    });
-    const content = await page.content();
-    await browser.close();
+    })
+    const content = await page.content()
+    await browser.close()
 
-    const $ = load(content);
+    const $ = load(content)
 
-    const items = $('dl.clearfix');
+    const items = $('dl.clearfix')
 
     const out = $(items)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const newsTitle = item.find('a').text();
-            const newsLink = host + item.find('a[href]').attr('href').slice(3);
-            const newsPubDate = parseDate(item.find('span').text());
+            item = $(item)
+            const newsTitle = item.find('a').text()
+            const newsLink = host + item.find('a[href]').attr('href').slice(3)
+            const newsPubDate = parseDate(item.find('span').text())
 
             return {
                 title: newsTitle,
                 link: newsLink,
                 pubDate: newsPubDate,
-            };
-        });
+            }
+        })
 
     return {
         title: '电子科技大学自动化学院通知',
         link: baseIndexUrl,
         description: '电子科技大学自动化工程学院通知',
         item: out,
-    };
+    }
 }

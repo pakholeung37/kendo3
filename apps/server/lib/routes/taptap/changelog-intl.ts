@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common/changelog';
+import { handler } from './common/changelog'
 
 export const route: Route = {
     path: '/intl/changelog/:id/:lang?',
@@ -32,4 +32,4 @@ export const route: Route = {
 | English (US) | 繁體中文 | 한국어 | 日本語 |
 | ------------ | -------- | ------ | ------ |
 | en_US       | zh_TW   | ko_KR | ja_JP |`,
-};
+}

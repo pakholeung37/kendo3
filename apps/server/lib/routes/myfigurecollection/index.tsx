@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
 const shortcuts = {
     potd: 'picture/browse/potd/',
     potw: 'picture/browse/potw/',
     potm: 'picture/browse/potm/',
-};
+}
 
 export const route: Route = {
     path: '/:category?/:language?',
@@ -38,37 +38,37 @@ export const route: Route = {
     description: `| 每日圖片 | 每週圖片 | 每月圖片 |
 | -------- | -------- | -------- |
 | potd     | potw     | potm     |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? '';
-    const category = ctx.req.param('category') ?? 'figure';
+    const language = ctx.req.param('language') ?? ''
+    const category = ctx.req.param('category') ?? 'figure'
     if (language && !isValidHost(language)) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
 
-    const rootUrl = `https://${language === 'en' || language === '' ? '' : `${language}.`}myfigurecollection.net`;
-    const currentUrl = `${rootUrl}/${Object.hasOwn(shortcuts, category) ? shortcuts[category] : category}`;
+    const rootUrl = `https://${language === 'en' || language === '' ? '' : `${language}.`}myfigurecollection.net`
+    const currentUrl = `${rootUrl}/${Object.hasOwn(shortcuts, category) ? shortcuts[category] : category}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.item-icon, .picture-icon')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25)
         .toArray()
         .map((item) => {
-            item = $(item).find('a');
+            item = $(item).find('a')
 
-            const link = item.attr('href');
+            const link = item.attr('href')
 
             return {
                 link: link.startsWith('http') ? link : `${rootUrl}${link}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -77,11 +77,11 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    item.title = content('.headline').text();
+                    item.title = content('.headline').text()
                     item.description = renderDescription(
                         /myfigurecollection\.net\/picture\//.test(item.link) ? [{ src: content('meta[property="og:image"]').attr('content') }] : JSON.parse(decodeURIComponent(content('meta[name="pictures"]').attr('content'))),
                         content('.form-field')
@@ -89,16 +89,16 @@ async function handler(ctx) {
                             .map((f) => ({
                                 key: content(f).find('.form-label').text(),
                                 value: content(f).find('.form-input').text(),
-                            }))
-                    );
+                            })),
+                    )
                 } catch {
-                    item.title = `Item #${item.link.split('/').pop()}`;
+                    item.title = `Item #${item.link.split('/').pop()}`
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title')
@@ -106,7 +106,7 @@ async function handler(ctx) {
             .replace(/ \(.*\)/, ''),
         link: currentUrl,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (pictures: Array<{ src?: string; w?: string; h?: string }>, fields: Array<{ key: string; value: string }>): string =>
@@ -127,5 +127,5 @@ const renderDescription = (pictures: Array<{ src?: string; w?: string; h?: strin
                     </tbody>
                 </table>
             ) : null}
-        </>
-    );
+        </>,
+    )

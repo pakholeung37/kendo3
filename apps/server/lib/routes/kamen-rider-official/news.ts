@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -55,25 +55,25 @@ export const route: Route = {
 | 仮面ライダーアウトサイダーズ           |
 | 仮面ライダーガッチャード               |
 | 仮面ライダー BLACK SUN                 |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const category = ctx.req.param('category')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.kamen-rider-official.com';
-    const apiUrl = new URL('api/v1/news_articles', rootUrl).href;
-    const currentUrl = new URL(`news_articles/${category ? `?category=${category}` : ''}`, rootUrl).href;
+    const rootUrl = 'https://www.kamen-rider-official.com'
+    const apiUrl = new URL('api/v1/news_articles', rootUrl).href
+    const currentUrl = new URL(`news_articles/${category ? `?category=${category}` : ''}`, rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const buildId = currentResponse.match(/"buildId":"(.*?)"/)[1];
+    const buildId = currentResponse.match(/"buildId":"(.*?)"/)[1]
 
-    const apiCategoryUrl = new URL(`_next/data/${buildId}/news_articles.json`, rootUrl).href;
+    const apiCategoryUrl = new URL(`_next/data/${buildId}/news_articles.json`, rootUrl).href
 
-    const { data: categoryResponse } = await got(apiCategoryUrl);
+    const { data: categoryResponse } = await got(apiCategoryUrl)
 
-    const id = categoryResponse.pageProps.categoryIds[category];
+    const id = categoryResponse.pageProps.categoryIds[category]
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -81,7 +81,7 @@ async function handler(ctx) {
             limit,
             offset: 0,
         },
-    });
+    })
 
     let items = response.news_articles.slice(0, limit).map((item) => ({
         title: item.list_title,
@@ -92,39 +92,39 @@ async function handler(ctx) {
                       src: new URL(item.list_image_path, rootUrl).href,
                       alt: item.list_title,
                   }
-                : undefined
+                : undefined,
         ),
         author: item.author,
         category: [item.category_name, item.category_2_name].filter(Boolean),
         guid: `kamen-rider-official-${item.id}`,
         pubDate: parseDate(item.release_date),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
                 content('a.c-button').each(function () {
-                    content(this).parent().remove();
-                });
+                    content(this).parent().remove()
+                })
 
                 content('img').each(function () {
                     content(this).replaceWith(
                         renderDescription({
                             src: content(this).prop('src'),
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                item.title = content('h1.p-post__title').text() || item.title;
-                item.description = content('main.p-post__main').html();
+                item.title = content('h1.p-post__title').text() || item.title
+                item.description = content('main.p-post__main').html()
                 item.author = content('div.p-post__responsibility p')
                     .toArray()
                     .map((a) => content(a).text())
-                    .join(' / ');
+                    .join(' / ')
                 item.category = [
                     ...new Set(
                         [
@@ -132,18 +132,18 @@ async function handler(ctx) {
                             ...content('ul.p-post__categories li a.p-post__category')
                                 .toArray()
                                 .map((c) => content(c).text().trim()),
-                        ].filter(Boolean)
+                        ].filter(Boolean),
                     ),
-                ];
+                ]
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -157,5 +157,5 @@ async function handler(ctx) {
         subtitle: $('meta[property="keywords"]').prop('content'),
         author: $('meta[property="og:site_name"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

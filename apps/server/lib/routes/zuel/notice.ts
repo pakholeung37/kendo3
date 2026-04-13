@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/notice',
@@ -27,32 +27,32 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'wap.zuel.edu.cn/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'http://wap.zuel.edu.cn';
-    const currentUrl = `${rootUrl}/notice/list.htm`;
+    const rootUrl = 'http://wap.zuel.edu.cn'
+    const currentUrl = `${rootUrl}/notice/list.htm`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.list_item')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('.Article_Title a');
+            const a = item.find('.Article_Title a')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('.Article_PublishDate').text()),
                 link: `${a.attr('href').startsWith('http') ? '' : rootUrl}${a.attr('href')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -60,20 +60,20 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.wp_articlecontent, .psgCont, .infodetail').html();
+                item.description = content('.wp_articlecontent, .psgCont, .infodetail').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '中南财经大学 - 通知公告',
         link: currentUrl,
         item: items,
-    };
+    }
 }

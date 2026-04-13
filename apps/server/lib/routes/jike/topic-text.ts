@@ -1,8 +1,8 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { constructTopicEntry } from './utils';
+import { constructTopicEntry } from './utils'
 
 export const route: Route = {
     path: '/topic/text/:id',
@@ -30,25 +30,25 @@ export const route: Route = {
     name: '圈子 - 纯文字',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const topicUrl = `https://m.okjike.com/topics/${id}`;
+    const id = ctx.req.param('id')
+    const topicUrl = `https://m.okjike.com/topics/${id}`
 
-    const data = await constructTopicEntry(ctx, topicUrl);
+    const data = await constructTopicEntry(ctx, topicUrl)
 
     if (data) {
-        const result = data.result;
+        const result = data.result
         result.item = data.posts.map((item) => {
-            const date = dayjs(item.createdAt);
+            const date = dayjs(item.createdAt)
             return {
                 title: `${data.topic.content} ${date.format('MM月DD日')}`,
                 description: item.content.replaceAll('\n', '<br>'),
                 pubDate: date.toDate(),
                 link: `https://m.okjike.com/originalPosts/${item.id}`,
-            };
-        });
-        return result;
+            }
+        })
+        return result
     }
 }

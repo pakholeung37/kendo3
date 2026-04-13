@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
-const host = 'https://www.magnumphotos.com';
+const host = 'https://www.magnumphotos.com'
 export const route: Route = {
     path: '/magazine',
     categories: ['picture'],
@@ -30,22 +30,22 @@ export const route: Route = {
     maintainers: ['EthanWng97'],
     handler,
     url: 'magnumphotos.com/',
-};
+}
 
 async function handler() {
-    const rssUrl = `${host}/feed/`;
-    const feed = await parser.parseURL(rssUrl);
+    const rssUrl = `${host}/feed/`
+    const feed = await parser.parseURL(rssUrl)
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link) {
-                    return;
+                    return
                 }
-                const data = await ofetch(item.link);
-                const $ = load(data);
-                const description = $('#content');
-                description.find('ul.share').remove();
-                description.find('h1').remove();
+                const data = await ofetch(item.link)
+                const $ = load(data)
+                const description = $('#content')
+                description.find('ul.share').remove()
+                description.find('h1').remove()
 
                 return {
                     title: item.title,
@@ -53,15 +53,15 @@ async function handler() {
                     link: item.link,
                     category: item.categories,
                     description: description.html(),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: 'Magnum Photos',
         link: host,
         description: 'Magnum is a community of thought, a shared human quality, a curiosity about what is going on in the world, a respect for what is going on and a desire to transcribe it visually',
         item: items,
-    };
+    }
 }

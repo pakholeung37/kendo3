@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 /**
  * OpenGithub - Github开源项目精选
@@ -20,7 +20,7 @@ const RESULT_DESC_MAP = {
     [COL_TYPE.SPECIAL]: 'OpenGithub - Github开源项目精选 - 专栏',
     [COL_TYPE.WEEKLY]: 'OpenGithub - Github开源项目精选 - 周刊',
     [COL_TYPE.MONTHLY]: 'OpenGithub - Github开源项目精选 - 月刊',
-};
+}
 
 export const route: Route = {
     path: '/collection/:colType',
@@ -34,25 +34,25 @@ export const route: Route = {
     name: '合集',
     maintainers: ['cnkmmk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = 'https://open.itc.cn';
+    const url = 'https://open.itc.cn'
 
-    const colType = ctx.req.param('colType');
+    const colType = ctx.req.param('colType')
 
     const result = {
         title: RESULT_DESC_MAP[colType] ?? 'NULL',
         link: url,
         description: RESULT_DESC_MAP[colType] ?? 'NULL',
         item: [] as DataItem[],
-    };
-    const response = await ofetch(`${url}/github/collection/list?colType=${colType}`);
-    const $ = load(response);
+    }
+    const response = await ofetch(`${url}/github/collection/list?colType=${colType}`)
+    const $ = load(response)
 
     result.item = [...$('.tab-pane > .row > .card')].map((item) => {
-        const date = $(item).find('.d-flex.mt-3.ms-sm-auto').text()?.split(':')?.[1];
-        const dataObject = date ? new Date(date) : undefined;
+        const date = $(item).find('.d-flex.mt-3.ms-sm-auto').text()?.split(':')?.[1]
+        const dataObject = date ? new Date(date) : undefined
 
         return {
             title: $(item).find('a.btn-link').text(),
@@ -60,8 +60,8 @@ async function handler(ctx) {
             link: $(item).find('a.btn-link').attr('href') || '',
             pubDate: dataObject,
             category: [...$(item).find('.nav.nav-stack.small li')].map((sub) => $(sub).find('.badge').text()),
-        };
-    });
+        }
+    })
 
-    return result;
+    return result
 }

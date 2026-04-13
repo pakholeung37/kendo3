@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/box',
@@ -23,42 +23,42 @@ export const route: Route = {
     name: '实时票房榜',
     maintainers: ['JackyST0'],
     handler,
-};
+}
 
 interface MovieItem {
     movieInfo: {
-        movieId: number;
-        movieName: string;
-        releaseInfo: string;
-    };
-    boxRate: string;
-    sumBoxDesc: string;
-    showCount: number;
-    showCountRate: string;
-    avgSeatView: string;
-    avgShowView: string;
-    splitBoxRate: string;
+        movieId: number
+        movieName: string
+        releaseInfo: string
+    }
+    boxRate: string
+    sumBoxDesc: string
+    showCount: number
+    showCountRate: string
+    avgSeatView: string
+    avgShowView: string
+    splitBoxRate: string
 }
 
 interface BoxResponse {
     movieList: {
-        status: boolean;
+        status: boolean
         data: {
-            list: MovieItem[];
-        };
-    };
+            list: MovieItem[]
+        }
+    }
 }
 
 async function handler() {
-    const apiUrl = 'https://piaofang.maoyan.com/dashboard-ajax';
+    const apiUrl = 'https://piaofang.maoyan.com/dashboard-ajax'
 
     const response = await ofetch<BoxResponse>(apiUrl, {
         headers: {
             Referer: 'https://piaofang.maoyan.com/dashboard',
         },
-    });
+    })
 
-    const movies = response.movieList?.data?.list || [];
+    const movies = response.movieList?.data?.list || []
 
     const items = movies.map((movie, index) => ({
         title: `${index + 1}. ${movie.movieInfo.movieName} - ${movie.sumBoxDesc}`,
@@ -72,12 +72,12 @@ async function handler() {
             <p>上座率：${movie.avgSeatView}</p>
             <p>场均人次：${movie.avgShowView}</p>
         `,
-    }));
+    }))
 
     return {
         title: '猫眼实时票房榜',
         link: 'https://piaofang.maoyan.com/dashboard',
         description: '猫眼电影实时票房排行榜',
         item: items,
-    };
+    }
 }

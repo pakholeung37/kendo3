@@ -1,30 +1,30 @@
-import logger from '@/utils/logger';
+import logger from '@/utils/logger'
 
 export async function crawler(item: any, browser: any): Promise<string> {
     try {
-        let response = '';
-        const page = await browser.newPage();
-        await page.setRequestInterception(true);
+        let response = ''
+        const page = await browser.newPage()
+        await page.setRequestInterception(true)
         page.on('request', (request) => {
-            const resourceType = request.resourceType();
+            const resourceType = request.resourceType()
             if (['document', 'script', 'stylesheet', 'xhr'].includes(resourceType)) {
-                request.continue();
+                request.continue()
             } else {
-                request.abort();
+                request.abort()
             }
-        });
+        })
         await page.goto(item.link, {
             waitUntil: 'networkidle0',
             timeout: 29000,
-        });
-        const selector = '.item-left .item .title .button';
-        await page.evaluate((selector) => document.querySelector(selector).click(), selector);
-        await page.waitForSelector('.item-left .item .bg_box div:nth-child(16)', { timeout: 5000 });
-        response = await page.content();
-        return response || '';
+        })
+        const selector = '.item-left .item .title .button'
+        await page.evaluate((selector) => document.querySelector(selector).click(), selector)
+        await page.waitForSelector('.item-left .item .bg_box div:nth-child(16)', { timeout: 5000 })
+        response = await page.content()
+        return response || ''
     } catch (error) {
-        logger.error('Error when visiting /gov/hangzhou/zwfw:', error);
-        return '';
+        logger.error('Error when visiting /gov/hangzhou/zwfw:', error)
+        return ''
     }
 }
 
@@ -85,5 +85,5 @@ export function analyzer(box: any): object {
             applicableObjectDescription: box.find('.row:nth(33)>div:nth(1)').find('.inner').text(),
             contentInvolved: box.find('.row:nth(34)>div:nth(1)').find('.inner').text(),
         },
-    };
+    }
 }

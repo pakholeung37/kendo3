@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Post } from './types';
+import type { Post } from './types'
 
 export const route: Route = {
     name: 'ニュース',
@@ -78,41 +78,41 @@ export const route: Route = {
         supportRadar: true,
     },
     view: ViewType.Articles,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const rootUrl = 'https://m-78.jp';
-    const cateAPIUrl = `${rootUrl}/wp-json/wp/v2/categories`;
-    const postsAPIUrl = `${rootUrl}/wp-json/wp/v2/posts`;
-    const category = ctx.req.param('category') ?? 'news';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')!, 10) : 20;
+    const rootUrl = 'https://m-78.jp'
+    const cateAPIUrl = `${rootUrl}/wp-json/wp/v2/categories`
+    const postsAPIUrl = `${rootUrl}/wp-json/wp/v2/posts`
+    const category = ctx.req.param('category') ?? 'news'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')!, 10) : 20
 
-    const categories = await ofetch(`${cateAPIUrl}?slug=${category}`);
+    const categories = await ofetch(`${cateAPIUrl}?slug=${category}`)
     if (categories.length === 0) {
-        throw new InvalidParameterError('Category not found');
+        throw new InvalidParameterError('Category not found')
     }
 
-    const { id: categoryId, link: categoryLink, name: categoryName } = categories[0];
+    const { id: categoryId, link: categoryLink, name: categoryName } = categories[0]
 
-    const posts = await ofetch<Post[]>(`${postsAPIUrl}?categories=${categoryId}&per_page=${limit}`);
+    const posts = await ofetch<Post[]>(`${postsAPIUrl}?categories=${categoryId}&per_page=${limit}`)
     return {
         title: `${categoryName} | ニュース`,
         link: categoryLink,
         item: posts.map((post) => {
-            const $ = load(post.content.rendered, null, false);
-            $('#ez-toc-container').remove();
+            const $ = load(post.content.rendered, null, false)
+            $('#ez-toc-container').remove()
             $('img').each((_, img) => {
                 if (/wp-content\/uploads/.test(img.attribs.src)) {
-                    img.attribs.src = img.attribs.src.replace(/(-\d+x\d+)/, '');
+                    img.attribs.src = img.attribs.src.replace(/(-\d+x\d+)/, '')
                 }
-            });
+            })
             return {
                 title: post.title.rendered,
                 link: post.link,
                 description: $.html(),
                 pubDate: parseDate(post.date_gmt),
                 updated: parseDate(post.modified_gmt),
-            };
+            }
         }),
-    };
+    }
 }

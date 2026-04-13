@@ -1,9 +1,9 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import parser from '@/utils/rss-parser';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import parser from '@/utils/rss-parser'
 
-import { getArchive, getCategories, parseItem, parseList } from './utils';
+import { getArchive, getCategories, parseItem, parseList } from './utils'
 
 export const route: Route = {
     path: '/news/:region/:category?',
@@ -108,43 +108,43 @@ news.yahoo.com (美国) 所支持的分类
 对于其他雅虎新闻, 本路由的 RSS 中提供了 author 字段, 可使用 RSSHub 的内置"内容过滤"功能, 例如 /yahoo-wg/news/tw/technology?filter_author=Yahoo%20Tech|Engadget 可从台湾雅虎的科技新闻中过滤出作者名称中包含 Yahoo Tech 或者 Engadget 的新闻, 即瘾科技中文版。
 `,
     },
-};
+}
 
 async function handler(ctx) {
-    const region = ['en', 'EN', 'us', 'US', 'www', 'WWW', ''].includes(ctx.req.param('region')) ? '' : ctx.req.param('region').toLowerCase();
-    const category = ctx.req.param('category');
+    const region = ['en', 'EN', 'us', 'US', 'www', 'WWW', ''].includes(ctx.req.param('region')) ? '' : ctx.req.param('region').toLowerCase()
+    const category = ctx.req.param('category')
     if (!['hk', 'tw', 'au', 'ca', 'fr', 'malaysia', 'nz', 'sg', 'uk', ''].includes(region)) {
-        throw new InvalidParameterError(`Unknown region: ${region}`);
+        throw new InvalidParameterError(`Unknown region: ${region}`)
     }
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
     if (['hk', 'tw'].includes(region)) {
-        const categoryMap = await getCategories(region, cache.tryGet);
-        const tag = category ? categoryMap[category].yctMap : null;
+        const categoryMap = await getCategories(region, cache.tryGet)
+        const tag = category ? categoryMap[category].yctMap : null
 
-        const response = await getArchive(region, limit, tag);
-        const list = parseList(region, response);
+        const response = await getArchive(region, limit, tag)
+        const list = parseList(region, response)
 
-        const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+        const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)))
 
         return {
             title: `Yahoo 新聞 ${region.toUpperCase()} - ${category ? categoryMap[category].name : '所有類別'}`,
             link: `https://${region}.news.yahoo.com/${category ? `${category}/` : ''}archive`,
             image: 'https://s.yimg.com/cv/apiv2/social/images/yahoo_default_logo-1200x1200.png',
             item: items,
-        };
+        }
     } else {
-        const rssUrl = `https://${region ? `${region}.` : ''}news.yahoo.com/rss/${category ? `${category}/` : ''}`;
-        const feed = await parser.parseURL(rssUrl);
-        const filteredItems = feed.items.filter((item) => item?.link && !item.link.includes('promotions') && new URL(item.link).hostname.match(/.*\.yahoo\.com$/));
-        const items = await Promise.all(filteredItems.map((item) => parseItem(item, cache.tryGet)));
+        const rssUrl = `https://${region ? `${region}.` : ''}news.yahoo.com/rss/${category ? `${category}/` : ''}`
+        const feed = await parser.parseURL(rssUrl)
+        const filteredItems = feed.items.filter((item) => item?.link && !item.link.includes('promotions') && new URL(item.link).hostname.match(/.*\.yahoo\.com$/))
+        const items = await Promise.all(filteredItems.map((item) => parseItem(item, cache.tryGet)))
 
         return {
             title: `Yahoo News ${region.toUpperCase()} - ${category ? category.toUpperCase() : 'All'}`,
             link: feed.link,
             description: feed.description,
             item: items,
-        };
+        }
     }
 }

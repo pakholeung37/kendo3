@@ -1,40 +1,40 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'cardgame' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '18', 10);
+    const { category = 'cardgame' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '18', 10)
 
-    const baseUrl = 'https://app.mycard520.com.tw';
-    const targetUrl: string = new URL(`category/${category.endsWith('/') ? category : `${category}/`}`, baseUrl).href;
+    const baseUrl = 'https://app.mycard520.com.tw'
+    const targetUrl: string = new URL(`category/${category.endsWith('/') ? category : `${category}/`}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-TW';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-TW'
 
-    $('div.page_numbers').remove();
+    $('div.page_numbers').remove()
 
     let items: DataItem[] = $('div#tab1 ul li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a')
 
-            const title: string = $el.find('div.text_box p').text();
-            const description: string | undefined = $aEl.html() ?? undefined;
-            const pubDateStr: string | undefined = $el.find('div.date').text().trim();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const image: string | undefined = $el.find('div.img_box img').attr('src');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $el.find('div.text_box p').text()
+            const description: string | undefined = $aEl.html() ?? undefined
+            const pubDateStr: string | undefined = $el.find('div.date').text().trim()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const image: string | undefined = $el.find('div.img_box img').attr('src')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -49,30 +49,30 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
-                    const $$pageBox: Cheerio<Element> = $$('div.page_box');
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
+                    const $$pageBox: Cheerio<Element> = $$('div.page_box')
 
-                    const title: string = $$pageBox.find('h2').text();
-                    const pubDateStr: string | undefined = $$('div.date').first().text();
-                    const upDatedStr: string | undefined = pubDateStr;
+                    const title: string = $$pageBox.find('h2').text()
+                    const pubDateStr: string | undefined = $$('div.date').first().text()
+                    const upDatedStr: string | undefined = pubDateStr
 
-                    $$pageBox.find('h2, div.date, .the_champ_sharing_container').remove();
+                    $$pageBox.find('h2, div.date, .the_champ_sharing_container').remove()
 
-                    const description: string | undefined = $$pageBox.html() ?? item.description;
+                    const description: string | undefined = $$pageBox.html() ?? item.description
 
                     const processedItem: DataItem = {
                         title,
@@ -84,16 +84,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -105,8 +105,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('title').text().split(/-/).pop()?.trim(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/category/:category?',
@@ -164,9 +164,9 @@ export const route: Route = {
         {
             source: ['app.mycard520.com.tw/category/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/mycard520${category ? `/${category}` : ''}`;
+                return `/mycard520${category ? `/${category}` : ''}`
             },
         },
         {
@@ -240,4 +240,4 @@ export const route: Route = {
 | [cardgame](https://rsshub.app/mycard520/category/cardgame)  | [cardgame-mobile](https://rsshub.app/mycard520/category/cardgame-mobile) | [cardgame-pc](https://rsshub.app/mycard520/category/cardgame-pc) | [cardgame-esports](https://rsshub.app/mycard520/category/cardgame-esports) | [cardgame-live](https://rsshub.app/mycard520/category/cardgame-live) |
 `,
     },
-};
+}

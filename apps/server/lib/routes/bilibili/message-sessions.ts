@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import bilibiliCache from './cache';
+import bilibiliCache from './cache'
 
 export const route: Route = {
     path: '/message/sessions/:uid',
@@ -35,76 +35,76 @@ export const route: Route = {
     description: `:::warning
   用户消息需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 interface SessionItem {
-    talker_id: number;
-    session_type: number;
-    at_seqno: number;
-    top_ts: number;
-    group_name: string;
-    group_cover: string;
-    is_follow: number;
-    is_dnd: number;
-    ack_seqno: number;
-    ack_ts: number;
-    session_ts: number;
-    unread_count: number;
+    talker_id: number
+    session_type: number
+    at_seqno: number
+    top_ts: number
+    group_name: string
+    group_cover: string
+    is_follow: number
+    is_dnd: number
+    ack_seqno: number
+    ack_ts: number
+    session_ts: number
+    unread_count: number
     last_msg: {
-        sender_uid: number;
-        receiver_type: number;
-        receiver_id: number;
-        msg_type: number;
-        content: string;
-        msg_seqno: number;
-        timestamp: number;
-        at_uids: number[] | null;
-        msg_key: number;
-        msg_status: number;
-        notify_code: string;
-        msg_source: number;
-    } | null;
-    group_type: number;
-    can_fold: number;
-    status: number;
-    max_seqno: number;
-    new_push_msg: number;
-    setting: number;
-    is_guardian: number;
-    is_intercept: number;
-    is_trust: number;
-    system_msg_type: number;
-    live_status: number;
-    biz_msg_unread_count: number;
-    user_label: unknown;
+        sender_uid: number
+        receiver_type: number
+        receiver_id: number
+        msg_type: number
+        content: string
+        msg_seqno: number
+        timestamp: number
+        at_uids: number[] | null
+        msg_key: number
+        msg_status: number
+        notify_code: string
+        msg_source: number
+    } | null
+    group_type: number
+    can_fold: number
+    status: number
+    max_seqno: number
+    new_push_msg: number
+    setting: number
+    is_guardian: number
+    is_intercept: number
+    is_trust: number
+    system_msg_type: number
+    live_status: number
+    biz_msg_unread_count: number
+    user_label: unknown
 }
 
 interface SessionResponse {
-    code: number;
-    msg: string;
-    message: string;
-    ttl: number;
+    code: number
+    msg: string
+    message: string
+    ttl: number
     data: {
-        session_list: SessionItem[] | null;
-        has_more: number;
-        anti_disturb_cleaning: boolean;
-        is_address_list_empty: number;
-        system_msg: Record<string, number>;
-        show_level: boolean;
-    };
+        session_list: SessionItem[] | null
+        has_more: number
+        anti_disturb_cleaning: boolean
+        is_address_list_empty: number
+        system_msg: Record<string, number>
+        show_level: boolean
+    }
 }
 
 interface UserInfo {
-    mid: string;
-    face: string;
-    name: string;
+    mid: string
+    face: string
+    name: string
 }
 
 interface UserCardsResponse {
-    code: number;
-    message: string;
-    ttl: number;
-    data: Record<string, UserInfo>;
+    code: number
+    message: string
+    ttl: number
+    data: Record<string, UserInfo>
 }
 
 /**
@@ -113,41 +113,41 @@ interface UserCardsResponse {
  */
 function parseMessageContent(content: string, msgType: number): string {
     try {
-        const parsed = JSON.parse(content);
+        const parsed = JSON.parse(content)
         switch (msgType) {
             case 1: // Text message
-                return parsed.content || content;
+                return parsed.content || content
             case 2: // Image
-                return `[图片] ${parsed.url || ''}`;
+                return `[图片] ${parsed.url || ''}`
             case 5: // Recall
-                return '[消息已撤回]';
+                return '[消息已撤回]'
             case 6: // Sticker
-                return '[表情]';
+                return '[表情]'
             case 7: // Share
-                return `[分享] ${parsed.title || ''}`;
+                return `[分享] ${parsed.title || ''}`
             case 10: // System notification
-                return parsed.content || parsed.title || content;
+                return parsed.content || parsed.title || content
             case 11: // Video card
-                return `[视频] ${parsed.title || ''}`;
+                return `[视频] ${parsed.title || ''}`
             case 12: // Article card
-                return `[专栏] ${parsed.title || ''}`;
+                return `[专栏] ${parsed.title || ''}`
             case 14: // Bangumi card
-                return `[番剧] ${parsed.title || ''}`;
+                return `[番剧] ${parsed.title || ''}`
             default:
-                return parsed.content || parsed.title || content;
+                return parsed.content || parsed.title || content
         }
     } catch {
-        return content;
+        return content
     }
 }
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const name = await bilibiliCache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const name = await bilibiliCache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await ofetch<SessionResponse>('https://api.vc.bilibili.com/session_svr/v1/session_svr/get_sessions', {
@@ -163,17 +163,17 @@ async function handler(ctx) {
             Referer: 'https://message.bilibili.com/',
             Cookie: cookie,
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message ?? response.msg ?? `Error code ${response.code}`);
+        throw new Error(response.message ?? response.msg ?? `Error code ${response.code}`)
     }
 
-    const sessionList = response.data.session_list || [];
-    const talkerIds = sessionList.filter((s) => s.session_type === 1).map((s) => s.talker_id);
+    const sessionList = response.data.session_list || []
+    const talkerIds = sessionList.filter((s) => s.session_type === 1).map((s) => s.talker_id)
 
     // Fetch user info for all talkers
-    let userCards: Record<string, UserInfo> = {};
+    let userCards: Record<string, UserInfo> = {}
     if (talkerIds.length > 0) {
         const userCardsResponse = await cache.tryGet(
             `bilibili-user-cards-${talkerIds.join(',')}`,
@@ -188,39 +188,39 @@ async function handler(ctx) {
                         Referer: 'https://message.bilibili.com/',
                         Cookie: cookie,
                     },
-                });
-                return res.data || {};
+                })
+                return res.data || {}
             },
-            config.cache.routeExpire
-        );
-        userCards = userCardsResponse as Record<string, UserInfo>;
+            config.cache.routeExpire,
+        )
+        userCards = userCardsResponse as Record<string, UserInfo>
     }
 
     const items: DataItem[] = sessionList
         .filter((session) => session.last_msg)
         .map((session) => {
-            const lastMsg = session.last_msg!;
-            const talkerId = session.talker_id;
-            const userInfo = userCards[String(talkerId)];
-            const talkerName = userInfo?.name || `用户${talkerId}`;
-            const talkerFace = userInfo?.face || '';
+            const lastMsg = session.last_msg!
+            const talkerId = session.talker_id
+            const userInfo = userCards[String(talkerId)]
+            const talkerName = userInfo?.name || `用户${talkerId}`
+            const talkerFace = userInfo?.face || ''
 
-            const msgContent = parseMessageContent(lastMsg.content, lastMsg.msg_type);
-            const isSentByMe = lastMsg.sender_uid === Number(uid);
+            const msgContent = parseMessageContent(lastMsg.content, lastMsg.msg_type)
+            const isSentByMe = lastMsg.sender_uid === Number(uid)
 
-            let description = '';
+            let description = ''
             if (talkerFace) {
-                description += `<p><img src="${talkerFace.replace('http://', 'https://')}" width="48" height="48" style="border-radius: 50%;" /></p>`;
+                description += `<p><img src="${talkerFace.replace('http://', 'https://')}" width="48" height="48" style="border-radius: 50%;" /></p>`
             }
 
-            description += isSentByMe ? `<p><strong>你</strong> 对 <strong>${talkerName}</strong> 说：</p>` : `<p><strong>${talkerName}</strong> 说：</p>`;
-            description += `<blockquote>${msgContent}</blockquote>`;
+            description += isSentByMe ? `<p><strong>你</strong> 对 <strong>${talkerName}</strong> 说：</p>` : `<p><strong>${talkerName}</strong> 说：</p>`
+            description += `<blockquote>${msgContent}</blockquote>`
 
             if (session.unread_count > 0) {
-                description += `<p>未读消息: ${session.unread_count} 条</p>`;
+                description += `<p>未读消息: ${session.unread_count} 条</p>`
             }
 
-            const title = isSentByMe ? `你对 ${talkerName} 说：${msgContent}` : `${talkerName}：${msgContent}`;
+            const title = isSentByMe ? `你对 ${talkerName} 说：${msgContent}` : `${talkerName}：${msgContent}`
 
             return {
                 title,
@@ -229,8 +229,8 @@ async function handler(ctx) {
                 pubDate: parseDate(lastMsg.timestamp * 1000),
                 author: isSentByMe ? name : talkerName,
                 guid: `bilibili-session-${talkerId}-${lastMsg.msg_key}`,
-            };
-        });
+            }
+        })
 
     return {
         title: `${name} 的 B站消息 - 我的消息`,
@@ -238,5 +238,5 @@ async function handler(ctx) {
         description: `${name} 的 B站消息 - 我的消息`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

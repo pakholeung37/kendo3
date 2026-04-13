@@ -1,6 +1,6 @@
-import { fetchContentItems } from '@/routes/ainvest/utils';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import { fetchContentItems } from '@/routes/ainvest/utils'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
 export const route: Route = {
     path: '/news',
@@ -25,17 +25,17 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.ainvest.com/news/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
-    const streamIds = [109, 416, 438, 529, 721, 834, 835];
-    const items = await fetchContentItems(streamIds, limit);
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
+    const streamIds = [109, 416, 438, 529, 721, 834, 835]
+    const items = await fetchContentItems(streamIds, limit)
 
     return {
         title: 'AInvest - Latest News',
         link: 'https://www.ainvest.com/news/',
         language: 'en',
         item: items,
-    };
+    }
 }

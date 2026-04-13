@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const domain = 'whu.edu.cn';
+const domain = 'whu.edu.cn'
 
 /**
  * Process the meta information from the HTML content.
@@ -15,14 +15,14 @@ const domain = 'whu.edu.cn';
  * @returns {Object} The meta information extracted from the content.
  */
 const processMeta = (text) => {
-    const meta = {};
+    const meta = {}
 
     text.replaceAll(/<meta name="(.*?)" content="(.*?)"/gi, (_, key, value) => {
-        meta[key] = value;
-    });
+        meta[key] = value
+    })
 
-    return meta;
-};
+    return meta
+}
 
 /**
  * Get a specific meta value from the meta object.
@@ -31,7 +31,7 @@ const processMeta = (text) => {
  * @param {string} key        - The key of the meta value to retrieve.
  * @returns {string|undefined} The value of the specified meta key, or undefined if not found.
  */
-const getMeta = (metaObject, key) => (Object.hasOwn(metaObject, key) ? metaObject[key] : undefined);
+const getMeta = (metaObject, key) => (Object.hasOwn(metaObject, key) ? metaObject[key] : undefined)
 
 /**
  * Retrieves item details from a given link and updates the item object.
@@ -41,30 +41,30 @@ const getMeta = (metaObject, key) => (Object.hasOwn(metaObject, key) ? metaObjec
  */
 const getItemDetail = async (item, rootUrl) => {
     try {
-        const { data: detailResponse } = await got(item.link);
+        const { data: detailResponse } = await got(item.link)
 
-        const content = load(detailResponse);
+        const content = load(detailResponse)
 
         // Missing the `src` properties for the images.
         // The `src` property should be replaced with the value of `orisrc` to show the image.
         // Replace images in the content with custom JSX template.
         content('p.vsbcontent_img').each(function () {
-            const image = content(this).find('img');
+            const image = content(this).find('img')
             content(this).replaceWith(
                 renderDescription({
                     image: {
                         src: new URL(image.prop('orisrc'), rootUrl).href,
                         width: image.prop('width'),
                     },
-                })
-            );
-        });
+                }),
+            )
+        })
 
         // Missing the `src` properties for the videos.
         // The `src` property should be replaced with the value of `vurl` to play the video.
         // Replace videos in the content with custom JSX template.
         content('script[name="_videourl"]').each(function () {
-            const video = content(this);
+            const video = content(this)
             video.replaceWith(
                 renderDescription({
                     video: {
@@ -72,52 +72,52 @@ const getItemDetail = async (item, rootUrl) => {
                         width: content(video).prop('vwidth'),
                         height: content(video).prop('vheight'),
                     },
-                })
-            );
-        });
+                }),
+            )
+        })
 
         // Extract the description from the content.
-        const description = content('div.v_news_content').html();
+        const description = content('div.v_news_content').html()
 
         // Remove unwanted table elements from the content.
-        content('form[name="_newscontent_fromname"] table').remove();
+        content('form[name="_newscontent_fromname"] table').remove()
 
         // Extract attachments from the content.
         const attachments = content('form[name="_newscontent_fromname"] ul li')
             .toArray()
             .map((attachment) => {
-                attachment = content(attachment).find('a');
+                attachment = content(attachment).find('a')
 
                 return {
                     title: attachment.text(),
                     link: new URL(attachment.prop('href'), rootUrl).href,
-                };
-            });
+                }
+            })
 
         // Process the meta information from the detail response.
-        const meta = processMeta(detailResponse);
+        const meta = processMeta(detailResponse)
 
-        item.title = getMeta(meta, 'ArticleTitle') ?? item.title;
+        item.title = getMeta(meta, 'ArticleTitle') ?? item.title
         item.description = renderDescription({
             description,
             attachments,
-        });
-        item.author = getMeta(meta, 'ContentSource');
-        item.category = getMeta(meta, 'Keywords')?.split(' ').filter(Boolean) ?? [];
-        item.guid = getMeta(meta, 'Url') ?? item.link;
-        item.pubDate = getMeta(meta, 'PubDate') ? timezone(parseDate(getMeta(meta, 'PubDate')), +8) : item.pubDate;
+        })
+        item.author = getMeta(meta, 'ContentSource')
+        item.category = getMeta(meta, 'Keywords')?.split(' ').filter(Boolean) ?? []
+        item.guid = getMeta(meta, 'Url') ?? item.link
+        item.pubDate = getMeta(meta, 'PubDate') ? timezone(parseDate(getMeta(meta, 'PubDate')), +8) : item.pubDate
 
         // Set enclosure information if attachments exist.
         if (attachments.length > 0) {
-            item.enclosure_url = attachments[0].link;
-            item.enclosure_type = `application/${attachments[0].title.split('.').pop()}`;
+            item.enclosure_url = attachments[0].link
+            item.enclosure_type = `application/${attachments[0].title.split('.').pop()}`
         }
     } catch {
         //
     }
 
-    return item;
-};
+    return item
+}
 
 /**
  * Process items asynchronously.
@@ -131,11 +131,11 @@ const processItems = async (items, tryGet, rootUrl) =>
     await Promise.all(
         items.map((item) => {
             if (!item.link.includes(domain)) {
-                return item;
+                return item
             }
 
-            return tryGet(item.link, async () => await getItemDetail(item, rootUrl));
-        })
-    );
+            return tryGet(item.link, async () => await getItemDetail(item, rootUrl))
+        }),
+    )
 
-export { domain, getMeta, processItems, processMeta };
+export { domain, getMeta, processItems, processMeta }

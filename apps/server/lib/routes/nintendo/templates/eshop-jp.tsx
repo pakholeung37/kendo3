@@ -1,13 +1,13 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ItemData = {
-    iurl?: string;
-    pdate?: string;
-    dprice?: string;
-    hcopy?: string[];
-    text?: string;
-};
+    iurl?: string
+    pdate?: string
+    dprice?: string
+    hcopy?: string[]
+    text?: string
+}
 
 export const renderEshopJpDescription = (item: ItemData) =>
     renderToString(
@@ -31,5 +31,5 @@ export const renderEshopJpDescription = (item: ItemData) =>
                 : null}
             <br />
             {item.text ? <>{raw(item.text.replaceAll('\n', '<br>'))}</> : null}
-        </>
-    );
+        </>,
+    )

@@ -1,15 +1,15 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import getToken from '../_access';
-import constants from '../_constants';
-import { getMangaMetaByIds } from '../_feed';
-import { getFilteredLanguages } from '../_profile';
-import { toQueryString } from '../_utils';
+import getToken from '../_access'
+import constants from '../_constants'
+import { getMangaMetaByIds } from '../_feed'
+import { getFilteredLanguages } from '../_profile'
+import { toQueryString } from '../_utils'
 
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 25
 
 export const route: Route = {
     path: '/user/feed/follow/:lang?',
@@ -60,18 +60,18 @@ export const route: Route = {
         nsfw: true,
     },
     handler,
-};
+}
 
 async function handler(ctx) {
-    const userFollowUrl = `${constants.API.BASE}/user/follows/manga/feed`;
+    const userFollowUrl = `${constants.API.BASE}/user/follows/manga/feed`
 
-    const { lang } = ctx.req.param();
+    const { lang } = ctx.req.param()
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : DEFAULT_LIMIT;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : DEFAULT_LIMIT
 
-    const accessToken = await getToken();
+    const accessToken = await getToken()
 
-    const languagesQuery = new Set([...(typeof lang === 'string' ? [lang] : lang || []), ...(await getFilteredLanguages())].filter(Boolean));
+    const languagesQuery = new Set([...(typeof lang === 'string' ? [lang] : lang || []), ...(await getFilteredLanguages())].filter(Boolean))
 
     const feed = (await cache.tryGet(
         'mangadex:user-follows',
@@ -89,32 +89,32 @@ async function handler(ctx) {
                         Authorization: `Bearer ${accessToken}`,
                         'User-Agent': config.trueUA,
                     },
-                }
-            );
+                },
+            )
 
-            const followedChapterFeed = response?.data?.data;
+            const followedChapterFeed = response?.data?.data
             if (!followedChapterFeed) {
-                throw new Error('Failed to retrieve user follows from MangaDex API.');
+                throw new Error('Failed to retrieve user follows from MangaDex API.')
             }
 
-            return followedChapterFeed;
+            return followedChapterFeed
         },
         config.cache.routeExpire,
-        false
-    )) as Array<Record<string, any>>;
+        false,
+    )) as Array<Record<string, any>>
 
-    const mangaIds = feed.map((chapter) => chapter?.relationships.find((relationship) => relationship.type === 'manga')?.id);
+    const mangaIds = feed.map((chapter) => chapter?.relationships.find((relationship) => relationship.type === 'manga')?.id)
 
-    const mangaMetas = await getMangaMetaByIds(mangaIds);
+    const mangaMetas = await getMangaMetaByIds(mangaIds)
 
     return {
         title: 'User Follows',
         link: 'https://mangadex.org/titles/feed',
         description: 'The latest updates of all the manga you follow on MangaDex.',
         item: feed.map((chapter) => {
-            const mangaId = chapter.relationships.find((relationship) => relationship.type === 'manga')?.id;
-            const mangaMeta = mangaMetas.get(mangaId);
-            const chapterTitile = [chapter.attributes.volume ? `Vol. ${chapter.attributes.volume}` : null, chapter.attributes.chapter ? `Ch. ${chapter.attributes.chapter}` : null, chapter.attributes.title].filter(Boolean).join(' ');
+            const mangaId = chapter.relationships.find((relationship) => relationship.type === 'manga')?.id
+            const mangaMeta = mangaMetas.get(mangaId)
+            const chapterTitile = [chapter.attributes.volume ? `Vol. ${chapter.attributes.volume}` : null, chapter.attributes.chapter ? `Ch. ${chapter.attributes.chapter}` : null, chapter.attributes.title].filter(Boolean).join(' ')
 
             return {
                 title: mangaMeta?.title || 'Unknown',
@@ -122,7 +122,7 @@ async function handler(ctx) {
                 pubDate: new Date(chapter.attributes.publishAt),
                 description: chapterTitile,
                 image: mangaMeta?.cover,
-            };
+            }
         }),
-    };
+    }
 }

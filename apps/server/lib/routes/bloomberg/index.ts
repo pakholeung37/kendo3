@@ -1,9 +1,9 @@
-import pMap from 'p-map';
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { parseArticle, parseNewsList, rootUrl } from './utils';
+import { parseArticle, parseNewsList, rootUrl } from './utils'
 
 const siteTitleMapping = {
     '/': 'News',
@@ -18,7 +18,7 @@ const siteTitleMapping = {
     equality: 'Equality',
     businessweek: 'Businessweek',
     citylab: 'CityLab',
-};
+}
 
 export const route: Route = {
     path: '/:site?',
@@ -58,17 +58,17 @@ export const route: Route = {
 | citylab      | CityLab      |
   `,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const site = ctx.req.param('site');
-    const currentUrl = site ? `${rootUrl}/${site}/sitemap_news.xml` : `${rootUrl}/sitemap_news.xml`;
+    const site = ctx.req.param('site')
+    const currentUrl = site ? `${rootUrl}/${site}/sitemap_news.xml` : `${rootUrl}/sitemap_news.xml`
 
-    const list = await parseNewsList(currentUrl, ctx);
-    const items = await pMap(list, (item) => parseArticle(item), { concurrency: 1 });
+    const list = await parseNewsList(currentUrl, ctx)
+    const items = await pMap(list, (item) => parseArticle(item), { concurrency: 1 })
     return {
         title: `Bloomberg - ${siteTitleMapping[site ?? '/']}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

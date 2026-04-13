@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.hinatazaka46.com';
+const rootUrl = 'https://www.hinatazaka46.com'
 
 export const route: Route = {
     path: '/blog/:id?/:page?',
@@ -59,25 +59,25 @@ export const route: Route = {
 | 5         | 加藤 史帆    |
 | 4         | 影山 優佳    |
 | 2         | 潮 紗理菜    |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'all';
-    const page = ctx.req.param('page') ?? '0';
+    const id = ctx.req.param('id') ?? 'all'
+    const page = ctx.req.param('page') ?? '0'
 
-    const params = id === 'all' ? `?page=${page}` : `?page=${page}&ct=${id}`;
-    const currentUrl = `${rootUrl}/s/official/diary/member/list${params}`;
+    const params = id === 'all' ? `?page=${page}` : `?page=${page}&ct=${id}`
+    const currentUrl = `${rootUrl}/s/official/diary/member/list${params}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const items = $('div.p-blog-group .p-blog-article')
         .toArray()
         .map((item) => {
-            const content = load(item);
+            const content = load(item)
 
             return {
                 title: content('.c-blog-article__title').text(),
@@ -85,13 +85,13 @@ async function handler(ctx) {
                 pubDate: parseDate(content('.c-blog-article__date').text()),
                 author: content('.c-blog-article__name').text(),
                 description: content('.c-blog-article__text').html(),
-            };
-        });
+            }
+        })
 
     return {
         allowEmpty: true,
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

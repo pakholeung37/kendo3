@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getData } from './utils';
+import { getData } from './utils'
 
 export const route: Route = {
     path: '/category/:category',
@@ -35,9 +35,9 @@ export const route: Route = {
     name: 'Categories',
     maintainers: ['emdoe'],
     handler,
-};
+}
 
-const ENDPOINT = 'https://api.aeonmedia.co/graphql';
+const ENDPOINT = 'https://api.aeonmedia.co/graphql'
 const LIST_BY_SECTION = /* GraphQL */ `
     query getAeonArticlesBySection($section: String!, $sortField: ArticleSortEnum = published_at, $afterCursor: String, $tag: String) {
         section(site: aeon, slug: $section) {
@@ -76,11 +76,11 @@ const LIST_BY_SECTION = /* GraphQL */ `
             slug
         }
     }
-`;
+`
 
 async function handler(ctx) {
-    const category = ctx.req.param('category').toLowerCase();
-    const url = `https://aeon.co/category/${category}`;
+    const category = ctx.req.param('category').toLowerCase()
+    const url = `https://aeon.co/category/${category}`
     const response = await ofetch(ENDPOINT, {
         method: 'POST',
         body: {
@@ -90,7 +90,7 @@ async function handler(ctx) {
                 section: category,
             },
         },
-    });
+    })
 
     const list = response.data.articles.nodes.map((node) => ({
         title: node.title,
@@ -102,14 +102,14 @@ async function handler(ctx) {
         type: node.type,
         section: node.section.slug,
         slug: node.slug,
-    }));
+    }))
 
-    const items = await getData(list);
+    const items = await getData(list)
 
     return {
         title: `AEON | ${response.data.section.title}`,
         link: url,
         description: response.data.section.metaDescription,
         item: items,
-    };
+    }
 }

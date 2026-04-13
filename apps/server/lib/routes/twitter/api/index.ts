@@ -1,31 +1,31 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
 
-import devApi from './developer-api/api';
+import devApi from './developer-api/api'
 // import mobileApi from './mobile-api/api';
-import webApi from './web-api/api';
+import webApi from './web-api/api'
 
-const enableThirdPartyApi = config.twitter.thirdPartyApi;
+const enableThirdPartyApi = config.twitter.thirdPartyApi
 // const enableMobileApi = config.twitter.username && config.twitter.password;
-const enableWebApi = config.twitter.authToken;
-const enableDeveloperApi = config.twitter.consumerKey && config.twitter.consumerSecret;
+const enableWebApi = config.twitter.authToken
+const enableDeveloperApi = config.twitter.consumerKey && config.twitter.consumerSecret
 
-type ApiItem = (id: string, params?: Record<string, any>) => Promise<Record<string, any>> | Record<string, any> | null;
+type ApiItem = (id: string, params?: Record<string, any>) => Promise<Record<string, any>> | Record<string, any> | null
 let api: {
-    init: () => void;
-    getUser: ApiItem;
-    getUserTweets: ApiItem;
-    getUserTweetsAndReplies: ApiItem;
-    getUserMedia: ApiItem;
-    getUserLikes: ApiItem;
-    getUserTweet: ApiItem;
-    getSearch: ApiItem;
-    getList: ApiItem;
-    getHomeTimeline: ApiItem;
-    getHomeLatestTimeline: ApiItem;
+    init: () => void
+    getUser: ApiItem
+    getUserTweets: ApiItem
+    getUserTweetsAndReplies: ApiItem
+    getUserMedia: ApiItem
+    getUserLikes: ApiItem
+    getUserTweet: ApiItem
+    getSearch: ApiItem
+    getList: ApiItem
+    getHomeTimeline: ApiItem
+    getHomeLatestTimeline: ApiItem
 } = {
     init: () => {
-        throw new ConfigNotFoundError('Twitter API is not configured');
+        throw new ConfigNotFoundError('Twitter API is not configured')
     },
     getUser: () => null,
     getUserTweets: () => null,
@@ -37,14 +37,14 @@ let api: {
     getList: () => null,
     getHomeTimeline: () => null,
     getHomeLatestTimeline: () => null,
-};
-
-if (enableThirdPartyApi) {
-    api = webApi;
-} else if (enableWebApi) {
-    api = webApi;
-} else if (enableDeveloperApi) {
-    api = devApi;
 }
 
-export default api;
+if (enableThirdPartyApi) {
+    api = webApi
+} else if (enableWebApi) {
+    api = webApi
+} else if (enableDeveloperApi) {
+    api = devApi
+}
+
+export default api

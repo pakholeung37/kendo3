@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getNextBuildId } from './utils';
+import { baseUrl, getNextBuildId } from './utils'
 
 export const route: Route = {
     path: '/contests',
@@ -17,16 +17,16 @@ export const route: Route = {
             source: ['makerworld.com/:lang/contests'],
         },
     ],
-};
+}
 
 async function handler() {
-    const nextBuildId = await getNextBuildId();
+    const nextBuildId = await getNextBuildId()
     const response = await ofetch(`${baseUrl}/_next/data/${nextBuildId}/en/contests.json`, {
         headers: {
             'User-Agent': config.trueUA,
         },
-    });
-    const { listConst, previewList } = response.pageProps;
+    })
+    const { listConst, previewList } = response.pageProps
 
     const items = [
         ...listConst.map((c) => ({
@@ -40,7 +40,7 @@ async function handler() {
             description: p.themeDesc,
             pubDate: parseDate(p.contestTime),
         })),
-    ];
+    ]
 
     return {
         title: 'Contest - MakerWorld',
@@ -48,5 +48,5 @@ async function handler() {
         link: `${baseUrl}/en/contests`,
         image: `${baseUrl}/favicon_new.png`,
         item: items,
-    };
+    }
 }

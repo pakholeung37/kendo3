@@ -49,4 +49,4 @@ export default {
 
     // 国际合作局 - 信息公开 https://www.nsfc.gov.cn/publish/portal0/tab1386/
     'gjhzj-xxgk': '/publish/portal0/tab1386/',
-};
+}

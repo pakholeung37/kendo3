@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/:language/:channel?',
@@ -28,12 +28,12 @@ export const route: Route = {
 
   -   频道为单一路径，如 \`http://www.ftchinese.com/rss/news\` 则为 \`/ftchinese/simplified/news\`.
   -   频道包含多重路径，如 \`http://www.ftchinese.com/rss/column/007000002\` 则替换 \`/\` 为 \`-\` \`/ftchinese/simplified/column-007000002\`.`,
-};
+}
 
 async function handler(ctx) {
     return await utils.getData({
         site: ctx.req.param('language') === 'simplified' ? 'www' : 'big5',
         channel: ctx.req.param('channel'),
         ctx,
-    });
+    })
 }

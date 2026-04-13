@@ -1,16 +1,16 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 type DescriptionRenderOptions = {
-    images?: DescriptionImage[];
-    intro?: string;
-    description?: string;
-};
+    images?: DescriptionImage[]
+    intro?: string
+    description?: string
+}
 
 export const renderDescription = ({ images, intro, description }: DescriptionRenderOptions): string =>
     renderToString(
@@ -20,9 +20,9 @@ export const renderDescription = ({ images, intro, description }: DescriptionRen
                     <figure>
                         <img src={image.src} alt={image.alt ?? undefined} />
                     </figure>
-                ) : null
+                ) : null,
             )}
             {intro ? <blockquote>{intro}</blockquote> : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )

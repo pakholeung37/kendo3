@@ -1,35 +1,35 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { lang = 'en' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { lang = 'en' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.deepl.com';
-    const targetUrl: string = new URL(`${lang}/blog`, baseUrl).href;
+    const baseUrl = 'https://www.deepl.com'
+    const targetUrl: string = new URL(`${lang}/blog`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? lang;
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? lang
 
     let items: DataItem[] = $('h4, h6')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el).parent().parent();
+            const $el: Cheerio<Element> = $(el).parent().parent()
 
-            const title: string = $el.find('h4, h6').text();
-            const image: string | undefined = $el.find('img').attr('src');
+            const title: string = $el.find('h4, h6').text()
+            const image: string | undefined = $el.find('img').attr('src')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -40,16 +40,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       ]
                     : undefined,
                 intro: $el.find('p').text(),
-            });
-            const pubDateStr: string | undefined = $el.find('time').attr('datetime');
-            const linkUrl: string | undefined = $el.attr('href');
-            const authorsArr: string[] = $el.find('span.me-6 span').last().text().split(/,\s/);
+            })
+            const pubDateStr: string | undefined = $el.find('time').attr('datetime')
+            const linkUrl: string | undefined = $el.attr('href')
+            const authorsArr: string[] = $el.find('span.me-6 span').last().text().split(/,\s/)
             const authors: DataItem['author'] = authorsArr.map((author) => ({
                 name: author,
                 url: undefined,
                 avatar: undefined,
-            }));
-            const upDatedStr: string | undefined = pubDateStr;
+            }))
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -65,36 +65,36 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1[data-contentful-field-id="title"]').text();
+                const title: string = $$('h1[data-contentful-field-id="title"]').text()
                 const description: string | undefined =
                     item.description +
                     renderDescription({
                         description: $$('div.my-redesign-3').html(),
-                    });
-                const pubDateStr: string | undefined = $$('time').first().attr('datetime');
-                const authorsArr: string[] = $$('span[data-contentful-field-id="author"] span').last().text().split(/,\s/);
+                    })
+                const pubDateStr: string | undefined = $$('time').first().attr('datetime')
+                const authorsArr: string[] = $$('span[data-contentful-field-id="author"] span').last().text().split(/,\s/)
                 const authors: DataItem['author'] = authorsArr.map((author) => ({
                     name: author,
                     url: undefined,
                     avatar: undefined,
-                }));
-                const image: string | undefined = $$('meta[property="og:image"]').attr('content') ?? $$('picture[data-contentful-field-id="image"] img').attr('src');
-                const upDatedStr: string | undefined = pubDateStr;
+                }))
+                const image: string | undefined = $$('meta[property="og:image"]').attr('content') ?? $$('picture[data-contentful-field-id="image"] img').attr('src')
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -109,15 +109,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -128,8 +128,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         image: $('meta[property="og:image"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 const languageOptions = [
     {
@@ -208,7 +208,7 @@ const languageOptions = [
         label: 'العربية',
         value: 'ar',
     },
-];
+]
 
 export const route: Route = {
     path: '/blog/:lang?',
@@ -268,9 +268,9 @@ To subscribe to [Blog](https://www.deepl.com/en/blog), where the source URL is \
         {
             source: ['www.deepl.com/:lang/blog'],
             target: (params) => {
-                const lang: string = params.lang;
+                const lang: string = params.lang
 
-                return `/deepl/blog${lang ? `/${lang}` : ''}`;
+                return `/deepl/blog${lang ? `/${lang}` : ''}`
             },
         },
         {
@@ -417,4 +417,4 @@ To subscribe to [Blog](https://www.deepl.com/en/blog), where the source URL is \
 </details>
 `,
     },
-};
+}

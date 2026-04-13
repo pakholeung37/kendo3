@@ -1,29 +1,29 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, ProcessItems } from './util';
+import { baseUrl, ProcessItems } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = '0' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id = '0' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL('news', baseUrl).href;
-    const apiUrl: string = new URL(`news/getNewsIndexList/${id}`, baseUrl).href;
+    const targetUrl: string = new URL('news', baseUrl).href
+    const apiUrl: string = new URL(`news/getNewsIndexList/${id}`, baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
-    const response = await ofetch(apiUrl);
+    const response = await ofetch(apiUrl)
 
-    const items: DataItem[] = await ProcessItems(limit, response.data.dataList);
+    const items: DataItem[] = await ProcessItems(limit, response.data.dataList)
 
-    const title: string | undefined = $(`div.whale_news_index-content-tab li[data_id="${id}"]`).text();
+    const title: string | undefined = $(`div.whale_news_index-content-tab li[data_id="${id}"]`).text()
 
     return {
         title: `${$('title').text().trim().split(/\s/)[0]}${title ? ` - ${title}` : id}`,
@@ -34,8 +34,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="keywords"]').attr('content')?.split(/,/)[0] ?? undefined,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:id?',
@@ -112,4 +112,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

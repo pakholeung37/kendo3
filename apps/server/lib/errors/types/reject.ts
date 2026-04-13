@@ -1,5 +1,5 @@
 class RejectError extends Error {
-    name = 'RejectError';
+    name = 'RejectError'
 }
 
-export default RejectError;
+export default RejectError

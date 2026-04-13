@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/art/:folder/:username/:mode?',
@@ -37,35 +37,35 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { username, folder = 'gallery', mode = 'sfw' } = ctx.req.param();
-    let url = `https://faexport.spangle.org.uk/user/${username}/${folder}.json?sfw=1&full=1`;
+    const { username, folder = 'gallery', mode = 'sfw' } = ctx.req.param()
+    let url = `https://faexport.spangle.org.uk/user/${username}/${folder}.json?sfw=1&full=1`
     if (mode === 'nsfw') {
-        url = `https://faexport.spangle.org.uk/user/${username}/${folder}.json?full=1`;
+        url = `https://faexport.spangle.org.uk/user/${username}/${folder}.json?full=1`
     }
     const data = await ofetch(url, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
-    let folderName;
+    let folderName
 
     switch (folder) {
         case 'gallery':
-            folderName = 'Gallery';
-            break;
+            folderName = 'Gallery'
+            break
         case 'scraps':
-            folderName = 'Scraps';
-            break;
+            folderName = 'Scraps'
+            break
         case 'favorites':
-            folderName = 'Favorites';
-            break;
+            folderName = 'Favorites'
+            break
         default:
-            folderName = 'Gallery';
+            folderName = 'Gallery'
     }
     const items = data.map((item) => ({
         title: item.title,
@@ -74,7 +74,7 @@ async function handler(ctx) {
         description: `<img src="${item.thumbnail}">`,
         // 由于源API未提供日期，故无pubDate
         author: item.name,
-    }));
+    }))
 
     return {
         allowEmpty: true,
@@ -82,5 +82,5 @@ async function handler(ctx) {
         link: `https://www.furaffinity.net/${folder}/${username}`,
         description: `Fur Affinity ${folderName} of ${username}`,
         item: items,
-    };
+    }
 }

@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'JavDB',
@@ -17,4 +17,4 @@ JavDB 有多个备用域名，本路由默认使用永久域名 \`https://javdb.
 因为该站有反爬检测，所以不应将此值调整过高
 :::`,
     lang: 'zh-CN',
-};
+}

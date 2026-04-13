@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/ai',
@@ -26,14 +26,14 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'ai.ucas.ac.cn/index.php/zh-cn/tzgg',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://ai.ucas.ac.cn';
-    const link = `${baseUrl}/index.php/zh-cn/tzgg`;
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.b-list li');
+    const baseUrl = 'https://ai.ucas.ac.cn'
+    const link = `${baseUrl}/index.php/zh-cn/tzgg`
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.b-list li')
 
     return {
         title: '中科院人工智能所',
@@ -42,13 +42,13 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a.text(),
                     link: `${baseUrl}${a.attr('href')}`,
                     pubDate: parseDate(item.find('.m-date').text(), 'YYYY-MM-DD'),
-                };
+                }
             }),
-    };
+    }
 }

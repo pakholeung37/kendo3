@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/user/:user',
@@ -28,18 +28,18 @@ export const route: Route = {
     name: 'User Threads',
     maintainers: ['yshalsager'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://rattibha.com';
-    const { user: twitterUser } = ctx.req.param();
+    const baseUrl = 'https://rattibha.com'
+    const { user: twitterUser } = ctx.req.param()
 
     const userData = await cache.tryGet(`rattibha:user:${twitterUser}`, async () => {
         const data = await ofetch(`${baseUrl}/user`, {
             query: { id: twitterUser },
-        });
-        return data.user;
-    });
+        })
+        return data.user
+    })
 
     const userThreads = await cache.tryGet(
         `rattibha:userThreads:${twitterUser}`,
@@ -52,8 +52,8 @@ async function handler(ctx) {
                 },
             }),
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     // extract the relevant data from the API response
     const items = userThreads.map((item) => ({
@@ -78,13 +78,13 @@ async function handler(ctx) {
                     </>
                 ) : null}
                 {raw(item.thread.t.info.text.replaceAll('\n', '<br>'))}
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `سلاسل تغريدات ${twitterUser}`,
         link: `${baseUrl}/${twitterUser}`,
         item: items,
-    };
+    }
 }

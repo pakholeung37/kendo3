@@ -1,13 +1,13 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://zodgame.xyz';
+const rootUrl = 'https://zodgame.xyz'
 
 export const route: Route = {
     path: '/forum/:fid?',
@@ -31,15 +31,15 @@ export const route: Route = {
     name: 'forum',
     maintainers: ['FeCCC'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const fid = ctx.req.param('fid');
-    const subUrl = `${rootUrl}/api/mobile/index.php?version=4&module=forumdisplay&fid=${fid}`;
-    const cookie = config.zodgame.cookie;
+    const fid = ctx.req.param('fid')
+    const subUrl = `${rootUrl}/api/mobile/index.php?version=4&module=forumdisplay&fid=${fid}`
+    const cookie = config.zodgame.cookie
 
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('Zodgame RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('Zodgame RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
 
     const response = await got({
@@ -48,16 +48,16 @@ async function handler(ctx) {
         headers: {
             Cookie: cookie,
         },
-    });
+    })
 
-    const info = response.data.Variables;
+    const info = response.data.Variables
 
     const ThreadList = info.forum_threadlist
         .map((item) => {
             if (!info.threadtypes.types[item.typeid]) {
-                return;
+                return
             }
-            const type = info.threadtypes.types[item.typeid];
+            const type = info.threadtypes.types[item.typeid]
 
             return {
                 tid: item.tid,
@@ -66,9 +66,9 @@ async function handler(ctx) {
                 link: `${rootUrl}/forum.php?mod=viewthread&tid=${item.tid}&extra=page%3D1`,
                 category: type,
                 pubDate: parseDate(item.dbdateline * 1000),
-            };
+            }
         })
-        .filter((item) => item !== undefined);
+        .filter((item) => item !== undefined)
 
     // fulltext
     const items = await Promise.all(
@@ -80,17 +80,17 @@ async function handler(ctx) {
                     headers: {
                         Cookie: cookie,
                     },
-                });
+                })
 
-                const threadInfo = threadResponse.data.Variables;
+                const threadInfo = threadResponse.data.Variables
 
-                let description = '';
+                let description = ''
 
                 if (threadInfo.thread.freemessage) {
-                    description += threadInfo.thread.freemessage;
-                    description += renderDescription(threadInfo.postlist[0].message);
+                    description += threadInfo.thread.freemessage
+                    description += renderDescription(threadInfo.postlist[0].message)
                 } else {
-                    description += threadInfo.postlist[0].message;
+                    description += threadInfo.postlist[0].message
                 }
 
                 return {
@@ -104,16 +104,16 @@ async function handler(ctx) {
                     upvotes: Number.parseInt(threadInfo.thread.recommend_add, 10),
                     downvotes: Number.parseInt(threadInfo.thread.recommend_sub, 10),
                     comments: Number.parseInt(threadInfo.thread.replies, 10),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: `${info.forum.name} - ZodGame论坛`,
         link: `${rootUrl}/forum.php?mod=forumdisplay&fid=${fid}`,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (content: string): string =>
@@ -122,5 +122,5 @@ const renderDescription = (content: string): string =>
             <br />
             <br />
             <span>{content}</span>
-        </>
-    );
+        </>,
+    )

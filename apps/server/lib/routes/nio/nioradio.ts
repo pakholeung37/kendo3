@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/nioradio/:albumid',
@@ -32,24 +32,24 @@ export const route: Route = {
     name: 'NIO Radio',
     maintainers: ['marcosteam'],
     handler: async (ctx) => {
-        const { albumid } = ctx.req.param();
+        const { albumid } = ctx.req.param()
         const req = new URLSearchParams({
             albumId: albumid,
             sorttype: '2',
             pagenum: '1',
             pagesize: '10',
-        }).toString();
+        }).toString()
         const data = await ofetch('https://gateway-front-external.nio.com/moat/100914/v2/audio/list', {
             method: 'POST',
             body: req,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-        });
+        })
 
-        const podcasts = data.result.dataList;
-        const podcastName = podcasts[0].albumName;
-        const podcastImage = podcasts[0].albumPic;
+        const podcasts = data.result.dataList
+        const podcastName = podcasts[0].albumName
+        const podcastImage = podcasts[0].albumPic
 
         const items = podcasts.map((podcast) => ({
             title: podcast.audioName,
@@ -62,13 +62,13 @@ export const route: Route = {
             enclosure_url: podcast.aacPlayUrl192,
             enclosure_length: podcast.aacFileSize192,
             enclosure_type: 'audio/x-m4a',
-        }));
+        }))
         return {
             title: `NIO Radio - ${podcastName}`,
             link: 'https://www.nio.com',
             itunes_author: podcasts[0].host.join(', '),
             image: podcastImage,
             item: items,
-        };
+        }
     },
-};
+}

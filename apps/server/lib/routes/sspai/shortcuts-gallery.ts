@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/shortcuts',
@@ -24,14 +24,14 @@ export const route: Route = {
     maintainers: ['Andiedie'],
     handler,
     url: 'shortcuts.sspai.com/*',
-};
+}
 
 async function handler() {
     const {
         data: { data: categories },
-    } = await got('https://shortcuts.sspai.com/api/v1/user/workflow/all/get');
+    } = await got('https://shortcuts.sspai.com/api/v1/user/workflow/all/get')
 
-    const items = [];
+    const items = []
 
     for (const category of categories) {
         for (const shortcut of category.data || []) {
@@ -41,7 +41,7 @@ async function handler() {
                 pubDate: parseDate(shortcut.utime * 1000),
                 guid: shortcut.id,
                 link: shortcut.url,
-            });
+            })
         }
     }
 
@@ -50,5 +50,5 @@ async function handler() {
         link: 'https://shortcuts.sspai.com/#/main/workflow',
         description: 'Shortcuts Gallery - 少数派',
         item: items,
-    };
+    }
 }

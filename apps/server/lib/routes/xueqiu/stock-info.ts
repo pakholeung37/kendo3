@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import queryString from 'query-string';
-import sanitizeHtml from 'sanitize-html';
+import { load } from 'cheerio'
+import queryString from 'query-string'
+import sanitizeHtml from 'sanitize-html'
 
-import { parseToken } from '@/routes/xueqiu/cookies';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { parseToken } from '@/routes/xueqiu/cookies'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/stock_info/:id/:type?',
@@ -32,33 +32,33 @@ export const route: Route = {
     description: `| 公告         | 新闻 | 研报     |
 | ------------ | ---- | -------- |
 | announcement | news | research |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const type = ctx.req.param('type') || 'announcement';
-    const count = 10;
-    const page = 1;
+    const id = ctx.req.param('id')
+    const type = ctx.req.param('type') || 'announcement'
+    const count = 10
+    const page = 1
     const typename = {
         announcement: '公告',
         news: '自选股新闻',
         research: '研报',
         all: 'all',
-    };
-    const source = typename[type];
+    }
+    const source = typename[type]
 
-    const link = `https://xueqiu.com/S/${id}`;
+    const link = `https://xueqiu.com/S/${id}`
     const res1 = await got({
         method: 'get',
         url: link,
-    });
+    })
 
-    const token = await parseToken(link);
-    const $ = load(res1.data); // 使用 cheerio 加载返回的 HTML
-    const stock_name = $('.stock-name').text().split('(')[0];
+    const token = await parseToken(link)
+    const $ = load(res1.data) // 使用 cheerio 加载返回的 HTML
+    const stock_name = $('.stock-name').text().split('(')[0]
 
-    let query_url = 'https://xueqiu.com/statuses';
-    query_url += source === 'all' ? '/search.json' : '/stock_timeline.json';
+    let query_url = 'https://xueqiu.com/statuses'
+    query_url += source === 'all' ? '/search.json' : '/stock_timeline.json'
 
     const res2 = await got({
         method: 'get',
@@ -77,9 +77,9 @@ async function handler(ctx) {
             Cookie: token,
             Referer: link,
         },
-    });
+    })
 
-    const data = res2.data.list;
+    const data = res2.data.list
     return {
         title: `${id} ${stock_name} - ${source}`,
         link,
@@ -90,5 +90,5 @@ async function handler(ctx) {
             pubDate: parseDate(item.created_at),
             link: `https://xueqiu.com${item.target}`,
         })),
-    };
+    }
 }

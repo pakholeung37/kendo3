@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/topic/:topic?/:type?',
@@ -44,51 +44,51 @@ export const route: Route = {
 ::: tip
   Click here to view [All Topics](https://hbr.org/topics)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const topic = ctx.req.param('topic') ?? 'Leadership';
-    const type = ctx.req.param('type') ?? 'Popular';
+    const topic = ctx.req.param('topic') ?? 'Leadership'
+    const type = ctx.req.param('type') ?? 'Popular'
 
-    const rootUrl = 'https://hbr.org';
-    const currentUrl = `${rootUrl}/topic/${topic}`;
+    const rootUrl = 'https://hbr.org'
+    const currentUrl = `${rootUrl}/topic/${topic}`
 
-    const response = await ofetch(currentUrl);
+    const response = await ofetch(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $(`stream-content[data-stream-name="${type}"]`)
         .find('.stream-item')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.attr('data-title'),
                 author: item.attr('data-authors'),
                 category: item.attr('data-topic'),
                 link: `${rootUrl}${item.attr('data-url')}`,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await ofetch(item.link);
+                const detailResponse = await ofetch(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.description = content('.article-body, article[itemprop="description"]').html();
-                item.pubDate = parseDate(content('meta[property="article:published_time"]').attr('content'));
+                item.description = content('.article-body, article[itemprop="description"]').html()
+                item.pubDate = parseDate(content('meta[property="article:published_time"]').attr('content'))
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('title').eq(0).text()} - ${type}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

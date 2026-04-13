@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
 
-import { baseURL } from './const';
+import { baseURL } from './const'
 
 export const route: Route = {
     path: '/apps/:handle/reviews/:page?',
@@ -18,10 +18,10 @@ export const route: Route = {
             source: ['apps.shopify.com/:handle'],
         },
     ],
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { handle = '', page = '1' } = ctx.req.param();
+    const { handle = '', page = '1' } = ctx.req.param()
     const response = await got.get(`${baseURL}/${handle}/reviews`, {
         searchParams: {
             sort_by: 'newest',
@@ -33,23 +33,23 @@ async function handler(ctx: Context): Promise<Data> {
             referer: baseURL,
             dnt: '1',
         },
-    });
+    })
 
-    const htmlContent = response.data;
-    const $ = load(htmlContent);
+    const htmlContent = response.data
+    const $ = load(htmlContent)
 
     const items = $('div[data-merchant-review]')
         .toArray()
         .map((item) => {
-            const $item = $(item);
+            const $item = $(item)
 
-            const reviewID = $item.attr('data-review-content-id');
+            const reviewID = $item.attr('data-review-content-id')
 
-            const $review1 = $item.find('div:nth-child(1)');
-            const $review2 = $item.find('div:nth-child(2)');
+            const $review1 = $item.find('div:nth-child(1)')
+            const $review2 = $item.find('div:nth-child(2)')
 
-            const description = $item.find('div[data-truncate-review] div[data-truncate-content-copy] p').html() || '';
-            const author = $review2.find('div.tw-text-fg-primary').text().trim();
+            const description = $item.find('div[data-truncate-review] div[data-truncate-content-copy] p').html() || ''
+            const author = $review2.find('div.tw-text-fg-primary').text().trim()
 
             const result: DataItem = {
                 guid: reviewID,
@@ -65,10 +65,10 @@ async function handler(ctx: Context): Promise<Data> {
                     location: $review2.find('div.tw-text-fg-primary + div').text().trim(),
                     author,
                 },
-            };
+            }
 
-            return result;
-        });
+            return result
+        })
 
     return {
         title: `Reviews handle:${handle} page:${page} – Shopify App Store`,
@@ -76,5 +76,5 @@ async function handler(ctx: Context): Promise<Data> {
         allowEmpty: true,
         language: 'en-us',
         item: items,
-    };
+    }
 }

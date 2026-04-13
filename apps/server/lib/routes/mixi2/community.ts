@@ -1,16 +1,16 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { CONFIG_OPTIONS, generatePostDataItem, getClient, postFilter } from './utils';
+import { CONFIG_OPTIONS, generatePostDataItem, getClient, postFilter } from './utils'
 
 const handler = async (ctx: Context) => {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
-    const communityId = ctx.req.param('id');
-    const mediaOnly = ctx.req.param('media') === 'media';
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
+    const communityId = ctx.req.param('id')
+    const mediaOnly = ctx.req.param('media') === 'media'
 
-    const client = getClient();
+    const client = getClient()
 
     const [communityInfo, postsData] = await Promise.all([
         client.getCommunity({
@@ -21,11 +21,11 @@ const handler = async (ctx: Context) => {
             limit,
             mediaOnly,
         }),
-    ]);
+    ])
 
     const personasData = await client.getPersonas({
         personaIds: postsData?.posts.map((post) => post.personaId),
-    });
+    })
 
     return {
         title: `${communityInfo.community.name} - ${mediaOnly ? 'メディア' : 'ポスト'}`,
@@ -37,8 +37,8 @@ const handler = async (ctx: Context) => {
                 title: communityInfo.community.name,
                 ...generatePostDataItem(post, personasData.personas),
             })) ?? [],
-    } as Data;
-};
+    } as Data
+}
 
 export const route: Route = {
     path: '/community/:id/:media?',
@@ -72,4 +72,4 @@ export const route: Route = {
     view: ViewType.SocialMedia,
     handler,
     maintainers: ['KarasuShin'],
-};
+}

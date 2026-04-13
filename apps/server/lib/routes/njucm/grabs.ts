@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getNoticeList } from './utils';
+import { getNoticeList } from './utils'
 
-const url = 'https://gra.njucm.edu.cn/2899/list.htm';
-const host = 'https://gra.njucm.edu.cn';
+const url = 'https://gra.njucm.edu.cn/2899/list.htm'
+const host = 'https://gra.njucm.edu.cn'
 
 export const route: Route = {
     path: '/grabszs',
@@ -27,18 +27,18 @@ export const route: Route = {
     maintainers: ['real-jiakai'],
     handler,
     url: 'lib.njucm.edu.cn/2899/list.htm',
-};
+}
 
 async function handler(ctx) {
     const out = await getNoticeList(ctx, url, host, '#wp_news_w3 > table > tbody > tr', 'a', {
         title: '.Article_Title',
         content: '.Article_Content',
         date: '.Article_PublishDate',
-    });
+    })
 
     return {
         title: '南京中医药大学 -- 博士招生',
         link: url,
         item: out,
-    };
+    }
 }

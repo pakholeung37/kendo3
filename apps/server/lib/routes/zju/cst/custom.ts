@@ -1,30 +1,30 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 async function getPage(id) {
     const res = await got({
         method: 'get',
         url: `http://www.cst.zju.edu.cn/${id}/list.htm`,
-    });
-    const $ = load(res.data);
-    const content = $('.lm_new ul li');
+    })
+    const $ = load(res.data)
+    const content = $('.lm_new ul li')
 
     return content.toArray().map((item) => {
-        item = $(item);
+        item = $(item)
 
-        const title = item.find('a').text();
-        const pubDate = parseDate(item.find('.fr').text());
-        const link = item.find('a').attr('href');
+        const title = item.find('a').text()
+        const pubDate = parseDate(item.find('.fr').text())
+        const link = item.find('a').attr('href')
 
         return {
             title,
             pubDate,
             link,
-        };
-    });
+        }
+    })
 }
 
 export const route: Route = {
@@ -48,20 +48,20 @@ export const route: Route = {
 | 0        | 1        | 2        | 3        | 4        | 5        | 6        | 7        | 8            | 9            | 10       |
 
 #### 自定义聚合通知 {#zhe-jiang-da-xue-ruan-jian-xue-yuan-zi-ding-yi-ju-he-tong-zhi}`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id').split('+');
-    const tasks = id.map((id) => getPage(id));
-    const results = await Promise.all(tasks);
-    let items = [];
+    const id = ctx.req.param('id').split('+')
+    const tasks = id.map((id) => getPage(id))
+    const results = await Promise.all(tasks)
+    let items = []
     for (const result of results) {
-        items = [...items, ...result];
+        items = [...items, ...result]
     }
 
     return {
         title: '浙江大学软件学院通知',
         link: 'http://www.cst.zju.edu.cn/',
         item: items,
-    };
+    }
 }

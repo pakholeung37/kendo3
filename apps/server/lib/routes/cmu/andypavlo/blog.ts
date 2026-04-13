@@ -1,21 +1,21 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 async function getArticles() {
-    const url = 'https://www.cs.cmu.edu/~pavlo/blog/index.html';
-    const { data: res } = await got(url);
-    const $ = load(res);
+    const url = 'https://www.cs.cmu.edu/~pavlo/blog/index.html'
+    const { data: res } = await got(url)
+    const $ = load(res)
 
     const list = $('.row.mb-3')
         .toArray()
         .map((element) => {
-            const $item = $(element);
-            const $title = $item.find('h4 a');
-            const $date = $item.find('.text-muted');
-            const $description = $item.find('p');
+            const $item = $(element)
+            const $title = $item.find('h4 a')
+            const $date = $item.find('.text-muted')
+            const $description = $item.find('p')
 
             return {
                 title: $title.text().trim(),
@@ -23,9 +23,9 @@ async function getArticles() {
                 description: $description.text().trim(),
                 pubDate: parseDate($date.attr('title')),
                 guid: $title.attr('href'),
-            };
-        });
-    return list;
+            }
+        })
+    return list
 }
 
 export const route: Route = {
@@ -44,13 +44,13 @@ export const route: Route = {
     name: 'Andy Pavlo Blog',
     maintainers: ['mocusez'],
     handler,
-};
+}
 
 async function handler() {
-    const articles = await getArticles();
+    const articles = await getArticles()
     return {
         title: 'Andy Pavlo - Carnegie Mellon University',
         link: 'https://www.cs.cmu.edu/~pavlo/blog/index.html',
         item: articles,
-    };
+    }
 }

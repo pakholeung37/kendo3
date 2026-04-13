@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/blog/:language?',
@@ -33,24 +33,24 @@ export const route: Route = {
     description: `| English | Chinese | Japanese | Korean |
 | ------- | ------- | -------- | ------ |
 |         | zh-CN   | ja       | ko     |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? '';
+    const language = ctx.req.param('language') ?? ''
 
-    const rootUrl = 'https://sensortower.com';
-    const currentUrl = `${rootUrl}${language ? `/${language}` : ''}/blog`;
+    const rootUrl = 'https://sensortower.com'
+    const currentUrl = `${rootUrl}${language ? `/${language}` : ''}/blog`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const data = response.data.match(/"uri":"(\/blog\/.*?)"/g);
+    const data = response.data.match(/"uri":"(\/blog\/.*?)"/g)
 
     let items = data.map((item) => ({
         link: `${rootUrl}${language ? `/${language}` : ''}${item.match(/"(\/blog\/.*?)"/)[1]}`,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -58,39 +58,39 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
-                const detail = JSON.parse(`{${detailResponse.data.match(/("title":.*?),"body":/)[1]}}`);
+                const content = load(detailResponse.data)
+                const detail = JSON.parse(`{${detailResponse.data.match(/("title":.*?),"body":/)[1]}}`)
 
-                content('h1').remove();
-                content('h5').parent().remove();
-                content('div[data-testid="Text-embedded-entry-block"]').remove();
+                content('h1').remove()
+                content('h5').parent().remove()
+                content('div[data-testid="Text-embedded-entry-block"]').remove()
 
                 content('img').each(function () {
-                    const image = (content(this).attr('srcset') ?? content(this).attr('src')).split('?w=')[0];
+                    const image = (content(this).attr('srcset') ?? content(this).attr('src')).split('?w=')[0]
 
-                    content(this).replaceWith(renderDescription({ image }));
-                });
+                    content(this).replaceWith(renderDescription({ image }))
+                })
 
-                item.title = detail.title;
-                item.author = detail.author.name;
-                item.pubDate = parseDate(detail.pubDate, 'MMMM YYYY');
-                item.category = [...(detail.tags?.map((t) => t.title) ?? []), ...(detail.category?.map((c) => c.title) ?? [])];
+                item.title = detail.title
+                item.author = detail.author.name
+                item.pubDate = parseDate(detail.pubDate, 'MMMM YYYY')
+                item.category = [...(detail.tags?.map((t) => t.title) ?? []), ...(detail.category?.map((c) => c.title) ?? [])]
                 item.description = renderDescription({
                     header: content('header[data-csk-entry-type="blog"]').html() ?? undefined,
                     description: content('div[data-csk-entry-type="blog"] div[data-testid="Text-root"]').html() ?? undefined,
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Sensor Tower - Blog',
         link: currentUrl,
         item: items,
         language: language || 'en-US',
-    };
+    }
 }

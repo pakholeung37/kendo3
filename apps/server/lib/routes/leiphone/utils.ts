@@ -1,23 +1,23 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const ProcessFeed = async (list, cache) => {
-    const host = 'https://www.leiphone.com';
+    const host = 'https://www.leiphone.com'
 
     const items = await Promise.all(
         list.map(async (e) => {
-            const link = new URL(e, host).href;
+            const link = new URL(e, host).href
 
             const single = await cache.tryGet(link, async () => {
-                const response = await got.get(link);
+                const response = await got.get(link)
 
-                const $ = load(response.data);
+                const $ = load(response.data)
 
-                let description = '';
+                let description = ''
                 if ($('.top-img').html() !== null) {
-                    description += $('.top-img').html();
+                    description += $('.top-img').html()
                 }
 
                 return {
@@ -26,14 +26,14 @@ const ProcessFeed = async (list, cache) => {
                     pubDate: parseDate($('.time').text(), 8),
                     author: $('.aut > a').text(),
                     link,
-                };
-            });
+                }
+            })
 
-            return single;
-        })
-    );
+            return single
+        }),
+    )
 
-    return items;
-};
+    return items
+}
 
-export default { ProcessFeed };
+export default { ProcessFeed }

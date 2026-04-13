@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/ci-en/:id/article',
@@ -30,33 +30,33 @@ export const route: Route = {
     name: "Ci-en Creators' Article",
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '7400';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10;
+    const id = ctx.req.param('id') ?? '7400'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10
 
-    const rootUrl = 'https://ci-en.dlsite.com';
-    const currentUrl = `${rootUrl}/creator/${id}/article?mode=list`;
+    const rootUrl = 'https://ci-en.dlsite.com'
+    const currentUrl = `${rootUrl}/creator/${id}/article?mode=list`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.c-postedArticle-info a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -64,30 +64,30 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.article-title').remove();
+                content('.article-title').remove()
 
                 content('.file-player-image').each(function () {
-                    content(this).replaceWith(`<img src="${content(this).attr('data-actual')}">`);
-                });
+                    content(this).replaceWith(`<img src="${content(this).attr('data-actual')}">`)
+                })
 
-                item.description = content('article').html();
-                item.pubDate = timezone(parseDate(content('.e-date').first().text()), +9);
+                item.description = content('article').html()
+                item.pubDate = timezone(parseDate(content('.e-date').first().text()), +9)
                 item.category = content('.c-hashTagList-item')
                     .toArray()
-                    .map((t) => content(t).text().split('#').pop().trim());
+                    .map((t) => content(t).text().split('#').pop().trim())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

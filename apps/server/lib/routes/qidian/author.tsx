@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { PRESETS } from '@/utils/header-generator';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { PRESETS } from '@/utils/header-generator'
 
 export const route: Route = {
     path: '/author/:id',
@@ -25,19 +25,19 @@ export const route: Route = {
     name: '作者',
     maintainers: ['miles170', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const currentUrl = `https://my.qidian.com/author/${id}/`;
+    const id = ctx.req.param('id')
+    const currentUrl = `https://my.qidian.com/author/${id}/`
 
     // Reason: PC site (my.qidian.com) returns anti-bot JS challenge; mobile site has SSR data
-    const response = await got(`https://m.qidian.com/author/${id}/`, { headerGeneratorOptions: PRESETS.MODERN_IOS });
-    const $ = load(response.data);
-    const { pageContext } = JSON.parse($('#vite-plugin-ssr_pageContext').text());
-    const pageData = pageContext.pageProps.pageData;
+    const response = await got(`https://m.qidian.com/author/${id}/`, { headerGeneratorOptions: PRESETS.MODERN_IOS })
+    const $ = load(response.data)
+    const { pageContext } = JSON.parse($('#vite-plugin-ssr_pageContext').text())
+    const pageData = pageContext.pageProps.pageData
 
-    const authorName = pageData.info.name;
+    const authorName = pageData.info.name
 
     const items = (pageData.allBook || []).map((book) => ({
         title: book.bName,
@@ -45,12 +45,12 @@ async function handler(ctx) {
         category: book.cat,
         description: book.desc,
         link: `https://book.qidian.com/info/${book.bid}/`,
-    }));
+    }))
 
     return {
         title: `${authorName} - 起点中文网`,
         description: pageData.info.desc,
         link: currentUrl,
         item: items,
-    };
+    }
 }

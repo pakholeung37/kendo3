@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getPostByAccountId, showByUsername } from './utils';
+import { baseUrl, getPostByAccountId, showByUsername } from './utils'
 
 export const route: Route = {
     path: '/user/:username',
@@ -28,7 +28,7 @@ export const route: Route = {
     name: 'User Posts',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 const renderDescription = (postImages, body: string): string =>
     renderToString(
@@ -42,14 +42,14 @@ const renderDescription = (postImages, body: string): string =>
                   ))
                 : null}
             {body ? raw(body) : null}
-        </>
-    );
+        </>,
+    )
 
 async function handler(ctx) {
-    const { username } = ctx.req.param();
+    const { username } = ctx.req.param()
 
-    const account = await showByUsername(username);
-    const posts = await getPostByAccountId(account.id);
+    const account = await showByUsername(username)
+    const posts = await getPostByAccountId(account.id)
 
     const items = posts.map((p) => ({
         title: p.body?.replaceAll('\r\n', ' ').trim().split(' ')[0],
@@ -57,7 +57,7 @@ async function handler(ctx) {
         pubDate: parseDate(p.published_at),
         link: `${baseUrl}/posts/${p.id}`,
         author: p.user.name,
-    }));
+    }))
 
     return {
         title: `${account.name} (@${account.username})`,
@@ -69,5 +69,5 @@ Followers ${account.followings_count} Follow ${account.about.replaceAll('\r\n', 
         logo: account.avatar_url,
         language: 'ja-JP',
         item: items,
-    };
+    }
 }

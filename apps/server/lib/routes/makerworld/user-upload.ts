@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getNextBuildId } from './utils';
+import { baseUrl, getNextBuildId } from './utils'
 
 export const route: Route = {
     path: '/user/:handle/upload',
@@ -20,12 +20,12 @@ export const route: Route = {
             source: ['makerworld.com/:lang/:handle/upload', 'makerworld.com/:lang/:handle'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const { handle } = ctx.req.param();
+    const { handle } = ctx.req.param()
 
-    const nextBuildId = await getNextBuildId();
+    const nextBuildId = await getNextBuildId()
     const response = await ofetch(`${baseUrl}/_next/data/${nextBuildId}/en/${handle}/upload.json`, {
         headers: {
             'User-Agent': config.trueUA,
@@ -33,8 +33,8 @@ async function handler(ctx) {
         query: {
             handle,
         },
-    });
-    const { userInfo, designs } = response.pageProps;
+    })
+    const { userInfo, designs } = response.pageProps
 
     const items = designs.map((d) => ({
         title: d.title,
@@ -43,7 +43,7 @@ async function handler(ctx) {
         author: d.designCreator.name,
         category: d.tags,
         description: d.instances.map((i) => `<figure><img src="${i.cover}" alt="${d.title}"><figcaption>${i.title}</figcaption></figure>`).join(''),
-    }));
+    }))
 
     return {
         title: `${userInfo.name} | Published - MakerWorld`,
@@ -51,5 +51,5 @@ async function handler(ctx) {
         description: userInfo.personal.bio,
         image: userInfo.avatar,
         item: items,
-    };
+    }
 }

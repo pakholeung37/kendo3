@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const rootUrl = 'http://www.rsj.sh.gov.cn';
+const rootUrl = 'http://www.rsj.sh.gov.cn'
 
 const renderDescription = ({ name, type, date, registrationDeadline }) =>
     renderToString(
@@ -17,8 +17,8 @@ const renderDescription = ({ name, type, date, registrationDeadline }) =>
             <text>考试日期：{date} </text>
             <br />
             <text>报名起止日期：{registrationDeadline} </text>
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: ['/sh/rsj/ksxm', '/shanghai/rsj/ksxm'],
@@ -42,18 +42,18 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'rsj.sh.gov.cn/',
-};
+}
 
 async function handler() {
-    const url = `${rootUrl}/ksyzc/wangz/kwaplist_300.jsp`;
+    const url = `${rootUrl}/ksyzc/wangz/kwaplist_300.jsp`
 
     const response = await got({
         method: 'get',
         url,
         responseType: 'buffer',
-    });
-    const dataHtml = iconv.decode(response.data, 'gbk');
-    const $ = load(dataHtml);
+    })
+    const dataHtml = iconv.decode(response.data, 'gbk')
+    const $ = load(dataHtml)
 
     const items = $('kwap')
         .toArray()
@@ -67,11 +67,11 @@ async function handler() {
                 registrationDeadline: $(item).find('baomksrq_A300').text(),
             }),
             guid: `${$(item).find('kaosrq').text()}${$(item).find('kaosxmmc').text()}`,
-        }));
+        }))
 
     return {
         title: '上海市职业能力考试院 - 考试项目',
         link: url,
         item: items,
-    };
+    }
 }

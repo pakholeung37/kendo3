@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { PRESETS } from '@/utils/header-generator';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { PRESETS } from '@/utils/header-generator'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/chapter/:id',
@@ -28,20 +28,20 @@ export const route: Route = {
     name: '作品章节',
     maintainers: ['fuzy112', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const response = await got(`https://m.qidian.com/book/${id}.html`, { headerGeneratorOptions: PRESETS.MODERN_IOS });
-    const $ = load(response.data);
+    const response = await got(`https://m.qidian.com/book/${id}.html`, { headerGeneratorOptions: PRESETS.MODERN_IOS })
+    const $ = load(response.data)
 
-    const name = $('meta[property="og:title"]').attr('content');
-    const coverUrl = `https:${$('.detail__header-cover__img').attr('src')}`;
+    const name = $('meta[property="og:title"]').attr('content')
+    const coverUrl = `https:${$('.detail__header-cover__img').attr('src')}`
 
-    const { data: catalog } = await got(`https://m.qidian.com/book/${id}/catalog/`, { headerGeneratorOptions: PRESETS.MODERN_IOS });
-    const $c = load(catalog);
-    const { pageContext } = JSON.parse($c('#vite-plugin-ssr_pageContext').text());
+    const { data: catalog } = await got(`https://m.qidian.com/book/${id}/catalog/`, { headerGeneratorOptions: PRESETS.MODERN_IOS })
+    const $c = load(catalog)
+    const { pageContext } = JSON.parse($c('#vite-plugin-ssr_pageContext').text())
 
     const chapterItem = pageContext.pageProps.pageData.vs
         .flatMap((v) => v.cs)
@@ -49,7 +49,7 @@ async function handler(ctx) {
             title: c.cN,
             pubDate: parseDate(c.uT),
             link: `https://vipreader.qidian.com/chapter/${id}/${c.id}`,
-        }));
+        }))
 
     return {
         title: `起点 ${name}`,
@@ -57,5 +57,5 @@ async function handler(ctx) {
         description: $('#bookSummary content').text(),
         image: coverUrl,
         item: chapterItem,
-    };
+    }
 }

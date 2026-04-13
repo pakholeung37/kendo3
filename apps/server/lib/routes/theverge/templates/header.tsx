@@ -1,33 +1,33 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type HeaderRenderOptions = {
     featuredImage?: {
         image?: {
-            originalUrl?: string;
-            title?: string;
-            alt?: string;
-        };
-    };
+            originalUrl?: string
+            title?: string
+            alt?: string
+        }
+    }
     ledeMediaData?: {
-        __typename?: string;
-        embedHtml?: string;
+        __typename?: string
+        embedHtml?: string
         image?: {
             thumbnails?: {
                 horizontal?: {
-                    url?: string;
-                };
-            };
-            title?: string;
+                    url?: string
+                }
+            }
+            title?: string
             credit?: {
-                plaintext?: string;
-            };
-        };
+                plaintext?: string
+            }
+        }
         video?: {
-            volumeUuid?: string;
-        };
-    };
-};
+            volumeUuid?: string
+        }
+    }
+}
 
 export const renderHeader = ({ featuredImage, ledeMediaData }: HeaderRenderOptions): string =>
     renderToString(
@@ -51,5 +51,5 @@ export const renderHeader = ({ featuredImage, ledeMediaData }: HeaderRenderOptio
                     <iframe src={`https://volume.vox-cdn.com/embed/${ledeMediaData.video?.volumeUuid}`} allowfullscreen></iframe>
                 ) : null
             ) : null}
-        </>
-    );
+        </>,
+    )

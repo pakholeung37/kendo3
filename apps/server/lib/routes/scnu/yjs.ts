@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/yjs',
@@ -25,13 +25,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'yz.scnu.edu.cn/tongzhigonggao/ssgg',
-};
+}
 
 async function handler() {
-    const link = 'https://yz.scnu.edu.cn/tongzhigonggao/ssgg/';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.listmod div a');
+    const link = 'https://yz.scnu.edu.cn/tongzhigonggao/ssgg/'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.listmod div a')
 
     return {
         title: '华南师范大学研究生院',
@@ -40,11 +40,11 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.text(),
                     link: item.attr('href'),
-                };
+                }
             }),
-    };
+    }
 }

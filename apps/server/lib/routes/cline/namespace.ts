@@ -10,4 +10,4 @@ Cline understands your codebase context and can help with everything from small 
         name: 'Cline Offcial Blog',
         description: 'Cline 官方博客',
     },
-};
+}

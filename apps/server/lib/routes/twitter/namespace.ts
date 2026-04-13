@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'X (Twitter)',
@@ -52,4 +52,4 @@ Currently supports two authentication methods:
 
 `,
     lang: 'en',
-};
+}

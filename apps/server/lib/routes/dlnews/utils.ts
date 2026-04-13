@@ -1,12 +1,12 @@
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.dlnews.com';
-const getData = async (url) => (await ofetch(url)).content_elements;
+const baseUrl = 'https://www.dlnews.com'
+const getData = async (url) => (await ofetch(url)).content_elements
 
 const getList = (data) =>
     data.map((value) => {
-        const { _id, headlines, description, publish_date, website_url, taxonomy, credits, promo_items } = value;
+        const { _id, headlines, description, publish_date, website_url, taxonomy, credits, promo_items } = value
         return {
             id: _id,
             title: headlines.basic,
@@ -16,7 +16,7 @@ const getList = (data) =>
             itunes_item_image: promo_items.basic.url,
             pubDate: parseDate(publish_date),
             category: taxonomy.sections.map((v) => v.name).join(', '),
-        };
-    });
+        }
+    })
 
-export { getData, getList };
+export { getData, getList }

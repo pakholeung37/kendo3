@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/popular/:timeframe?',
@@ -25,13 +25,13 @@ export const route: Route = {
     maintainers: ['DIYgod', 'loganrockmore'],
     handler,
     url: 'dribbble.com/',
-};
+}
 
 async function handler(ctx) {
-    const timeframe = ctx.req.param('timeframe');
-    const url = `https://dribbble.com/shots/popular${timeframe ? `?timeframe=${timeframe}` : ''}`;
+    const timeframe = ctx.req.param('timeframe')
+    const url = `https://dribbble.com/shots/popular${timeframe ? `?timeframe=${timeframe}` : ''}`
 
-    const title = 'Dribbble - Popular Shots';
+    const title = 'Dribbble - Popular Shots'
 
-    return await utils.getData(url, title);
+    return await utils.getData(url, title)
 }

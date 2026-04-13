@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 const renderDesc = (installers?: string[]) =>
     renderToString(
@@ -15,8 +15,8 @@ const renderDesc = (installers?: string[]) =>
                     <br />
                 </>
             ))}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/:appId',
@@ -39,33 +39,33 @@ export const route: Route = {
     name: 'Apps Update',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://winstall.app';
-    const appId = ctx.req.param('appId');
+    const baseUrl = 'https://winstall.app'
+    const appId = ctx.req.param('appId')
 
     const buildId = await cache.tryGet(
         'winget:buildId',
         async () => {
-            const { data } = await got(baseUrl);
-            const $ = load(data);
+            const { data } = await got(baseUrl)
+            const $ = load(data)
 
-            return JSON.parse($('#__NEXT_DATA__').text()).buildId;
+            return JSON.parse($('#__NEXT_DATA__').text()).buildId
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const { data: response } = await got(`${baseUrl}/_next/data/${buildId}/apps/${appId}.json`);
-    const { app } = response.pageProps;
+    const { data: response } = await got(`${baseUrl}/_next/data/${buildId}/apps/${appId}.json`)
+    const { app } = response.pageProps
     const items = app.versions.map((item) => ({
         title: `${app.name} ${item.version}`,
         description: renderDesc(item.installers),
         author: app.publisher,
         category: app.tags,
         guid: `winstall:${appId}:${item.version}`,
-    }));
+    }))
 
     return {
         title: `${app.name} - winstall`,
@@ -74,5 +74,5 @@ async function handler(ctx) {
         image: `https://api.winstall.app/icons/next/${appId}.webp`,
         language: 'en',
         item: items,
-    };
+    }
 }

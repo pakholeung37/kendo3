@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-export const baseUrl = 'https://makerworld.com';
+export const baseUrl = 'https://makerworld.com'
 
 export const getNextBuildId = () =>
     cache.tryGet('makerworld:nextBuildId', async () => {
@@ -12,8 +12,8 @@ export const getNextBuildId = () =>
             headers: {
                 'User-Agent': config.trueUA,
             },
-        });
-        const $ = load(response);
-        const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-        return nextData.buildId;
-    });
+        })
+        const $ = load(response)
+        const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+        return nextData.buildId
+    })

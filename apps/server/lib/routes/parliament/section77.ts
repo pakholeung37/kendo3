@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/section77/:type?',
@@ -31,17 +31,17 @@ export const route: Route = {
 
   -   \`-m\` for the draft which Speaker of Parliament considered as a monetary draft (ประธานสภาผู้แทนราษฎรวินิจฉัยว่า เป็นร่างการเงิน), or
   -   \`-nm\` for non-monetary one (ประธานสภาผู้แทนราษฎรวินิจฉัยว่า ไม่เป็นร่างการเงิน).`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.parliament.go.th/section77';
-    const { type = '' } = ctx.req.param();
-    const cookieJar = new CookieJar();
+    const baseUrl = 'https://www.parliament.go.th/section77'
+    const { type = '' } = ctx.req.param()
+    const cookieJar = new CookieJar()
 
-    let title = 'ร่างพระราชบัญญัติที่เปิดรับฟังความคิดเห็นตามมาตรา 77 ของรัฐธรรมนูญ';
+    let title = 'ร่างพระราชบัญญัติที่เปิดรับฟังความคิดเห็นตามมาตรา 77 ของรัฐธรรมนูญ'
 
     if (type) {
-        const [presenter, isMonetaryAct = ''] = type.split('-');
+        const [presenter, isMonetaryAct = ''] = type.split('-')
 
         title +=
             {
@@ -54,13 +54,13 @@ async function handler(ctx) {
                 substatus2: 'ที่บรรจุเข้าระเบียบวาระ',
                 substatus3: 'ที่พิจารณาแล้ว',
                 closewsubypm: 'ที่นายกฯ ไม่รับรอง',
-            }[presenter] ?? '';
+            }[presenter] ?? ''
 
         title +=
             {
                 m: ' (ประธานสภาผู้แทนราษฎรวินิจฉัยว่า เป็นร่างการเงิน)',
                 nm: ' (ประธานสภาผู้แทนราษฎรวินิจฉัยว่า ไม่เป็นร่างการเงิน)',
-            }[isMonetaryAct] ?? '';
+            }[isMonetaryAct] ?? ''
     }
 
     const result = {
@@ -68,31 +68,31 @@ async function handler(ctx) {
         link: `${baseUrl}/survey_more_news.php${type ? '?type=' + type : ''}`,
         language: 'th-th',
         item: [],
-    };
+    }
 
     const queryParams = {
         page: 1,
         type,
-    };
+    }
     if (type) {
-        queryParams.type = type;
+        queryParams.type = type
     }
 
-    const url = `${baseUrl}/ajax/pagination.php?${new URLSearchParams(queryParams).toString()}`;
+    const url = `${baseUrl}/ajax/pagination.php?${new URLSearchParams(queryParams).toString()}`
     const { data: response } = await got({
         url,
         cookieJar,
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
     if ($.text() === 'ยังไม่มีข้อมูล') {
-        return result;
+        return result
     }
 
     const actList = $('div.item-77')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').text(),
                 link: `${baseUrl}/${item.find('a').attr('href')}`,
@@ -100,11 +100,11 @@ async function handler(ctx) {
                     .find('label')
                     .toArray()
                     .map((l) => $(l).text()),
-            };
-        });
+            }
+        })
 
     if (!actList.length) {
-        return result;
+        return result
     }
 
     const actListFull = await Promise.all(
@@ -113,19 +113,19 @@ async function handler(ctx) {
                 const { data: response } = await got({
                     url: item.link,
                     cookieJar,
-                });
-                const $ = load(response);
+                })
+                const $ = load(response)
 
                 // Select the first element with the class name 'comment-body'
-                item.title = $('.title h5').first().text();
+                item.title = $('.title h5').first().text()
                 item.author = $('.present-by')
                     .first()
                     .text()
-                    .replaceAll(/^\s*เสนอโดย\s*/g, '');
-                item.description = $('.des').first().html();
+                    .replaceAll(/^\s*เสนอโดย\s*/g, '')
+                item.description = $('.des').first().html()
 
                 // Act draft status
-                const [, presenter, monetaryType] = $('.type77 h5').text().split(' ');
+                const [, presenter, monetaryType] = $('.type77 h5').text().split(' ')
                 item.category = [
                     ...item.category,
                     $('.container-fluid .bg-status .col-md-8.p-0 h5 span,a')
@@ -133,22 +133,22 @@ async function handler(ctx) {
                         .map((statusElem) => $(statusElem).text()),
                     presenter,
                     monetaryType,
-                ];
+                ]
 
-                const voteText = $('.row.bg-status .col-md-4.text-right').text().trim();
-                const voteRegex = /^ผู้แสดงความคิดเห็น\s*(\d+)\s*คน\s*(\d+(?:\.\d+)?)%\s*(\d+(?:\.\d+)?)%/g.exec(voteText);
+                const voteText = $('.row.bg-status .col-md-4.text-right').text().trim()
+                const voteRegex = /^ผู้แสดงความคิดเห็น\s*(\d+)\s*คน\s*(\d+(?:\.\d+)?)%\s*(\d+(?:\.\d+)?)%/g.exec(voteText)
 
                 if (voteRegex) {
-                    const voteTotal = Number.parseInt(voteRegex[0]);
-                    const upvotePercent = Number.parseFloat(voteRegex[1]);
-                    const downvotePercent = Number.parseFloat(voteRegex[2]);
+                    const voteTotal = Number.parseInt(voteRegex[0])
+                    const upvotePercent = Number.parseFloat(voteRegex[1])
+                    const downvotePercent = Number.parseFloat(voteRegex[2])
 
-                    item.upvotes = Number.parseInt((upvotePercent / 100) * voteTotal);
-                    item.downvotes = Number.parseInt((downvotePercent / 100) * voteTotal);
+                    item.upvotes = Number.parseInt((upvotePercent / 100) * voteTotal)
+                    item.downvotes = Number.parseInt((downvotePercent / 100) * voteTotal)
                 }
 
-                const dateText = $('.banner-detail .banner-detail-caption .blockquote p:last-child').text();
-                const dateRegex = /^รับฟังตั้งแต่วันที่\s(\d{1,2})\s*([\u0E00-\u0E7F]+)\s*(\d{4})/g.exec(dateText);
+                const dateText = $('.banner-detail .banner-detail-caption .blockquote p:last-child').text()
+                const dateRegex = /^รับฟังตั้งแต่วันที่\s(\d{1,2})\s*([\u0E00-\u0E7F]+)\s*(\d{4})/g.exec(dateText)
 
                 if (dateRegex) {
                     item.pubDate = timezone(
@@ -168,24 +168,24 @@ async function handler(ctx) {
                                 พฤศจิกายน: 10,
                                 ธันวาคม: 11,
                             }[dateRegex[2].trim()],
-                            Number.parseInt(dateRegex[1])
+                            Number.parseInt(dateRegex[1]),
                         ),
-                        +7
-                    );
+                        +7,
+                    )
                 }
 
                 // Every property of a list item defined above is reused here
                 // and we add a new property 'description'
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     if (!actListFull.length) {
-        return result;
+        return result
     }
 
-    result.item = actListFull;
+    result.item = actListFull
 
-    return result;
+    return result
 }

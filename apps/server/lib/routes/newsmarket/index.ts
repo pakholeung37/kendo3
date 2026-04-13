@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -33,33 +33,33 @@ export const route: Route = {
 | 食農教育       | 人物               | 漁業。畜牧           | 綠生活。國際        | 評論    |
 | -------------- | ------------------ | -------------------- | ------------------- | ------- |
 | food-education | people-and-history | raising-and-breeding | living-green-travel | opinion |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
+    const category = ctx.req.param('category') ?? ''
 
-    const rootUrl = 'https://www.newsmarket.com.tw';
-    const currentUrl = `${rootUrl}${category ? `/blog/category/${category}` : ''}`;
+    const rootUrl = 'https://www.newsmarket.com.tw'
+    const currentUrl = `${rootUrl}${category ? `/blog/category/${category}` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.title a')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
                 pubDate: parseDate(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -67,30 +67,30 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
                 content('figure img').each(function () {
                     content(this)
                         .parent()
-                        .html(`<img src="${content(this).attr('data-src')}">`);
-                });
+                        .html(`<img src="${content(this).attr('data-src')}">`)
+                })
 
-                content('.inline-post').remove();
+                content('.inline-post').remove()
 
-                item.author = content('.author-name').text();
-                item.description = content('.entry-content').html();
-                item.pubDate = parseDate(detailResponse.data.match(/"datePublished":"(.*)","dateModified"/)[1]);
+                item.author = content('.author-name').text()
+                item.description = content('.entry-content').html()
+                item.pubDate = parseDate(detailResponse.data.match(/"datePublished":"(.*)","dateModified"/)[1])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

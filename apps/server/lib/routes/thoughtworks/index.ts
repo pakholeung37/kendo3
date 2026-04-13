@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch'; // 统一使用的请求库
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch' // 统一使用的请求库
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog',
@@ -14,7 +14,7 @@ export const route: Route = {
     name: 'Inside Blog',
     maintainers: ['Hyvi'],
     handler,
-};
+}
 async function handler() {
     // https://www.thoughtworks.com/rest/search/config 里的 BLOG_SEARCH_TOKEN
     const tokenData = await ofetch('https://www.thoughtworks.com/rest/search/config', {
@@ -23,10 +23,10 @@ async function handler() {
             origin: 'https://www.thoughtworks.com',
             referer: 'https://www.thoughtworks.com/',
         },
-    });
+    })
 
     // 'Bearer ' + token
-    const bearerToken = 'Bearer ' + tokenData.BLOG_SEARCH_TOKEN;
+    const bearerToken = 'Bearer ' + tokenData.BLOG_SEARCH_TOKEN
 
     const data = await ofetch('https://platform-eu.cloud.coveo.com/rest/search/v2?organizationId=thoughtworksproductionhcqoag0q', {
         method: 'POST',
@@ -43,7 +43,7 @@ async function handler() {
             numberOfResults: 10,
             firstResult: 0,
         },
-    });
+    })
     // 从 API 响应中提取相关数据
     const items = data.results.map((item) => ({
         // 文章标题
@@ -58,7 +58,7 @@ async function handler() {
         author: item.raw.sysauthor,
         // 如果有的话，文章分类
         // category: item.labels.map((label) => label.name),
-    }));
+    }))
 
     return {
         // 源标题
@@ -67,5 +67,5 @@ async function handler() {
         link: 'https://www.thoughtworks.com/zh-cn/insights/blog',
         // 源文章
         item: items,
-    };
+    }
 }

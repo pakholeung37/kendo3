@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const FEED_TITLE = 'Genossenschaften.immo' as const;
-const FEED_LOGO = 'https://genossenschaften.immo/static/gimmo/img/favicon/favicon-128x128.png' as const;
-const FEED_LANGUAGE = 'de' as const;
-const BASE_URL = 'https://genossenschaften.immo' as const;
-const PATH_PREFIX = '/genossenschaften/' as const;
+const FEED_TITLE = 'Genossenschaften.immo' as const
+const FEED_LOGO = 'https://genossenschaften.immo/static/gimmo/img/favicon/favicon-128x128.png' as const
+const FEED_LANGUAGE = 'de' as const
+const BASE_URL = 'https://genossenschaften.immo' as const
+const PATH_PREFIX = '/genossenschaften/' as const
 
 export const route: Route = {
     name: 'Immobiliensuche',
@@ -63,43 +63,43 @@ filters, copy the part of the URL after the \`?\`.
         supportScihub: false,
     },
     async handler(ctx) {
-        let path = ctx.req.path.slice(PATH_PREFIX.length);
+        let path = ctx.req.path.slice(PATH_PREFIX.length)
         if (path.startsWith('&')) {
             // in case request url is something like `/genossenschaften/&cost=…`
-            path = path.slice(1);
+            path = path.slice(1)
         }
 
-        const link = `${BASE_URL}/?${path}`;
-        const response = await ofetch(link);
-        const $ = load(response);
+        const link = `${BASE_URL}/?${path}`
+        const response = await ofetch(link)
+        const $ = load(response)
 
         const items = $('[itemtype="https://schema.org/Apartment"]')
             .toArray()
             .map((el) => {
-                const $el = $(el);
-                const name = $el.find('[itemprop=name]').text();
-                const body = $el.find('.card-body').text().trim();
+                const $el = $(el)
+                const name = $el.find('[itemprop=name]').text()
+                const body = $el.find('.card-body').text().trim()
                 // UTC timestamp: <time datetime="2025-01-07T15:48:07.089153">
-                const dateTime = $el.find('time').attr('datetime');
-                const itemPubDate = dateTime ? new Date(dateTime + 'Z') : undefined;
-                const itemLink = BASE_URL + $el.find('[itemprop=url]').attr('href');
-                const itemImage = $el.find('[itemprop=image]').attr('href');
+                const dateTime = $el.find('time').attr('datetime')
+                const itemPubDate = dateTime ? new Date(dateTime + 'Z') : undefined
+                const itemLink = BASE_URL + $el.find('[itemprop=url]').attr('href')
+                const itemImage = $el.find('[itemprop=image]').attr('href')
 
                 // e.g. ['2', '60,00 m²', '500,00 €', '10.000,00 €']
                 const numbers = $el
                     .find('.card-body .fs-5')
                     .toArray()
-                    .map((el) => $(el).text().trim());
+                    .map((el) => $(el).text().trim())
 
                 // e.g. ['Verfügbar', 'OEVW', 'Miete', 'Wohneinheit']
                 const itemCategories = $el
                     .find('.badge')
                     .toArray()
-                    .map((el) => $(el).text().trim());
+                    .map((el) => $(el).text().trim())
 
-                const titleAppendix = numbers.length ? ` | ${numbers.join(' · ')}` : '';
-                const itemTitle = name + titleAppendix;
-                const itemDescription = itemCategories.join(' · ') + (body.length ? ` / ${body}` : '');
+                const titleAppendix = numbers.length ? ` | ${numbers.join(' · ')}` : ''
+                const itemTitle = name + titleAppendix
+                const itemDescription = itemCategories.join(' · ') + (body.length ? ` / ${body}` : '')
 
                 return {
                     title: itemTitle,
@@ -108,8 +108,8 @@ filters, copy the part of the URL after the \`?\`.
                     description: itemDescription,
                     category: itemCategories,
                     image: itemImage,
-                } satisfies DataItem;
-            });
+                } satisfies DataItem
+            })
 
         return {
             title: FEED_TITLE,
@@ -118,6 +118,6 @@ filters, copy the part of the URL after the \`?\`.
             allowEmpty: true,
             item: items,
             link,
-        } satisfies Data;
+        } satisfies Data
     },
-};
+}

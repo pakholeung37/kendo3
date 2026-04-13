@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
-import MarkdownIt from 'markdown-it';
+import { load } from 'cheerio'
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
     breaks: true,
-});
+})
 
-const host = 'https://leetcode.com';
-const gqlEndpoint = `${host}/graphql`;
+const host = 'https://leetcode.com'
+const gqlEndpoint = `${host}/graphql`
 
 export const route: Route = {
     path: '/articles',
@@ -36,12 +36,12 @@ export const route: Route = {
     maintainers: ['LogicJake'],
     handler,
     url: 'leetcode.com/articles',
-};
+}
 
 async function handler() {
-    const link = new URL('/articles/', host).href;
-    const response = await ofetch(link, { parseResponse: (txt) => txt });
-    const $ = load(response);
+    const link = new URL('/articles/', host).href
+    const response = await ofetch(link, { parseResponse: (txt) => txt })
+    const $ = load(response)
 
     const list = $('a.list-group-item')
         .toArray()
@@ -52,14 +52,14 @@ async function handler() {
                 author: $(item).find('.text-500').text(),
                 link: new URL($(item).attr('href'), host).href,
                 pubDate: $(item).find('p.pull-right.media-date strong').text().trim(),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const out = await Promise.all(
         list.map((info) =>
             cache.tryGet(info.link, async () => {
-                const titleSlug = info.link.split('/')[4];
+                const titleSlug = info.link.split('/')[4]
 
                 const questionContent = await ofetch(gqlEndpoint, {
                     method: 'POST',
@@ -76,7 +76,7 @@ async function handler() {
                             }
                         `,
                     },
-                });
+                })
 
                 const officialSolution = await ofetch(gqlEndpoint, {
                     method: 'POST',
@@ -93,17 +93,17 @@ async function handler() {
                             }
                         `,
                     },
-                });
+                })
 
-                const solution = md.render(officialSolution.data.question.solution.content);
+                const solution = md.render(officialSolution.data.question.solution.content)
 
-                info.description = (questionContent.data.question.content?.trim() ?? '') + solution;
-                info.pubDate = parseDate(info.pubDate);
+                info.description = (questionContent.data.question.content?.trim() ?? '') + solution
+                info.pubDate = parseDate(info.pubDate)
 
-                return info;
-            })
-        )
-    );
+                return info
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
@@ -111,5 +111,5 @@ async function handler() {
         image: 'https://assets.leetcode.com/static_assets/public/icons/favicon-192x192.png',
         link,
         item: out,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     name: 'PAIR - AI Exploreables',
@@ -18,38 +18,38 @@ export const route: Route = {
         },
     ],
     handler: async () => {
-        const baseUrl = 'https://pair.withgoogle.com';
+        const baseUrl = 'https://pair.withgoogle.com'
         const response = await ofetch(baseUrl + '/explorables', {
             method: 'GET',
-        });
-        const $ = load(response);
+        })
+        const $ = load(response)
         const items = await Promise.all(
             $('div.explorable-card')
                 .toArray()
                 .map(async (el) => {
-                    const title = $(el).find('h3').text();
-                    const image = $(el).find('img').attr('src');
-                    const link = baseUrl + $(el).find('a').attr('href');
+                    const title = $(el).find('h3').text()
+                    const image = $(el).find('img').attr('src')
+                    const link = baseUrl + $(el).find('a').attr('href')
                     return (await cache.tryGet(link, async () => {
-                        const response = await ofetch(link);
-                        const $item = load(response);
-                        let description = $item('body').html();
+                        const response = await ofetch(link)
+                        const $item = load(response)
+                        let description = $item('body').html()
                         if (!description || description.trim() === '') {
-                            description = $('p').text();
+                            description = $('p').text()
                         }
                         return {
                             title,
                             link,
                             description,
                             image,
-                        };
-                    })) as DataItem;
-                })
-        );
+                        }
+                    })) as DataItem
+                }),
+        )
         return {
             title: 'PAIR - AI Exploreables',
             link: 'https://pair.withgoogle.com/explorables',
             item: items,
-        };
+        }
     },
-};
+}

@@ -1,15 +1,15 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
-const rootUrl = 'https://github.com';
-const apiUrl = 'https://api.github.com';
+})
+const rootUrl = 'https://github.com'
+const apiUrl = 'https://api.github.com'
 
 const typeDict = {
     issue: {
@@ -21,7 +21,7 @@ const typeDict = {
     pull: {
         title: 'Pull request',
     },
-};
+}
 
 export const route: Route = {
     path: '/comments/:user/:repo/:number?',
@@ -41,13 +41,13 @@ export const route: Route = {
     name: 'Issue / Pull Request comments',
     maintainers: ['TonyRL', 'FliegendeWurst'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
-    const repo = ctx.req.param('repo');
-    const number = ctx.req.param('number') && Number.isNaN(Number.parseInt(ctx.req.param('number'))) ? 1 : Number.parseInt(ctx.req.param('number'));
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100;
+    const user = ctx.req.param('user')
+    const repo = ctx.req.param('repo')
+    const number = ctx.req.param('number') && Number.isNaN(Number.parseInt(ctx.req.param('number'))) ? 1 : Number.parseInt(ctx.req.param('number'))
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100
     const headers =
         config.github && config.github.access_token
             ? {
@@ -56,9 +56,9 @@ async function handler(ctx) {
               }
             : {
                   Accept: 'application/vnd.github.v3+json',
-              };
+              }
 
-    return await (Number.isNaN(number) ? allIssues(ctx, user, repo, limit, headers) : singleIssue(ctx, user, repo, number, limit, headers));
+    return await (Number.isNaN(number) ? allIssues(ctx, user, repo, limit, headers) : singleIssue(ctx, user, repo, number, limit, headers))
 }
 
 async function allIssues(ctx, user, repo, limit, headers) {
@@ -69,16 +69,16 @@ async function allIssues(ctx, user, repo, limit, headers) {
             direction: 'desc',
             per_page: limit,
         },
-    });
+    })
 
-    const timeline = response._data;
+    const timeline = response._data
 
     const items = timeline.map((item) => {
-        const actor = item.actor?.login ?? item.user?.login ?? 'ghost';
-        const issueUrlParts = item.issue_url.split('/');
-        const issue = issueUrlParts.at(-1);
-        const urlParts = item.html_url.split('/');
-        const issueType = typeDict[urlParts.at(-2)].title;
+        const actor = item.actor?.login ?? item.user?.login ?? 'ghost'
+        const issueUrlParts = item.issue_url.split('/')
+        const issue = issueUrlParts.at(-1)
+        const urlParts = item.html_url.split('/')
+        const issueType = typeDict[urlParts.at(-2)].title
 
         return {
             title: `${actor} commented on ${user}/${repo}: ${issueType} #${issue}`,
@@ -86,8 +86,8 @@ async function allIssues(ctx, user, repo, limit, headers) {
             pubDate: parseDate(item.created_at),
             link: item.html_url,
             description: item.body ? md.render(item.body) : null,
-        };
-    });
+        }
+    })
 
     const rateLimit = {
         limit: Number.parseInt(response.headers.get('x-ratelimit-limit')),
@@ -95,38 +95,38 @@ async function allIssues(ctx, user, repo, limit, headers) {
         reset: parseDate(Number.parseInt(response.headers.get('x-ratelimit-reset')) * 1000),
         resoure: response.headers.get('x-ratelimit-resource'),
         used: Number.parseInt(response.headers.get('x-ratelimit-used')),
-    };
+    }
 
     const ret = {
         title: `${user}/${repo}: Issue & Pull request comments`,
         link: `${rootUrl}/${user}/${repo}`,
         item: items,
-    };
+    }
 
     ctx.set('json', {
         ...ret,
         rateLimit,
-    });
-    return ret;
+    })
+    return ret
 }
 
 async function singleIssue(ctx, user, repo, number, limit, headers) {
     const response = await ofetch.raw(`${apiUrl}/repos/${user}/${repo}/issues/${number}`, {
         headers,
-    });
-    const issue = response._data;
-    const type = issue.pull_request ? 'pull' : 'issue';
+    })
+    const issue = response._data
+    const type = issue.pull_request ? 'pull' : 'issue'
 
     let timelineResponse = await ofetch.raw(issue.timeline_url, {
         headers,
         query: {
             per_page: limit,
         },
-    });
-    const items = [];
-    const lastUrl = timelineResponse.headers.get('link')?.match(/<(\S+?)>; rel="last"/)?.[1];
+    })
+    const items = []
+    const lastUrl = timelineResponse.headers.get('link')?.match(/<(\S+?)>; rel="last"/)?.[1]
     if (lastUrl) {
-        timelineResponse = await ofetch.raw(lastUrl, { headers });
+        timelineResponse = await ofetch.raw(lastUrl, { headers })
     } else {
         items.push({
             title: `${issue.user.login} created ${user}/${repo}: ${typeDict[type].title} #${issue.number}`,
@@ -134,12 +134,12 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
             author: issue.user.login,
             pubDate: parseDate(issue.created_at),
             link: `${issue.html_url}#issue-${issue.id}`,
-        });
+        })
     }
-    const timeline = timelineResponse._data;
+    const timeline = timelineResponse._data
 
     for (const item of timeline) {
-        const actor = item.actor?.login ?? item.user?.login ?? 'ghost';
+        const actor = item.actor?.login ?? item.user?.login ?? 'ghost'
         switch (item.event) {
             case 'closed':
                 items.push({
@@ -147,8 +147,8 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
                     author: actor,
                     pubDate: parseDate(item.created_at),
                     link: item.url,
-                });
-                break;
+                })
+                break
             case 'commented':
                 items.push({
                     title: `${actor} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number}`,
@@ -156,8 +156,8 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
                     author: actor,
                     pubDate: parseDate(item.created_at),
                     link: item.html_url,
-                });
-                break;
+                })
+                break
             case 'cross-referenced':
                 items.push({
                     title: `${actor} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number}`,
@@ -166,8 +166,8 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
                     pubDate: parseDate(item.created_at),
                     guid: `${actor} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number} on ${item.created_at}`,
                     link: `${actor} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number} on ${item.created_at}`,
-                });
-                break;
+                })
+                break
             case 'renamed':
                 items.push({
                     title: `${actor} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number}`,
@@ -175,8 +175,8 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
                     author: actor,
                     pubDate: parseDate(item.created_at),
                     link: item.url,
-                });
-                break;
+                })
+                break
             case 'reviewed':
                 items.push({
                     title: `${item.user.login} ${item.event} on ${user}/${repo}: ${typeDict[type].title} #${issue.number}`,
@@ -184,10 +184,10 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
                     author: item.user.login,
                     pubDate: parseDate(item.submitted_at),
                     link: item.html_url,
-                });
-                break;
+                })
+                break
             default:
-                break;
+                break
         }
     }
 
@@ -195,7 +195,7 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
         title: `${user}/${repo}: ${typeDict[type].title} #${number} - ${issue.title}`,
         link: issue.html_url,
         item: items,
-    };
+    }
 
     ctx.set('json', {
         ...ret,
@@ -206,6 +206,6 @@ async function singleIssue(ctx, user, repo, number, limit, headers) {
             resoure: response.headers.get('x-ratelimit-resource'),
             used: Number.parseInt(response.headers.get('x-ratelimit-used')),
         },
-    });
-    return ret;
+    })
+    return ret
 }

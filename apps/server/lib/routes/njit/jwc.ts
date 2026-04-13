@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'https://jwc.njit.edu.cn';
+const host = 'https://jwc.njit.edu.cn'
 
 export const route: Route = {
     path: '/jwc/:type?',
@@ -26,44 +26,44 @@ export const route: Route = {
     description: `| 教学 | 考试 | 信息 | 实践 |
 | ---- | ---- | ---- | ---- |
 | jx   | ks   | xx   | sj   |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'jx';
-    const link = host + '/index/' + type + '.htm';
-    const response = await got(link);
-    const $ = load(response.body);
+    const type = ctx.req.param('type') ?? 'jx'
+    const link = host + '/index/' + type + '.htm'
+    const response = await got(link)
+    const $ = load(response.body)
 
     const urlList = $('body')
         .find('ul li span a')
-        .map((e) => $(e).attr('href'));
+        .map((e) => $(e).attr('href'))
 
     const titleList = $('body')
         .find('ul li span a')
         .toArray()
-        .map((e) => $(e).attr('title'));
+        .map((e) => $(e).attr('title'))
 
     const dateList = $('body')
         .find('span.date')
         .toArray()
-        .map((e) => $(e).text());
+        .map((e) => $(e).text())
 
     const out = await Promise.all(
         urlList.map((itemUrl, index) => {
-            itemUrl = new URL(itemUrl, host).href;
+            itemUrl = new URL(itemUrl, host).href
             if (itemUrl.includes('.htm')) {
                 return cache.tryGet(itemUrl, async () => {
-                    const response = await got(itemUrl);
+                    const response = await got(itemUrl)
                     if (response.redirectUrls.length !== 0) {
                         const single = {
                             title: titleList[index],
                             link: itemUrl,
                             description: '该通知无法直接预览, 请点击原文链接↑查看',
                             pubDate: parseDate(dateList[index]),
-                        };
-                        return single;
+                        }
+                        return single
                     }
-                    const $ = load(response.body);
+                    const $ = load(response.body)
                     const single = {
                         title: $('title').text(),
                         link: itemUrl,
@@ -73,45 +73,45 @@ async function handler(ctx) {
                             .replaceAll('href="/', `href="${new URL('.', host).href}`)
                             .trim(),
                         pubDate: $('.author p').eq(1).text().replace('时间:', ''),
-                    };
-                    return single;
-                });
+                    }
+                    return single
+                })
             } else {
                 const single = {
                     title: titleList[index],
                     link: itemUrl,
                     description: '该通知为文件，请点击原文链接↑下载',
                     pubDate: parseDate(dateList[index]),
-                };
-                return single;
+                }
+                return single
             }
-        })
-    );
-    let info;
+        }),
+    )
+    let info
     switch (type) {
         case 'ks':
-            info = '考试';
+            info = '考试'
 
-            break;
+            break
 
         case 'xx':
-            info = '信息';
+            info = '信息'
 
-            break;
+            break
 
         case 'sj':
-            info = '实践';
+            info = '实践'
 
-            break;
+            break
 
         case 'jx':
         default:
-            info = '教学';
-            break;
+            info = '教学'
+            break
     }
     return {
         title: '南京工程学院教务处 -- ' + info,
         link,
         item: out,
-    };
+    }
 }

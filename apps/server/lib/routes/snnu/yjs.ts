@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjs',
@@ -28,48 +28,48 @@ export const route: Route = {
         },
     ],
     handler: async () => {
-        const url = 'https://newyjs.snnu.edu.cn/tzgg1.htm';
-        const response = await ofetch(url);
-        const $ = load(response);
-        const list = $('.n_bt li').toArray().slice(0, 10);
+        const url = 'https://newyjs.snnu.edu.cn/tzgg1.htm'
+        const response = await ofetch(url)
+        const $ = load(response)
+        const list = $('.n_bt li').toArray().slice(0, 10)
 
         const items = await Promise.all(
             list.map((item) => {
-                const $item = $(item);
-                const $link = $item.find('a').first();
-                const link = new URL($link.attr('href') || '', url).href;
+                const $item = $(item)
+                const $link = $item.find('a').first()
+                const link = new URL($link.attr('href') || '', url).href
 
-                const pubDate = parseDate($link.find('em').text());
-                const title = $link.attr('title') || $link.find('p').text() || $link.text();
+                const pubDate = parseDate($link.find('em').text())
+                const title = $link.attr('title') || $link.find('p').text() || $link.text()
 
                 return cache.tryGet(link, async () => {
                     try {
-                        const detailResponse = await ofetch(link);
-                        const $$ = load(detailResponse);
-                        const description = $$('.v_news_content').html() || $$('#vsb_content').html() || '';
+                        const detailResponse = await ofetch(link)
+                        const $$ = load(detailResponse)
+                        const description = $$('.v_news_content').html() || $$('#vsb_content').html() || ''
 
                         return {
                             title,
                             link,
                             description,
                             pubDate,
-                        };
+                        }
                     } catch {
                         return {
                             title,
                             link,
                             pubDate,
-                        };
+                        }
                     }
-                });
-            })
-        );
+                })
+            }),
+        )
 
         return {
             title: '陕西师范大学 - 研究生院通知公告',
             link: url,
             image: 'https://newyjs.snnu.edu.cn/2024html/images24/logo01.png',
             item: items,
-        };
+        }
     },
-};
+}

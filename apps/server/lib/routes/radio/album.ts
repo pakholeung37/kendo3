@@ -1,16 +1,16 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const audio_types = {
     m3u8: 'x-mpegURL',
     mp3: 'mpeg',
     mp4: 'mp4',
     m4a: 'mp4',
-};
+}
 
 export const route: Route = {
     path: '/album/:id',
@@ -35,14 +35,14 @@ export const route: Route = {
 ::: tip
   部分专辑不适用该路由，此时可以尝试 [节目](#yun-ting-jie-mu) 路由
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://ytweb.radio.cn';
-    const currentUrl = `${rootUrl}/share/albumDetail?columnId=${id}`;
-    const apiRootUrl = 'https://ytapi.radio.cn';
+    const rootUrl = 'https://ytweb.radio.cn'
+    const currentUrl = `${rootUrl}/share/albumDetail?columnId=${id}`
+    const apiRootUrl = 'https://ytapi.radio.cn'
 
     const response = await ofetch(`${apiRootUrl}/ytsrv/srv/wifimusicbox/demand/detail`, {
         method: 'POST',
@@ -69,14 +69,14 @@ async function handler(ctx) {
             h5flag: '1',
         }),
         parseResponse: JSON.parse,
-    });
+    })
 
     const items = response.con.map((item) => {
-        let enclosure_url = item.playUrlHigh ?? item.playUrlMedium ?? item.playUrlLow ?? item.playUrl;
-        enclosure_url = enclosure_url.endsWith('.m3u8') ? item.downloadUrl : enclosure_url;
+        let enclosure_url = item.playUrlHigh ?? item.playUrlMedium ?? item.playUrlLow ?? item.playUrl
+        enclosure_url = enclosure_url.endsWith('.m3u8') ? item.downloadUrl : enclosure_url
 
-        const fileExt = new URL(enclosure_url).pathname.split('.').pop();
-        const enclosure_type = fileExt ? `audio/${audio_types[fileExt]}` : '';
+        const fileExt = new URL(enclosure_url).pathname.split('.').pop()
+        const enclosure_type = fileExt ? `audio/${audio_types[fileExt]}` : ''
 
         return {
             guid: item.id,
@@ -89,8 +89,8 @@ async function handler(ctx) {
             enclosure_length: item.fileSize,
             itunes_duration: item.duration,
             itunes_item_image: item.logoUrl,
-        };
-    });
+        }
+    })
 
     return {
         title: `云听 - ${response.columnName}`,
@@ -100,5 +100,5 @@ async function handler(ctx) {
         logo: response.logoUrl,
         description: response.descriptions ?? response.descriptionSimple,
         itunes_author: response.ownerNickName || 'radio.cn',
-    };
+    }
 }

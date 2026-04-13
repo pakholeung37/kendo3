@@ -1,8 +1,8 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getArticle, getArticleList, mdTableBuilder, parseArticleList } from './utils';
+import { getArticle, getArticleList, mdTableBuilder, parseArticleList } from './utils'
 
 const idNameMap = [
     {
@@ -35,7 +35,7 @@ const idNameMap = [
         name: '全部评测',
         nodeId: '20915',
     },
-];
+]
 
 export const route: Route = {
     path: '/review/:type?',
@@ -62,22 +62,22 @@ export const route: Route = {
     maintainers: ['yy4382'],
     description: mdTableBuilder(idNameMap),
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const type = ctx.req.param('type') ?? 'pc';
+    const type = ctx.req.param('type') ?? 'pc'
 
-    const idName = idNameMap.find((item) => item.type === type);
+    const idName = idNameMap.find((item) => item.type === type)
     if (!idName) {
-        throw new Error(`Invalid type: ${type}`);
+        throw new Error(`Invalid type: ${type}`)
     }
 
-    const response = await getArticleList(idName.nodeId);
-    const list = parseArticleList(response);
-    const fullTextList = await Promise.all(list.map((item) => getArticle(item)));
+    const response = await getArticleList(idName.nodeId)
+    const list = parseArticleList(response)
+    const fullTextList = await Promise.all(list.map((item) => getArticle(item)))
     return {
         title: `${idName.name} - 游民星空评测`,
         link: 'https://www.gamersky.com/review',
         item: fullTextList,
-    };
+    }
 }

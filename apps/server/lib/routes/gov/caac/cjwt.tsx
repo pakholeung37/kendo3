@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/caac/cjwt/:category?',
@@ -31,15 +31,15 @@ export const route: Route = {
     url: 'caac.gov.cn/HDJL/',
     description: `| 机票 | 托运 | 无人机 | 体检 | 行政审批 | 投诉 |
 | ---- | ---- | ------ | ---- | -------- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.caac.gov.cn';
-    const apiUrl = new URL(`caacgov/jsonp/messageBoard/visit/get${category ? 'CJWT' : ''}List`, rootUrl).href;
-    const currentUrl = new URL('HDJL/', rootUrl).href;
+    const rootUrl = 'https://www.caac.gov.cn'
+    const apiUrl = new URL(`caacgov/jsonp/messageBoard/visit/get${category ? 'CJWT' : ''}List`, rootUrl).href
+    const currentUrl = new URL('HDJL/', rootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -47,7 +47,7 @@ async function handler(ctx) {
             infoMess: category,
             pageIndex: 1,
         },
-    });
+    })
 
     const items = JSON.parse(response.match(/jsonp_messageBoard_getList\((.*?)\)$/)[1])
         .returnData.root.slice(0, limit)
@@ -60,12 +60,12 @@ async function handler(ctx) {
             guid: `caac-cjwt#${item.id}`,
             pubDate: timezone(parseDate(item.createDate), +8),
             updated: timezone(parseDate(item.feedbackDate), +8),
-        }));
+        }))
 
-    const author = '中国民用航空局';
-    const image = new URL('images/Logo2.png', rootUrl).href;
-    const icon = new URL('images/weixinLogo.jpg', rootUrl).href;
-    const subtitle = '公众留言';
+    const author = '中国民用航空局'
+    const image = new URL('images/Logo2.png', rootUrl).href
+    const icon = new URL('images/weixinLogo.jpg', rootUrl).href
+    const subtitle = '公众留言'
 
     return {
         item: items,
@@ -79,7 +79,7 @@ async function handler(ctx) {
         subtitle,
         author,
         allowEmpty: true,
-    };
+    }
 }
 
 const renderDescription = (item): string =>
@@ -104,5 +104,5 @@ const renderDescription = (item): string =>
                     <p style="text-indent:1em;">{item.feedback ? raw(item.feedback) : null}</p>
                 </dd>
             </dl>
-        </div>
-    );
+        </div>,
+    )

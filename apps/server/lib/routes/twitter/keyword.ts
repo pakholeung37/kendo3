@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import api from './api';
-import utils from './utils';
+import api from './api'
+import utils from './utils'
 
 export const route: Route = {
     path: '/keyword/:keyword/:routeParams?',
@@ -43,12 +43,12 @@ export const route: Route = {
             source: ['x.com/search'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
-    await api.init();
-    const data = await api.getSearch(keyword);
+    const keyword = ctx.req.param('keyword')
+    await api.init()
+    const data = await api.getSearch(keyword)
 
     return {
         title: `Twitter Keyword - ${keyword}`,
@@ -57,5 +57,5 @@ async function handler(ctx) {
             data,
         }),
         allowEmpty: true,
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/live/room/:id',
@@ -24,23 +24,23 @@ export const route: Route = {
     name: '直播间开播',
     maintainers: ['MittWillson'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const url = `https://www.lang.live/room/${id}`;
+    const id = ctx.req.param('id')
+    const url = `https://www.lang.live/room/${id}`
 
-    const api = 'https://api.lang.live/langweb/v1/room/liveinfo';
+    const api = 'https://api.lang.live/langweb/v1/room/liveinfo'
     const {
         data: { data },
     } = await got(api, {
         searchParams: {
             room_id: id,
         },
-    });
+    })
 
-    let item = [];
-    const name = data.live_info.nickname;
+    let item = []
+    const name = data.live_info.nickname
     if (data.live_info.live_status === 1) {
         item = [
             {
@@ -49,7 +49,7 @@ async function handler(ctx) {
                 guid: `lang:live:room:${id}:${data.live_info.live_id}`,
                 description: renderToString(<img src={data.live_info.headimg} />),
             },
-        ];
+        ]
     }
 
     return {
@@ -58,5 +58,5 @@ async function handler(ctx) {
         link: url,
         item,
         allowEmpty: true,
-    };
+    }
 }

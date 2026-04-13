@@ -1,12 +1,12 @@
-import pMap from 'p-map';
+import pMap from 'p-map'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderComic } from './template/comic';
+import { renderComic } from './template/comic'
 
 export const route: Route = {
     path: '/update',
@@ -30,26 +30,26 @@ export const route: Route = {
     name: '最近更新',
     maintainers: ['kjasn'],
     handler: async () => {
-        const baseUrl = 'https://manhua.zaimanhua.com';
-        const currentUrl = `${baseUrl}/api/v1/comic2/update_list?status&theme&zone&cate&firstLetter&sortType&page=1&size=20`;
+        const baseUrl = 'https://manhua.zaimanhua.com'
+        const currentUrl = `${baseUrl}/api/v1/comic2/update_list?status&theme&zone&cate&firstLetter&sortType&page=1&size=20`
 
         const response = await ofetch(currentUrl, {
             headers: {
                 'user-agent': config.trueUA,
                 referer: baseUrl,
             },
-        });
+        })
 
         // 近期更新漫画数据
-        const updateData = response.data.comicList;
+        const updateData = response.data.comicList
         const items = await pMap(
             updateData,
             async (item) => {
-                const comicId = item.id;
-                const lastUpdateChapterId = item.last_update_chapter_id;
-                const comicPy = item.comic_py;
+                const comicId = item.id
+                const lastUpdateChapterId = item.last_update_chapter_id
+                const comicPy = item.comic_py
                 // 当前漫画章节内容的 API
-                const chapterUrl = `${baseUrl}/api/v1/comic2/chapter/detail?comic_id=${comicId}&chapter_id=${lastUpdateChapterId}`;
+                const chapterUrl = `${baseUrl}/api/v1/comic2/chapter/detail?comic_id=${comicId}&chapter_id=${lastUpdateChapterId}`
 
                 return await cache.tryGet(chapterUrl, async () => {
                     // 获取章节内容
@@ -58,10 +58,10 @@ export const route: Route = {
                             'user-agent': config.trueUA,
                             referer: baseUrl,
                         },
-                    });
+                    })
 
-                    const chapterData = chapterResponse.data;
-                    const description = renderComic(chapterData.chapterInfo.page_url || []);
+                    const chapterData = chapterResponse.data
+                    const description = renderComic(chapterData.chapterInfo.page_url || [])
 
                     return {
                         title: `[${item.status}] | ${item.name} - ${item.last_update_chapter_name}`,
@@ -71,16 +71,16 @@ export const route: Route = {
                         link: `${baseUrl}/view/${comicPy}/${comicId}/${lastUpdateChapterId}`,
                         pubDate: parseDate(item.last_updatetime * 1000),
                         description,
-                    };
-                });
+                    }
+                })
             },
-            { concurrency: 3 }
-        );
+            { concurrency: 3 },
+        )
 
         return {
             title: '再漫画 - 最近更新',
             link: `${baseUrl}/update`,
             item: items,
-        };
+        }
     },
-};
+}

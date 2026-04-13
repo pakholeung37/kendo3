@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { apiRootUrl, getInfo, processItems, rootUrl } from './util';
+import { apiRootUrl, getInfo, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: ['/channel/:id?', '/:id?'],
@@ -25,14 +25,14 @@ export const route: Route = {
 | 城市 | 政策 | 特写 | 干货 | 科技股 |
 | ---- | ---- | ---- | ---- | ------ |
 | 16   | 15   | 6    | 12   | 33     |`,
-};
+}
 
 async function handler(ctx) {
-    const { id = 'news' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const { id = 'news' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
 
-    const apiUrl = new URL(`v2/content/channel/${id === 'news' ? 'getArticle' : 'detail'}`, apiRootUrl).href;
-    const currentUrl = new URL(`channel/${id}`, rootUrl).href;
+    const apiUrl = new URL(`v2/content/channel/${id === 'news' ? 'getArticle' : 'detail'}`, apiRootUrl).href
+    const currentUrl = new URL(`channel/${id}`, rootUrl).href
 
     const items = await processItems(
         apiUrl,
@@ -42,11 +42,11 @@ async function handler(ctx) {
             ? {}
             : {
                   channel_id: id,
-              }
-    );
+              },
+    )
 
     return {
         item: items,
         ...(await getInfo(currentUrl, cache.tryGet)),
-    };
+    }
 }

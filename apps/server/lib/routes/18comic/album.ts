@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { renderDescription } from './templates/description';
-import { defaultDomain, getApiUrl, getRootUrl, processApiItems } from './utils';
+import { renderDescription } from './templates/description'
+import { defaultDomain, getApiUrl, getRootUrl, processApiItems } from './utils'
 
 export const route: Route = {
     path: '/album/:id',
@@ -30,23 +30,23 @@ export const route: Route = {
     description: `::: tip
   专辑 id 不包括 URL 中标题的部分。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const { domain = defaultDomain } = ctx.req.query();
-    const rootUrl = getRootUrl(domain);
-    const currentUrl = `${rootUrl}/album/${id}`;
+    const id = ctx.req.param('id')
+    const { domain = defaultDomain } = ctx.req.query()
+    const rootUrl = getRootUrl(domain)
+    const currentUrl = `${rootUrl}/album/${id}`
 
-    const apiUrl = `${getApiUrl()}/album?id=${id}`;
+    const apiUrl = `${getApiUrl()}/album?id=${id}`
 
-    const apiResult = await processApiItems(apiUrl);
+    const apiResult = await processApiItems(apiUrl)
 
-    const category = apiResult.tags;
-    const author = apiResult.author.join(', ');
-    const description = apiResult.description;
-    const addTime = apiResult.addtime;
-    let results: any[] = [];
+    const category = apiResult.tags
+    const author = apiResult.author.join(', ')
+    const description = apiResult.description
+    const addTime = apiResult.addtime
+    let results: any[] = []
     if (apiResult.series.length === 0) {
         results.push({
             title: apiResult.name,
@@ -63,34 +63,34 @@ async function handler(ctx) {
                 cover: `https://cdn-msp3.${domain}/media/albums/${id}_3x4.jpg`,
                 category,
             }),
-        });
+        })
     } else {
         results = await Promise.all(
             apiResult.series.map((item, index) =>
                 cache.tryGet(`18comic:album:${item.id}`, async () => {
-                    const chapterApiUrl = `${getApiUrl()}/chapter?id=${item.id}`;
-                    const chapterResult = await processApiItems(chapterApiUrl);
-                    const result = {};
-                    const chapterNum = index + 1;
-                    result.title = `第${chapterNum}話 ${item.name === '' ? chapterNum : item.name}`;
-                    result.link = `${rootUrl}/photo/${item.id}`;
-                    result.guid = `${rootUrl}/photo/${item.id}`;
-                    result.updated = new Date(chapterResult.addtime * 1000);
-                    result.pubDate = addTime;
-                    result.category = category;
-                    result.author = author;
+                    const chapterApiUrl = `${getApiUrl()}/chapter?id=${item.id}`
+                    const chapterResult = await processApiItems(chapterApiUrl)
+                    const result = {}
+                    const chapterNum = index + 1
+                    result.title = `第${chapterNum}話 ${item.name === '' ? chapterNum : item.name}`
+                    result.link = `${rootUrl}/photo/${item.id}`
+                    result.guid = `${rootUrl}/photo/${item.id}`
+                    result.updated = new Date(chapterResult.addtime * 1000)
+                    result.pubDate = addTime
+                    result.category = category
+                    result.author = author
                     result.description = renderDescription({
                         introduction: description,
                         // 不取图片，因为专辑的图片会被分割排序，所以只取封面图
                         images: [`https://cdn-msp3.${domain}/media/albums/${item.id}_3x4.jpg`],
                         cover: `https://cdn-msp3.${domain}/media/albums/${item.id}_3x4.jpg`,
                         category,
-                    });
-                    return result;
-                })
-            )
-        );
-        results = results.toReversed();
+                    })
+                    return result
+                }),
+            ),
+        )
+        results = results.toReversed()
     }
 
     return {
@@ -99,5 +99,5 @@ async function handler(ctx) {
         item: results,
         allowEmpty: true,
         description,
-    };
+    }
 }

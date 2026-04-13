@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { apiRootUrl, getInfo, processItems, rootUrl } from './util';
+import { apiRootUrl, getInfo, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/author/:id',
@@ -24,21 +24,21 @@ export const route: Route = {
     name: '作者',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
 
-    const apiUrl = new URL('v2/author/author/detail', apiRootUrl).href;
-    const currentUrl = new URL(`author/${id}`, rootUrl).href;
+    const apiUrl = new URL('v2/author/author/detail', apiRootUrl).href
+    const currentUrl = new URL(`author/${id}`, rootUrl).href
 
     const items = await processItems(apiUrl, limit, cache.tryGet, {
         author_id: id,
-    });
+    })
 
     return {
         item: items,
         ...(await getInfo(currentUrl, cache.tryGet)),
-    };
+    }
 }

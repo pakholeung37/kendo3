@@ -1,6 +1,6 @@
-import type { FC } from 'hono/jsx';
+import type { FC } from 'hono/jsx'
 
-import type { Data } from '@/types';
+import type { Data } from '@/types'
 
 const RSS: FC<{ data: Data }> = ({ data }) => (
     <feed xmlns="http://www.w3.org/2005/Atom" xmlns:rsshub="http://rsshub.app/xml/schemas">
@@ -36,8 +36,8 @@ const RSS: FC<{ data: Data }> = ({ data }) => (
                 {typeof item.category === 'string' ? <category term={item.category}></category> : item.category?.map((c) => <category term={c}></category>)}
                 {item.media &&
                     Object.entries(item.media).map(([key, value]) => {
-                        const Tag = `media:${key}`;
-                        return <Tag {...value} />;
+                        const Tag = `media:${key}`
+                        return <Tag {...value} />
                     })}
                 {item.upvotes ? <rsshub:upvotes>{item.upvotes}</rsshub:upvotes> : ''}
                 {item.downvotes ? <rsshub:downvotes>{item.downvotes}</rsshub:downvotes> : ''}
@@ -45,6 +45,6 @@ const RSS: FC<{ data: Data }> = ({ data }) => (
             </entry>
         ))}
     </feed>
-);
+)
 
-export default RSS;
+export default RSS

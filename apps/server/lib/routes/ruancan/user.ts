@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import fetchFeed from './utils';
+import fetchFeed from './utils'
 
 export const route: Route = {
     path: '/user/:id',
@@ -13,11 +13,11 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'ruancan.com/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const currentUrl = `/i/${id}`;
+    const id = ctx.req.param('id')
+    const currentUrl = `/i/${id}`
 
-    return await fetchFeed(ctx, currentUrl);
+    return await fetchFeed(ctx, currentUrl)
 }

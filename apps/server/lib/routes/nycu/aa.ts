@@ -1,21 +1,21 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import timezone from '@/utils/timezone';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import timezone from '@/utils/timezone'
 
 function ROCDate(dateStr: string | Date): Date {
-    const date = new Date(dateStr);
-    date.setFullYear(date.getFullYear() + 1911);
+    const date = new Date(dateStr)
+    date.setFullYear(date.getFullYear() + 1911)
 
-    return timezone(date, 8);
+    return timezone(date, 8)
 }
 
 async function handler(ctx: Context): Promise<Data> {
-    const id = ctx.req.param('id') ?? '2652';
-    const url = `https://aa.nycu.edu.tw/aa/ch/app/news/list?module=headnews&id=${id}`;
+    const id = ctx.req.param('id') ?? '2652'
+    const url = `https://aa.nycu.edu.tw/aa/ch/app/news/list?module=headnews&id=${id}`
 
     const name = {
         '2652': '全部',
@@ -27,11 +27,11 @@ async function handler(ctx: Context): Promise<Data> {
         '2565': '教學發展中心',
         '2617': '國際高教培訓暨認證中心',
         '2638': '雙語教育與學習推動辦公室',
-    }[id];
+    }[id]
 
     const $ = await ofetch<CheerioAPI>(url, {
         parseResponse: load,
-    });
+    })
 
     const item = $('.newslist li')
         .toArray()
@@ -41,7 +41,7 @@ async function handler(ctx: Context): Promise<Data> {
             pubDate: ROCDate($('div p:nth-child(1)', e).text().replace('更新日期：', '').trim()),
             category: [$('div p:nth-child(2)', e).text().replace('分類：', '')],
             author: $('div p:nth-child(3)', e).text().replace('發布單位：', ''),
-        }));
+        }))
 
     return {
         title: `陽明交大教務處公告 - ${name}`,
@@ -49,7 +49,7 @@ async function handler(ctx: Context): Promise<Data> {
         language: 'zh-TW',
         link: url,
         item,
-    };
+    }
 }
 
 export const route: Route = {
@@ -71,4 +71,4 @@ export const route: Route = {
     parameters: { id: 'id, see below' },
     example: '/nycu/aa/2652',
     handler,
-};
+}

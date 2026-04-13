@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/changelog/:id',
@@ -26,41 +26,41 @@ export const route: Route = {
 | O&O AppBuster  | ooappbuster |
 | O&O Lanytix    | oolanytix   |
 | O&O DeskInfo   | oodeskinfo  |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'shutup10';
+    const id = ctx.req.param('id') ?? 'shutup10'
 
-    const rootUrl = 'https://www.oo-software.com';
-    const currentUrl = `${rootUrl}/en/${id}/changelog`;
+    const rootUrl = 'https://www.oo-software.com'
+    const currentUrl = `${rootUrl}/en/${id}/changelog`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.content h4')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.text();
+            const title = item.text()
 
             return {
                 title,
                 link: `${currentUrl}#${title.split(' – ')[0]}`,
                 description: item.next().html(),
                 pubDate: parseDate(title.match(/released (on )?(.*)$/)[2], 'MMMM DD, YYYY'),
-            };
-        });
+            }
+        })
 
-    items[0].enclosure_url = $('.banner-inlay').find('a').attr('href');
+    items[0].enclosure_url = $('.banner-inlay').find('a').attr('href')
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

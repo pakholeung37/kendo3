@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/',
@@ -15,31 +15,31 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'globallawreview.org/Magazine/GetIssueContentList',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'http://www.globallawreview.org';
+    const rootUrl = 'http://www.globallawreview.org'
 
-    const { data: firstResponse } = await got(rootUrl);
+    const { data: firstResponse } = await got(rootUrl)
 
-    let $ = load(firstResponse);
+    let $ = load(firstResponse)
 
-    const currentUrl = new URL($('p.tabBtn span a').prop('href'), rootUrl).href;
+    const currentUrl = new URL($('p.tabBtn span a').prop('href'), rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    $ = load(response);
+    $ = load(response)
 
     const items = $('ul.digest li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('p.p1 a');
-            const link = new URL(a.prop('href'), rootUrl).href;
+            const a = item.find('p.p1 a')
+            const link = new URL(a.prop('href'), rootUrl).href
 
             return {
                 title: a.text(),
@@ -58,8 +58,8 @@ async function handler(ctx) {
                         .find('p.p4')
                         .text()
                         .match(/(\d+(\.\d+)?)\sKB/)[1] * 1000,
-            };
-        });
+            }
+        })
 
     return {
         item: items,
@@ -67,5 +67,5 @@ async function handler(ctx) {
         link: currentUrl,
         language: 'zh-cn',
         author: '中国社会科学院法学研究所',
-    };
+    }
 }

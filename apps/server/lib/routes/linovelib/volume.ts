@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/volume/:id',
@@ -17,13 +17,13 @@ export const route: Route = {
     name: '卷',
     maintainers: ['rkscv'],
     handler,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { id } = ctx.req.param();
-    const link = `https://www.linovelib.com/novel/${id}/catalog`;
-    const response = await got(link);
-    const $ = load(response.data);
+    const { id } = ctx.req.param()
+    const link = `https://www.linovelib.com/novel/${id}/catalog`
+    const response = await got(link)
+    const $ = load(response.data)
     return {
         title: `${$('.book-meta h1').text()} - 哔哩轻小说`,
         link,
@@ -34,5 +34,5 @@ async function handler(ctx: Context): Promise<Data> {
                 link: $(elem).find('.volume-cover').attr('href'),
             }))
             .toReversed(),
-    };
+    }
 }

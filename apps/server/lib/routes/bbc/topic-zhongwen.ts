@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { fetchBbcContent } from './utils';
+import { fetchBbcContent } from './utils'
 
 export const route: Route = {
     path: '/zhongwen/topics/:topic/:variant?',
@@ -30,37 +30,37 @@ export const route: Route = {
         },
     ],
     categories: ['traditional-media'],
-};
+}
 
 async function handler(ctx) {
-    const { topic, variant = 'trad' } = ctx.req.param();
-    const link = `https://www.bbc.com/zhongwen/topics/${topic}/${variant}`;
+    const { topic, variant = 'trad' } = ctx.req.param()
+    const link = `https://www.bbc.com/zhongwen/topics/${topic}/${variant}`
 
-    const response = await ofetch(link);
-    const $ = load(response);
+    const response = await ofetch(link)
+    const $ = load(response)
 
-    const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-    const pageData = nextData.props.pageProps.pageData;
+    const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+    const pageData = nextData.props.pageProps.pageData
 
     const list = pageData.curations[0].summaries.map((item) => ({
         title: item.title,
         link: item.link,
         pubDate: parseDate(item.firstPublished),
         image: item.imageUrl ? item.imageUrl.replace('/{width}/', '/1536/') : undefined,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { category, description } = await fetchBbcContent(item.link, item);
+                const { category, description } = await fetchBbcContent(item.link, item)
 
-                item.category = category;
-                item.description = description;
+                item.category = category
+                item.description = description
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${pageData.title} - BBC News 中文`,
@@ -68,5 +68,5 @@ async function handler(ctx) {
         link,
         image: 'https://www.bbc.com/favicon.ico',
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/saved/:limit?',
@@ -40,21 +40,21 @@ export const route: Route = {
     maintainers: ['outloudvi'],
     handler,
     url: 'open.spotify.com/collection/tracks',
-};
+}
 
 async function handler(ctx) {
-    const token = await utils.getPrivateToken();
+    const token = await utils.getPrivateToken()
 
-    const limit = ctx.req.param('limit');
-    const pageSize = Number.isNaN(Number.parseInt(limit)) ? 50 : Number.parseInt(limit);
+    const limit = ctx.req.param('limit')
+    const pageSize = Number.isNaN(Number.parseInt(limit)) ? 50 : Number.parseInt(limit)
 
     const itemsResponse = await ofetch(`https://api.spotify.com/v1/me/tracks?limit=${pageSize}`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
-    const tracks = itemsResponse.items;
+    })
+    const tracks = itemsResponse.items
 
     return {
         title: 'Spotify: My Saved Tracks',
@@ -65,5 +65,5 @@ async function handler(ctx) {
             ...utils.parseTrack(x.track),
             pubDate: parseDate(x.added_at),
         })),
-    };
+    }
 }

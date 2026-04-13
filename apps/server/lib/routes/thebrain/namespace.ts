@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'TheBrain',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     categories: ['new-media'],
     description: '',
     lang: 'en',
-};
+}

@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { defaultDomain, renderDescription } from './utils';
+import { defaultDomain, renderDescription } from './utils'
 
 export const route: Route = {
     path: '/category/:caty/:img?',
@@ -25,34 +25,34 @@ export const route: Route = {
     name: 'Category',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { caty: category, img } = ctx.req.param();
+    const { caty: category, img } = ctx.req.param()
 
     const categories = await cache.tryGet('pornhub:categories', async () => {
-        const { data } = await got(`${defaultDomain}/webmasters/categories`);
-        return data.categories;
-    });
+        const { data } = await got(`${defaultDomain}/webmasters/categories`)
+        return data.categories
+    })
 
-    const categoryId = Number.isNaN(category) ? categories.find((item) => item.category === category)?.id : category;
-    const categoryName = Number.isNaN(category) ? category : categories.find((item) => item.id === Number.parseInt(category)).category;
+    const categoryId = Number.isNaN(category) ? categories.find((item) => item.category === category)?.id : category
+    const categoryName = Number.isNaN(category) ? category : categories.find((item) => item.id === Number.parseInt(category)).category
 
     const response = await cache.tryGet(
         `pornhub:category:${categoryName}`,
         async () => {
-            const { data } = await got(`${defaultDomain}/webmasters/search?category=${categoryName}`);
-            return data;
+            const { data } = await got(`${defaultDomain}/webmasters/search?category=${categoryName}`)
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     if (response.code) {
-        throw new Error(response.message);
+        throw new Error(response.message)
     }
 
-    const showImages = img === 'img=1';
+    const showImages = img === 'img=1'
 
     const list = response.videos.map((item) => ({
         title: item.title,
@@ -60,11 +60,11 @@ async function handler(ctx) {
         description: renderDescription({ thumbs: item.thumbs }, showImages),
         pubDate: parseDate(item.publish_date),
         category: [...new Set([...item.tags.map((t) => t.tag_name), ...item.categories.map((c) => c.category)])],
-    }));
+    }))
 
     return {
         title: `Pornhub - ${categoryName}`,
         link: `${defaultDomain}/video?c=${categoryId}`,
         item: list,
-    };
+    }
 }

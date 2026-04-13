@@ -1,57 +1,57 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const baseUrl = 'https://papers.cool';
-    const targetUrl: string = new URL(`${id}?show=${limit}`, baseUrl).href;
+    const baseUrl = 'https://papers.cool'
+    const targetUrl: string = new URL(`${id}?show=${limit}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     const items: DataItem[] = $('div.paper')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('a.title-link').text();
+            const title: string = $el.find('a.title-link').text()
             const pubDateStr: string | undefined = $el
                 .find('p.date')
                 .contents()
                 .last()
                 .text()
                 ?.trim()
-                ?.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/)?.[1];
-            const linkUrl: string | undefined = $el.find('a.title-link').attr('href');
-            const categoryEls: Element[] = $el.find('p.subjects a').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const authorEls: Element[] = $el.find('p.authors a.author').toArray();
+                ?.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/)?.[1]
+            const linkUrl: string | undefined = $el.find('a.title-link').attr('href')
+            const categoryEls: Element[] = $el.find('p.subjects a').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const authorEls: Element[] = $el.find('p.authors a.author').toArray()
             const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                const $authorEl: Cheerio<Element> = $(authorEl);
+                const $authorEl: Cheerio<Element> = $(authorEl)
 
                 return {
                     name: $authorEl.text(),
                     url: $authorEl.attr('href'),
                     avatar: undefined,
-                };
-            });
-            const doi: string = $el.attr('id') as string;
-            const guid = `papers.cool-${doi}`;
-            const upDatedStr: string | undefined = pubDateStr;
+                }
+            })
+            const doi: string = $el.attr('id') as string
+            const guid = `papers.cool-${doi}`
+            const upDatedStr: string | undefined = pubDateStr
 
             let processedItem: DataItem = {
                 title,
@@ -64,10 +64,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 id: guid,
                 updated: upDatedStr ? timezone(parseDate(upDatedStr), +0) : undefined,
                 language,
-            };
+            }
 
-            const $enclosureEl: Cheerio<Element> = $el.find('a.title-pdf').first();
-            const enclosureUrl: string | undefined = $enclosureEl.attr('onclick')?.match(/togglePdf\('.*?',\s'(.*?)',\sthis\)/)?.[1];
+            const $enclosureEl: Cheerio<Element> = $el.find('a.title-pdf').first()
+            const enclosureUrl: string | undefined = $enclosureEl.attr('onclick')?.match(/togglePdf\('.*?',\s'(.*?)',\sthis\)/)?.[1]
 
             if (enclosureUrl) {
                 processedItem = {
@@ -76,7 +76,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     enclosure_type: 'application/pdf',
                     enclosure_title: title,
                     enclosure_length: undefined,
-                };
+                }
             }
 
             const description: string = renderDescription({
@@ -84,7 +84,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 kimiUrl: `${targetUrl.replace(/[a-zA-Z0-9.]+$/, 'kimi')}?paper=${doi}`,
                 authors,
                 summary: $el.find('p.summary').text(),
-            });
+            })
 
             processedItem = {
                 ...processedItem,
@@ -93,11 +93,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     html: description,
                     text: description,
                 },
-            };
+            }
 
-            return processedItem;
+            return processedItem
         })
-        .filter((_): _ is DataItem => true);
+        .filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -109,8 +109,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         language,
         feedLink: `${targetUrl}/feed`,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/category/:id{.+}?',
@@ -1217,4 +1217,4 @@ To subscribe to [Artificial Intelligence (cs.AI)](https://papers.cool/arxiv/cs.A
 订阅 [人工智能 (cs.AI)](https://papers.cool/arxiv/cs.AI)（<https://papers.cool/arxiv/cs.AI>），请从 URL 中提取 \`arxiv/cs.AI\` 作为 \`category\` 参数，得到的路由将是 [\`/papers/category/arxiv/cs.AI\`](https://rsshub.app/papers/category/arxiv/cs.AI)。
 :::`,
     },
-};
+}

@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 const categories = {
     today: 'left',
     newest: 'right',
-};
+}
 
 export const route: Route = {
     path: '/featured/:category?',
@@ -28,40 +28,40 @@ export const route: Route = {
     description: `| Today's Featured Trope | Newest Trope |
 | ---------------------- | ------------ |
 | today                  | newest       |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'today' } = ctx.req.param();
+    const { category = 'today' } = ctx.req.param()
 
-    const rootUrl = 'https://tvtropes.org';
+    const rootUrl = 'https://tvtropes.org'
 
-    const { data: response } = await got(rootUrl);
+    const { data: response } = await got(rootUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const item = $(`div#featured-tropes div.${categories[category]}`);
+    const item = $(`div#featured-tropes div.${categories[category]}`)
 
-    const link = new URL(item.find('h2.entry-title a').prop('href'), rootUrl).href;
+    const link = new URL(item.find('h2.entry-title a').prop('href'), rootUrl).href
 
-    const { data: detailResponse } = await got(link);
+    const { data: detailResponse } = await got(link)
 
-    const content = load(detailResponse);
+    const content = load(detailResponse)
 
-    content('div.folderlabel').remove();
+    content('div.folderlabel').remove()
 
     content('div.lazy_load_img_box').each((_, el) => {
-        el = content(el);
+        el = content(el)
 
-        const image = el.find('img');
+        const image = el.find('img')
 
         el.replaceWith(
             renderToString(
                 <figure>
                     <img src={image.prop('src')} alt={image.prop('alt')} width={image.prop('width')} height={image.prop('height')} />
-                </figure>
-            )
-        );
-    });
+                </figure>,
+            ),
+        )
+    })
 
     const items = [
         {
@@ -69,10 +69,10 @@ async function handler(ctx) {
             link,
             description: content('div#main-article').html(),
         },
-    ];
+    ]
 
-    const image = new URL($('img.logo-big').prop('src'), rootUrl).href;
-    const icon = $('link[rel="shortcut icon"]').prop('href');
+    const image = new URL($('img.logo-big').prop('src'), rootUrl).href
+    const icon = $('link[rel="shortcut icon"]').prop('href')
 
     return {
         item: items,
@@ -86,5 +86,5 @@ async function handler(ctx) {
         subtitle: $('meta[property="og:title"]').prop('content'),
         author: $('meta[property="og:site_name"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

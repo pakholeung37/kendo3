@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/',
@@ -22,66 +22,66 @@ export const route: Route = {
             target: '/',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.fanxinzhui.com';
-    const currentUrl = new URL('lastest', rootUrl).href;
+    const rootUrl = 'https://www.fanxinzhui.com'
+    const currentUrl = new URL('lastest', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a.la')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const season = item.find('span.season').text();
-            const name = item.find('span.name').text();
-            const link = new URL(item.prop('href'), rootUrl).href;
+            const season = item.find('span.season').text()
+            const name = item.find('span.name').text()
+            const link = new URL(item.prop('href'), rootUrl).href
 
             return {
                 title: `${season} ${name}`,
                 link,
                 guid: `${link}#${season}`,
                 pubDate: timezone(parseDate(item.find('span.time').text()), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.author = undefined;
-                item.category = [];
+                item.author = undefined
+                item.category = []
 
                 content('div.info ul li').each((_, el) => {
-                    el = content(el);
+                    el = content(el)
 
-                    const key = el.find('span').text().split(/:/)[0];
-                    const value = el.contents().last().text().trim();
+                    const key = el.find('span').text().split(/:/)[0]
+                    const value = el.contents().last().text().trim()
 
                     if (key === '类型') {
-                        item.category = [...item.category, ...value.split(/\//)];
+                        item.category = [...item.category, ...value.split(/\//)]
                     } else if (key === '首播日期') {
-                        return;
+                        return
                     } else {
-                        item.author = `${item.author ? `${item.author}/` : ''}${value}`;
-                        item.category = [...item.category, ...value.split(/\//)].filter((c) => c !== '等');
+                        item.author = `${item.author ? `${item.author}/` : ''}${value}`
+                        item.category = [...item.category, ...value.split(/\//)].filter((c) => c !== '等')
                     }
-                });
+                })
 
                 content('div.image').each((_, el) => {
-                    el = content(el);
+                    el = content(el)
 
-                    const image = el.find('img').prop('src');
+                    const image = el.find('img').prop('src')
 
                     el.replaceWith(
                         renderDescription(
@@ -92,27 +92,27 @@ async function handler(ctx) {
                                           alt: content('div.resource_title h2').text(),
                                       },
                                   ]
-                                : undefined
-                        )
-                    );
-                });
+                                : undefined,
+                        ),
+                    )
+                })
 
                 content('a.password').each((_, el) => {
-                    el = content(el);
+                    el = content(el)
 
-                    el.replaceWith(el.text());
-                });
+                    el.replaceWith(el.text())
+                })
 
-                item.description = content('div.middle_box').html();
-                item.enclosure_url = content('p.way span a').prop('href');
+                item.description = content('div.middle_box').html()
+                item.enclosure_url = content('p.way span a').prop('href')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('img.logo').prop('src'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('img.logo').prop('src'), rootUrl).href
 
     return {
         item: items,
@@ -123,7 +123,7 @@ async function handler(ctx) {
         image,
         author: title.split(/_/).pop(),
         allowEmpty: true,
-    };
+    }
 }
 
 const renderDescription = (images: Array<{ src?: string; alt?: string }> | undefined): string =>
@@ -134,7 +134,7 @@ const renderDescription = (images: Array<{ src?: string; alt?: string }> | undef
                     <figure key={`${image.src}-${index}`}>
                         <img src={image.src} alt={image.alt} />
                     </figure>
-                ) : null
+                ) : null,
             )}
-        </>
-    );
+        </>,
+    )

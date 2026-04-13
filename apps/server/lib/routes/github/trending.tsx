@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/trending/:since/:language/:spoken_language?',
@@ -62,34 +62,34 @@ export const route: Route = {
     maintainers: ['DIYgod', 'jameschensmith'],
     handler,
     url: 'github.com/trending',
-};
+}
 
 async function handler(ctx) {
     if (!config.github || !config.github.access_token) {
-        throw new ConfigNotFoundError('GitHub trending RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('GitHub trending RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
-    const since = ctx.req.param('since');
-    const language = ctx.req.param('language') === 'any' ? '' : ctx.req.param('language');
-    const spoken_language = ctx.req.param('spoken_language') ?? '';
+    const since = ctx.req.param('since')
+    const language = ctx.req.param('language') === 'any' ? '' : ctx.req.param('language')
+    const spoken_language = ctx.req.param('spoken_language') ?? ''
 
-    const trendingUrl = `https://github.com/trending/${encodeURIComponent(language)}?since=${since}&spoken_language_code=${spoken_language}`;
+    const trendingUrl = `https://github.com/trending/${encodeURIComponent(language)}?since=${since}&spoken_language_code=${spoken_language}`
     const { data: trendingPage } = await got({
         method: 'get',
         url: trendingUrl,
         headers: {
             Referer: trendingUrl,
         },
-    });
-    const $ = load(trendingPage);
+    })
+    const $ = load(trendingPage)
 
-    const articles = $('article');
+    const articles = $('article')
     const trendingRepos = articles.toArray().map((item) => {
-        const [owner, name] = $(item).find('h2').text().split('/');
+        const [owner, name] = $(item).find('h2').text().split('/')
         return {
             name: name.trim(),
             owner: owner.trim(),
-        };
-    });
+        }
+    })
 
     const { data: repoData } = await got({
         method: 'post',
@@ -106,7 +106,7 @@ async function handler(ctx) {
                 _${index}: repository(owner: "${repo.owner}", name: "${repo.name}") {
                     ...RepositoryFragment
                 }
-            `
+            `,
                 )
                 .join('\n')}
             }
@@ -123,12 +123,12 @@ async function handler(ctx) {
             }
             `,
         },
-    });
+    })
 
     const repos = Object.values(repoData.data).map((repo) => {
-        const found = trendingRepos.find((r) => `${r.owner}/${r.name}` === repo.nameWithOwner);
-        return { ...found, ...repo };
-    });
+        const found = trendingRepos.find((r) => `${r.owner}/${r.name}` === repo.nameWithOwner)
+        return { ...found, ...repo }
+    })
 
     return {
         title: $('title').text(),
@@ -148,9 +148,9 @@ async function handler(ctx) {
                     Stars: {raw(String(r.stargazerCount))}
                     <br />
                     Forks: {raw(String(r.forkCount))}
-                </>
+                </>,
             ),
             link: `https://github.com/${r.nameWithOwner}`,
         })),
-    };
+    }
 }

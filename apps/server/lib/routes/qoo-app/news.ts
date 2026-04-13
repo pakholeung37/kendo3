@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { fixImg, newsUrl, siteIcon } from './utils';
+import { fixImg, newsUrl, siteIcon } from './utils'
 
 export const route: Route = {
     path: '/news/:lang?',
@@ -25,30 +25,30 @@ export const route: Route = {
     description: `| 中文 | English |
 | ---- | ------- |
 |      | en      |`,
-};
+}
 
 async function handler(ctx) {
-    const { lang = '' } = ctx.req.param();
-    const apiUrl = `${newsUrl}${lang ? `/${lang}` : ''}/wp-json/wp/v2/posts`;
+    const { lang = '' } = ctx.req.param()
+    const apiUrl = `${newsUrl}${lang ? `/${lang}` : ''}/wp-json/wp/v2/posts`
 
     const { data } = await got(apiUrl, {
         searchParams: {
             per_page: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100,
         },
-    });
+    })
 
     const items = data.map((item) => {
-        const $ = load(item.content.rendered, null, false);
+        const $ = load(item.content.rendered, null, false)
 
-        fixImg($);
+        fixImg($)
 
         return {
             title: item.title.rendered,
             link: item.link.slice(0, item.link.lastIndexOf('/')),
             description: $.html(),
             pubDate: parseDate(item.date_gmt),
-        };
-    });
+        }
+    })
 
     return {
         title: 'QooApp : Anime Game Platform',
@@ -60,5 +60,5 @@ async function handler(ctx) {
         link: `${newsUrl}${lang ? `/${lang}` : ''}`,
         language: lang === 'en' ? 'en' : 'zh',
         item: items,
-    };
+    }
 }

@@ -1,63 +1,63 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category = 'news-325' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12;
+    const { category = 'news-325' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12
 
-    const rootUrl = 'https://www.cngold.org.cn';
-    const currentUrl = new URL(`${category}.html`, rootUrl).href;
+    const rootUrl = 'https://www.cngold.org.cn'
+    const currentUrl = new URL(`${category}.html`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.newsList li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('t1').text(),
                 pubDate: parseDate(item.find('div.min, div.day').text(), ['YYYY-MM-DD', 'MM-DD']),
                 link: new URL(item.find('a').prop('href'), rootUrl).href,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.details_top div.t1').text();
-                const description = $$('div.details_con').html();
+                const title = $$('div.details_top div.t1').text()
+                const description = $$('div.details_con').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('div.details_top div.min span').first().text());
-                item.author = $$('div.details_top div.min span').last().text().split(/：/).pop();
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('div.details_top div.min span').first().text())
+                item.author = $$('div.details_top div.min span').last().text().split(/：/).pop()
                 item.content = {
                     html: description,
                     text: $$('div.details_con').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title: `${$('title').text()} - ${$('div.tab a.current').text()}`,
@@ -68,8 +68,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="keywords"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -131,9 +131,9 @@ export const route: Route = {
         {
             source: ['www.cngold.org.cn/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return category ? `/${category}` : '';
+                return category ? `/${category}` : ''
             },
         },
         {
@@ -192,4 +192,4 @@ export const route: Route = {
             target: '/technology-350',
         },
     ],
-};
+}

@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchContent, processItem, rootUrl } from './utils';
+import { fetchContent, processItem, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/3-2-1',
@@ -25,11 +25,11 @@ export const route: Route = {
     name: '3-2-1 Newsletter',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const newsletters = await fetchContent('3-2-1');
-    const items = newsletters.map((item) => processItem(item));
+    const newsletters = await fetchContent('3-2-1')
+    const items = newsletters.map((item) => processItem(item))
 
     return {
         title: 'James Clear - 3-2-1 Newsletter',
@@ -39,5 +39,5 @@ async function handler(): Promise<Data> {
         language: 'en',
         image: `${rootUrl}/wp-content/uploads/2021/04/3-2-1-Featured-Image.png`,
         icon: `${rootUrl}/favicon.ico`,
-    };
+    }
 }

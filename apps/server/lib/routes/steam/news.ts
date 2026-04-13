@@ -1,12 +1,12 @@
-import bbobHTML from '@bbob/html';
-import { getUniqAttr } from '@bbob/plugin-helper';
-import presetHTML5 from '@bbob/preset-html5';
-import type { BBobCoreTagNodeTree, NodeContent, PresetFactory } from '@bbob/types';
-import type { Context } from 'hono';
+import bbobHTML from '@bbob/html'
+import { getUniqAttr } from '@bbob/plugin-helper'
+import presetHTML5 from '@bbob/preset-html5'
+import type { BBobCoreTagNodeTree, NodeContent, PresetFactory } from '@bbob/types'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:appid/:language?',
@@ -73,7 +73,7 @@ export const route: Route = {
             target: '/news/:appid',
         },
     ],
-};
+}
 
 const langMap = {
     english: 'en',
@@ -105,18 +105,18 @@ const langMap = {
     arabic: 'ar',
     latam: 'es-419',
     bulgarian: 'bg',
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { appid = '958260', language = 'english' } = ctx.req.param();
-    const limitQuery = ctx.req.query('limit');
-    const limit = limitQuery ? Number.parseInt(limitQuery, 10) : 100;
+    const { appid = '958260', language = 'english' } = ctx.req.param()
+    const limitQuery = ctx.req.query('limit')
+    const limit = limitQuery ? Number.parseInt(limitQuery, 10) : 100
 
-    const rootUrl = 'https://steamcommunity.com';
-    const apiRootUrl = 'https://store.steampowered.com';
-    const clanRootUrl = 'https://clan.fastly.steamstatic.com';
-    const sharedRootUrl = 'https://shared.fastly.steamstatic.com';
-    const apiUrl = new URL('events/ajaxgetpartnereventspageable/', apiRootUrl).href;
+    const rootUrl = 'https://steamcommunity.com'
+    const apiRootUrl = 'https://store.steampowered.com'
+    const clanRootUrl = 'https://clan.fastly.steamstatic.com'
+    const sharedRootUrl = 'https://shared.fastly.steamstatic.com'
+    const apiUrl = new URL('events/ajaxgetpartnereventspageable/', apiRootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -126,10 +126,10 @@ async function handler(ctx: Context): Promise<Data> {
             count: limit,
             l: language,
         },
-    });
+    })
 
     const items: DataItem[] = response.events.slice(0, limit).map((item): DataItem => {
-        const title = item.event_name;
+        const title = item.event_name
         const description = `<div lang="${langMap[language] || ''}">${bbobHTML(
             item.announcement_body.body
                 .replaceAll('{STEAM_CLAN_IMAGE}', `${clanRootUrl}/images`)
@@ -137,11 +137,11 @@ async function handler(ctx: Context): Promise<Data> {
                 .replaceAll('[/olist]', '[/list]')
                 .replaceAll(/(\[\/h\d\])\n/g, '$1')
                 .replaceAll(/(\[list(?:=.*?)?\])\n/g, '$1'),
-            [customPreset(), linebreakRenderer, plainUrlRenderer]
-        )}</div>`;
-        const jsondata = JSON.parse(item.jsondata);
-        const titleImage = jsondata.localized_title_image?.[0];
-        const capsuleImage = jsondata.localized_capsule_image?.[0];
+            [customPreset(), linebreakRenderer, plainUrlRenderer],
+        )}</div>`
+        const jsondata = JSON.parse(item.jsondata)
+        const titleImage = jsondata.localized_title_image?.[0]
+        const capsuleImage = jsondata.localized_capsule_image?.[0]
 
         return {
             title,
@@ -156,8 +156,8 @@ async function handler(ctx: Context): Promise<Data> {
             updated: parseDate(item.announcement_body.updatetime, 'X'),
             image: capsuleImage ? new URL(`images/${item.announcement_body.clanid}/${capsuleImage}`, clanRootUrl).href : undefined,
             banner: titleImage ? new URL(`images/${item.announcement_body.clanid}/${titleImage}`, clanRootUrl).href : undefined,
-        };
-    });
+        }
+    })
 
     return {
         title: `App ${appid} News`,
@@ -165,7 +165,7 @@ async function handler(ctx: Context): Promise<Data> {
         image: new URL(`store_item_assets/steam/apps/${appid}/hero_capsule.jpg`, sharedRootUrl).href,
         item: items,
         language: langMap[language] || null,
-    };
+    }
 }
 
 const linebreakRenderer = (tree: BBobCoreTagNodeTree) =>
@@ -174,22 +174,22 @@ const linebreakRenderer = (tree: BBobCoreTagNodeTree) =>
             return {
                 tag: 'br',
                 content: null,
-            };
+            }
         }
-        return node;
-    });
+        return node
+    })
 
 const plainUrlRenderer = (tree: BBobCoreTagNodeTree) =>
     tree.walk((node) => {
         if (typeof node === 'string' && /https?:\/\/[^\s]+/.test(node)) {
-            let lastIndex = 0;
-            let match: RegExpExecArray | null;
-            const content: NodeContent[] = [];
+            let lastIndex = 0
+            let match: RegExpExecArray | null
+            const content: NodeContent[] = []
 
-            const urlRe = /https?:\/\/[^\s]+/g;
+            const urlRe = /https?:\/\/[^\s]+/g
             while ((match = urlRe.exec(node)) !== null) {
                 if (match.index > lastIndex) {
-                    content.push(node.slice(lastIndex, match.index));
+                    content.push(node.slice(lastIndex, match.index))
                 }
                 content.push({
                     tag: 'a',
@@ -199,28 +199,28 @@ const plainUrlRenderer = (tree: BBobCoreTagNodeTree) =>
                         target: '_blank',
                     },
                     content: match[0],
-                });
+                })
 
-                lastIndex = match.index + match[0].length;
+                lastIndex = match.index + match[0].length
             }
 
             if (lastIndex < node.length) {
-                content.push(node.slice(lastIndex));
+                content.push(node.slice(lastIndex))
             }
 
             if (content.length === 0) {
-                return node;
+                return node
             }
             if (content.length === 1) {
-                return content[0];
+                return content[0]
             }
             return {
                 tag: 'span',
                 content,
-            };
+            }
         }
-        return node;
-    });
+        return node
+    })
 
 const customPreset: PresetFactory = presetHTML5.extend((tags) => ({
     ...tags,
@@ -276,7 +276,7 @@ const customPreset: PresetFactory = presetHTML5.extend((tags) => ({
                     src: node.attrs?.[key],
                     type,
                 },
-            }))
+            })),
         ),
     }),
-}));
+}))

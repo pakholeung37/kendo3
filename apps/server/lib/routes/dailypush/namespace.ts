@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'DailyPush',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     description: 'DailyPush aggregates trending dev articles from 200+ blogs, ranked by community signals from Hacker News, Reddit, X & more.',
     lang: 'en',
     categories: ['programming'],
-};
+}

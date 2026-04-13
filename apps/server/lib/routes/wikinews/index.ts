@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const currentURL = 'https://zh.wikinews.org/wiki/Special:%E6%96%B0%E9%97%BB%E8%AE%A2%E9%98%85';
+const currentURL = 'https://zh.wikinews.org/wiki/Special:%E6%96%B0%E9%97%BB%E8%AE%A2%E9%98%85'
 
 export const route: Route = {
     path: '/latest',
@@ -29,15 +29,15 @@ export const route: Route = {
     maintainers: ['KotoriK'],
     handler,
     description: `根据维基新闻的[sitemap](https://zh.wikinews.org/wiki/Special:%E6%96%B0%E9%97%BB%E8%AE%A2%E9%98%85)获取新闻全文。目前仅支持中文维基新闻。`,
-};
+}
 
 async function handler() {
-    const resp = await got(currentURL);
-    const $ = load(resp.data);
+    const resp = await got(currentURL)
+    const $ = load(resp.data)
     const urls = $('url')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find(String.raw`news\:title`).text(),
                 pubDate: parseDate(item.find(String.raw`news\:publication_date`).text()),
@@ -47,24 +47,24 @@ async function handler() {
                     .split(',')
                     .map((item) => item.trim()),
                 link: item.find('loc').text(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         urls.map((item) =>
             cache.tryGet(item.link, async () => {
-                const resp = await got(item.link);
-                const $ = load(resp.data);
-                item.description = $('#bodyContent').html();
+                const resp = await got(item.link)
+                const $ = load(resp.data)
+                item.description = $('#bodyContent').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '最新新闻 - 维基新闻',
         link: currentURL,
         item: items,
-    };
+    }
 }

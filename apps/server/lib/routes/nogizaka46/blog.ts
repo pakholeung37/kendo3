@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.nogizaka46.com';
+const rootUrl = 'https://www.nogizaka46.com'
 
 export const route: Route = {
     path: '/blog/:id?',
@@ -71,19 +71,19 @@ export const route: Route = {
 | 36750     | 岩本 蓮加             |
 | 36749     | 伊藤 理々杏           |
 | 264       | 齋藤 飛鳥             |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'all';
-    const params = id === 'all' ? '' : `?ct=${id}`;
-    const currentUrl = `${rootUrl}/s/n46/api/list/blog${params}`;
+    const id = ctx.req.param('id') ?? 'all'
+    const params = id === 'all' ? '' : `?ct=${id}`
+    const currentUrl = `${rootUrl}/s/n46/api/list/blog${params}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const list = JSON.parse(response.data.slice(4).slice(0, -2)).data;
+    const list = JSON.parse(response.data.slice(4).slice(0, -2)).data
 
     return {
         allowEmpty: true,
@@ -99,5 +99,5 @@ async function handler(ctx) {
                 description: item.text,
                 guid: rootUrl + new URL(item.link).pathname,
             })),
-    };
+    }
 }

@@ -1,37 +1,37 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const createSearchParams = (queryString: string, limit: number = 30): URLSearchParams => {
-    const params = new URLSearchParams(queryString);
-    params.set('offset', '0');
-    params.set('limit', limit.toString());
-    return params;
-};
+    const params = new URLSearchParams(queryString)
+    params.set('offset', '0')
+    params.set('limit', limit.toString())
+    return params
+}
 
 const searchParamsToObject = (searchParams: URLSearchParams): Record<string, string> => {
-    const obj: Record<string, string> = {};
+    const obj: Record<string, string> = {}
     for (const [key, value] of searchParams.entries()) {
-        obj[key] = value;
+        obj[key] = value
     }
-    return obj;
-};
+    return obj
+}
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filters } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
-    const params: URLSearchParams = createSearchParams(filters, limit);
+    const { filters } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
+    const params: URLSearchParams = createSearchParams(filters, limit)
 
-    const baseUrl = 'https://digitalpolicyalert.org';
-    const apiBaseUrl = 'https://api.globaltradealert.org';
-    const targetUrl: string = new URL(`activity-tracker?${params.toString()}`, baseUrl).href;
+    const baseUrl = 'https://digitalpolicyalert.org'
+    const apiBaseUrl = 'https://api.globaltradealert.org'
+    const targetUrl: string = new URL(`activity-tracker?${params.toString()}`, baseUrl).href
     // Reason: trailing slash avoids a 301 redirect from the API server
-    const apiUrl: string = new URL('dpa/intervention/', apiBaseUrl).href;
+    const apiUrl: string = new URL('dpa/intervention/', apiBaseUrl).href
 
     // Reason: explicit Accept header needed because RSSHub's ofetch auto-generates
     // browser-like Accept headers, causing the API to return HTML via content negotiation
@@ -40,17 +40,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
         headers: {
             Accept: 'application/json',
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'en';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'en'
 
     const items: DataItem[] = (response.results ?? []).slice(0, limit).map((item): DataItem => {
-        const title: string = item.title;
-        const description: string | undefined = item.latest_event?.description ?? undefined;
-        const pubDate: number | string = item.latest_event?.date;
-        const linkUrl: string | undefined = item.slug ? `change/${item.slug}` : undefined;
+        const title: string = item.title
+        const description: string | undefined = item.latest_event?.description ?? undefined
+        const pubDate: number | string = item.latest_event?.date
+        const linkUrl: string | undefined = item.slug ? `change/${item.slug}` : undefined
         const categories: string[] = [
             ...new Set([
                 ...(item.economic_activities?.map((activity) => activity.name) ?? []),
@@ -59,14 +59,14 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 item.status?.name,
                 item.type?.name,
             ]),
-        ].filter(Boolean);
+        ].filter(Boolean)
         const authors: DataItem['author'] =
             item.implementers?.map((author) => ({
                 name: author.name,
                 url: undefined,
                 avatar: undefined,
-            })) ?? undefined;
-        const updated: number | string = pubDate;
+            })) ?? undefined
+        const updated: number | string = pubDate
 
         const processedItem: DataItem = {
             title,
@@ -81,10 +81,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
             },
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     return {
         title: $('title').text(),
@@ -96,8 +96,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/activity-tracker/:filters?',
@@ -129,12 +129,12 @@ To subscribe to [Activity Tracker - International trade](https://digitalpolicyal
         {
             source: ['digitalpolicyalert.org'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const filters: string = createSearchParams(urlObj.searchParams.toString()).toString();
+                const urlObj: URL = new URL(url)
+                const filters: string = createSearchParams(urlObj.searchParams.toString()).toString()
 
-                return `/digitalpolicyalert/activity-tracker${filters ? `/${filters}` : ''}`;
+                return `/digitalpolicyalert/activity-tracker${filters ? `/${filters}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

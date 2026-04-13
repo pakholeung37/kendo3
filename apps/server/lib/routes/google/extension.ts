@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/chrome/extension/:id',
@@ -25,15 +25,15 @@ export const route: Route = {
     name: 'Extension Update',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const response = await ofetch(`https://chrome.google.com/webstore/detail/${id}?hl=en`);
-    const $ = load(response);
+    const response = await ofetch(`https://chrome.google.com/webstore/detail/${id}?hl=en`)
+    const $ = load(response)
 
-    const version = 'v' + $('.nBZElf').text();
+    const version = 'v' + $('.nBZElf').text()
 
     return {
         title: $('.Pa2dE').text() + ' - Google Chrome Extension',
@@ -49,5 +49,5 @@ async function handler(ctx) {
                 author: $('.cJI8ee').text(),
             },
         ],
-    };
+    }
 }

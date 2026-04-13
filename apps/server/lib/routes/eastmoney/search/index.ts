@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/search/:keyword',
@@ -21,11 +21,11 @@ export const route: Route = {
     name: '搜索',
     maintainers: ['drgnchan'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
-    const link = `https://so.eastmoney.com/News/s?KeyWord=${keyword}`;
+    const keyword = ctx.req.param('keyword')
+    const link = `https://so.eastmoney.com/News/s?KeyWord=${keyword}`
     const body = {
         uid: '',
         keyword,
@@ -43,23 +43,23 @@ async function handler(ctx) {
                 postTag: '</em>',
             },
         },
-    };
-    const cb = `jQuery${('3.5.1' + Math.random()).replaceAll(/\D/g, '')}_${Date.now()}`;
+    }
+    const cb = `jQuery${('3.5.1' + Math.random()).replaceAll(/\D/g, '')}_${Date.now()}`
 
-    const url = `https://search-api-web.eastmoney.com/search/jsonp`;
+    const url = `https://search-api-web.eastmoney.com/search/jsonp`
 
     const response = await got(url, {
         searchParams: {
             cb,
             param: JSON.stringify(body),
         },
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
-    const extractedText = data.match(/jQuery\d+_\d+\((.*)\)/)[1];
+    const extractedText = data.match(/jQuery\d+_\d+\((.*)\)/)[1]
 
-    const obj = JSON.parse(extractedText);
-    const arr = obj.result.cmsArticleWebOld;
+    const obj = JSON.parse(extractedText)
+    const arr = obj.result.cmsArticleWebOld
 
     const items = arr.map((item) => ({
         title: item.title,
@@ -67,10 +67,10 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.date), 8),
         link: item.url,
         author: item.mediaName,
-    }));
+    }))
     return {
         title: `东方财富网 - 搜索'${keyword}'`,
         link,
         item: items,
-    };
+    }
 }

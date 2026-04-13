@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { baseUrl } from './utils';
+import { baseUrl } from './utils'
 
 export const route: Route = {
     path: '/topic_list',
@@ -27,26 +27,26 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'agirls.aotter.net/',
-};
+}
 
 async function handler() {
-    const category = 'topic';
-    const link = `${baseUrl}/${category}`;
+    const category = 'topic'
+    const link = `${baseUrl}/${category}`
 
-    const response = await got(`${baseUrl}/${category}`);
+    const response = await got(`${baseUrl}/${category}`)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.ag-topic')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.ag-topic__link').text().trim(),
                 description: item.find('.ag-topic__summery').text().trim(),
                 link: `${baseUrl}${item.find('.ag-topic__link').attr('href')}`,
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text().trim(),
@@ -54,5 +54,5 @@ async function handler() {
         description: $('head meta[name=description]').attr('content'),
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }

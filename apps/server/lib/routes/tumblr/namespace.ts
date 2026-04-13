@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Tumblr',
@@ -14,4 +14,4 @@ Two login methods are currently supported:
 
 - \`TUMBLR_CLIENT_ID\`: The key never expires, however blogs that are "dashboard only" cannot be accessed.
 - \`TUMBLR_CLIENT_ID\` + \`TUMBLR_CLIENT_SECRET\` + \`TUMBLR_REFRESH_TOKEN\`: The refresh token will expire and will need to be regenerated, "dashboard only" blogs can be accessed.`,
-};
+}

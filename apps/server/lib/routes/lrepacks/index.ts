@@ -1,35 +1,35 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12
 
-    const rootUrl = 'https://lrepacks.net';
-    const currentUrl = new URL(category, rootUrl).href;
+    const rootUrl = 'https://lrepacks.net'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('#main article')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h3.entry-title').text();
+            const title = item.find('h3.entry-title').text()
             const description = renderDescription({
                 intro: item.find('div.entry-content').text(),
-            });
+            })
 
             return {
                 title,
@@ -40,20 +40,20 @@ export const handler = async (ctx) => {
                     .toArray()
                     .map((c) => $(c).text()),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const data = JSON.parse($$('script[type="application/ld+json"]').first().text())['@graph']?.[0] ?? undefined;
+                const data = JSON.parse($$('script[type="application/ld+json"]').first().text())['@graph']?.[0] ?? undefined
 
                 $$('div.entry-content a.highslide[href]').each((_, el) => {
-                    el = $$(el);
+                    el = $$(el)
 
                     el.parent().replaceWith(
                         renderDescription({
@@ -63,37 +63,37 @@ export const handler = async (ctx) => {
                                     alt: el.prop('title'),
                                 },
                             ],
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                const title = $$('h2.entry-title').text();
+                const title = $$('h2.entry-title').text()
                 const description =
                     item.description +
                     renderDescription({
                         description: $$('div.entry-content').html() ?? undefined,
-                    });
-                const image = $$('meta[property="og:image"]').prop('content');
+                    })
+                const image = $$('meta[property="og:image"]').prop('content')
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = data ? parseDate(data.datePublished) : undefined;
-                item.author = data?.author?.name ?? undefined;
+                item.title = title
+                item.description = description
+                item.pubDate = data ? parseDate(data.datePublished) : undefined
+                item.author = data?.author?.name ?? undefined
                 item.content = {
                     html: description,
                     text: $$('div.entry-content').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.updated = data ? parseDate(data.dateModified) : undefined;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.updated = data ? parseDate(data.dateModified) : undefined
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -104,8 +104,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -145,9 +145,9 @@ export const route: Route = {
         {
             source: ['lrepacks.net/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/lrepacks${category ? `/${category}` : ''}`;
+                return `/lrepacks${category ? `/${category}` : ''}`
             },
         },
         {
@@ -196,4 +196,4 @@ export const route: Route = {
             target: '/informaciya',
         },
     ],
-};
+}

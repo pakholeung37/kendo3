@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const rootUrl = 'https://www.yicai.com';
+const rootUrl = 'https://www.yicai.com'
 
 const ProcessItems = async (apiUrl, tryGet) => {
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = response.data.map((item) => ({
         title: item.NewsTitle,
@@ -31,33 +31,33 @@ const ProcessItems = async (apiUrl, tryGet) => {
             },
             intro: item.NewsNotes,
         }),
-    }));
+    }))
 
-    return Promise.all(fetchFullArticles(items, tryGet));
-};
+    return Promise.all(fetchFullArticles(items, tryGet))
+}
 function fetchFullArticles(items, tryGet) {
     return items.map((item) =>
         tryGet(item.link, async () => {
             const detailResponse = await got({
                 method: 'get',
                 url: item.link,
-            });
+            })
 
-            const content = load(detailResponse.data);
+            const content = load(detailResponse.data)
 
             if (!item.pubDate) {
-                const dataScript = content("script[src='/js/alert.min.js']").next().text() || content('title').next().text();
-                const pb = new Map(JSON.parse(dataScript.match(/_pb = (\[.*?]);/)[1].replaceAll("'", '"')));
-                item.pubDate = parseDate(`${pb.get('actime')}:00`);
+                const dataScript = content("script[src='/js/alert.min.js']").next().text() || content('title').next().text()
+                const pb = new Map(JSON.parse(dataScript.match(/_pb = (\[.*?]);/)[1].replaceAll("'", '"')))
+                item.pubDate = parseDate(`${pb.get('actime')}:00`)
             }
 
-            content('h1').remove();
-            content('.u-btn6, .m-smallshare, .topic-hot').remove();
+            content('h1').remove()
+            content('.u-btn6, .m-smallshare, .topic-hot').remove()
 
-            item.description = (item.description ?? '') + (content('.multiText, #multi-text, .txt').html() ?? '');
+            item.description = (item.description ?? '') + (content('.multiText, #multi-text, .txt').html() ?? '')
 
-            return item;
-        })
-    );
+            return item
+        }),
+    )
 }
-export { fetchFullArticles, ProcessItems, rootUrl };
+export { fetchFullArticles, ProcessItems, rootUrl }

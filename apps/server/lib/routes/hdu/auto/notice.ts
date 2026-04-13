@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import logger from '@/utils/logger';
+import type { Route } from '@/types'
+import logger from '@/utils/logger'
 
-import { fetchAutoNews } from './utils';
+import { fetchAutoNews } from './utils'
 
 const typeMap = {
     notice: {
@@ -20,7 +20,7 @@ const typeMap = {
         name: '学生工作',
         path: '3726/list.htm',
     },
-};
+}
 
 export const route: Route = {
     path: '/auto/:type?',
@@ -38,12 +38,12 @@ export const route: Route = {
     name: '自动化学院',
     maintainers: ['jalenzz'],
     handler: (ctx) => {
-        let type = ctx.req.param('type') || 'notice';
+        let type = ctx.req.param('type') || 'notice'
         if (!(type in typeMap)) {
-            logger.error(`Invalid type: ${type}. Valid types are: ${Object.keys(typeMap).join(', ')}, defaulting to notice`);
-            type = 'notice';
+            logger.error(`Invalid type: ${type}. Valid types are: ${Object.keys(typeMap).join(', ')}, defaulting to notice`)
+            type = 'notice'
         }
-        return fetchAutoNews(typeMap[type].path, typeMap[type].name);
+        return fetchAutoNews(typeMap[type].path, typeMap[type].name)
     },
     description: `| 通知公告  | 研究生教育 |    本科教学    | 学生工作  |
 | -------- | -------- |   --------    | -------- |
@@ -66,4 +66,4 @@ export const route: Route = {
             target: '/auto/student',
         },
     ],
-};
+}

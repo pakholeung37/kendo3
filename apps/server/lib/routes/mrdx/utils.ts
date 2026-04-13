@@ -1,15 +1,15 @@
 function getElementChildrenInnerText(element) {
-    let text = '';
+    let text = ''
     for (const child of element.children) {
         if (child.type === 'text') {
-            text += child.data.trim();
+            text += child.data.trim()
         }
         if (child.children !== undefined) {
-            text += getElementChildrenInnerText(child);
+            text += getElementChildrenInnerText(child)
         }
     }
 
-    return text;
+    return text
 }
 
-export { getElementChildrenInnerText };
+export { getElementChildrenInnerText }

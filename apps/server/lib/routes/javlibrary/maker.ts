@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { defaultLanguage, defaultMaker, defaultMode, ProcessItems, rootUrl } from './utils';
+import { defaultLanguage, defaultMaker, defaultMode, ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/videos/maker/:maker?/:language?/:mode?',
@@ -23,13 +23,13 @@ export const route: Route = {
     description: `| videos with comments (by date) | everything (by date) |
 | ------------------------------ | -------------------- |
 | 1                              | 2                    |`,
-};
+}
 
 async function handler(ctx) {
-    const mode = ctx.req.param('mode') ?? defaultMode;
-    const maker = ctx.req.param('maker') ?? defaultMaker;
-    const language = ctx.req.param('language') ?? defaultLanguage;
-    const currentUrl = `${rootUrl}/${language}/vl_maker.php?list&m=${maker}&mode=${mode}`;
+    const mode = ctx.req.param('mode') ?? defaultMode
+    const maker = ctx.req.param('maker') ?? defaultMaker
+    const language = ctx.req.param('language') ?? defaultLanguage
+    const currentUrl = `${rootUrl}/${language}/vl_maker.php?list&m=${maker}&mode=${mode}`
 
-    return await ProcessItems(language, currentUrl, cache.tryGet);
+    return await ProcessItems(language, currentUrl, cache.tryGet)
 }

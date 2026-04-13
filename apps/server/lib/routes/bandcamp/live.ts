@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/live',
@@ -26,24 +26,24 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'bandcamp.com/live_schedule',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://bandcamp.com';
-    const currentUrl = `${rootUrl}/live_schedule`;
+    const rootUrl = 'https://bandcamp.com'
+    const currentUrl = `${rootUrl}/live_schedule`
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    $('.curated-wrapper').remove();
+    $('.curated-wrapper').remove()
 
     const items = $('.live-listing')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 link: item.find('.title-link').attr('href'),
@@ -56,12 +56,12 @@ async function handler() {
                         .attr('style')
                         .match(/background-image: url\((.*)\);/)[1]
                 }">`,
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,82 +1,82 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category = 'sylm/xyxw' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11;
+    const { category = 'sylm/xyxw' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11
 
-    const domain = 'mse.hust.edu.cn';
-    const rootUrl = `https://${domain}`;
-    const currentUrl = new URL(`${category}.htm`, rootUrl).href;
+    const domain = 'mse.hust.edu.cn'
+    const rootUrl = `https://${domain}`
+    const currentUrl = new URL(`${category}.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.list ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('span.time').text()),
                 link: new URL(a.prop('href'), currentUrl).href,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.includes(domain)) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.article_title').text() || $$('div.article_title').text() || item.title;
-                const description = $$('div.v_news_content').html();
+                const title = $$('h1.article_title').text() || $$('div.article_title').text() || item.title
+                const description = $$('div.v_news_content').html()
 
                 for (const d of $$('div.article_data').contents().toArray()) {
-                    const data = $$(d).text();
+                    const data = $$(d).text()
 
                     if (!item.pubDate && data.startsWith('发布')) {
-                        const pubDate = data.split(/：/)?.pop();
-                        item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate;
+                        const pubDate = data.split(/：/)?.pop()
+                        item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate
                     } else if (!item.author && data.startsWith('作者')) {
-                        item.author = data.split(/：/)?.pop() ?? undefined;
+                        item.author = data.split(/：/)?.pop() ?? undefined
                     } else if (!item.author && data.startsWith('编辑')) {
-                        item.author = data.split(/：/)?.pop() ?? undefined;
+                        item.author = data.split(/：/)?.pop() ?? undefined
                     }
                 }
 
-                item.title = title;
-                item.description = description;
+                item.title = title
+                item.description = description
                 item.content = {
                     html: description,
                     text: $$('div.v_news_content').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('meta[name="keywords"]').prop('content')?.replaceAll(',', ' - ') ?? $('title').text();
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const title = $('meta[name="keywords"]').prop('content')?.replaceAll(',', ' - ') ?? $('title').text()
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title,
@@ -87,8 +87,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/)[0]?.trim(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/mse/:category{.+}?',
@@ -216,9 +216,9 @@ export const route: Route = {
         {
             source: ['mse.hust.edu.cn/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/hust/mse${category ? `/${category}` : ''}`;
+                return `/hust/mse${category ? `/${category}` : ''}`
             },
         },
         {
@@ -572,4 +572,4 @@ export const route: Route = {
             target: '/mse/xyzl/cyxz',
         },
     ],
-};
+}

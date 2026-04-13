@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:section?/:type?/:user?',
@@ -39,31 +39,31 @@ export const route: Route = {
     maintainers: ['nczitzk', 'xie-dongping'],
     handler,
     description: `Subscribe to the content of a specific user`,
-};
+}
 
 async function handler(ctx) {
-    const section = ctx.req.param('section') ?? 'index';
-    const type = ctx.req.param('type') ?? 'sources';
-    const user = ctx.req.param('user') ?? '';
+    const section = ctx.req.param('section') ?? 'index'
+    const type = ctx.req.param('type') ?? 'sources'
+    const user = ctx.req.param('user') ?? ''
 
-    const rootUrl = 'https://news.ycombinator.com';
-    const sectionUrl = section === 'index' ? '' : `/${section}`;
-    let optUrl = user === '' ? '' : '?id=' + user;
+    const rootUrl = 'https://news.ycombinator.com'
+    const sectionUrl = section === 'index' ? '' : `/${section}`
+    let optUrl = user === '' ? '' : '?id=' + user
 
     if (section === 'over') {
-        optUrl = user === '' ? '?points=100' : '?points=' + user;
+        optUrl = user === '' ? '?points=100' : '?points=' + user
     }
 
-    const currentUrl = `${rootUrl}${sectionUrl}${optUrl}`;
-    const response = await got(currentUrl);
+    const currentUrl = `${rootUrl}${sectionUrl}${optUrl}`
+    const response = await got(currentUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.athing')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30)
         .toArray()
         .map((thing) => {
-            thing = $(thing);
+            thing = $(thing)
 
             const item = {
                 guid: thing.attr('id'),
@@ -81,14 +81,14 @@ async function handler(ctx) {
 
                 currentComment: thing.find('.comment').text(),
                 description: '',
-            };
+            }
 
-            item.link = `${rootUrl}/item?id=${item.guid}`;
-            item.guid = type === 'sources' ? item.guid : `${item.guid}${item.comments === 'discuss' ? '' : `-${item.comments}`}`;
-            item.description = `<a href="${item.link}">Comments on Hacker News</a> | <a href="${item.origin}">Source</a>`;
+            item.link = `${rootUrl}/item?id=${item.guid}`
+            item.guid = type === 'sources' ? item.guid : `${item.guid}${item.comments === 'discuss' ? '' : `-${item.comments}`}`
+            item.description = `<a href="${item.link}">Comments on Hacker News</a> | <a href="${item.origin}">Source</a>`
 
-            return item;
-        });
+            return item
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -97,57 +97,57 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    content('.reply').remove();
+                    content('.reply').remove()
 
-                    item.description = '';
+                    item.description = ''
 
                     content('.comtr').each(function () {
-                        const author = content(this).find('.hnuser');
-                        const comment = content(this).find('.commtext');
+                        const author = content(this).find('.hnuser')
+                        const comment = content(this).find('.commtext')
 
                         item.description +=
                             `<div><div><small><a href="${rootUrl}/${author.attr('href')}">${author.text()}</a></small>` +
                             `&nbsp&nbsp<small><a href="${rootUrl}/item?id=${content(this).attr('id')}">` +
-                            `${content(this).find('.age').attr('title')}</a></small></div>`;
+                            `${content(this).find('.age').attr('title')}</a></small></div>`
 
-                        const commentText = comment.clone();
+                        const commentText = comment.clone()
 
-                        commentText.find('p').remove();
-                        commentText.html(`<p>${commentText.text()}</p>`);
+                        commentText.find('p').remove()
+                        commentText.html(`<p>${commentText.text()}</p>`)
                         commentText.append(
                             comment
                                 .find('p')
                                 .toArray()
-                                .map((p) => `<p>${content(p).html()}</p>`)
-                        );
+                                .map((p) => `<p>${content(p).html()}</p>`),
+                        )
 
-                        item.description += `<div>${commentText.html()}</div></div>`;
-                    });
+                        item.description += `<div>${commentText.html()}</div></div>`
+                    })
                 } else if (item.comments !== 'discuss' && type === 'comments_list') {
-                    item.title = item.onStory;
-                    item.description = item.currentComment;
+                    item.title = item.onStory
+                    item.description = item.currentComment
                 }
 
                 if (Number.isNaN(item.comments)) {
-                    item.comments = 0;
+                    item.comments = 0
                 }
 
-                item.link = type === 'sources' ? item.origin : item.link;
+                item.link = type === 'sources' ? item.origin : item.link
 
-                delete item.origin;
+                delete item.origin
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

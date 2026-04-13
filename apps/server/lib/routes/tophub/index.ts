@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/:id',
@@ -31,21 +31,21 @@ export const route: Route = {
     name: '榜单',
     maintainers: ['LogicJake'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const link = `https://tophub.today/n/${id}`;
+    const link = `https://tophub.today/n/${id}`
     const response = await ofetch(link, {
         headers: {
             Referer: 'https://tophub.today',
             Cookie: config.tophub?.cookie ?? '',
         },
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
-    const title = $('.tt h3').text().trim();
+    const title = $('.tt h3').text().trim()
 
     const out = $('.rank-all-item:not(.history-content) .jc-c tr')
         .toArray()
@@ -54,9 +54,9 @@ async function handler(ctx) {
                 title: $(e).find('td a').first().text(),
                 link: $(e).find('td a').first().attr('href'),
                 description: $(e).find('.ws').text().trim(),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     return {
         title,
@@ -64,5 +64,5 @@ async function handler(ctx) {
         image: $('.ii img').attr('src'),
         link,
         item: out,
-    };
+    }
 }

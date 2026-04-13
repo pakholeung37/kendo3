@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/curations',
@@ -28,27 +28,27 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'news.pts.org.tw/curations',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://news.pts.org.tw';
-    const currentUrl = `${rootUrl}/curations`;
+    const rootUrl = 'https://news.pts.org.tw'
+    const currentUrl = `${rootUrl}/curations`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.project-intro')
         .last()
         .find('h3 a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const projectDiv = item.parent().parent();
+            const projectDiv = item.parent().parent()
 
             return {
                 title: item.text(),
@@ -57,8 +57,8 @@ async function handler() {
                 description: renderDescription({
                     image: projectDiv.parent().find('.cover-fit').attr('src'),
                 }),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title')
@@ -66,5 +66,5 @@ async function handler() {
             .replace(/第\d+頁 ｜ /, ''),
         link: currentUrl,
         item: items,
-    };
+    }
 }

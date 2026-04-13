@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
-const baseUrl = 'https://byteclicks.com';
+const baseUrl = 'https://byteclicks.com'
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -27,31 +27,31 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'byteclicks.com/',
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
+    const tag = ctx.req.param('tag')
     const { data: search } = await got(`${baseUrl}/wp-json/wp/v2/tags`, {
         searchParams: {
             search: tag,
             per_page: 100,
         },
-    });
-    const tagData = search.find((item) => item.name === tag);
+    })
+    const tagData = search.find((item) => item.name === tag)
 
     const { data } = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
             per_page: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100,
             tags: tagData.id,
         },
-    });
+    })
 
-    const items = parseItem(data);
+    const items = parseItem(data)
 
     return {
         title: `${tagData.name} - 字节点击`,
         image: 'https://byteclicks.com/wp-content/themes/RK-Blogger/images/wbolt.ico',
         link: tagData.link,
         item: items,
-    };
+    }
 }

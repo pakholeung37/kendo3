@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/lists/:id/:filter?/:sort?',
@@ -17,14 +17,14 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const filter = ctx.req.param('filter') ?? '';
-    const sort = ctx.req.param('sort') ?? '0';
+    const id = ctx.req.param('id')
+    const filter = ctx.req.param('filter') ?? ''
+    const sort = ctx.req.param('sort') ?? '0'
 
-    const currentUrl = `/lists/${id}?lst=${sort}${filter && filter !== 'none' ? `&f=${filter}` : ''}`;
+    const currentUrl = `/lists/${id}?lst=${sort}${filter && filter !== 'none' ? `&f=${filter}` : ''}`
 
     const filters = {
         '': '',
@@ -34,14 +34,14 @@ async function handler(ctx) {
         download: '含磁链',
         cnsub: '含字幕',
         preview: '預覽圖',
-    };
+    }
 
     const sortOptions = {
         0: '加入时间排序',
         1: '发布时间排序',
-    };
+    }
 
-    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} ${sortOptions[sort]}`;
+    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} ${sortOptions[sort]}`
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

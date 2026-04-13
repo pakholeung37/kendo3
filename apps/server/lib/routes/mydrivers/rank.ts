@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { getInfo, processItems, rootUrl } from './util';
+import { getInfo, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/rank/:range?',
@@ -31,40 +31,40 @@ export const route: Route = {
     description: `| 24 小时最热 | 本周最热 | 本月最热 |
 | ----------- | -------- | -------- |
 | 0           | 1        | 2        |`,
-};
+}
 
 async function handler(ctx) {
-    const { range = '0' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { range = '0' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const currentUrl = new URL('newsclass.aspx?tid=1001', rootUrl).href;
+    const currentUrl = new URL('newsclass.aspx?tid=1001', rootUrl).href
 
-    const apiUrl = new URL(`m/newslist.ashx?ac=rank&tid=${range}`, rootUrl).href;
+    const apiUrl = new URL(`m/newslist.ashx?ac=rank&tid=${range}`, rootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a')
         .toArray()
         .filter((item) => /\/(\d+)\.html?/.test($(item).prop('href')))
         .slice(0, limit)
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.prop('href');
+            const link = item.prop('href')
 
             return {
                 title: item.text(),
                 link: new URL(link, rootUrl).href,
                 guid: link.match(/\/(\d+)\.html?/)[1],
-            };
-        });
+            }
+        })
 
-    items = await processItems(items);
+    items = await processItems(items)
 
     return {
         item: items,
         ...(await getInfo(currentUrl, Number.parseInt(range, 10))),
-    };
+    }
 }

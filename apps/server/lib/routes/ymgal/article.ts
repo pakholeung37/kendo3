@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const host = 'https://www.ymgal.games';
+const host = 'https://www.ymgal.games'
 
 const types = {
     news: '?type=NEWS&page=1',
     column: '?type=COLUMN&page=1',
-};
+}
 
 export const route: Route = {
     path: '/article/:type?',
@@ -32,48 +32,48 @@ export const route: Route = {
     description: `| 全部文章 | 资讯 | 专栏   |
 | -------- | ---- | ------ |
 | all      | news | column |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'all';
+    const type = ctx.req.param('type') || 'all'
 
-    const link = `${host}/co/topic/list` + types[type];
-    let data = [];
+    const link = `${host}/co/topic/list` + types[type]
+    let data = []
     if (type === 'all') {
         await Promise.all(
             Object.values(types).map(async (type) => {
-                const response = await got(`${host}/co/topic/list${type}`);
-                data.push(...response.data.data);
-            })
-        );
-        data = data.toSorted((a, b) => b.publishTime - a.publishTime).slice(0, 10);
+                const response = await got(`${host}/co/topic/list${type}`)
+                data.push(...response.data.data)
+            }),
+        )
+        data = data.toSorted((a, b) => b.publishTime - a.publishTime).slice(0, 10)
     } else {
-        const response = await got(link);
-        data = response.data.data;
+        const response = await got(link)
+        data = response.data.data
     }
 
     const items = await Promise.all(
         data.map((item) => {
-            const itemUrl = host + '/co/article/' + item.topicId;
+            const itemUrl = host + '/co/article/' + item.topicId
             return cache.tryGet(itemUrl, async () => {
-                const result = await got(itemUrl);
-                const $ = load(result.data);
-                const description = $('article').html().trim();
+                const result = await got(itemUrl)
+                const $ = load(result.data)
+                const description = $('article').html().trim()
                 return {
                     title: item.title,
                     link: itemUrl,
                     pubDate: timezone(parseDate(item.publishTime), 8),
                     description,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    let info = '全部文章';
+    let info = '全部文章'
     if (type === 'news') {
-        info = '资讯';
+        info = '资讯'
     } else if (type === 'column') {
-        info = '专栏';
+        info = '专栏'
     }
 
     return {
@@ -81,5 +81,5 @@ async function handler(ctx) {
         link: `${host}/co/article`,
         description: `月幕 Galgame - ${info}`,
         item: items,
-    };
+    }
 }

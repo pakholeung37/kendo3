@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:id?',
@@ -47,22 +47,22 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-};
+}
 
 export async function handler(ctx) {
-    const { id = 'latest' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 22;
+    const { id = 'latest' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 22
 
-    const rootUrl = 'https://xd.x6d.com';
+    const rootUrl = 'https://xd.x6d.com'
 
-    let currentUrl = new URL(id === 'latest' ? '' : `html/${id}.html`, rootUrl).href;
+    let currentUrl = new URL(id === 'latest' ? '' : `html/${id}.html`, rootUrl).href
 
-    const { data: firstResponse } = await got(currentUrl);
+    const { data: firstResponse } = await got(currentUrl)
 
-    let $;
+    let $
 
     if (/<meta\s/.test(firstResponse)) {
-        $ = load(firstResponse);
+        $ = load(firstResponse)
     } else {
         currentUrl = new URL(
             id === 'latest'
@@ -72,62 +72,62 @@ export async function handler(ctx) {
                       .toReversed()
                       .join('')
                       .replaceAll("'", ''),
-            rootUrl
-        ).href;
+            rootUrl,
+        ).href
 
-        const { data: response } = await got(currentUrl);
+        const { data: response } = await got(currentUrl)
 
-        $ = load(response);
+        $ = load(response)
     }
 
-    $('i.rj').remove();
+    $('i.rj').remove()
 
-    const language = 'zh';
+    const language = 'zh'
 
-    const query = id === 'latest' ? $('#newslist ul').first().find('li').not('li.addd').find('a').slice(0, limit) : $('a.soft-title').slice(0, limit);
+    const query = id === 'latest' ? $('#newslist ul').first().find('li').not('li.addd').find('a').slice(0, limit) : $('a.soft-title').slice(0, limit)
 
     let items = query.toArray().map((item) => {
-        item = $(item);
+        item = $(item)
 
         return {
             title: item.prop('title') ?? item.text(),
             link: new URL(item.prop('href'), rootUrl).href,
             language,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.article-title').text();
-                const description = $$('div.article-content').html();
-                const image = new URL($$('div.article-content img').first().prop('src'), rootUrl).href;
+                const title = $$('h1.article-title').text()
+                const description = $$('div.article-content').html()
+                const image = new URL($$('div.article-content img').first().prop('src'), rootUrl).href
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('time').text()), +8);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('time').text()), +8)
                 item.category = $$('b.bq-wg')
                     .toArray()
-                    .map((c) => $$(c).text());
-                item.author = $$('span.bq-zz').text();
+                    .map((c) => $$(c).text())
+                item.author = $$('span.bq-zz').text()
                 item.content = {
                     html: description,
                     text: $$('div.article-content').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.header-logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.header-logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text().split(/\s-/)[0],
@@ -137,5 +137,5 @@ export async function handler(ctx) {
         allowEmpty: true,
         image,
         language,
-    };
+    }
 }

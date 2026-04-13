@@ -1,10 +1,10 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const md = MarkdownIt();
+const md = MarkdownIt()
 
 export const route: Route = {
     path: '/',
@@ -18,14 +18,14 @@ export const route: Route = {
     maintainers: ['hyoban'],
     handler,
     url: 'hackertalk.net/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ?? 25;
+    const limit = ctx.req.query('limit') ?? 25
 
-    const response = await got(`https://api.hackertalk.net/v1/posts?limit=${limit}&orderBy=time`);
+    const response = await got(`https://api.hackertalk.net/v1/posts?limit=${limit}&orderBy=time`)
 
-    const data = response.data.data;
+    const data = response.data.data
 
     return {
         title: '黑客说的最新帖子',
@@ -37,5 +37,5 @@ async function handler(ctx) {
             pubDate: parseDate(item.createdAt),
             link: `https://hackertalk.net/posts/${item.id}`,
         })),
-    };
+    }
 }

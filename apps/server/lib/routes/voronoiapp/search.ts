@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { CommonDataProperties, CommonRouteProperties, getPostItems } from './common';
+import { CommonDataProperties, CommonRouteProperties, getPostItems } from './common'
 
 export const route: Route = {
     ...CommonRouteProperties,
@@ -11,9 +11,9 @@ export const route: Route = {
             source: ['www.voronoiapp.com/explore'],
             // 新版本中貌似不再支持 function 形式的 target
             target: (_, url) => {
-                const parsedURL = new URL(url);
-                const keyword = parsedURL.searchParams.get('search');
-                return `/voronoiapp/search/${keyword}`;
+                const parsedURL = new URL(url)
+                const keyword = parsedURL.searchParams.get('search')
+                return `/voronoiapp/search/${keyword}`
             },
         },
     ],
@@ -22,13 +22,13 @@ export const route: Route = {
         keyword: 'The keyword to search for',
     },
     handler: async (ctx) => {
-        const { keyword } = ctx.req.param();
-        const items = await getPostItems({ search: keyword });
+        const { keyword } = ctx.req.param()
+        const items = await getPostItems({ search: keyword })
         return {
             ...CommonDataProperties,
             title: `Voronoi Posts for "${keyword}"`,
             link: `https://www.voronoiapp.com/explore?search=${encodeURIComponent(keyword)}`,
             item: items,
-        } as Data;
+        } as Data
     },
-};
+}

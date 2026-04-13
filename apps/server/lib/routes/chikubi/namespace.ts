@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '乳首ふぇち',
@@ -13,4 +13,4 @@ Sometimes a product may exist in both posts and works.
 Sometimes there might be only a single post without any reposted work, and vice versa.
 :::`,
     lang: 'ja',
-};
+}

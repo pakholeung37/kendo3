@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
-import { getRadarDomin, headers, parseItems } from './utils';
+import { getRadarDomin, headers, parseItems } from './utils'
 
 export const route: Route = {
     path: '/pornstar/:username/:language?/:sort?/:img?',
@@ -71,32 +71,32 @@ export const route: Route = {
     name: 'Pornstar',
     maintainers: ['I2IMk', 'queensferryme'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { language = 'www', username, sort = 'mr', img } = ctx.req.param();
-    let link = `https://${language}.pornhub.com/pornstar/${username}?o=${sort}`;
+    const { language = 'www', username, sort = 'mr', img } = ctx.req.param()
+    let link = `https://${language}.pornhub.com/pornstar/${username}?o=${sort}`
     if (!isValidHost(language)) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
 
-    const { data: response } = await got(link, { headers });
-    let $ = load(response);
-    let items;
+    const { data: response } = await got(link, { headers })
+    let $ = load(response)
+    let items
 
-    const showImages = img === 'img=1';
+    const showImages = img === 'img=1'
 
     if ($('.withBio').length === 0) {
-        link = `https://${language}.pornhub.com/pornstar/${username}/videos?o=${sort}`;
-        const { data: response } = await got(link, { headers });
-        $ = load(response);
+        link = `https://${language}.pornhub.com/pornstar/${username}/videos?o=${sort}`
+        const { data: response } = await got(link, { headers })
+        $ = load(response)
         items = $('#mostRecentVideosSection .videoBox')
             .toArray()
-            .map((e) => parseItems($(e), showImages));
+            .map((e) => parseItems($(e), showImages))
     } else {
         items = $('#pornstarsVideoSection .videoBox')
             .toArray()
-            .map((e) => parseItems($(e), showImages));
+            .map((e) => parseItems($(e), showImages))
     }
 
     return {
@@ -106,5 +106,5 @@ async function handler(ctx): Promise<Data> {
         image: $('#getAvatar').attr('src'),
         language: $('html').attr('lang') as any,
         item: items,
-    };
+    }
 }

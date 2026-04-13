@@ -1,21 +1,21 @@
-import crypto from 'node:crypto';
+import crypto from 'node:crypto'
 
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Category, Collection, Tag } from './types';
+import type { Category, Collection, Tag } from './types'
 
-const b64tou8a = (str) => Uint8Array.from(Buffer.from(str, 'base64'));
-const b64tohex = (str) => Buffer.from(str, 'base64').toString('hex');
+const b64tou8a = (str) => Uint8Array.from(Buffer.from(str, 'base64'))
+const b64tohex = (str) => Buffer.from(str, 'base64').toString('hex')
 const s256 = (s1: Uint8Array, s2: string) => {
-    const sha = crypto.createHash('sha256');
-    sha.update(s1);
-    sha.update(s2);
-    return sha.digest('hex');
-};
+    const sha = crypto.createHash('sha256')
+    sha.update(s1)
+    sha.update(s2)
+    return sha.digest('hex')
+}
 
 /**
  * Solve _wafchallengeid
@@ -23,53 +23,53 @@ const s256 = (s1: Uint8Array, s2: string) => {
  * @returns base64 encoded solved challenge string {"v":{"a":"...", "b":"timestamp", "c":"..."}, "s":"...", "d":"solution"}
  */
 export const solveWafChallenge = (cs: string) => {
-    const c = JSON.parse(Buffer.from(cs, 'base64').toString());
-    const prefix = b64tou8a(c.v.a);
-    const expect = b64tohex(c.v.c);
+    const c = JSON.parse(Buffer.from(cs, 'base64').toString())
+    const prefix = b64tou8a(c.v.a)
+    const expect = b64tohex(c.v.c)
 
     for (let i = 0; i < 1_000_000; i++) {
-        const hash = s256(prefix, i.toString());
+        const hash = s256(prefix, i.toString())
         if (hash === expect) {
-            c.d = Buffer.from(i.toString()).toString('base64');
-            break;
+            c.d = Buffer.from(i.toString()).toString('base64')
+            break
         }
     }
-    return Buffer.from(JSON.stringify(c)).toString('base64');
-};
+    return Buffer.from(JSON.stringify(c)).toString('base64')
+}
 
 export const generateUuid = () => {
-    const e = (t) => (t ? (t ^ ((16 * 0.5) >> (t / 4))).toString(10) : '10000000-1000-4000-8000-100000000000'.replaceAll(/[018]/g, e));
-    return e().replaceAll('-', '').slice(0, 19);
-};
+    const e = (t) => (t ? (t ^ ((16 * 0.5) >> (t / 4))).toString(10) : '10000000-1000-4000-8000-100000000000'.replaceAll(/[018]/g, e))
+    return e().replaceAll('-', '').slice(0, 19)
+}
 
 export const getArticle = async (link) => {
-    let response = await ofetch(link);
-    let $ = cheerio.load(response);
+    let response = await ofetch(link)
+    let $ = cheerio.load(response)
     if ($('script').text().includes('_wafchallengeid')) {
         const cs = $('script:contains("_wafchallengeid")')
             .text()
-            .match(/cs="(.*?)",c/)?.[1];
-        const cookie = solveWafChallenge(cs);
+            .match(/cs="(.*?)",c/)?.[1]
+        const cookie = solveWafChallenge(cs)
 
         response = await ofetch(link, {
             headers: {
                 cookie: `_wafchallengeid=${cookie};`,
             },
-        });
+        })
 
-        $ = cheerio.load(response);
+        $ = cheerio.load(response)
     }
 
-    return $('.article-viewer').html();
-};
+    return $('.article-viewer').html()
+}
 
 export const parseList = (data) =>
     data.map((item) => {
-        const isArticle = !!item.article_info;
-        const isShortMsg = !!item.msg_Info;
+        const isArticle = !!item.article_info
+        const isShortMsg = !!item.msg_Info
         if (isShortMsg) {
-            const msg = item.msg_Info;
-            const contentMatches = msg.content.match(/\[(.*?)\]\s+(.*)/);
+            const msg = item.msg_Info
+            const contentMatches = msg.content.match(/\[(.*?)\]\s+(.*)/)
             return {
                 title: contentMatches?.[1],
                 description: contentMatches?.[2]?.trim(),
@@ -78,7 +78,7 @@ export const parseList = (data) =>
                 link: `https://juejin.cn/pin/7548882523352186915${item.msg_id}`,
                 category: [item.topic.title],
                 isShortMsg: true,
-            };
+            }
         }
 
         return {
@@ -88,25 +88,25 @@ export const parseList = (data) =>
             author: item.author_user_info.user_name,
             link: `https://juejin.cn${isArticle ? `/post/${item.article_id}` : `/news/${item.content_id}`}`,
             category: [...new Set([item.category.category_name, ...item.tags.map((tag) => tag.tag_name)])],
-        };
-    });
+        }
+    })
 
 export const ProcessFeed = (list) =>
     Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                item.description = item.isShortMsg ? item.description : (await getArticle(item.link)) || item.description;
+                item.description = item.isShortMsg ? item.description : (await getArticle(item.link)) || item.description
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
 export const getCategoryBrief = () =>
     cache.tryGet('juejin:categoryBriefs', async () => {
-        const response = await ofetch('https://api.juejin.cn/tag_api/v1/query_category_briefs');
-        return response.data;
-    }) as Promise<Category[]>;
+        const response = await ofetch('https://api.juejin.cn/tag_api/v1/query_category_briefs')
+        return response.data
+    }) as Promise<Category[]>
 
 export const getCollection = (collectionId) =>
     cache.tryGet(`juejin:collectionId:${collectionId}`, async () => {
@@ -115,9 +115,9 @@ export const getCollection = (collectionId) =>
                 tag_id: collectionId,
                 cursor: 0,
             },
-        });
-        return response.data;
-    }) as Promise<Collection>;
+        })
+        return response.data
+    }) as Promise<Collection>
 
 export const getTag = (tag) =>
     cache.tryGet(`juejin:tag:${tag}`, async () => {
@@ -126,9 +126,9 @@ export const getTag = (tag) =>
             body: {
                 key_word: tag,
             },
-        });
-        return response.data;
-    }) as Promise<{ tag_id: string; tag: Tag }>;
+        })
+        return response.data
+    }) as Promise<{ tag_id: string; tag: Tag }>
 
 export const getTagList = () =>
     cache.tryGet('juejin:tagList', async () => {
@@ -142,6 +142,6 @@ export const getTagList = () =>
                 cursor: '0',
                 limit: 100,
             },
-        });
-        return response.data;
-    }) as Promise<Array<{ tag_id: string; tag: Tag }>>;
+        })
+        return response.data
+    }) as Promise<Array<{ tag_id: string; tag: Tag }>>

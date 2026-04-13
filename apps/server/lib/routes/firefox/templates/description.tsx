@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    header?: string;
-    overview?: string;
-    dataClasses?: string;
-};
+    header?: string
+    overview?: string
+    dataClasses?: string
+}
 
 const FirefoxDescription = ({ header, overview, dataClasses }: DescriptionData) => (
     <>
@@ -15,6 +15,6 @@ const FirefoxDescription = ({ header, overview, dataClasses }: DescriptionData) 
         <br />
         {dataClasses ? raw(dataClasses) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<FirefoxDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<FirefoxDescription {...data} />)

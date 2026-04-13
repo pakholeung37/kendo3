@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/video/reply/:bvid',
@@ -19,22 +19,22 @@ export const route: Route = {
     name: '视频评论',
     maintainers: ['Qixingchen'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let bvid = ctx.req.param('bvid');
-    let aid;
+    let bvid = ctx.req.param('bvid')
+    let aid
     if (!bvid.startsWith('BV')) {
-        aid = bvid;
-        bvid = null;
+        aid = bvid
+        bvid = null
     }
-    const name = await cache.getVideoNameFromId(aid, bvid);
+    const name = await cache.getVideoNameFromId(aid, bvid)
     if (!aid) {
-        aid = await cache.getAidFromBvid(bvid);
+        aid = await cache.getAidFromBvid(bvid)
     }
 
-    const link = `https://www.bilibili.com/video/${bvid || `av${aid}`}`;
-    const cookie = await cache.getCookie();
+    const link = `https://www.bilibili.com/video/${bvid || `av${aid}`}`
+    const cookie = await cache.getCookie()
     const response = await got({
         method: 'get',
         url: `https://api.bilibili.com/x/v2/reply?type=1&oid=${aid}&sort=0`,
@@ -42,9 +42,9 @@ async function handler(ctx) {
             Referer: link,
             Cookie: cookie,
         },
-    });
+    })
 
-    const data = response.data.data.replies;
+    const data = response.data.data.replies
 
     return {
         title: `${name} 的 评论`,
@@ -56,5 +56,5 @@ async function handler(ctx) {
             pubDate: new Date(item.ctime * 1000).toUTCString(),
             link: `${link}/#reply${item.rpid}`,
         })),
-    };
+    }
 }

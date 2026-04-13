@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiRootUrl, processItems, rootUrl } from './util';
+import { apiRootUrl, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/daily',
@@ -28,34 +28,34 @@ export const route: Route = {
     maintainers: ['nczitzk', 'fashioncj'],
     handler,
     url: 'readhub.cn/daily',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11
 
-    const currentUrl = new URL('daily', apiRootUrl).href;
-    const infoUrl = new URL('daily', rootUrl).href;
+    const currentUrl = new URL('daily', apiRootUrl).href
+    const infoUrl = new URL('daily', rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const dailyItems = currentResponse.data.items;
+    const dailyItems = currentResponse.data.items
 
     let items = dailyItems.slice(0, limit).map((item) => ({
         title: item.title,
         link: new URL(`topic/${item.uid}`, rootUrl).href,
         description: `<p>${item.summary}</p>`,
         guid: item.uid,
-    }));
+    }))
 
-    items = await processItems(items, cache.tryGet);
+    items = await processItems(items, cache.tryGet)
 
-    const { data: currentHTMLResponse } = await got(infoUrl);
-    const $ = load(currentHTMLResponse);
+    const { data: currentHTMLResponse } = await got(infoUrl)
+    const $ = load(currentHTMLResponse)
 
-    const author = $('meta[name="application-name"]').prop('content');
-    const subtitle = $('meta[property="og:title"]').prop('content');
-    const image = 'https://readhub.cn/icons/icon-192x192.png';
-    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href'), rootUrl);
+    const author = $('meta[name="application-name"]').prop('content')
+    const subtitle = $('meta[property="og:title"]').prop('content')
+    const image = 'https://readhub.cn/icons/icon-192x192.png'
+    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href'), rootUrl)
 
     return {
         item: items,
@@ -69,5 +69,5 @@ async function handler(ctx) {
         subtitle,
         author,
         allowEmpty: true,
-    };
+    }
 }

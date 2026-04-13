@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/forestry/gjlckjdjt/:category?',
@@ -31,28 +31,28 @@ export const route: Route = {
 | 生态修复 | stxf |
 | 用材林   | ycl  |
 | 其他     | qt   |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'gjlckjdjt' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'gjlckjdjt' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'http://www.forestry.gov.cn';
-    const currentUrl = new URL(`${category}.jhtml`, rootUrl).href;
+    const rootUrl = 'http://www.forestry.gov.cn'
+    const currentUrl = new URL(`${category}.jhtml`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a.items')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('p.name').text();
-            const link = new URL(item.prop('href'), rootUrl).href;
-            const pubDateMatches = link.match(/\/\d{8}\//);
+            const title = item.find('p.name').text()
+            const link = new URL(item.prop('href'), rootUrl).href
+            const pubDateMatches = link.match(/\/\d{8}\//)
 
             return {
                 title,
@@ -64,51 +64,51 @@ async function handler(ctx) {
                     },
                 }),
                 pubDate: pubDateMatches ? parseDate(pubDateMatches[1]) : undefined,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
                 content('p').each((_, e) => {
-                    e = content(e);
+                    e = content(e)
                     if (e.find('img, video, embed.edui-faked-video').length === 0 && /^\s*$/.test(e.text())) {
-                        e.remove();
+                        e.remove()
                     }
-                });
+                })
 
                 content('video, embed.edui-faked-video').each((_, e) => {
-                    e = content(e);
+                    e = content(e)
 
-                    const src = e.prop('src');
-                    item.enclosure_url = item.enclosure_url ?? src;
+                    const src = e.prop('src')
+                    item.enclosure_url = item.enclosure_url ?? src
 
                     e.replaceWith(
                         renderDescription({
                             video: {
                                 src,
                             },
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                const pubDateMatches = item.link.match(/\/\d{8}\//);
+                const pubDateMatches = item.link.match(/\/\d{8}\//)
 
-                item.title = content('div.tit').text();
-                item.description += content('div.zhengwen').html();
-                item.pubDate = pubDateMatches ? parseDate(pubDateMatches[1]) : undefined;
-                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined;
+                item.title = content('div.tit').text()
+                item.description += content('div.zhengwen').html()
+                item.pubDate = pubDateMatches ? parseDate(pubDateMatches[1]) : undefined
+                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items,
@@ -121,5 +121,5 @@ async function handler(ctx) {
         subtitle: $('div.weizhi').contents().last().text(),
         author: '国家林业和草原局',
         allowEmpty: true,
-    };
+    }
 }

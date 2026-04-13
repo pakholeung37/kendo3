@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionRenderOptions = {
-    video?: string;
-    description?: string;
-};
+    video?: string
+    description?: string
+}
 
 export const renderDescription = ({ video, description }: DescriptionRenderOptions): string =>
     renderToString(
@@ -15,5 +15,5 @@ export const renderDescription = ({ video, description }: DescriptionRenderOptio
                 </video>
             ) : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/video/page/:bvid/:embed?',
@@ -19,27 +19,27 @@ export const route: Route = {
     name: '视频选集列表',
     maintainers: ['sxzz'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let bvid = ctx.req.param('bvid');
-    let aid;
+    let bvid = ctx.req.param('bvid')
+    let aid
     if (!bvid.startsWith('BV')) {
-        aid = bvid;
-        bvid = null;
+        aid = bvid
+        bvid = null
     }
-    const embed = !ctx.req.param('embed');
-    const link = `https://www.bilibili.com/video/${bvid || `av${aid}`}`;
+    const embed = !ctx.req.param('embed')
+    const link = `https://www.bilibili.com/video/${bvid || `av${aid}`}`
     const response = await got({
         method: 'get',
         url: `https://api.bilibili.com/x/web-interface/view?${bvid ? `bvid=${bvid}` : `aid=${aid}`}`,
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const respdata = response.data.data;
-    const { title: name, pages: data } = response.data.data;
+    const respdata = response.data.data
+    const { title: name, pages: data } = response.data.data
 
     return {
         title: `视频 ${name} 的选集列表`,
@@ -53,5 +53,5 @@ async function handler(ctx) {
                 description: utils.renderUGCDescription(embed, respdata.pic, `${item.part} - ${name}`, respdata.aid, item.cid, respdata.bvid),
                 link: `${link}?p=${item.page}`,
             })),
-    };
+    }
 }

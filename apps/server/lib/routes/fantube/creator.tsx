@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getCreatorFragment, getCreatorPostReelList } from './utils';
+import { baseUrl, getCreatorFragment, getCreatorPostReelList } from './utils'
 
 export const route: Route = {
     path: '/r18/creator/:identifier',
@@ -27,7 +27,7 @@ export const route: Route = {
     name: 'User Posts',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 const renderDescription = ({ description, thumbnailUrl, sampleVideoId, imageUrls }): string =>
     renderToString(
@@ -58,15 +58,15 @@ const renderDescription = ({ description, thumbnailUrl, sampleVideoId, imageUrls
                 </>
             ) : null}
             {description ? raw(description.replaceAll('\n', '<br>')) : null}
-        </>
-    );
+        </>,
+    )
 
 async function handler(ctx) {
-    const { identifier } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') || 18, 10);
+    const { identifier } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') || 18, 10)
 
-    const creatorInfo = await getCreatorFragment(identifier);
-    const posts = await getCreatorPostReelList(identifier, limit);
+    const creatorInfo = await getCreatorFragment(identifier)
+    const posts = await getCreatorPostReelList(identifier, limit)
 
     const items = posts.map((p) => ({
         title: p.title.replaceAll('\n', ' ').trim(),
@@ -80,7 +80,7 @@ async function handler(ctx) {
         author: p.creator.displayName,
         pubDate: parseDate(p.publishStartAt),
         image: p.thumbnailUrl,
-    }));
+    }))
 
     return {
         title: `${creatorInfo.displayName}のプロフィール｜クリエイターページ｜FANTUBE(ファンチューブ)`,
@@ -91,5 +91,5 @@ async function handler(ctx) {
         logo: creatorInfo.avatarImageUrl,
         language: 'ja',
         item: items,
-    };
+    }
 }

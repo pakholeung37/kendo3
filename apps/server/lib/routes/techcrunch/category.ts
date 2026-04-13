@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const host = 'https://techcrunch.com';
+const host = 'https://techcrunch.com'
 export const route: Route = {
     path: '/category/:categoryId',
     categories: ['new-media'],
@@ -21,14 +21,14 @@ export const route: Route = {
 From the page source of \`https://techcrunch.com/category/***\`, locate the \`{category_id}\`  
 Example:  
 \`html\` -> \`head\` -> \`<link rel="alternate" title="JSON" type="application/json" href="https://techcrunch.com/wp-json/wp/v2/categories/{category_id}">\``,
-};
+}
 
 async function handler(ctx) {
-    const categoryId = ctx.req.param('categoryId');
-    const { data } = await got(`${host}/wp-json/wp/v2/posts?categories=${categoryId}`);
+    const categoryId = ctx.req.param('categoryId')
+    const { data } = await got(`${host}/wp-json/wp/v2/posts?categories=${categoryId}`)
     const items = data.map((item) => {
-        const head = item.yoast_head_json;
-        const $ = load(item.content.rendered, null, false);
+        const head = item.yoast_head_json
+        const $ = load(item.content.rendered, null, false)
         return {
             title: item.title.rendered,
             description: renderDescription({
@@ -37,13 +37,13 @@ async function handler(ctx) {
             }),
             link: item.link,
             pubDate: parseDate(item.date_gmt),
-        };
-    });
+        }
+    })
 
     return {
         title: 'TechCrunch',
         link: host,
         description: 'Reporting on the business of technology, startups, venture capital funding, and Silicon Valley.',
         item: items,
-    };
+    }
 }

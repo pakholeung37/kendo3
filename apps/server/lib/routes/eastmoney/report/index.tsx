@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getEpsOrPeStr, getRatingChangeStr } from '../utils';
+import { getEpsOrPeStr, getRatingChangeStr } from '../utils'
 
 export const route: Route = {
     path: '/report/:category',
@@ -46,11 +46,11 @@ export const route: Route = {
     description: `| 策略报告       | 宏观研究    | 券商晨报     | 行业研究 | 个股研报 |
 | -------------- | ----------- | ------------ | -------- | -------- |
 | strategyreport | macresearch | brokerreport | industry | stock    |`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://data.eastmoney.com';
-    const { category = 'strategyreport' } = ctx.req.param();
+    const baseUrl = 'https://data.eastmoney.com'
+    const { category = 'strategyreport' } = ctx.req.param()
 
     const reportType = {
         brokerreport: '券商晨报',
@@ -58,58 +58,58 @@ async function handler(ctx) {
         macresearch: '宏观研究',
         strategyreport: '策略报告',
         stock: '个股研报',
-    };
+    }
     const linkType = {
         brokerreport: 'zw_brokerreport',
         industry: 'zw_industry',
         macresearch: 'zw_macresearch',
         strategyreport: 'zw_strategy',
         stock: 'info',
-    };
+    }
 
-    const res = await got(`${baseUrl}/report/${category}`);
-    const $ = load(res.data);
+    const res = await got(`${baseUrl}/report/${category}`)
+    const $ = load(res.data)
 
     const initData = JSON.parse(
         $('script')
             .text()
-            .match(/var initdata(.=?)(.*?);/)[2]
-    );
+            .match(/var initdata(.=?)(.*?);/)[2],
+    )
 
     const list = initData.data.map((item) => {
-        const stockName = category === 'stock' ? `[${item.stockName}]` : '';
+        const stockName = category === 'stock' ? `[${item.stockName}]` : ''
         return {
             title: `[${item.orgSName}]${stockName}${item.title}`,
             link: `${baseUrl}/report/${linkType[category]}` + (category === 'stock' ? `/${item.infoCode}.html` : `.jshtml?encodeUrl=${item.encodeUrl}`),
             pubDate: parseDate(item.publishDate),
             author: item.researcher,
             originItem: item, // temp use
-        };
-    });
+        }
+    })
 
     const items = await Promise.all(
         list.map((item) => {
-            const tempOriginItem = item.originItem;
-            delete item.originItem; // temp use
+            const tempOriginItem = item.originItem
+            delete item.originItem // temp use
 
             return cache.tryGet(item.link, async () => {
                 try {
-                    const { data: response } = await got(item.link);
-                    const $ = load(response);
+                    const { data: response } = await got(item.link)
+                    const $ = load(response)
 
                     if (category === 'stock') {
-                        const { title, stockName, stockCode, emRatingName, ratingChange, indvInduName } = tempOriginItem;
-                        const ratingChangeStr = getRatingChangeStr(ratingChange);
-                        const currentYear = new Date().getFullYear();
-                        const nextYear = currentYear + 1;
-                        const description = $('.newsContent').html();
-                        const enclosureUrl = $('#ContentBody .rightlab').attr('href');
-                        const predictThisYearEps = getEpsOrPeStr(tempOriginItem.predictThisYearEps, 3);
-                        const predictThisYearPe = getEpsOrPeStr(tempOriginItem.predictThisYearPe, 2);
-                        const predictNextYearEps = getEpsOrPeStr(tempOriginItem.predictNextYearEps, 3);
-                        const predictNextYearPe = getEpsOrPeStr(tempOriginItem.predictNextYearPe, 2);
+                        const { title, stockName, stockCode, emRatingName, ratingChange, indvInduName } = tempOriginItem
+                        const ratingChangeStr = getRatingChangeStr(ratingChange)
+                        const currentYear = new Date().getFullYear()
+                        const nextYear = currentYear + 1
+                        const description = $('.newsContent').html()
+                        const enclosureUrl = $('#ContentBody .rightlab').attr('href')
+                        const predictThisYearEps = getEpsOrPeStr(tempOriginItem.predictThisYearEps, 3)
+                        const predictThisYearPe = getEpsOrPeStr(tempOriginItem.predictThisYearPe, 2)
+                        const predictNextYearEps = getEpsOrPeStr(tempOriginItem.predictNextYearEps, 3)
+                        const predictNextYearPe = getEpsOrPeStr(tempOriginItem.predictNextYearPe, 2)
 
-                        item.enclosure_url = enclosureUrl;
+                        item.enclosure_url = enclosureUrl
                         item.description = renderToString(
                             <>
                                 <table>
@@ -147,23 +147,23 @@ async function handler(ctx) {
                                     </tbody>
                                 </table>
                                 <div>{description ? raw(description) : null}</div>
-                            </>
-                        );
+                            </>,
+                        )
                     } else {
-                        item.link = $('.pdf-link').attr('href');
-                        item.description = $('.ctx-content').html();
+                        item.link = $('.pdf-link').attr('href')
+                        item.description = $('.ctx-content').html()
                     }
-                    return item;
+                    return item
                 } catch {
-                    return item;
+                    return item
                 }
-            });
-        })
-    );
+            })
+        }),
+    )
 
     return {
         title: `东方财富网-${reportType[category]}`,
         link: baseUrl,
         item: items,
-    };
+    }
 }

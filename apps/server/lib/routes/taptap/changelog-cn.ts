@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common/changelog';
+import { handler } from './common/changelog'
 
 export const route: Route = {
     path: '/changelog/:id/:lang?',
@@ -27,4 +27,4 @@ export const route: Route = {
     name: '游戏更新',
     maintainers: ['hoilc', 'ETiV'],
     handler,
-};
+}

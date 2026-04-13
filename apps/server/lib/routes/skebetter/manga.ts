@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
+import { config } from '@/config'
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { fetchData, processItems } from './utils';
+import { fetchData, processItems } from './utils'
 
 export const route: Route = {
     path: '/manga/:order',
@@ -37,31 +37,31 @@ export const route: Route = {
 | 新着 (Latest) | 人気 (Hot) |
 | ---- | ---- |
 | 1    | 2    |`,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const order = ctx.req.param('order') ?? '1';
-    const baseUrl = 'https://api.twieromanga.com/api/mangaseries';
+    const order = ctx.req.param('order') ?? '1'
+    const baseUrl = 'https://api.twieromanga.com/api/mangaseries'
     const orderMap = {
         '1': '新着',
         '2': '人気',
-    };
+    }
 
-    const url = `${baseUrl}?order=${order}`;
+    const url = `${baseUrl}?order=${order}`
 
     const items = await cache.tryGet(
         url,
         async () => {
-            const data = await fetchData(url, true);
-            return processItems(data, 'manga');
+            const data = await fetchData(url, true)
+            return processItems(data, 'manga')
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     return {
         title: `Skebetter Manga - ${orderMap[order]}`,
         link: `https://skebetter.com/series?order=${order}`,
         item: items as DataItem[],
-    };
+    }
 }

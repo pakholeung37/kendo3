@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -20,18 +20,18 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://netflav.com';
-    const { data } = await got(baseUrl);
+    const baseUrl = 'https://netflav.com'
+    const { data } = await got(baseUrl)
 
-    const $ = load(data);
-    const nextData = JSON.parse($('#__NEXT_DATA__').text());
+    const $ = load(data)
+    const nextData = JSON.parse($('#__NEXT_DATA__').text())
     const {
         head,
         props: { initialState },
-    } = nextData;
+    } = nextData
 
     const items = [...initialState.censored.docs, ...initialState.uncensored.docs, ...initialState.chinese.docs, ...initialState.trending.docs].map((item) => ({
         title: item.title,
@@ -40,7 +40,7 @@ async function handler() {
         pubDate: parseDate(item.sourceDate),
         author: [...new Set(item.actors.map((a) => a.replace(/^(\w{2}:)/, '')))].join(', '),
         category: [...new Set(item.tags?.map((t) => t.replace(/^(\w{2}:)/, '')))],
-    }));
+    }))
 
     return {
         title: head.find((h) => h[0] === 'title')[1].children,
@@ -50,7 +50,7 @@ async function handler() {
         link: baseUrl,
         item: items,
         allowEmpty: true,
-    };
+    }
 }
 
 const renderDescription = (images: string[], description: string): string =>
@@ -60,5 +60,5 @@ const renderDescription = (images: string[], description: string): string =>
                 <img key={`${img}-${index}`} src={img} />
             ))}
             {description ? <p>{description}</p> : null}
-        </>
-    );
+        </>,
+    )

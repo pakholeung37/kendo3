@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/rankings/:category?/:time?',
@@ -43,15 +43,15 @@ export const route: Route = {
 | 日榜  | 週榜   | 月榜    |
 | ----- | ------ | ------- |
 | daily | weekly | monthly |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'censored';
-    const time = ctx.req.param('time') ?? 'daily';
+    const category = ctx.req.param('category') ?? 'censored'
+    const time = ctx.req.param('time') ?? 'daily'
 
-    const currentUrl = `/rankings/movies?p=${time}&t=${category}`;
+    const currentUrl = `/rankings/movies?p=${time}&t=${category}`
 
-    const title = 'JavDB';
+    const title = 'JavDB'
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

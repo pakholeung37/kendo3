@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseItem, parseList } from './utils';
+import { parseItem, parseList } from './utils'
 
 export const route: Route = {
     path: '/scientific',
@@ -16,7 +16,7 @@ export const route: Route = {
     maintainers: ['alphardex', 'nczitzk'],
     handler,
     url: 'guokr.com/scientific',
-};
+}
 
 async function handler() {
     const { data: response } = await got('https://www.guokr.com/beta/proxy/science_api/articles', {
@@ -24,16 +24,16 @@ async function handler() {
             retrieve_type: 'by_category',
             page: 1,
         },
-    });
+    })
 
-    const result = parseList(response);
+    const result = parseList(response)
 
-    const items = await Promise.all(result.map((item) => parseItem(item)));
+    const items = await Promise.all(result.map((item) => parseItem(item)))
 
     return {
         title: '果壳网 科学人',
         link: 'https://www.guokr.com/scientific',
         description: '果壳网 科学人',
         item: items,
-    };
+    }
 }

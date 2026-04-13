@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Institute of Science Tokyo',
@@ -12,4 +12,4 @@ You can filter news by category through the category parameter. For more informa
     ja: {
         name: '東京科学大学',
     },
-};
+}

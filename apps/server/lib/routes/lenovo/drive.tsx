@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/drive/:selName',
@@ -27,19 +27,19 @@ export const route: Route = {
     name: '驱动',
     maintainers: ['cscnk52'],
     handler,
-};
+}
 
 export async function handler(ctx) {
-    const selName = ctx.req.param('selName');
-    const link = `https://newsupport.lenovo.com.cn/api/drive/drive_listnew?searchKey=${selName}`;
+    const selName = ctx.req.param('selName')
+    const link = `https://newsupport.lenovo.com.cn/api/drive/drive_listnew?searchKey=${selName}`
 
-    const response = await ofetch(link);
+    const response = await ofetch(link)
 
     if (response.statusCode !== 200) {
-        throw new InvalidParameterError(`无效序列号, 请检查你的序列号是否正确.`);
+        throw new InvalidParameterError(`无效序列号, 请检查你的序列号是否正确.`)
     }
 
-    const driveList = response.data.partList.flatMap((part) => part.drivelist);
+    const driveList = response.data.partList.flatMap((part) => part.drivelist)
 
     const items: DataItem[] = driveList.map(
         (item) =>
@@ -48,14 +48,14 @@ export async function handler(ctx) {
                 link: `https://newsupport.lenovo.com.cn/driveDownloads_detail.html?driveId=${item.DriverEdtionId}`,
                 description: renderToString(<DriveDescription driveName={item.DriverName} driveCode={item.DriverCode} driveVersion={item.Version} downloadFileName={item.FileName} downloadFilePath={item.FilePath} />),
                 pubDate: parseDate(item.CreateTime, +8),
-            }) as DataItem
-    );
+            }) as DataItem,
+    )
 
     return {
         title: `${response.data.driverSerious[0].NodeCode} 驱动`,
         item: items,
         language: 'zh-CN',
-    } as Data;
+    } as Data
 }
 
 const DriveDescription = ({ driveName, driveCode, driveVersion, downloadFileName, downloadFilePath }: { driveName: string; driveCode: string; driveVersion: string; downloadFileName: string; downloadFilePath: string }) => (
@@ -82,4 +82,4 @@ const DriveDescription = ({ driveName, driveCode, driveVersion, downloadFileName
             </li>
         </ul>
     </div>
-);
+)

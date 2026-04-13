@@ -1,10 +1,10 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/express',
@@ -20,11 +20,11 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'techflowpost.com/',
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://www.techflowpost.com';
-    const currentUrl = `${rootUrl}/newsletter/index.html`;
+    const rootUrl = 'https://www.techflowpost.com'
+    const currentUrl = `${rootUrl}/newsletter/index.html`
 
     const { data: response } = await got.post('https://www.techflowpost.com/ashx/newflash_index.ashx', {
         form: {
@@ -32,7 +32,7 @@ async function handler(ctx) {
             pagesize: ctx.req.query('limit') ?? 50,
             time: dayjs().format('YYYY/M/D HH:mm:ss'),
         },
-    });
+    })
 
     const items = response.content.map((item) => ({
         title: item.stitle,
@@ -40,11 +40,11 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.dcreate_time), +8),
         updated: timezone(parseDate(item.dmodi_time), +8),
         description: item.scontent,
-    }));
+    }))
 
     return {
         title: '深潮TechFlow - 快讯',
         link: currentUrl,
         item: items,
-    };
+    }
 }

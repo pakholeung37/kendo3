@@ -1,31 +1,31 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const { category } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const apiSlug = 'wp-json/wp/v2';
-    const baseUrl = 'https://60s.aa1.cn';
+    const apiSlug = 'wp-json/wp/v2'
+    const baseUrl = 'https://60s.aa1.cn'
 
-    const apiUrl = new URL(`${apiSlug}/posts`, baseUrl).href;
-    const apiSearchUrl = new URL(`${apiSlug}/categories`, baseUrl).href;
+    const apiUrl = new URL(`${apiSlug}/posts`, baseUrl).href
+    const apiSearchUrl = new URL(`${apiSlug}/categories`, baseUrl).href
 
     const searchResponse = await ofetch(apiSearchUrl, {
         query: {
             search: category,
         },
-    });
+    })
 
-    const categoryObj = searchResponse.find((c) => c.slug === category || c.name === category);
-    const categoryId: number | undefined = categoryObj?.id ?? undefined;
-    const categorySlug: string | undefined = categoryObj?.slug ?? undefined;
+    const categoryObj = searchResponse.find((c) => c.slug === category || c.name === category)
+    const categoryId: number | undefined = categoryObj?.id ?? undefined
+    const categorySlug: string | undefined = categoryObj?.slug ?? undefined
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -33,32 +33,32 @@ export const handler = async (ctx: Context): Promise<Data> => {
             per_page: limit,
             categories: categoryId,
         },
-    });
+    })
 
-    const targetUrl: string = new URL(categorySlug ? `category/${categorySlug}` : '', baseUrl).href;
+    const targetUrl: string = new URL(categorySlug ? `category/${categorySlug}` : '', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
     const items: DataItem[] = response.slice(0, limit).map((item): DataItem => {
-        const title: string = item.title?.rendered ?? item.title;
-        const description: string | undefined = item.content.rendered;
-        const pubDate: number | string = item.date_gmt;
-        const linkUrl: string | undefined = item.link;
+        const title: string = item.title?.rendered ?? item.title
+        const description: string | undefined = item.content.rendered
+        const pubDate: number | string = item.date_gmt
+        const linkUrl: string | undefined = item.link
 
-        const terminologies = item._embedded?.['wp:term'];
+        const terminologies = item._embedded?.['wp:term']
 
-        const categories: string[] = terminologies?.flat().map((c) => c.name) ?? [];
+        const categories: string[] = terminologies?.flat().map((c) => c.name) ?? []
         const authors: DataItem['author'] =
             item._embedded?.author.map((author) => ({
                 name: author.name,
                 url: author.link,
                 avatar: author.avatar_urls?.['96'] ?? author.avatar_urls?.['48'] ?? author.avatar_urls?.['24'] ?? undefined,
-            })) ?? [];
-        const guid: string = item.guid?.rendered ?? item.guid;
-        const image: string | undefined = item._embedded?.['wp:featuredmedia']?.[0].source_url ?? undefined;
-        const updated: number | string = item.modified_gmt ?? pubDate;
+            })) ?? []
+        const guid: string = item.guid?.rendered ?? item.guid
+        const image: string | undefined = item._embedded?.['wp:featuredmedia']?.[0].source_url ?? undefined
+        const updated: number | string = item.modified_gmt ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -77,12 +77,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -94,8 +94,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/-/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/60s/:category?',
@@ -185,4 +185,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

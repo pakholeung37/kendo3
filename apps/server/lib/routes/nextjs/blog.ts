@@ -1,27 +1,27 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const handler: Route['handler'] = async () => {
-    const data = await ofetch('https://nextjs.org/blog');
+    const data = await ofetch('https://nextjs.org/blog')
 
-    const $ = load(data);
+    const $ = load(data)
 
     const item = (await Promise.all(
         $('article')
             .toArray()
             .slice(0, 20)
             .map((item) => {
-                const $ = load(item);
-                const link = `https://nextjs.org${$('a[href^="/blog"]').attr('href')}`;
+                const $ = load(item)
+                const link = `https://nextjs.org${$('a[href^="/blog"]').attr('href')}`
 
                 return cache.tryGet(`nextjs:blog:${link}`, async () => {
-                    const data = await ofetch(link);
+                    const data = await ofetch(link)
 
-                    const $ = load(data);
+                    const $ = load(data)
 
                     return {
                         title: $('h1').first().text().trim(),
@@ -31,20 +31,20 @@ const handler: Route['handler'] = async () => {
                             $('p[data-version="v1"]')
                                 .first()
                                 .text()
-                                .replace(/st|nd|rd|th/, '')
+                                .replace(/st|nd|rd|th/, ''),
                         ),
-                    };
-                });
-            })
-    )) as DataItem[];
+                    }
+                })
+            }),
+    )) as DataItem[]
 
     return {
         title: 'Next.js Blog',
         link: 'https://nextjs.org/blog',
         language: 'en-US',
         item,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/blog',
@@ -61,4 +61,4 @@ export const route: Route = {
         supportScihub: false,
     },
     handler,
-};
+}

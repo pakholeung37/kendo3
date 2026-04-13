@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const FEED_LANGUAGE = 'de' as const;
-const FEED_LOGO = 'https://www.wbv-gpa.at/app/uploads/2024/01/cropped-WBV-Favicon-192x192.png';
-const SITE_URL = 'https://www.wbv-gpa.at' as const;
-const BASE_URL = `${SITE_URL}/angebote/` as const;
+const FEED_LANGUAGE = 'de' as const
+const FEED_LOGO = 'https://www.wbv-gpa.at/app/uploads/2024/01/cropped-WBV-Favicon-192x192.png'
+const SITE_URL = 'https://www.wbv-gpa.at' as const
+const BASE_URL = `${SITE_URL}/angebote/` as const
 
 export const route: Route = {
     name: 'Angebote',
@@ -31,34 +31,34 @@ Filtering by state is done client-side.
     ],
 
     async handler(ctx) {
-        const category = ctx.req.param('category') || 'wohnungen';
-        const state = ctx.req.param('state');
+        const category = ctx.req.param('category') || 'wohnungen'
+        const state = ctx.req.param('state')
 
-        const link = BASE_URL + category;
-        const response = await ofetch(link);
-        const $ = load(response);
-        const title = $('title').text();
+        const link = BASE_URL + category
+        const response = await ofetch(link)
+        const $ = load(response)
+        const title = $('title').text()
 
         const items = $('.objects__list__rows__item.mix')
             .toArray()
             .map((el) => {
-                const $el = $(el);
-                const link = $el.find('a').attr('href');
+                const $el = $(el)
+                const link = $el.find('a').attr('href')
                 const title = $el
                     .find('.objects__list__rows__item__info__cell:not(.desktop_only):not(.objects__list__rows__item__info__cell--link)')
                     .toArray()
                     .map((el) => $(el).text().trim())
-                    .join(', ');
+                    .join(', ')
                 const description = $el
                     .find('.objects__list__rows__item__info__cell.desktop_only:not(.objects__list__rows__item__info__cell--link)')
                     .toArray()
                     .map((el) => $(el).text().trim())
-                    .join(', ');
+                    .join(', ')
 
                 // no pubDate and no image :(
-                return state && !$el.hasClass(state) ? false : ({ title, description, link } satisfies DataItem);
+                return state && !$el.hasClass(state) ? false : ({ title, description, link } satisfies DataItem)
             })
-            .filter((item) => item !== false);
+            .filter((item) => item !== false)
 
         return {
             title,
@@ -67,6 +67,6 @@ Filtering by state is done client-side.
             allowEmpty: true,
             item: items,
             link,
-        } satisfies Data;
+        } satisfies Data
     },
-};
+}

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/zhongchou/:category?/:sort?/:status?',
@@ -46,32 +46,32 @@ export const route: Route = {
             source: ['zhongchou.modian.com/:category/:sort/:status'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const { category = 'all', sort = 'top_time', status = 'all' } = ctx.req.param();
+    const { category = 'all', sort = 'top_time', status = 'all' } = ctx.req.param()
 
-    const rootUrl = 'https://zhongchou.modian.com';
-    const currentUrl = `${rootUrl}/${category}/${sort}/${status}`;
+    const rootUrl = 'https://zhongchou.modian.com'
+    const currentUrl = `${rootUrl}/${category}/${sort}/${status}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.pro_title')
         .slice(0, 12)
         .toArray()
         .map((item) => {
-            item = $(item).parent();
+            item = $(item).parent()
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -79,24 +79,24 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                const startTime = detailResponse.data.match(/realtime_sync\.pro_time\('(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'\);/);
+                const startTime = detailResponse.data.match(/realtime_sync\.pro_time\('(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'\);/)
 
-                item.pubDate = startTime === null ? Date.parse(content('.start-time h3').text() || content('h3[start_time]').attr('start_time')) : Date.parse(startTime[1]);
+                item.pubDate = startTime === null ? Date.parse(content('.start-time h3').text() || content('h3[start_time]').attr('start_time')) : Date.parse(startTime[1])
 
-                item.author = content('span[data-nickname]').text();
-                item.description = `<img src="${content('#big_logo').attr('src')}"><br>` + content('.center-top').html() + content('#my_back_info').html() + content('#cont_match_htmlstr').html();
+                item.author = content('span[data-nickname]').text()
+                item.description = `<img src="${content('#big_logo').attr('src')}"><br>` + content('.center-top').html() + content('#my_back_info').html() + content('#cont_match_htmlstr').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('.category div span').text()} - ${$('.status div span').text()} - ${$('.sort div span').text()} - 摩点众筹`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

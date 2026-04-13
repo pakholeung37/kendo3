@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/news_web_easy',
@@ -30,7 +30,7 @@ export const route: Route = {
     maintainers: ['Andiedie'],
     handler,
     url: 'news.web.nhk/news/easy/',
-};
+}
 
 async function handler(ctx) {
     const buildAuthorizeResponse = await ofetch.raw('https://news.web.nhk/tix/build_authorize', {
@@ -45,33 +45,33 @@ async function handler(ctx) {
             postal: '1000001',
         },
         redirect: 'manual',
-    });
+    })
     const buildAuthorizeCookie = buildAuthorizeResponse.headers
         .getSetCookie()
         .map((c) => c.split(';')[0])
-        .join('; ');
+        .join('; ')
 
     const authorizeResponse = await ofetch.raw(buildAuthorizeResponse.headers.get('location'), {
         redirect: 'manual',
-    });
+    })
 
     const idpResponse = await ofetch.raw(authorizeResponse.headers.get('location'), {
         headers: {
             cookie: buildAuthorizeCookie,
         },
         redirect: 'manual',
-    });
+    })
     const idpCookie = idpResponse.headers
         .getSetCookie()
         .map((c) => c.split(';')[0])
-        .join('; ');
+        .join('; ')
 
     const data = await ofetch('https://news.web.nhk/news/easy/news-list.json', {
         headers: {
             cookie: buildAuthorizeCookie + '; ' + idpCookie,
         },
-    });
-    const dates = data[0];
+    })
+    const dates = data[0]
 
     let items = Object.values(dates).flatMap((articles) =>
         articles.map((article) => ({
@@ -81,15 +81,15 @@ async function handler(ctx) {
                     {article.title_with_ruby ? <h1>{raw(article.title_with_ruby)}</h1> : null}
                     {article.news_web_image_uri ? <img src={article.news_web_image_uri} /> : null}
                     <br />
-                </>
+                </>,
             ),
             guid: article.news_id,
             pubDate: timezone(parseDate(article.news_prearranged_time), +9),
             link: `https://news.web.nhk/news/easy/${article.news_id}/${article.news_id}.html`,
-        }))
-    );
+        })),
+    )
 
-    items = items.toSorted((a, b) => b.pubDate - a.pubDate).slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30);
+    items = items.toSorted((a, b) => b.pubDate - a.pubDate).slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30)
 
     items = await Promise.all(
         items.map((item) =>
@@ -98,18 +98,18 @@ async function handler(ctx) {
                     headers: {
                         cookie: buildAuthorizeCookie + '; ' + idpCookie,
                     },
-                });
-                const $ = load(data);
-                item.description += $('.article-body').html();
-                return item;
-            })
-        )
-    );
+                })
+                const $ = load(data)
+                item.description += $('.article-body').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'NEWS WEB EASY',
         link: 'https://news.web.nhk/news/easy/',
         description: 'NEWS WEB EASYは、小学生・中学生の皆さんや、日本に住んでいる外国人のみなさんに、わかりやすいことば　でニュースを伝えるウェブサイトです。',
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 // Reason: preserve original category numbers for backward compatibility.
 // WordPress category ids from REST API (GET /wp-json/wp/v2/categories).
@@ -13,7 +13,7 @@ const categories = {
     3: { title: '快讯', slug: 'lifestyle', id: 106 },
     8: { title: '财富', slug: 'finance', id: 108 },
     6: { title: '生活', slug: 'lifestyle', id: 106 },
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -34,25 +34,25 @@ export const route: Route = {
     description: `| 全部 | 要闻 | 商业 | 快讯 | 财富 | 生活 |
 | ---- | ---- | ---- | ---- | ---- | ---- |
 | 0    | 1    | 2    | 3    | 8    | 6    |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') || '0';
-    const cat = categories[category] || categories[0];
+    const category = ctx.req.param('category') || '0'
+    const cat = categories[category] || categories[0]
 
-    const rootUrl = 'https://caus.com';
-    const apiUrl = `${rootUrl}/wp-json/wp/v2/posts`;
+    const rootUrl = 'https://caus.com'
+    const apiUrl = `${rootUrl}/wp-json/wp/v2/posts`
 
     const query: Record<string, string | number> = {
         per_page: 20,
         // Reason: using _embed=1 with many posts produces responses too large for ofetch to parse as JSON
         _embed: 'author,wp:term',
-    };
+    }
     if (cat.id) {
-        query.categories = cat.id;
+        query.categories = cat.id
     }
 
-    const data = await ofetch(apiUrl, { query });
+    const data = await ofetch(apiUrl, { query })
 
     const items = data.map((item) => ({
         title: item.title.rendered,
@@ -61,13 +61,13 @@ async function handler(ctx) {
         pubDate: parseDate(item.date_gmt),
         author: item._embedded?.author?.[0]?.name,
         category: item._embedded?.['wp:term']?.[0]?.map((t) => t.name),
-    }));
+    }))
 
-    const currentUrl = cat.slug ? `${rootUrl}/category/${cat.slug}/` : rootUrl;
+    const currentUrl = cat.slug ? `${rootUrl}/category/${cat.slug}/` : rootUrl
 
     return {
         title: `${cat.title} - 加美财经`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

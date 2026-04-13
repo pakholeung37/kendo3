@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/ss/:type',
@@ -27,40 +27,40 @@ export const route: Route = {
     description: `| 新闻资讯 | 通知公告 |
 | -------- | -------- |
 | xwzx     | tzgg     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
     const typeDict = {
         xwzx: ['新闻资讯', 'https://www5.zzu.edu.cn/ss/index/skxw.htm'],
         tzgg: ['通知公告', 'https://www5.zzu.edu.cn/ss/index/tzgg.htm'],
-    };
+    }
 
     // 获取页面内容
-    const response = await got(typeDict[type][1]);
-    const $ = load(response.data);
+    const response = await got(typeDict[type][1])
+    const $ = load(response.data)
 
     // 解析页面内容并提取文章信息
     const list = $('.list_notice > a')
         .toArray()
         .slice(0, 10)
         .map((element) => {
-            const $element = $(element);
-            const link = new URL($element.attr('href'), typeDict[type][1]).href;
-            const title = $element.find('h3').text().trim();
+            const $element = $(element)
+            const link = new URL($element.attr('href'), typeDict[type][1]).href
+            const title = $element.find('h3').text().trim()
 
             // 获取发布时间
             // xwzx: 格式为 MM-DD，需要补全年份
             // tzgg: 格式为 yyyy-mm-dd，直接使用
-            const pubDateText = $element.find('time').text().trim();
-            let pubDate = null;
+            const pubDateText = $element.find('time').text().trim()
+            let pubDate = null
 
             if (pubDateText) {
                 if (type === 'xwzx') {
-                    const currentYear = new Date().getFullYear();
-                    pubDate = `${currentYear}-${pubDateText}`;
+                    const currentYear = new Date().getFullYear()
+                    pubDate = `${currentYear}-${pubDateText}`
                 } else {
-                    pubDate = pubDateText;
+                    pubDate = pubDateText
                 }
             }
 
@@ -68,12 +68,12 @@ async function handler(ctx) {
                 title,
                 link,
                 pubDate,
-            };
-        });
+            }
+        })
 
     return {
         title: `郑大社科院-${typeDict[type][0]}`,
         link: typeDict[type][1],
         item: list,
-    };
+    }
 }

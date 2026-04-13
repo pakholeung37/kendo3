@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/edge/addon/:crxid',
@@ -22,18 +22,18 @@ export const route: Route = {
     name: 'Addons Update',
     maintainers: ['hoilc', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const crxid = ctx.req.param('crxid');
+    const crxid = ctx.req.param('crxid')
 
-    const pageUrl = `https://microsoftedge.microsoft.com/addons/detail/${crxid}`;
+    const pageUrl = `https://microsoftedge.microsoft.com/addons/detail/${crxid}`
 
     const data = await ofetch(`https://microsoftedge.microsoft.com/addons/getproductdetailsbycrxid/${crxid}?hl=en`, {
         headers: {
             Referer: pageUrl,
         },
-    });
+    })
 
     return {
         title: `${data.name} - Microsoft Edge Addons`,
@@ -50,5 +50,5 @@ async function handler(ctx) {
                 link: pageUrl,
             },
         ],
-    };
+    }
 }

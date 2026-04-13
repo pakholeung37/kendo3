@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'World of Warships',
@@ -11,4 +11,4 @@ export const namespace: Namespace = {
     },
     description: 'Tip: use proxy if necessary.',
     lang: 'en',
-};
+}

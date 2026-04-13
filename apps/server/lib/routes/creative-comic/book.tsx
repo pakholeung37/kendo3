@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { apiHost, decrypt, getBook, getChapter, getChapters, getImgEncrypted, getImgKey, getRealKey, getUuid } from './utils';
+import { apiHost, decrypt, getBook, getChapter, getChapters, getImgEncrypted, getImgKey, getRealKey, getUuid } from './utils'
 
 export const route: Route = {
     path: '/book/:id/:coverOnly?/:quality?',
@@ -28,41 +28,41 @@ export const route: Route = {
     name: '漫畫',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id, coverOnly = 'true', quality = '1' } = ctx.req.param();
-    const uuid = await getUuid(cache.tryGet);
+    const { id, coverOnly = 'true', quality = '1' } = ctx.req.param()
+    const uuid = await getUuid(cache.tryGet)
     const {
         data: { data: book },
-    } = await getBook(id, uuid);
+    } = await getBook(id, uuid)
     const {
         data: { data: chapters },
-    } = await getChapters(id, uuid);
+    } = await getChapters(id, uuid)
 
     const items = await Promise.all(
         chapters.chapters
             .toSorted((a, b) => b.idx - a.idx)
             .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 3)
             .map(async (c) => {
-                let pages;
+                let pages
                 if (coverOnly !== 'true' && coverOnly !== '1') {
                     const {
                         data: { data: chapter },
-                    } = await getChapter(c.id, uuid);
+                    } = await getChapter(c.id, uuid)
 
                     if (chapter.chapter.free_day === null || chapter.chapter.free_day === 0) {
                         pages = await Promise.all(
                             chapter.chapter.proportion.map(async (p) => {
-                                let { data: imgKey } = await getImgKey(p.id, uuid);
-                                imgKey = imgKey.data.key;
+                                let { data: imgKey } = await getImgKey(p.id, uuid)
+                                imgKey = imgKey.data.key
 
-                                const realKey = getRealKey(imgKey);
-                                const encrypted = await getImgEncrypted(p.id, quality);
+                                const realKey = getRealKey(imgKey)
+                                const encrypted = await getImgEncrypted(p.id, quality)
 
-                                return cache.tryGet(`${apiHost}/fs/chapter_content/encrypt/${p.id}/${quality}`, () => decrypt(encrypted, realKey));
-                            })
-                        );
+                                return cache.tryGet(`${apiHost}/fs/chapter_content/encrypt/${p.id}/${quality}`, () => decrypt(encrypted, realKey))
+                            }),
+                        )
                     }
                 }
 
@@ -74,9 +74,9 @@ async function handler(ctx) {
                     link: `https://www.creative-comic.tw/reader_comic/${c.id}`,
                     author: book.author.map((author) => author.name).join(', '),
                     category: book.tags.map((tag) => tag.name),
-                };
-            })
-    );
+                }
+            }),
+    )
 
     return {
         title: `${book.name} | CCC創作集`,
@@ -85,7 +85,7 @@ async function handler(ctx) {
         image: book.image1,
         item: items,
         language: 'zh-hant',
-    };
+    }
 }
 
 const renderChapterDescription = (chapter, pages: string[] | undefined, cover?: string): string =>
@@ -99,5 +99,5 @@ const renderChapterDescription = (chapter, pages: string[] | undefined, cover?: 
                 </>
             ))}
             {cover ? <img src={cover} /> : null}
-        </>
-    );
+        </>,
+    )

@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import parser from '@/utils/rss-parser'
 
-import { fetchArticle } from './utils';
+import { fetchArticle } from './utils'
 
-const HOME_PAGE = 'https://apnews.com';
+const HOME_PAGE = 'https://apnews.com'
 
 export const route: Route = {
     path: '/rss/:category?',
@@ -34,17 +34,17 @@ export const route: Route = {
     name: 'News',
     maintainers: ['zoenglinghou', 'mjysci', 'TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { rss = 'index' } = ctx.req.param();
-    const url = `${HOME_PAGE}/${rss}.rss`;
-    const res = await parser.parseURL(url);
+    const { rss = 'index' } = ctx.req.param()
+    const url = `${HOME_PAGE}/${rss}.rss`
+    const res = await parser.parseURL(url)
 
-    const items = ctx.req.query('fulltext') === 'true' ? await Promise.all(res.items.map((item) => fetchArticle(item))) : res;
+    const items = ctx.req.query('fulltext') === 'true' ? await Promise.all(res.items.map((item) => fetchArticle(item))) : res
 
     return {
         ...res,
         item: items,
-    };
+    }
 }

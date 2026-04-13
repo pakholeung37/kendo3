@@ -1,12 +1,12 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 const renderDescription = ({ images, stargazersCount, language, description }) =>
     renderToString(
@@ -17,7 +17,7 @@ const renderDescription = ({ images, stargazersCount, language, description }) =
                           <figure key={image.src}>
                               <img src={image.src} alt={image.alt} />
                           </figure>
-                      ) : null
+                      ) : null,
                   )
                 : null}
             {stargazersCount ? (
@@ -44,30 +44,30 @@ const renderDescription = ({ images, stargazersCount, language, description }) =
                     </tbody>
                 </table>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'repositories' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const { category = 'repositories' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const baseUrl = 'https://gitstar-ranking.com';
-    const targetUrl: string = new URL(category, baseUrl).href;
+    const baseUrl = 'https://gitstar-ranking.com'
+    const targetUrl: string = new URL(category, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     const items: DataItem[] = $('a.list-group-item')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const stargazersCount = Number($el.find('span.stargazers_count').text()?.trim());
-            const title: string = $el.find('span.hidden-xs').text()?.trim();
-            const image: string | undefined = $el.find('img.avatar_image_big').attr('src');
-            const language: string | undefined = $el.find('div.repo-language').text()?.trim();
+            const stargazersCount = Number($el.find('span.stargazers_count').text()?.trim())
+            const title: string = $el.find('span.hidden-xs').text()?.trim()
+            const image: string | undefined = $el.find('img.avatar_image_big').attr('src')
+            const language: string | undefined = $el.find('div.repo-language').text()?.trim()
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -80,10 +80,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 stargazersCount,
                 language,
                 description: $el.find('div.repo-description').text()?.trim(),
-            });
-            const linkUrl: string | undefined = $el.attr('href');
-            const categories: string[] = language ? [language] : [];
-            const guid = `gitstar-ranking-${title}-${stargazersCount}`;
+            })
+            const linkUrl: string | undefined = $el.attr('href')
+            const categories: string[] = language ? [language] : []
+            const guid = `gitstar-ranking-${title}-${stargazersCount}`
 
             const processedItem: DataItem = {
                 title: `${title} ⭐${stargazersCount}`,
@@ -99,12 +99,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -115,8 +115,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/-/).pop()?.trim(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -186,4 +186,4 @@ To subscribe to [Repositories](https://gitstar-ranking.com/repositories), where 
         },
     ],
     view: ViewType.Articles,
-};
+}

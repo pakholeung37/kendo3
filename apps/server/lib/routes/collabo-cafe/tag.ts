@@ -1,24 +1,24 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { parseItems } from './parser';
+import { parseItems } from './parser'
 
 export const handler = async (ctx: Context): Promise<Data | null> => {
-    const { tag } = ctx.req.param();
-    const baseUrl = `https://collabo-cafe.com/events/tag/${tag}`;
-    const res = await ofetch(baseUrl);
-    const $ = load(res);
-    const items = parseItems($);
+    const { tag } = ctx.req.param()
+    const baseUrl = `https://collabo-cafe.com/events/tag/${tag}`
+    const res = await ofetch(baseUrl)
+    const $ = load(res)
+    const items = parseItems($)
 
     return {
         title: '标签',
         link: baseUrl,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -36,4 +36,4 @@ export const route: Route = {
     name: '标签',
     maintainers: ['cokemine'],
     handler,
-};
+}

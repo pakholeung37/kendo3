@@ -1,4 +1,4 @@
-import got from '@/utils/got';
+import got from '@/utils/got'
 
 async function graphqlRequest(body, cookie) {
     const { data } = await got('https://medium.com/_/graphql', {
@@ -27,27 +27,27 @@ async function graphqlRequest(body, cookie) {
             cookie,
         },
         body: JSON.stringify([body]),
-    });
-    return data[0].data;
+    })
+    return data[0].data
 }
 
 async function getFollowingFeedQuery(user, cookie, pagingLimit = 20) {
-    return (await graphqlRequest(newFollowingFeedQuery(pagingLimit), cookie))?.followingFeed;
+    return (await graphqlRequest(newFollowingFeedQuery(pagingLimit), cookie))?.followingFeed
 }
 
 async function getWebInlineRecommendedFeedQuery(user, cookie, pagingLimit = 20) {
-    return (await graphqlRequest(newWebInlineRecommendedFeedQuery(pagingLimit), cookie))?.webRecommendedFeed;
+    return (await graphqlRequest(newWebInlineRecommendedFeedQuery(pagingLimit), cookie))?.webRecommendedFeed
 }
 
 async function getWebInlineTopicFeedQuery(user, tagSlug, cookie, pagingLimit = 20) {
-    return (await graphqlRequest(newWebInlineTopicFeedQuery(tagSlug, pagingLimit), cookie))?.personalisedTagFeed;
+    return (await graphqlRequest(newWebInlineTopicFeedQuery(tagSlug, pagingLimit), cookie))?.personalisedTagFeed
 }
 
 async function getUserCatalogMainContentQuery(user, catalogId, cookie, pagingLimit = 20) {
-    return (await graphqlRequest(newUserCatalogMainContentQuery(catalogId, pagingLimit), cookie))?.catalogById;
+    return (await graphqlRequest(newUserCatalogMainContentQuery(catalogId, pagingLimit), cookie))?.catalogById
 }
 
-export { getFollowingFeedQuery, getUserCatalogMainContentQuery, getWebInlineRecommendedFeedQuery, getWebInlineTopicFeedQuery };
+export { getFollowingFeedQuery, getUserCatalogMainContentQuery, getWebInlineRecommendedFeedQuery, getWebInlineTopicFeedQuery }
 
 function newFollowingFeedQuery(pagingLimit = 5) {
     return {
@@ -82,7 +82,7 @@ function newFollowingFeedQuery(pagingLimit = 5) {
                 }
             }
         `,
-    };
+    }
 }
 
 function newWebInlineRecommendedFeedQuery(pagingLimit = 5) {
@@ -118,7 +118,7 @@ function newWebInlineRecommendedFeedQuery(pagingLimit = 5) {
                 }
             }
         `,
-    };
+    }
 }
 
 function newWebInlineTopicFeedQuery(tagSlug, pagingLimit = 5) {
@@ -156,7 +156,7 @@ function newWebInlineTopicFeedQuery(tagSlug, pagingLimit = 5) {
                 }
             }
         `,
-    };
+    }
 }
 
 function newUserCatalogMainContentQuery(catalogId, pagingLimit = 20) {
@@ -189,5 +189,5 @@ function newUserCatalogMainContentQuery(catalogId, pagingLimit = 20) {
                 }
             }
         `,
-    };
+    }
 }

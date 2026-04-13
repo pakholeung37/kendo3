@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchContent, processItem, rootUrl } from './utils';
+import { fetchContent, processItem, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/quotes',
@@ -25,11 +25,11 @@ export const route: Route = {
     name: 'Quotes',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const quotes = await fetchContent('quotes');
-    const items = quotes.map((item) => processItem(item));
+    const quotes = await fetchContent('quotes')
+    const items = quotes.map((item) => processItem(item))
 
     return {
         title: 'James Clear - Quotes',
@@ -38,5 +38,5 @@ async function handler(): Promise<Data> {
         item: items,
         language: 'en',
         icon: `${rootUrl}/favicon.ico`,
-    };
+    }
 }

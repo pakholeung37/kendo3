@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseArticle } from './utils';
+import { parseArticle } from './utils'
 
 export const route: Route = {
     path: '/article',
@@ -27,10 +27,10 @@ export const route: Route = {
     maintainers: ['EsuRt'],
     handler,
     url: 'caixin.com/',
-};
+}
 
 async function handler() {
-    const { data: response } = await got('https://mapiv5.caixin.com/m/api/getWapIndexListByPage');
+    const { data: response } = await got('https://mapiv5.caixin.com/m/api/getWapIndexListByPage')
 
     const list = response.data.list.map((item) => ({
         title: item.title,
@@ -41,14 +41,14 @@ async function handler() {
         pics: item.pics,
         audio: item.cms_audio_url,
         audio_image_url: item.audio_image_url,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))))
 
     return {
         title: '财新网 - 首页',
         link: 'https://www.caixin.com',
         description: '财新网 - 首页',
         item: items,
-    };
+    }
 }

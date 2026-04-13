@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    image?: string;
-    intro?: string;
-};
+    image?: string
+    intro?: string
+}
 
 const CoolidgeDescription = ({ image, intro }: DescriptionData) => (
     <>
@@ -14,6 +14,6 @@ const CoolidgeDescription = ({ image, intro }: DescriptionData) => (
         ) : null}
         <p>{intro}</p>
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<CoolidgeDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<CoolidgeDescription {...data} />)

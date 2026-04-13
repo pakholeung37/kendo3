@@ -1,10 +1,10 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { parseToken } from '@/routes/xueqiu/cookies';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { parseToken } from '@/routes/xueqiu/cookies'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/favorite/:id',
@@ -27,13 +27,13 @@ export const route: Route = {
     name: '用户收藏动态',
     maintainers: ['imlonghao'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const link = `https://xueqiu.com/u/${id}`;
-    const token = await parseToken(link);
+    const link = `https://xueqiu.com/u/${id}`
+    const token = await parseToken(link)
     const res2 = await got({
         method: 'get',
         url: 'https://xueqiu.com/favorites.json',
@@ -44,8 +44,8 @@ async function handler(ctx) {
             Cookie: token,
             Referer: link,
         },
-    });
-    const data = res2.data.list;
+    })
+    const data = res2.data.list
 
     const {
         user: { screen_name },
@@ -57,7 +57,7 @@ async function handler(ctx) {
             Cookie: token,
             Referer: link,
         },
-    });
+    })
 
     return {
         title: `${screen_name} 的雪球收藏动态`,
@@ -70,5 +70,5 @@ async function handler(ctx) {
             link: `https://xueqiu.com${item.target}`,
         })),
         allowEmpty: true,
-    };
+    }
 }

@@ -1,37 +1,37 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 type WordpressPost = {
-    id: number;
-    date: string;
-    date_gmt?: string;
-    link: string;
-    title?: { rendered?: string };
-    excerpt?: { rendered?: string };
-    content?: { rendered?: string };
+    id: number
+    date: string
+    date_gmt?: string
+    link: string
+    title?: { rendered?: string }
+    excerpt?: { rendered?: string }
+    content?: { rendered?: string }
     _embedded?: {
-        author?: Array<{ name?: string }>;
-        'wp:term'?: Array<Array<{ name?: string }>>;
-    };
-};
+        author?: Array<{ name?: string }>
+        'wp:term'?: Array<Array<{ name?: string }>>
+    }
+}
 
-const ROOT_URL = 'https://www.hudsonrivertrading.com';
+const ROOT_URL = 'https://www.hudsonrivertrading.com'
 
 const SECTION_LABELS: Record<string, string> = {
     algo: 'Algorithm',
     engineers: 'Engineering',
     interns: 'Intern Spotlight',
     more: 'Hardware, Systems & More',
-};
+}
 
 // Find the category IDs at https://www.hudsonrivertrading.com/wp-json/wp/v2/categories
 const SECTION_CATEGORY_IDS: Record<string, number> = {
     algo: 7,
     engineers: 11,
     interns: 16,
-};
+}
 
 export const route: Route = {
     path: '/blog/:section?',
@@ -67,35 +67,35 @@ export const route: Route = {
 ${Object.entries(SECTION_LABELS)
     .map(([key, label]) => `| /hudsonrivertrading/blog/${key} | ${label} |`)
     .join('\n')}`,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const sectionParam = (ctx.req.param('section') ?? '').toLowerCase();
-    const apiBase = `${ROOT_URL}/wp-json/wp/v2`;
+    const sectionParam = (ctx.req.param('section') ?? '').toLowerCase()
+    const apiBase = `${ROOT_URL}/wp-json/wp/v2`
 
     // Build query using fixed category IDs
-    let categoriesQuery: { include?: number; exclude?: number[] } | undefined;
+    let categoriesQuery: { include?: number; exclude?: number[] } | undefined
     if (sectionParam) {
         if (Object.hasOwn(SECTION_CATEGORY_IDS, sectionParam)) {
-            categoriesQuery = { include: SECTION_CATEGORY_IDS[sectionParam] };
+            categoriesQuery = { include: SECTION_CATEGORY_IDS[sectionParam] }
         } else if (sectionParam === 'more') {
-            categoriesQuery = { exclude: Object.values(SECTION_CATEGORY_IDS) };
+            categoriesQuery = { exclude: Object.values(SECTION_CATEGORY_IDS) }
         } else {
-            throw new InvalidParameterError(`Invalid section: ${sectionParam}. Valid sections are: ${Object.keys(SECTION_LABELS).join(', ')}`);
+            throw new InvalidParameterError(`Invalid section: ${sectionParam}. Valid sections are: ${Object.keys(SECTION_LABELS).join(', ')}`)
         }
     }
     // If sectionParam is empty/undefined, categoriesQuery remains undefined = all posts
 
-    const searchParams: string[] = ['per_page=20', '_embed=author,wp:term'];
+    const searchParams: string[] = ['per_page=20', '_embed=author,wp:term']
     if (categoriesQuery?.include) {
-        searchParams.push(`categories=${categoriesQuery.include}`);
+        searchParams.push(`categories=${categoriesQuery.include}`)
     }
     if (categoriesQuery?.exclude?.length) {
-        searchParams.push(`categories_exclude=${categoriesQuery.exclude.join(',')}`);
+        searchParams.push(`categories_exclude=${categoriesQuery.exclude.join(',')}`)
     }
 
-    const apiUrl = `${apiBase}/posts?${searchParams.join('&')}`;
-    const data = await ofetch<WordpressPost[]>(apiUrl);
+    const apiUrl = `${apiBase}/posts?${searchParams.join('&')}`
+    const data = await ofetch<WordpressPost[]>(apiUrl)
 
     const items = data.map((post) => ({
         title: post.title?.rendered,
@@ -109,14 +109,14 @@ async function handler(ctx): Promise<Data> {
                   .map((term: any) => term?.name)
                   .filter(Boolean)
             : undefined,
-    }));
+    }))
 
-    const sectionLabel = sectionParam && SECTION_LABELS[sectionParam] ? ` - ${SECTION_LABELS[sectionParam]}` : '';
+    const sectionLabel = sectionParam && SECTION_LABELS[sectionParam] ? ` - ${SECTION_LABELS[sectionParam]}` : ''
 
     return {
         title: `Hudson River Trading${sectionLabel}`,
         link: `${ROOT_URL}/hrtbeat/#${sectionParam}`,
         language: 'en',
         item: items,
-    } as Data;
+    } as Data
 }

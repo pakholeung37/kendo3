@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import getItems from './items-processor';
+import getItems from './items-processor'
 
 export const route: Route = {
     path: '/public',
@@ -26,24 +26,24 @@ export const route: Route = {
     name: 'Public',
     maintainers: ['adrianrico97'],
     handler,
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.publico.es';
-    const currentUrl = `${rootUrl}/public`;
+    const rootUrl = 'https://www.publico.es'
+    const currentUrl = `${rootUrl}/public`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const items = getItems($);
+    const items = getItems($)
 
     return {
         title: 'public | Público',
         link: currentUrl,
         item: items,
-    };
+    }
 }

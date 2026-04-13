@@ -1,14 +1,14 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { queryToBoolean } from '@/utils/readable-social';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { queryToBoolean } from '@/utils/readable-social'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 const notFoundData = {
     title: '此 bilibili 频道不存在',
-};
+}
 
 export const route: Route = {
     path: '/user/collection/:uid/:sid/:embed?/:sortReverse?/:page?',
@@ -32,29 +32,29 @@ export const route: Route = {
     name: 'UP 主频道的合集',
     maintainers: ['shininome', 'cscnk52'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = Number.parseInt(ctx.req.param('uid'));
-    const sid = Number.parseInt(ctx.req.param('sid'));
-    const embed = queryToBoolean(ctx.req.param('embed') || 'true');
-    const sortReverse = Number.parseInt(ctx.req.param('sortReverse')) === 1;
-    const page = ctx.req.param('page') ? Number.parseInt(ctx.req.param('page')) : 1;
-    const limit = ctx.req.query('limit') ?? 25;
+    const uid = Number.parseInt(ctx.req.param('uid'))
+    const sid = Number.parseInt(ctx.req.param('sid'))
+    const embed = queryToBoolean(ctx.req.param('embed') || 'true')
+    const sortReverse = Number.parseInt(ctx.req.param('sortReverse')) === 1
+    const page = ctx.req.param('page') ? Number.parseInt(ctx.req.param('page')) : 1
+    const limit = ctx.req.query('limit') ?? 25
 
-    const link = `https://space.bilibili.com/${uid}/channel/collectiondetail?sid=${sid}`;
-    const [userName, face] = await cache.getUsernameAndFaceFromUID(uid);
-    const host = `https://api.bilibili.com/x/polymer/web-space/seasons_archives_list?mid=${uid}&season_id=${sid}&sort_reverse=${sortReverse}&page_num=${page}&page_size=${limit}`;
+    const link = `https://space.bilibili.com/${uid}/channel/collectiondetail?sid=${sid}`
+    const [userName, face] = await cache.getUsernameAndFaceFromUID(uid)
+    const host = `https://api.bilibili.com/x/polymer/web-space/seasons_archives_list?mid=${uid}&season_id=${sid}&sort_reverse=${sortReverse}&page_num=${page}&page_size=${limit}`
 
     const response = await got(host, {
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const data = response.data.data;
+    const data = response.data.data
     if (!data.archives) {
-        return notFoundData;
+        return notFoundData
     }
 
     return {
@@ -71,5 +71,5 @@ async function handler(ctx) {
             link: item.pubdate > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
             author: userName,
         })),
-    };
+    }
 }

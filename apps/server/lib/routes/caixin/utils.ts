@@ -1,47 +1,47 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-import { renderArticle } from './templates/article';
+import { renderArticle } from './templates/article'
 
 const parseArticle = async (item) => {
     if (new URL(item.link).hostname.endsWith('.blog.caixin.com')) {
-        return parseBlogArticle(item);
+        return parseBlogArticle(item)
     } else {
-        const { data: response } = await got(item.link);
+        const { data: response } = await got(item.link)
 
-        const $ = load(response);
+        const $ = load(response)
 
         item.description = renderArticle({
             item,
             $,
-        });
+        })
 
         if (item.audio) {
-            item.itunes_item_image = item.audio_image_url;
-            item.enclosure_url = item.audio;
-            item.enclosure_type = 'audio/mpeg';
+            item.itunes_item_image = item.audio_image_url
+            item.enclosure_url = item.audio
+            item.enclosure_type = 'audio/mpeg'
         }
 
-        return item;
+        return item
     }
-};
+}
 
 const parseBlogArticle = async (item) => {
-    const response = await got(item.link);
-    const $ = load(response.data);
-    const article = $('#the_content').removeAttr('style');
-    article.find('img').removeAttr('style');
+    const response = await got(item.link)
+    const $ = load(response.data)
+    const article = $('#the_content').removeAttr('style')
+    article.find('img').removeAttr('style')
     article
         .find('p')
         // Non-breaking space U+00A0, `&nbsp;` in html
         // element.children[0].data === $(element, article).text()
         .filter((_, element) => element.children[0].data === String.fromCodePoint(160))
-        .remove();
+        .remove()
 
-    item.description = article.html();
+    item.description = article.html()
 
-    return item;
-};
+    return item
+}
 
-export { parseArticle, parseBlogArticle };
+export { parseArticle, parseBlogArticle }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getItems } from './utils';
+import { getItems } from './utils'
 
-const url = 'https://yz.jou.edu.cn/index/zxgg.htm';
-const host = 'https://yz.jou.edu.cn';
+const url = 'https://yz.jou.edu.cn/index/zxgg.htm'
+const host = 'https://yz.jou.edu.cn'
 
 export const route: Route = {
     path: '/yztzgg',
@@ -27,10 +27,10 @@ export const route: Route = {
     maintainers: ['real-jiakai'],
     handler,
     url: 'yz.jou.edu.cn/index/zxgg.htm',
-};
+}
 
 async function handler(ctx) {
-    const out = await getItems(ctx, url, host, 'winstyle207638', 'timestyle207638', 'titlestyle207543', 'timestyle207543');
+    const out = await getItems(ctx, url, host, 'winstyle207638', 'timestyle207638', 'titlestyle207543', 'timestyle207543')
 
     // 生成RSS源
     return {
@@ -40,5 +40,5 @@ async function handler(ctx) {
         link: url,
         // items的内容
         item: out,
-    };
+    }
 }

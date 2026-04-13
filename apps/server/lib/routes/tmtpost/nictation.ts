@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/nictation',
@@ -22,12 +22,12 @@ export const route: Route = {
     maintainers: ['defp'],
     handler,
     url: 'www.tmtpost.com/nictation',
-};
+}
 
 async function handler() {
-    const currentTime = Math.floor(Date.now() / 1000);
-    const oneHourAgo = currentTime - 3600;
-    const url = 'https://api.tmtpost.com/v1/word/list';
+    const currentTime = Math.floor(Date.now() / 1000)
+    const oneHourAgo = currentTime - 3600
+    const url = 'https://api.tmtpost.com/v1/word/list'
 
     const response = await got({
         method: 'get',
@@ -41,9 +41,9 @@ async function handler() {
         headers: {
             'app-version': 'web1.0',
         },
-    });
+    })
 
-    const data = response.data.data;
+    const data = response.data.data
 
     return {
         title: '钛媒体 - 快报',
@@ -55,5 +55,5 @@ async function handler() {
             link: item.share_link || `https://www.tmtpost.com/nictation/${item.guid}.html`,
             author: item.author_name,
         })),
-    };
+    }
 }

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
 export const route: Route = {
     path: '/exhibitions',
@@ -17,10 +17,10 @@ export const route: Route = {
     name: 'Exhibitions',
     maintainers: ['chazeon'],
     handler,
-};
+}
 
 async function handler() {
-    const link = 'https://thejewishmuseum.org/exhibitions';
+    const link = 'https://thejewishmuseum.org/exhibitions'
 
     return await buildData({
         link,
@@ -31,5 +31,5 @@ async function handler() {
             title: `$('h3').text()`,
             link: `$('h3').parent().attr('href')`,
         },
-    });
+    })
 }

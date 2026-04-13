@@ -1,31 +1,31 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, fetchItems } from './util';
+import { baseUrl, fetchItems } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'highlights', country = 'us' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const { category = 'highlights', country = 'us' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href;
+    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href
 
     const response = await ofetch(targetUrl, {
         headers: {
             Cookie: `countryId=${country};`,
         },
-    });
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
-    const selector = 'div.card-panel';
+    })
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
+    const selector = 'div.card-panel'
 
-    const items: DataItem[] = await fetchItems($, selector, targetUrl, country, limit);
+    const items: DataItem[] = await fetchItems($, selector, targetUrl, country, limit)
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -37,8 +37,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/\|/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?/:country?',
@@ -176,9 +176,9 @@ To subscribe to [Highlights](https://www.app-sales.net/highlights/), where the s
         {
             source: ['app-sales.net/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/app-sales${category ? `/${category}` : ''}`;
+                return `/app-sales${category ? `/${category}` : ''}`
             },
         },
         {
@@ -198,4 +198,4 @@ To subscribe to [Highlights](https://www.app-sales.net/highlights/), where the s
         },
     ],
     view: ViewType.Articles,
-};
+}

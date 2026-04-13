@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/journal/:id/:category?',
@@ -30,15 +30,15 @@ export const route: Route = {
 | All Recent Articles | Advance Articles |
 | ------------------- | ---------------- |
 | allrecentarticles   | advancearticles  |`,
-};
+}
 
 async function handler(ctx) {
-    const { id, category = 'allrecentarticles' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { id, category = 'allrecentarticles' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://pubs.rsc.org';
-    const currentUrl = new URL(`en/journals/journalissues/${id}#!recentarticles`, rootUrl).href;
-    const apiUrl = new URL('en/journals/getrecentarticles', rootUrl).href;
+    const rootUrl = 'https://pubs.rsc.org'
+    const currentUrl = new URL(`en/journals/journalissues/${id}#!recentarticles`, rootUrl).href
+    const apiUrl = new URL('en/journals/getrecentarticles', rootUrl).href
 
     const { data: response } = await got.post(apiUrl, {
         form: {
@@ -47,36 +47,36 @@ async function handler(ctx) {
             iscontentavailable: true,
             category,
         },
-    });
+    })
 
-    let $ = load(response);
+    let $ = load(response)
 
     $('div.capsule__article-image').each(function () {
-        const image = $(this).find('img').prop('data-original');
+        const image = $(this).find('img').prop('data-original')
         $(this).replaceWith(
             renderToString(
                 image ? (
                     <figure>
                         <img src={image} />
                     </figure>
-                ) : null
-            )
-        );
-    });
+                ) : null,
+            ),
+        )
+    })
 
     let items = $('div.capsule--article')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const authors = item.find('div.article__authors').text().trim();
-            const doi = item.find('div.text--small span a').text().split(/org\//).pop();
+            const authors = item.find('div.article__authors').text().trim()
+            const doi = item.find('div.text--small span a').text().split(/org\//).pop()
 
-            const isOpenAccess = !!item.find('span.capsule__context img.ver-t').prop('alt');
-            const isManuscript = !!item.find('span.capsule__context span').text();
+            const isOpenAccess = !!item.find('span.capsule__context img.ver-t').prop('alt')
+            const isManuscript = !!item.find('span.capsule__context span').text()
 
-            const enclosureUrl = new URL(item.find('div.capsule__action--buttons a').prop('href').split('?').pop(), rootUrl).href;
+            const enclosureUrl = new URL(item.find('div.capsule__action--buttons a').prop('href').split('?').pop(), rootUrl).href
 
             return {
                 title: item.find('h3.capsule__title').text(),
@@ -89,38 +89,38 @@ async function handler(ctx) {
                 enclosure_url: enclosureUrl,
                 enclosure_type: enclosureUrl ? 'application/pdf' : undefined,
                 doi,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.guid, async () => {
                 if (item.category.pop()) {
-                    const { data: detailResponse } = await got(item.link.replace(/\/articlelanding\//, '/articlehtml/'));
+                    const { data: detailResponse } = await got(item.link.replace(/\/articlelanding\//, '/articlehtml/'))
 
-                    const content = load(detailResponse);
+                    const content = load(detailResponse)
 
-                    content('#pnlArticleAccess, #pnlArticleContent').remove();
-                    content('div.abstract, div.article-abstract__heading').prevAll().remove();
+                    content('#pnlArticleAccess, #pnlArticleContent').remove()
+                    content('div.abstract, div.article-abstract__heading').prevAll().remove()
 
-                    item.title = content('meta[name="DC.title"]').prop('content');
-                    item.description = content('#wrapper, article.article-control').html();
-                    item.pubDate = timezone(parseDate(content('meta[name="citation_online_date"]').prop('content'), 'YYYY/MM/DD'), +1);
-                    item.enclosure_url = content('meta[name="citation_pdf_url"]').prop('content');
-                    item.enclosure_type = item.enclosure_url ? 'application/pdf' : undefined;
-                    item.doi = content('meta[name="DC.Identifier"]').prop('content');
+                    item.title = content('meta[name="DC.title"]').prop('content')
+                    item.description = content('#wrapper, article.article-control').html()
+                    item.pubDate = timezone(parseDate(content('meta[name="citation_online_date"]').prop('content'), 'YYYY/MM/DD'), +1)
+                    item.enclosure_url = content('meta[name="citation_pdf_url"]').prop('content')
+                    item.enclosure_type = item.enclosure_url ? 'application/pdf' : undefined
+                    item.doi = content('meta[name="DC.Identifier"]').prop('content')
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: detailResponse } = await got(currentUrl);
+    const { data: detailResponse } = await got(currentUrl)
 
-    $ = load(detailResponse);
+    $ = load(detailResponse)
 
-    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -134,5 +134,5 @@ async function handler(ctx) {
         subtitle: $('title').text(),
         author: $('meta[name="citation_journal_abbrev"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

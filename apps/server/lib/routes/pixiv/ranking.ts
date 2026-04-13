@@ -1,13 +1,13 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import getRanking from './api/get-ranking';
-import { getToken } from './token';
-import pixivUtils from './utils';
+import getRanking from './api/get-ranking'
+import { getToken } from './token'
+import pixivUtils from './utils'
 
 const titles = {
     day: 'pixiv 日排行',
@@ -24,7 +24,7 @@ const titles = {
     week_r18: 'pixiv R-18 周排行',
     week_r18g: 'pixiv R-18G 排行',
     day_ai: 'AI 生成作品排行榜',
-};
+}
 
 const links = {
     day: 'https://www.pixiv.net/ranking.php?mode=daily',
@@ -41,7 +41,7 @@ const links = {
     day_female_r18: 'https://www.pixiv.net/ranking.php?mode=female_r18',
     week_r18: 'https://www.pixiv.net/ranking.php?mode=weekly_r18',
     week_r18g: 'https://www.pixiv.net/ranking.php?mode=r18g',
-};
+}
 
 const alias = {
     daily: 'day',
@@ -58,7 +58,7 @@ const alias = {
     female_r18: 'day_female_r18',
     weekly_r18: 'week_r18',
     r18g: 'week_r18g',
-};
+}
 
 export const route: Route = {
     path: '/ranking/:mode/:date?',
@@ -142,33 +142,33 @@ export const route: Route = {
     name: 'Rankings',
     maintainers: ['EYHN'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.pixiv || !config.pixiv.refreshToken) {
-        throw new ConfigNotFoundError('pixiv RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('pixiv RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
 
-    const mode = alias[ctx.req.param('mode')] ?? ctx.req.param('mode');
-    const date = ctx.req.param('date') ? new Date(ctx.req.param('date')) : new Date();
+    const mode = alias[ctx.req.param('mode')] ?? ctx.req.param('mode')
+    const date = ctx.req.param('date') ? new Date(ctx.req.param('date')) : new Date()
 
-    const token = await getToken(cache.tryGet);
+    const token = await getToken(cache.tryGet)
     if (!token) {
-        throw new ConfigNotFoundError('pixiv not login');
+        throw new ConfigNotFoundError('pixiv not login')
     }
 
-    const response = await getRanking(mode, ctx.req.param('date') && date, token);
+    const response = await getRanking(mode, ctx.req.param('date') && date, token)
 
-    const illusts = response.data.illusts;
+    const illusts = response.data.illusts
 
-    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 `;
+    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 `
 
     return {
         title: (ctx.req.param('date') ? dateStr : '') + titles[mode],
         link: links[mode],
         description: dateStr + titles[mode],
         item: illusts.map((illust, index) => {
-            const images = pixivUtils.getImgs(illust);
+            const images = pixivUtils.getImgs(illust)
             return {
                 title: `#${index + 1} ${illust.title}`,
                 pubDate: parseDate(illust.create_date),
@@ -182,7 +182,7 @@ async function handler(ctx) {
                     },
                 ],
                 category: illust.tags.map((tag) => tag.name),
-            };
+            }
         }),
-    };
+    }
 }

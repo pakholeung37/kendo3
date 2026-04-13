@@ -1,25 +1,25 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { baseUrl, processItems } from './util';
+import { baseUrl, processItems } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL(`topics/${id ?? 'home'}`, baseUrl).href;
-    const apiUrl: string = new URL(`gapi/v1/${id ? `topics/${id}/recommend` : 'talk-original-recommendations'}`, baseUrl).href;
+    const targetUrl: string = new URL(`topics/${id ?? 'home'}`, baseUrl).href
+    const apiUrl: string = new URL(`gapi/v1/${id ? `topics/${id}/recommend` : 'talk-original-recommendations'}`, baseUrl).href
 
     const query = {
         'page[limit]': limit,
         include: 'talk,talk.topic,talk.user',
         'talk-include': 'topic,user',
-    };
+    }
 
-    return await processItems(limit, query, apiUrl, targetUrl);
-};
+    return await processItems(limit, query, apiUrl, targetUrl)
+}
 
 export const route: Route = {
     path: ['/topics/:id/recommend', '/topics/recommend'],
@@ -58,4 +58,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.SocialMedia,
-};
+}

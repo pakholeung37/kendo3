@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/papers/:category?/:time?/:cited?',
@@ -22,24 +22,24 @@ export const route: Route = {
     name: 'Trending Papers on arXiv',
     maintainers: ['CookiePieWw'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { time = 'Since beginning', cited = 'Cited and uncited papers', category = 'All categories' } = ctx.req.param();
+    const { time = 'Since beginning', cited = 'Cited and uncited papers', category = 'All categories' } = ctx.req.param()
 
-    const rootUrl = 'https://trendingpapers.com';
-    const currentUrl = `${rootUrl}/api/papers?p=1&o=pagerank_growth&pd=${time}&cc=${cited}&c=${category}`;
+    const rootUrl = 'https://trendingpapers.com'
+    const currentUrl = `${rootUrl}/api/papers?p=1&o=pagerank_growth&pd=${time}&cc=${cited}&c=${category}`
 
-    const response = await ofetch(currentUrl);
+    const response = await ofetch(currentUrl)
 
     const papers = response.data.map((_) => {
-        const title = _.title;
-        const abstract = _.abstract;
-        const url = _.url;
-        const arxivId = _.arxiv_id;
+        const title = _.title
+        const abstract = _.abstract
+        const url = _.url
+        const arxivId = _.arxiv_id
 
-        const pubDate = parseDate(_.pub_date);
-        const summaryCategories = _.summary_categories;
+        const pubDate = parseDate(_.pub_date)
+        const summaryCategories = _.summary_categories
 
         return {
             title,
@@ -48,12 +48,12 @@ async function handler(ctx) {
             guid: arxivId,
             pubDate,
             category: summaryCategories,
-        };
-    });
+        }
+    })
 
     return {
         title: `Trending Papers on arXiv.org | ${category} | ${time} | ${cited} | `,
         link: currentUrl,
         item: papers,
-    };
+    }
 }

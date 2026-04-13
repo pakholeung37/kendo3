@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/c/:username/:embed?',
@@ -36,26 +36,26 @@ export const route: Route = {
     name: 'Custom URL',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.youtube || !config.youtube.key) {
-        throw new ConfigNotFoundError('YouTube RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('YouTube RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
-    const username = ctx.req.param('username');
-    const embed = !ctx.req.param('embed');
+    const username = ctx.req.param('username')
+    const embed = !ctx.req.param('embed')
 
-    const { data: response } = await got(`https://www.youtube.com/c/${username}`);
-    const $ = load(response);
+    const { data: response } = await got(`https://www.youtube.com/c/${username}`)
+    const $ = load(response)
     const ytInitialData = JSON.parse(
         $('script')
             .text()
-            .match(/ytInitialData = ({.*?});/)?.[1] || '{}'
-    );
-    const externalId = ytInitialData.metadata.channelMetadataRenderer.externalId;
-    const playlistId = (await utils.getChannelWithId(externalId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads;
+            .match(/ytInitialData = ({.*?});/)?.[1] || '{}',
+    )
+    const externalId = ytInitialData.metadata.channelMetadataRenderer.externalId
+    const playlistId = (await utils.getChannelWithId(externalId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads
 
-    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items;
+    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items
 
     return {
         title: `${username} - YouTube`,
@@ -65,9 +65,9 @@ async function handler(ctx) {
         item: data
             .filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
             .map((item) => {
-                const snippet = item.snippet;
-                const videoId = snippet.resourceId.videoId;
-                const img = utils.getThumbnail(snippet.thumbnails);
+                const snippet = item.snippet
+                const videoId = snippet.resourceId.videoId
+                const img = utils.getThumbnail(snippet.thumbnails)
                 return {
                     title: snippet.title,
                     description: utils.renderDescription(embed, videoId, img, utils.formatDescription(snippet.description)),
@@ -75,7 +75,7 @@ async function handler(ctx) {
                     link: `https://www.youtube.com/watch?v=${videoId}`,
                     author: snippet.videoOwnerChannelTitle,
                     image: img.url,
-                };
+                }
             }),
-    };
+    }
 }

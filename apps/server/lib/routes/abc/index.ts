@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -31,33 +31,33 @@ export const route: Route = {
 :::`,
     maintainers: ['nczitzk', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'news/justin' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'news/justin' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.abc.net.au';
-    const apiUrl = new URL('news-web/api/loader/channelrefetch', rootUrl).href;
+    const rootUrl = 'https://www.abc.net.au'
+    const apiUrl = new URL('news-web/api/loader/channelrefetch', rootUrl).href
 
-    let currentUrl: string;
-    let documentId;
+    let currentUrl: string
+    let documentId
 
     if (Number.isNaN(category)) {
-        currentUrl = new URL(category, rootUrl).href;
+        currentUrl = new URL(category, rootUrl).href
     } else {
-        documentId = category;
-        const feedUrl = new URL(`news/feed/${documentId}/rss.xml`, rootUrl).href;
+        documentId = category
+        const feedUrl = new URL(`news/feed/${documentId}/rss.xml`, rootUrl).href
 
-        const feedResponse = await ofetch(feedUrl);
-        currentUrl = feedResponse.match(/<link>([\w-./:?]+)<\/link>/)[1];
+        const feedResponse = await ofetch(feedUrl)
+        currentUrl = feedResponse.match(/<link>([\w-./:?]+)<\/link>/)[1]
     }
 
-    const currentResponse = await ofetch(currentUrl);
+    const currentResponse = await ofetch(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    documentId = documentId ?? $('div[data-uri^="coremedia://collection/"]').first().prop('data-uri').split(/\//).pop();
+    documentId = documentId ?? $('div[data-uri^="coremedia://collection/"]').first().prop('data-uri').split(/\//).pop()
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -65,7 +65,7 @@ async function handler(ctx) {
             documentId,
             size: limit,
         },
-    });
+    })
 
     let items = response.collection.slice(0, limit).map((i) => {
         const item = {
@@ -83,31 +83,31 @@ async function handler(ctx) {
             guid: `abc-${i.id}`,
             pubDate: parseDate(i.dates.firstPublished),
             updated: i.dates.lastUpdated ? parseDate(i.dates.lastUpdated) : undefined,
-        };
-
-        if (i.mediaIndicator) {
-            item.enclosure_type = 'audio/mpeg';
-            item.itunes_item_image = i.image?.imgSrc.split(/\?/)[0] ?? undefined;
-            item.itunes_duration = i.mediaIndicator.duration;
         }
 
-        return item;
-    });
+        if (i.mediaIndicator) {
+            item.enclosure_type = 'audio/mpeg'
+            item.itunes_item_image = i.image?.imgSrc.split(/\?/)[0] ?? undefined
+            item.itunes_duration = i.mediaIndicator.duration
+        }
+
+        return item
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 try {
-                    const detailResponse = await ofetch(item.link);
+                    const detailResponse = await ofetch(item.link)
 
-                    const content = load(detailResponse);
+                    const content = load(detailResponse)
 
-                    content('aside, header, [data-print="inline-media"], [data-component="EmbedBlock"]').remove();
+                    content('aside, header, [data-print="inline-media"], [data-component="EmbedBlock"]').remove()
 
                     content('#body *, div[data-component="FeatureMedia"]')
                         .children()
                         .each(function () {
-                            const element = content(this);
+                            const element = content(this)
                             if (element.prop('tagName').toLowerCase() === 'figure') {
                                 element.replaceWith(
                                     renderDescription({
@@ -115,42 +115,42 @@ async function handler(ctx) {
                                             src: element.find('img').prop('src').split(/\?/)[0],
                                             alt: element.find('figcaption').text().trim(),
                                         },
-                                    })
-                                );
+                                    }),
+                                )
                             } else {
-                                element.removeAttr('id class role data-component data-uri');
+                                element.removeAttr('id class role data-component data-uri')
                             }
-                        });
+                        })
 
-                    item.title = content('meta[property="og:title"]').prop('content');
-                    item.description = '';
+                    item.title = content('meta[property="og:title"]').prop('content')
+                    item.description = ''
 
-                    const enclosurePattern = String.raw`"(?:MIME|content)?Type":"([\w]+/[\w]+)".*?"(?:fileS|s)?ize":(\d+),.*?"url":"([\w-.:/?]+)"`;
+                    const enclosurePattern = String.raw`"(?:MIME|content)?Type":"([\w]+/[\w]+)".*?"(?:fileS|s)?ize":(\d+),.*?"url":"([\w-.:/?]+)"`
 
-                    const enclosureMatches = detailResponse.match(new RegExp(enclosurePattern, 'g'));
+                    const enclosureMatches = detailResponse.match(new RegExp(enclosurePattern, 'g'))
 
                     if (enclosureMatches) {
                         const enclosureMatch = enclosureMatches
                             .map((e) => e.match(new RegExp(enclosurePattern)))
                             .toSorted((a, b) => Number.parseInt(a[2], 10) - Number.parseInt(b[2], 10))
-                            .pop();
+                            .pop()
 
-                        item.enclosure_url = enclosureMatch[3];
-                        item.enclosure_length = enclosureMatch[2];
-                        item.enclosure_type = enclosureMatch[1];
+                        item.enclosure_url = enclosureMatch[3]
+                        item.enclosure_length = enclosureMatch[2]
+                        item.enclosure_type = enclosureMatch[1]
 
                         item.description = renderDescription({
                             enclosure: {
                                 src: item.enclosure_url,
                                 type: item.enclosure_type,
                             },
-                        });
+                        })
                     }
 
                     item.description =
                         renderDescription({
                             description: (content('div[data-component="FeatureMedia"]').html() || '') + (content('#body div[data-component="LayoutContainer"] div').first().html() || ''),
-                        }) + item.description;
+                        }) + item.description
 
                     item.category = content('meta[property="article:tag"]')
                         .toArray()
@@ -158,21 +158,21 @@ async function handler(ctx) {
                             content(c)
                                 .prop('content')
                                 .split(/，/)
-                                .map((c) => c.trim())
-                        );
-                    item.guid = `abc-${content('meta[name="ContentId"]').prop('content')}`;
-                    item.pubDate = parseDate(content('meta[property="article:published_time"]').prop('content'));
-                    item.updated = parseDate(content('meta[property="article:modified_time"]').prop('content'));
+                                .map((c) => c.trim()),
+                        )
+                    item.guid = `abc-${content('meta[name="ContentId"]').prop('content')}`
+                    item.pubDate = parseDate(content('meta[property="article:published_time"]').prop('content'))
+                    item.updated = parseDate(content('meta[property="article:modified_time"]').prop('content'))
                 } catch {
                     //
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href') || '', rootUrl).href;
+    const icon = new URL($('link[rel="apple-touch-icon"]').prop('href') || '', rootUrl).href
 
     return {
         item: items,
@@ -186,5 +186,5 @@ async function handler(ctx) {
         subtitle: $('meta[property="og:title"]').prop('content'),
         author: $('meta[name="generator"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

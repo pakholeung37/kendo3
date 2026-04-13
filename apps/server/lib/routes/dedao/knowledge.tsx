@@ -1,15 +1,15 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const mentionPattern = /<\u2267\u2746>{"name":"(.*?)","uid":"\d+","at":"1"}<\/\u2266\u2746>/g;
+const mentionPattern = /<\u2267\u2746>{"name":"(.*?)","uid":"\d+","at":"1"}<\/\u2266\u2746>/g
 
-const formatNoteText = (text = '') => text.replaceAll('\n\n', '</p><p>').replaceAll(mentionPattern, ' @$1');
+const formatNoteText = (text = '') => text.replaceAll('\n\n', '</p><p>').replaceAll(mentionPattern, ' @$1')
 
-const extractImageUrl = (value?: string) => value?.match(/"url":"(.*?)"/)?.[1];
+const extractImageUrl = (value?: string) => value?.match(/"url":"(.*?)"/)?.[1]
 
 export const route: Route = {
     path: '/knowledge/:topic?/:type?',
@@ -32,20 +32,20 @@ export const route: Route = {
     name: '知识城邦',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const topic = ctx.req.param('topic') ?? '';
-    const type = /t|y/i.test(ctx.req.param('type') ?? 'true');
-    const count = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100;
+    const topic = ctx.req.param('topic') ?? ''
+    const type = /t|y/i.test(ctx.req.param('type') ?? 'true')
+    const count = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100
 
-    const rootUrl = 'https://www.dedao.cn';
-    const currentUrl = `${rootUrl}/knowledge${topic === '' ? '' : '/topic/' + topic}`;
-    const apiUrl = `${rootUrl}/pc/ledgers/${topic === '' ? 'notes/friends_timeline' : 'topic/notes/list'}`;
-    const detailUrl = `${rootUrl}/pc/ledgers/topic/detail`;
+    const rootUrl = 'https://www.dedao.cn'
+    const currentUrl = `${rootUrl}/knowledge${topic === '' ? '' : '/topic/' + topic}`
+    const apiUrl = `${rootUrl}/pc/ledgers/${topic === '' ? 'notes/friends_timeline' : 'topic/notes/list'}`
+    const detailUrl = `${rootUrl}/pc/ledgers/topic/detail`
 
     let title = '',
-        description = '';
+        description = ''
 
     if (topic !== '') {
         const detailResponse = await got({
@@ -55,10 +55,10 @@ async function handler(ctx) {
                 incr_view_count: false,
                 topic_id_hazy: topic,
             },
-        });
+        })
 
-        title = detailResponse.data.c.name;
-        description = detailResponse.data.c.intro;
+        title = detailResponse.data.c.name
+        description = detailResponse.data.c.intro
     }
 
     const response = await got({
@@ -72,7 +72,7 @@ async function handler(ctx) {
             topic_id_hazy: topic,
             version: 2,
         },
-    });
+    })
 
     const items = (topic === '' ? response.data.c.notes : response.data.c.note_detail_list).map((item) => ({
         title: item.f_part.note,
@@ -86,8 +86,8 @@ async function handler(ctx) {
                     <>
                         <br />
                         {item.f_part.images.map((image) => {
-                            const imageUrl = extractImageUrl(image);
-                            return imageUrl ? <img src={imageUrl} /> : null;
+                            const imageUrl = extractImageUrl(image)
+                            return imageUrl ? <img src={imageUrl} /> : null
                         })}
                     </>
                 ) : null}
@@ -104,21 +104,21 @@ async function handler(ctx) {
                             <>
                                 <br />
                                 {item.s_part.images.map((image) => {
-                                    const imageUrl = extractImageUrl(image);
-                                    return imageUrl ? <img src={imageUrl} /> : null;
+                                    const imageUrl = extractImageUrl(image)
+                                    return imageUrl ? <img src={imageUrl} /> : null
                                 })}
                             </>
                         ) : null}
                     </>
                 ) : null}
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `得到 - 知识城邦${title === '' ? '' : ' - ' + title}`,
         link: currentUrl,
         item: items,
         description,
-    };
+    }
 }

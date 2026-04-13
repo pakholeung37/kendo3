@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const sections = {
     zsgz: {
@@ -33,7 +33,7 @@ const sections = {
         // xsxz: { title: '下载中心 - 学生下载', path: '/xzzx/xsxz.htm' },
         xwxz: { title: '下载中心 - 学位下载', path: '/xzzx/xwxz.htm' },
     },
-};
+}
 
 export const route: Route = {
     path: '/yjs/:type/:subtype',
@@ -84,64 +84,64 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 export async function handler(ctx: Context) {
-    const { type, subtype } = ctx.req.param();
+    const { type, subtype } = ctx.req.param()
 
     if (!sections[type] || !sections[type][subtype]) {
-        throw new Error('Invalid type or subtype');
+        throw new Error('Invalid type or subtype')
     }
 
-    const { title, path } = sections[type][subtype];
-    const baseUrl = 'https://yjs.gmu.cn';
-    const link = baseUrl + path;
+    const { title, path } = sections[type][subtype]
+    const baseUrl = 'https://yjs.gmu.cn'
+    const link = baseUrl + path
 
-    const response = await got(link);
+    const response = await got(link)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     // 更新选择器以匹配研究生院网站的实际结构
-    const list = $('.n_listxx1 li');
+    const list = $('.n_listxx1 li')
 
     if (list.length === 0) {
-        throw new Error('No content found. The page structure might have changed.');
+        throw new Error('No content found. The page structure might have changed.')
     }
 
     const items = await Promise.all(
         list.toArray().map(async (item) => {
-            const element = $(item);
-            const a = element.find('a');
-            const dateText = element.find('span').text();
-            const href = a.attr('href');
-            const itemTitle = a.text().trim();
+            const element = $(item)
+            const a = element.find('a')
+            const dateText = element.find('span').text()
+            const href = a.attr('href')
+            const itemTitle = a.text().trim()
 
             if (!href || !itemTitle) {
-                return null;
+                return null
             }
 
-            const pubDate = parseDate(dateText);
+            const pubDate = parseDate(dateText)
             if (!pubDate) {
-                return null;
+                return null
             }
 
-            const fullLink = new URL(href, link).href;
+            const fullLink = new URL(href, link).href
 
             // Use cache.tryGet to cache the article content
             return await cache.tryGet(`gmu:yjs:${fullLink}`, async () => {
                 try {
-                    const contentResponse = await got(fullLink);
-                    const content = load(contentResponse.data);
+                    const contentResponse = await got(fullLink)
+                    const content = load(contentResponse.data)
 
                     // 获取新闻内容
-                    const articleContent = content('.v_news_content').html() || '暂无详细内容';
+                    const articleContent = content('.v_news_content').html() || '暂无详细内容'
 
                     return {
                         title: itemTitle,
                         link: fullLink,
                         pubDate,
                         description: articleContent,
-                    };
+                    }
                 } catch {
                     // 如果获取文章内容失败，返回基本信息
                     return {
@@ -149,18 +149,18 @@ export async function handler(ctx: Context) {
                         link: fullLink,
                         pubDate,
                         description: '暂无详细内容',
-                    };
+                    }
                 }
-            });
-        })
-    );
+            })
+        }),
+    )
 
-    const result = items.filter((item): item is { title: string; link: string; pubDate: Date; description: string } => item !== null);
+    const result = items.filter((item): item is { title: string; link: string; pubDate: Date; description: string } => item !== null)
 
     return {
         title,
         link,
         description: `广州医科大学研究生院 - ${title}`,
         item: result,
-    };
+    }
 }

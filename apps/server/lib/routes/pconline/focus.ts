@@ -1,25 +1,25 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.pconline.com.cn';
+const rootUrl = 'https://www.pconline.com.cn'
 interface Item {
-    id: string;
-    title: string;
-    channelName: string;
-    wap_3g_url: string;
-    bigImage: string;
-    cover: string;
-    largeImage: string;
-    authorname: string;
-    authorImg: string;
-    pc_pubDate: string;
-    artType: string;
-    summary: string;
-    url: string;
+    id: string
+    title: string
+    channelName: string
+    wap_3g_url: string
+    bigImage: string
+    cover: string
+    largeImage: string
+    authorname: string
+    authorImg: string
+    pc_pubDate: string
+    artType: string
+    summary: string
+    url: string
 }
 
 const categories = {
@@ -47,7 +47,7 @@ const categories = {
         title: '人物',
         path: 'character/',
     },
-};
+}
 
 const getContent = (item) =>
     cache.tryGet(item.link, async () => {
@@ -55,35 +55,35 @@ const getContent = (item) =>
             method: 'get',
             url: `https:${item.link}`,
             responseType: 'arrayBuffer',
-        });
+        })
 
-        const utf8decoder = new TextDecoder('GBK');
-        const html = utf8decoder.decode(detailResponse.data);
-        const $ = load(html);
-        item.description = $('.context-box .context-table tbody td').html();
-        return item;
-    });
+        const utf8decoder = new TextDecoder('GBK')
+        const html = utf8decoder.decode(detailResponse.data)
+        const $ = load(html)
+        item.description = $('.context-box .context-table tbody td').html()
+        return item
+    })
 
 export const handler = async (ctx) => {
-    const { category = 'all' } = ctx.req.param();
-    const cate = categories[category] || categories.all;
-    const currentUrl = `${rootUrl}/3g/other/focus/${cate.path}index.html`;
+    const { category = 'all' } = ctx.req.param()
+    const cate = categories[category] || categories.all
+    const currentUrl = `${rootUrl}/3g/other/focus/${cate.path}index.html`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
     const resString = response.data
         .replace(/Module\.callback\((.*)\)/s, '$1')
         .split('\n')
         .filter((e) => e.indexOf('"tags":') !== 0)
         .join('\n')
-        .replaceAll("'", '"');
-    const tinyData = resString.replaceAll(/[\n\r]/g, '');
-    const dataString = tinyData.replaceAll(',}', '}');
-    const data = JSON.parse(dataString || '');
-    const { articleList } = data;
+        .replaceAll("'", '"')
+    const tinyData = resString.replaceAll(/[\n\r]/g, '')
+    const dataString = tinyData.replaceAll(',}', '}')
+    const data = JSON.parse(dataString || '')
+    const { articleList } = data
     const list = articleList.map((item: Item) => ({
         id: item.id,
         title: item.title,
@@ -98,16 +98,16 @@ export const handler = async (ctx) => {
         description: item.summary,
         category: item.channelName,
         image: item.cover,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => getContent(item)));
+    const items = await Promise.all(list.map((item) => getContent(item)))
 
     return {
         title: `太平洋科技-${cate.title}`,
         link: currentUrl,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/focus/:category?',
@@ -141,4 +141,4 @@ export const route: Route = {
 | --- | --- | --- | --- | --- | --- |
 | all | tech | finance | life | company | character |
 :::`,
-};
+}

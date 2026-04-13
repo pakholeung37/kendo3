@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { PRESETS } from '@/utils/header-generator';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { PRESETS } from '@/utils/header-generator'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/user/:id',
@@ -36,13 +36,13 @@ export const route: Route = {
     maintainers: ['pseudoyu'],
     handler,
     description: '获取用户点评、签到、攻略等动态。',
-};
+}
 
 function addPictureAndVideo(item: any) {
-    let content = '';
-    content += item.pictureList ? item.pictureList.map((ele: any) => `<img src="${ele.picUrl}" />`).join('<br>') : '';
-    content += item.videoUrl ? `<img src="${item.videoUrl}" />` : '';
-    return content;
+    let content = ''
+    content += item.pictureList ? item.pictureList.map((ele: any) => `<img src="${ele.picUrl}" />`).join('<br>') : ''
+    content += item.videoUrl ? `<img src="${item.videoUrl}" />` : ''
+    return content
 }
 
 const starMap: Record<number, string> = {
@@ -54,84 +54,84 @@ const starMap: Record<number, string> = {
     40: '四星',
     45: '四星半',
     50: '五星',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const userPage = `https://m.dianping.com/userprofile/${id}`;
-    const cookie = config.dianping.cookie;
+    const userPage = `https://m.dianping.com/userprofile/${id}`
+    const cookie = config.dianping.cookie
 
     const headers: Record<string, string> = {
         Referer: userPage,
-    };
+    }
 
     if (cookie) {
-        headers.Cookie = cookie;
+        headers.Cookie = cookie
     }
 
     const pageResponse = await ofetch(userPage, {
         headers,
         headerGeneratorOptions: PRESETS.MODERN_IOS,
-    });
+    })
 
-    const nickNameReg = /window\.nickName = "(.*?)"/g;
-    const nickName = nickNameReg.exec(pageResponse as string)?.[1];
+    const nickNameReg = /window\.nickName = "(.*?)"/g
+    const nickName = nickNameReg.exec(pageResponse as string)?.[1]
 
     const response = await ofetch(`https://m.dianping.com/member/ajax/NobleUserFeeds?userId=${id}`, {
         headers,
         headerGeneratorOptions: PRESETS.MODERN_IOS,
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
     const items = data.map((item: any) => {
-        let link = '';
-        let title = '';
-        let content = '';
+        let link = ''
+        let title = ''
+        let content = ''
 
-        const poi = item.poi ? `地点：<a href="http://www.dianping.com/shop/${item.poi.shopId}">${item.poi.name} - ${item.poi.regionCategory}</a>` : '';
-        const poiName = item.poi ? item.poi.name : '';
+        const poi = item.poi ? `地点：<a href="http://www.dianping.com/shop/${item.poi.shopId}">${item.poi.name} - ${item.poi.regionCategory}</a>` : ''
+        const poiName = item.poi ? item.poi.name : ''
 
         switch (item.feedType) {
             case 1101:
                 // 签到成功
-                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=3`;
-                content = poi;
-                title = `签到成功: ${poiName} `;
+                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=3`
+                content = poi
+                title = `签到成功: ${poiName} `
 
-                break;
+                break
 
             case 101:
                 // 对商户、地点发布点评
-                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=1`;
-                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>';
-                content += `评分：${starMap[item.star]}<br>`;
-                content += poi + '<br>';
-                content += addPictureAndVideo(item);
-                title = `发布点评: ${poiName}`;
+                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=1`
+                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>'
+                content += `评分：${starMap[item.star]}<br>`
+                content += poi + '<br>'
+                content += addPictureAndVideo(item)
+                title = `发布点评: ${poiName}`
 
-                break;
+                break
 
             case 131:
                 // 发布点评
-                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=29`;
-                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>';
-                content += addPictureAndVideo(item);
-                title = `发布点评: ${content}`;
+                link = `https://m.dianping.com/ugcdetail/${item.mainId}?sceneType=0&bizType=29`
+                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>'
+                content += addPictureAndVideo(item)
+                title = `发布点评: ${content}`
 
-                break;
+                break
 
             case 4208:
                 // 发布攻略
-                link = `https://m.dianping.com/cityinsight/${item.mainId}`;
-                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>';
-                content += poi + '<br>';
-                content += item.moreDesc ? `<a href='${link}'>${item.moreDesc}</a><br>` : '';
-                content += addPictureAndVideo(item);
-                title = `发布攻略: ${poiName}`;
+                link = `https://m.dianping.com/cityinsight/${item.mainId}`
+                content = item.content.replaceAll(/\n+/g, '<br>') + '<br>'
+                content += poi + '<br>'
+                content += item.moreDesc ? `<a href='${link}'>${item.moreDesc}</a><br>` : ''
+                content += addPictureAndVideo(item)
+                title = `发布攻略: ${poiName}`
 
-                break;
+                break
 
             default:
             // Do nothing
@@ -141,13 +141,13 @@ async function handler(ctx) {
             description: content,
             title,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title: `大众点评 - ${nickName}`,
         link: userPage,
         description: `大众点评 - ${nickName}`,
         item: items,
-    };
+    }
 }

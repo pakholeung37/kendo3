@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import { getNSFWUserNovels } from './novel-api/user-novels/nsfw';
-import { getSFWUserNovels } from './novel-api/user-novels/sfw';
+import { getNSFWUserNovels } from './novel-api/user-novels/nsfw'
+import { getSFWUserNovels } from './novel-api/user-novels/sfw'
 
 export const route: Route = {
     path: '/user/novels/:id/:full_content?',
@@ -69,31 +69,31 @@ Default value for \`full_content\` is \`false\` if not specified.
 Example:
 - \`/pixiv/user/novels/79603797\` → 簡介 Basic info
 - \`/pixiv/user/novels/79603797/true\` → 全文 Full text`,
-};
+}
 
-const hasPixivAuth = () => Boolean(config.pixiv && config.pixiv.refreshToken);
+const hasPixivAuth = () => Boolean(config.pixiv && config.pixiv.refreshToken)
 
 async function handler(ctx): Promise<Data> {
-    const id = ctx.req.param('id');
-    const fullContent = fallback(undefined, queryToBoolean(ctx.req.param('full_content')), false);
-    const { limit } = ctx.req.query();
+    const id = ctx.req.param('id')
+    const fullContent = fallback(undefined, queryToBoolean(ctx.req.param('full_content')), false)
+    const { limit } = ctx.req.query()
 
     if (hasPixivAuth()) {
-        return await getNSFWUserNovels(id, fullContent, limit);
+        return await getNSFWUserNovels(id, fullContent, limit)
     }
 
     const nonR18Result = await getSFWUserNovels(id, fullContent, limit).catch((error) => {
         if (error.name === 'Error') {
-            return null;
+            return null
         }
-        throw error;
-    });
+        throw error
+    })
 
     if (nonR18Result) {
-        return nonR18Result;
+        return nonR18Result
     }
 
     throw new ConfigNotFoundError(
-        'This user may not have any novel works, or is an R18 creator, PIXIV_REFRESHTOKEN is required.\npixiv RSS is disabled due to the lack of relevant config.\n該用戶可能沒有小說作品，或者該用戶爲 R18 創作者，需要 PIXIV_REFRESHTOKEN。'
-    );
+        'This user may not have any novel works, or is an R18 creator, PIXIV_REFRESHTOKEN is required.\npixiv RSS is disabled due to the lack of relevant config.\n該用戶可能沒有小說作品，或者該用戶爲 R18 創作者，需要 PIXIV_REFRESHTOKEN。',
+    )
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/profile/:handle',
@@ -25,12 +25,12 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = 'https://api.cyberconnect.dev/profile/';
+    const url = 'https://api.cyberconnect.dev/profile/'
 
-    const handle = ctx.req.param('handle');
+    const handle = ctx.req.param('handle')
 
     const response = await ofetch(url, {
         method: 'POST',
@@ -88,9 +88,9 @@ async function handler(ctx) {
 
             `,
         },
-    });
+    })
 
-    const status = response.data.profile.status;
+    const status = response.data.profile.status
 
     if (status !== 'SUCCESS') {
         return {
@@ -103,10 +103,10 @@ async function handler(ctx) {
                     link: `https://link3.to/${handle}`,
                 },
             ],
-        };
+        }
     }
 
-    const profile = response.data.profile.data;
+    const profile = response.data.profile.data
 
     const items = profile.blocks
         .filter((block) => block.__typename === 'EventBlock')
@@ -120,7 +120,7 @@ async function handler(ctx) {
             pubDate: event.startTimestamp ? parseDate(event.startTimestamp * 1000) : null,
             itunes_item_image: event.posterUrl,
             itunes_duration: event.endTimestamp - event.startTimestamp,
-        }));
+        }))
 
     return {
         title: profile.displayName ?? profile.personalDisplayName.displayName,
@@ -139,5 +139,5 @@ async function handler(ctx) {
                           link: `https://link3.to/${handle}`,
                       },
                   ],
-    };
+    }
 }

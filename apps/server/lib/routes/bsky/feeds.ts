@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderPost } from './templates/post';
-import { getFeed, getFeedGenerator, resolveHandle } from './utils';
+import { renderPost } from './templates/post'
+import { getFeed, getFeedGenerator, resolveHandle } from './utils'
 
 export const route: Route = {
     path: '/profile/:handle/feed/:space/:routeParams?',
@@ -26,16 +26,16 @@ export const route: Route = {
     name: 'Feeds',
     maintainers: ['FerrisChi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const handle = ctx.req.param('handle');
-    const space = ctx.req.param('space');
+    const handle = ctx.req.param('handle')
+    const space = ctx.req.param('space')
 
-    const DID = await resolveHandle(handle, cache.tryGet);
-    const uri = `at://${DID}/app.bsky.feed.generator/${space}`;
-    const profile = await getFeedGenerator(uri, cache.tryGet);
-    const feeds = await getFeed(uri, cache.tryGet);
+    const DID = await resolveHandle(handle, cache.tryGet)
+    const uri = `at://${DID}/app.bsky.feed.generator/${space}`
+    const profile = await getFeedGenerator(uri, cache.tryGet)
+    const feeds = await getFeed(uri, cache.tryGet)
 
     const items = feeds.feed.map(({ post }) => ({
         title: post.record.text.split('\n')[0],
@@ -49,13 +49,13 @@ async function handler(ctx) {
         link: `https://bsky.app/profile/${post.author.handle}/post/${post.uri.split('app.bsky.feed.post/')[1]}`,
         upvotes: post.likeCount,
         comments: post.replyCount,
-    }));
+    }))
 
     ctx.set('json', {
         DID,
         profile,
         feeds,
-    });
+    })
 
     return {
         title: `${profile.view.displayName} — Bluesky`,
@@ -66,5 +66,5 @@ async function handler(ctx) {
         logo: profile.view.avatar,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

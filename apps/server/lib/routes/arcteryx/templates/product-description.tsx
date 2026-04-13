@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ProductItem = {
-    short_description?: string;
-    original_price?: string;
-    price?: string;
-    image: string;
-};
+    short_description?: string
+    original_price?: string
+    price?: string
+    image: string
+}
 
 export const renderProductDescription = (item: ProductItem): string =>
     renderToString(
@@ -29,5 +29,5 @@ export const renderProductDescription = (item: ProductItem): string =>
                 </>
             ) : null}
             <img src={item.image} />
-        </div>
-    );
+        </div>,
+    )

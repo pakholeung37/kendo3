@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/read/:type?',
@@ -25,28 +25,28 @@ export const route: Route = {
 
 | [标准专利](http://read.nlc.cn/outRes/outResList?type=标准专利) | [工具书](http://read.nlc.cn/outRes/outResList?type=工具书) | [少儿资源](http://read.nlc.cn/outRes/outResList?type=少儿资源) |
 | -------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |`,
-};
+}
 
 async function handler(ctx) {
-    const { type = '电子图书' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { type = '电子图书' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const author = '中国国家图书馆';
+    const author = '中国国家图书馆'
 
-    const rootUrl = 'http://read.nlc.cn';
-    const currentUrl = new URL(`/outRes/outResList?type=${type}`, rootUrl).href;
+    const rootUrl = 'http://read.nlc.cn'
+    const currentUrl = new URL(`/outRes/outResList?type=${type}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const items = $('ul.YMH2019_New_GRZX_list7 li a.aa')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('span').first().text();
+            const title = item.find('span').first().text()
 
             return {
                 title,
@@ -57,17 +57,17 @@ async function handler(ctx) {
                             .find('div.pic img')
                             .toArray()
                             .map((img) => {
-                                const image = $(img);
-                                const src = image.prop('src');
-                                const alt = title;
+                                const image = $(img)
+                                const src = image.prop('src')
+                                const alt = title
                                 return src ? (
                                     <figure>
                                         <img src={src} alt={alt} />
                                     </figure>
-                                ) : null;
+                                ) : null
                             })}
                         {item.find('div.txt').prop('title') ? <p>{item.find('div.txt').prop('title')}</p> : null}
-                    </>
+                    </>,
                 ),
                 author,
                 category: [type],
@@ -77,11 +77,11 @@ async function handler(ctx) {
                         .prop('onclick')
                         .match(/\('(\d+)'\)/)[1]
                 }`,
-            };
-        });
+            }
+        })
 
-    const image = new URL('static/style/css/images/YMH_home_main_logo.png', rootUrl).href;
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    const image = new URL('static/style/css/images/YMH_home_main_logo.png', rootUrl).href
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -95,5 +95,5 @@ async function handler(ctx) {
         subtitle: type,
         author,
         allowEmpty: true,
-    };
+    }
 }

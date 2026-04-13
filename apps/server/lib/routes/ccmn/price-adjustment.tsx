@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/price-adjustment/:category',
@@ -63,7 +63,7 @@ export const route: Route = {
     maintainers: ['chrisis58'],
     handler,
     description: '长江有色网的金属调价动态，包括铜、铝、锌、锡、铅、镍等金属。',
-};
+}
 
 const SUB_DOMAIN_MAP = {
     copper: 'copper.ccmn.cn',
@@ -72,7 +72,7 @@ const SUB_DOMAIN_MAP = {
     sn: 'sn.ccmn.cn',
     pb: 'pb.ccmn.cn',
     ni: 'ni.ccmn.cn',
-};
+}
 
 const READABLE_CATEGORIES = {
     copper: '铜',
@@ -81,68 +81,68 @@ const READABLE_CATEGORIES = {
     sn: '锡',
     pb: '铅',
     ni: '镍',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
-    const subDomain = SUB_DOMAIN_MAP[category];
+    const subDomain = SUB_DOMAIN_MAP[category]
     if (!subDomain) {
-        throw new Error('未知的金属类型');
+        throw new Error('未知的金属类型')
     }
 
-    const url = `https://${subDomain}`;
+    const url = `https://${subDomain}`
 
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.content1-text-div')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const dataId = $item.attr('data-id');
+            const $item = $(item)
+            const dataId = $item.attr('data-id')
 
-            const $top = $item.find('.top');
+            const $top = $item.find('.top')
 
-            const regionRaw = $top.find('.left').first();
+            const regionRaw = $top.find('.left').first()
             const region = regionRaw
                 .contents()
                 .filter((_, e) => e.type === 'text')
                 .text()
-                .trim();
+                .trim()
 
-            const dateStr = $top.find('.time').text().trim();
+            const dateStr = $top.find('.time').text().trim()
 
-            const metal = $top.find('.right').first().text().trim();
+            const metal = $top.find('.right').first().text().trim()
 
-            const $priceSpan = $top.find('span.clearfloat');
-            const minPriceLabel = $priceSpan.find('.left').text().trim();
-            const maxPriceLabel = $priceSpan.find('.right').text().trim();
+            const $priceSpan = $top.find('span.clearfloat')
+            const minPriceLabel = $priceSpan.find('.left').text().trim()
+            const maxPriceLabel = $priceSpan.find('.right').text().trim()
 
-            const $bottom = $item.find('.bottom');
-            const $avgSpan = $bottom.find('.up_down_span');
+            const $bottom = $item.find('.bottom')
+            const $avgSpan = $bottom.find('.up_down_span')
 
             const avgPrice = $avgSpan
                 .contents()
                 .filter((_, e) => e.type === 'text')
                 .text()
-                .trim();
+                .trim()
 
-            const changeStr = $avgSpan.find('.up_down').text().trim();
-            const changeNum = Number.parseFloat(changeStr);
+            const changeStr = $avgSpan.find('.up_down').text().trim()
+            const changeNum = Number.parseFloat(changeStr)
 
-            let icon; // 如果 change 为 0 或者无法解析，则不显示图标
+            let icon // 如果 change 为 0 或者无法解析，则不显示图标
             if (changeNum > 0) {
-                icon = '🔴';
+                icon = '🔴'
             } else if (changeNum < 0) {
-                icon = '🟢';
+                icon = '🟢'
             }
 
-            const title = `${icon ? icon + ' ' : ''}${region} ${metal} 调价: ${changeStr} (均价 ${avgPrice})`;
+            const title = `${icon ? icon + ' ' : ''}${region} ${metal} 调价: ${changeStr} (均价 ${avgPrice})`
 
             const description = renderToString(
                 <table>
@@ -183,8 +183,8 @@ async function handler(ctx) {
                             </td>
                         </tr>
                     </tbody>
-                </table>
-            );
+                </table>,
+            )
 
             return {
                 title,
@@ -192,12 +192,12 @@ async function handler(ctx) {
                 link: `${url}/quota/${dataId}.html`,
                 guid: dataId, // 使用 data-id 作为唯一标识
                 pubDate: timezone(parseDate(dateStr, 'MM-DD'), +8),
-            };
-        });
+            }
+        })
 
     return {
         title: `长江有色网 - 调价动态 - ${READABLE_CATEGORIES[category]}`,
         link: url,
         item: items,
-    };
+    }
 }

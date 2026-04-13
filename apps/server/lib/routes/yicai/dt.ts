@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const columns = {
     article: 2,
     report: 3,
     visualization: 4,
-};
+}
 
 export const route: Route = {
     path: '/dt/:column?/:category?',
@@ -70,15 +70,15 @@ export const route: Route = {
 | 营销     | visualization/43 |
 | 大公司   | visualization/44 |
 | 城市生活 | visualization/45 |`,
-};
+}
 
 async function handler(ctx) {
-    const { column = 'article', category = '0' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { column = 'article', category = '0' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://dt.yicai.com';
-    const apiUrl = new URL('api/getNewsList', rootUrl).href;
-    const currentUrl = new URL(column, rootUrl).href;
+    const rootUrl = 'https://dt.yicai.com'
+    const apiUrl = new URL('api/getNewsList', rootUrl).href
+    const currentUrl = new URL(column, rootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -87,11 +87,11 @@ async function handler(ctx) {
             cid: category,
             pageSize: limit,
         },
-    });
+    })
 
     let items = response.data.data.slice(0, limit).map((item) => {
-        const enclosureUrl = item.originVideo;
-        const enclosureExt = enclosureUrl.split(/\./).pop();
+        const enclosureUrl = item.originVideo
+        const enclosureExt = enclosureUrl.split(/\./).pop()
 
         return {
             title: item.newstitle,
@@ -111,20 +111,20 @@ async function handler(ctx) {
             enclosure_url: enclosureUrl,
             enclosure_type: enclosureUrl ? `${enclosureExt === 'mp4' ? 'video' : 'application'}/${enclosureExt}` : undefined,
             upvotes: item.newsscore ?? 0,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                content('div.logintips').remove();
+                content('div.logintips').remove()
 
                 content('img').each((_, e) => {
-                    e = content(e);
+                    e = content(e)
 
                     content(e).replaceWith(
                         renderDescription({
@@ -134,27 +134,27 @@ async function handler(ctx) {
                                 width: e.prop('width'),
                                 height: e.prop('height'),
                             },
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
                 item.description += renderDescription({
                     description: content('div.txt').html() ?? undefined,
-                });
-                item.author = content('div.authortime h3').text();
+                })
+                item.author = content('div.authortime h3').text()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const title = $('title').text();
-    const image = $('div.logo a img').prop('src');
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    const title = $('title').text()
+    const image = $('div.logo a img').prop('src')
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -168,5 +168,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="description"]').prop('content'),
         author: title.split(/_/).pop(),
         allowEmpty: true,
-    };
+    }
 }

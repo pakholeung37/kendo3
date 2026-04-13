@@ -1,11 +1,11 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { fallback, queryToBoolean, queryToInteger } from '@/utils/readable-social';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { fallback, queryToBoolean, queryToInteger } from '@/utils/readable-social'
 
 export const route: Route = {
     path: '/people/:userid/status/:routeParams?',
@@ -48,72 +48,72 @@ export const route: Route = {
   的效果为
 
   <img loading="lazy" src="/img/readable-douban.png" alt="豆瓣读书的可读豆瓣广播 RSS" />`,
-};
+}
 
-const headers = { Referer: `https://m.douban.com/` };
+const headers = { Referer: `https://m.douban.com/` }
 
 function tryFixStatus(status) {
-    let result = { isFixSuccess: true, why: '' };
-    const now = new Date();
+    let result = { isFixSuccess: true, why: '' }
+    const now = new Date()
 
     if (!status) {
         result = {
             isFixSuccess: false,
             // 添加方括号，与 status.msg 的样式统一
             why: '[ 无内容 ]',
-        };
-        status = {}; // dummy
+        }
+        status = {} // dummy
     } else if (status.deleted) {
         result = {
             isFixSuccess: false,
             why: status.msg ?? '[ 内容已被删除 ]',
-        };
+        }
     } else if (status.hidden) {
         result = {
             isFixSuccess: false,
             why: status.msg ?? '[ 内容已被设为不可见 ]',
-        };
+        }
     } else if (status.text === undefined || status.text === null || !status.uri) {
         result = {
             isFixSuccess: false,
             why: status.msg ?? '[ 内容已不可访问 ]',
-        };
+        }
     } else {
         if (!status.author) {
-            status.author = {};
+            status.author = {}
         }
         if (!status.author.url) {
-            status.author.url = 'https://www.douban.com/people/1/';
+            status.author.url = 'https://www.douban.com/people/1/'
         }
         if (!status.author.name) {
-            status.author.name = '[作者不可见]';
+            status.author.name = '[作者不可见]'
         }
         if (!status.author.avatar) {
-            status.author.avatar = 'https://img1.doubanio.com/icon/user_normal.jpg';
+            status.author.avatar = 'https://img1.doubanio.com/icon/user_normal.jpg'
         }
         if (!status.create_time) {
-            status.create_time = now.toLocaleString();
+            status.create_time = now.toLocaleString()
         }
         if (!status.entities) {
-            status.entities = [];
+            status.entities = []
         }
     }
 
     if (status.sharing_url) {
-        status.sharing_url = status.sharing_url.split('&')[0];
+        status.sharing_url = status.sharing_url.split('&')[0]
     }
 
     if (!result.isFixSuccess) {
-        status.sharing_url = 'https://www.douban.com?rsshub_failed=' + now.getTime().toString();
+        status.sharing_url = 'https://www.douban.com?rsshub_failed=' + now.getTime().toString()
         if (!status.create_time) {
-            status.create_time = now.toLocaleString();
+            status.create_time = now.toLocaleString()
         }
     }
-    return result;
+    return result
 }
 
 function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
 
     const mergedParams = {
         readable: fallback(params.readable, queryToBoolean(routeParams.readable), false),
@@ -132,9 +132,9 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
         widthOfPics: fallback(params.widthOfPics, queryToInteger(routeParams.widthOfPics), -1),
         heightOfPics: fallback(params.heightOfPics, queryToInteger(routeParams.heightOfPics), -1),
         sizeOfAuthorAvatar: fallback(params.sizeOfAuthorAvatar, queryToInteger(routeParams.sizeOfAuthorAvatar), 48),
-    };
+    }
 
-    params = mergedParams;
+    params = mergedParams
 
     const {
         readable,
@@ -153,176 +153,176 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
         widthOfPics,
         heightOfPics,
         sizeOfAuthorAvatar,
-    } = params;
+    } = params
 
     function prepareImages(imageUrls: Array<string | undefined>) {
         if (!imageUrls.length) {
-            return '';
+            return ''
         }
 
-        const imgTags: string[] = [];
+        const imgTags: string[] = []
 
         for (const url of imageUrls) {
             if (!url) {
-                imgTags.push('[无法显示的图片]');
-                continue;
+                imgTags.push('[无法显示的图片]')
+                continue
             }
 
-            const attributes: string[] = [];
-            const styleParts: string[] = [];
+            const attributes: string[] = []
+            const styleParts: string[] = []
 
             if (widthOfPics >= 0) {
-                attributes.push(`width="${widthOfPics}"`);
-                styleParts.push(`width: ${widthOfPics}px;`);
+                attributes.push(`width="${widthOfPics}"`)
+                styleParts.push(`width: ${widthOfPics}px;`)
             }
             if (heightOfPics >= 0) {
-                attributes.push(`height="${heightOfPics}"`);
-                styleParts.push(`height: ${heightOfPics}px;`);
+                attributes.push(`height="${heightOfPics}"`)
+                styleParts.push(`height: ${heightOfPics}px;`)
             }
 
             if (styleParts.length) {
-                attributes.push(`style="${styleParts.join(' ')}"`);
+                attributes.push(`style="${styleParts.join(' ')}"`)
             }
             if (readable) {
-                attributes.push('vspace="8"', 'hspace="4"');
+                attributes.push('vspace="8"', 'hspace="4"')
             }
 
-            const imgTag = `<img ${attributes.join(' ')} src="${url}">`;
-            const wrappedImage = addLinkForPics ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${imgTag}</a>` : imgTag;
+            const imgTag = `<img ${attributes.join(' ')} src="${url}">`
+            const wrappedImage = addLinkForPics ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${imgTag}</a>` : imgTag
 
-            imgTags.push(wrappedImage);
+            imgTags.push(wrappedImage)
         }
         if (readable) {
-            return imgTags.join('<br>');
+            return imgTags.join('<br>')
         }
-        return imgTags.join('');
+        return imgTags.join('')
     }
 
-    const { status, comments } = item;
-    const { isFixSuccess, why } = tryFixStatus(status);
+    const { status, comments } = item
+    const { isFixSuccess, why } = tryFixStatus(status)
     if (!isFixSuccess) {
         return {
             title: why,
             description: why,
-        };
+        }
     }
 
-    let description = '';
-    let title = '';
+    let description = ''
+    let title = ''
 
-    let activityInDesc;
-    let activityInTitle;
+    let activityInDesc
+    let activityInTitle
 
-    const { isFixSuccess: isResharedFixSuccess, why: resharedWhy } = tryFixStatus(status.reshared_status);
+    const { isFixSuccess: isResharedFixSuccess, why: resharedWhy } = tryFixStatus(status.reshared_status)
 
     if (status.activity === '转发') {
         if (isResharedFixSuccess) {
-            activityInDesc = '转发 ';
+            activityInDesc = '转发 '
             if (readable) {
-                activityInDesc += `<a href="${status.reshared_status.author.url}" target="_blank" rel="noopener noreferrer">`;
+                activityInDesc += `<a href="${status.reshared_status.author.url}" target="_blank" rel="noopener noreferrer">`
             }
             if (authorNameBold) {
-                activityInDesc += `<strong>`;
+                activityInDesc += `<strong>`
             }
-            activityInDesc += status.reshared_status.author.name;
+            activityInDesc += status.reshared_status.author.name
             if (authorNameBold) {
-                activityInDesc += `</strong>`;
+                activityInDesc += `</strong>`
             }
             if (readable) {
-                activityInDesc += `</a>`;
+                activityInDesc += `</a>`
             }
-            activityInDesc += ` 的广播`;
-            activityInTitle = `转发 ${status.reshared_status.author.name} 的广播`;
+            activityInDesc += ` 的广播`
+            activityInTitle = `转发 ${status.reshared_status.author.name} 的广播`
         } else {
-            activityInDesc = `转发广播`;
-            activityInTitle = `转发广播`;
+            activityInDesc = `转发广播`
+            activityInTitle = `转发广播`
         }
     } else {
-        activityInDesc = status.activity;
-        activityInTitle = status.activity;
+        activityInDesc = status.activity
+        activityInTitle = status.activity
     }
 
     if (showAuthorInDesc) {
-        let usernameAndAvatar = '';
+        let usernameAndAvatar = ''
         if (readable) {
-            usernameAndAvatar += `<a href="${status.author.url}" target="_blank" rel="noopener noreferrer">`;
+            usernameAndAvatar += `<a href="${status.author.url}" target="_blank" rel="noopener noreferrer">`
         }
         if (showAuthorAvatarInDesc) {
-            usernameAndAvatar += `<img width="${sizeOfAuthorAvatar}" height="${sizeOfAuthorAvatar}" src="${status.author.avatar}" ${readable ? 'hspace="8" vspace="8" align="left"' : ''} />`;
+            usernameAndAvatar += `<img width="${sizeOfAuthorAvatar}" height="${sizeOfAuthorAvatar}" src="${status.author.avatar}" ${readable ? 'hspace="8" vspace="8" align="left"' : ''} />`
         }
         if (authorNameBold) {
-            usernameAndAvatar += `<strong>`;
+            usernameAndAvatar += `<strong>`
         }
-        usernameAndAvatar += status.author.name;
+        usernameAndAvatar += status.author.name
         if (authorNameBold) {
-            usernameAndAvatar += `</strong>`;
+            usernameAndAvatar += `</strong>`
         }
         if (readable) {
-            usernameAndAvatar += `</a>`;
+            usernameAndAvatar += `</a>`
         }
-        usernameAndAvatar += `&ensp;`;
-        description += usernameAndAvatar + activityInDesc + (showColonInDesc ? ': ' : '');
+        usernameAndAvatar += `&ensp;`
+        description += usernameAndAvatar + activityInDesc + (showColonInDesc ? ': ' : '')
     }
 
     if (showAuthorInTitle) {
-        title += `${status.author.name} `;
+        title += `${status.author.name} `
     }
-    title += `${activityInTitle}: `;
+    title += `${activityInTitle}: `
 
     if (showTimestampInDescription) {
-        description += `<br><small>${status.create_time}</small><br>`;
+        description += `<br><small>${status.create_time}</small><br>`
     }
 
-    let text = status.text;
-    let lastIndex = 0;
-    const replacedTextSegements = [];
+    let text = status.text
+    let lastIndex = 0
+    const replacedTextSegements = []
     for (const entity of status.entities) {
         replacedTextSegements.push(
             text.slice(lastIndex, entity.start),
-            `<a href="${entity.uri.replace('douban://douban.com', 'https://www.douban.com/doubanapp/dispatch?uri=')}" target="_blank" rel="noopener noreferrer">${entity.title}</a>`
-        );
-        lastIndex = entity.end;
+            `<a href="${entity.uri.replace('douban://douban.com', 'https://www.douban.com/doubanapp/dispatch?uri=')}" target="_blank" rel="noopener noreferrer">${entity.title}</a>`,
+        )
+        lastIndex = entity.end
     }
-    replacedTextSegements.push(text.slice(lastIndex));
-    text = replacedTextSegements.join('');
+    replacedTextSegements.push(text.slice(lastIndex))
+    text = replacedTextSegements.join('')
 
     // text // images // video_info // parent status
 
-    description += text;
+    description += text
 
     if (status.card) {
-        title += status.card.rating ? `《${status.card.title}》` : `「${status.card.title}」`;
+        title += status.card.rating ? `《${status.card.title}》` : `「${status.card.title}」`
     }
 
     if (status.activity !== '转发' || showRetweetTextInTitle) {
-        title += status.text.replace('\n', '');
+        title += status.text.replace('\n', '')
     }
 
     if (status.images && status.images.length) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`;
+        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`
 
         // 一些RSS Reader会识别所有<img>标签作为内含图片显示，我们不想要头像也作为内含图片之一
         // 让所有配图在description的最前面再次出现一次，但宽高设为0
-        let picsPrefix = '';
+        let picsPrefix = ''
         for (const image of status.images) {
             if (!(image.large && image.large.url)) {
-                continue;
+                continue
             }
-            picsPrefix += `<img width="0" height="0" hidden="true" src="${image.large.url}">`;
+            picsPrefix += `<img width="0" height="0" hidden="true" src="${image.large.url}">`
         }
-        picsPrefixes.push(picsPrefix);
+        picsPrefixes.push(picsPrefix)
 
-        const imageUrls: Array<string | undefined> = [];
+        const imageUrls: Array<string | undefined> = []
         for (const image of status.images) {
-            imageUrls.push(image?.large?.url);
+            imageUrls.push(image?.large?.url)
         }
-        description += prepareImages(imageUrls);
+        description += prepareImages(imageUrls)
     }
 
     if (status.video_info) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`;
-        const videoCover = status.video_info.cover_url;
-        const videoSrc = status.video_info.video_url;
+        description += readable ? `<br clear="both" /><div style="clear: both"></div>` : `<br>`
+        const videoCover = status.video_info.cover_url
+        const videoSrc = status.video_info.video_url
         if (videoSrc) {
             description = `
                 ${description}
@@ -331,43 +331,43 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
                     ${videoCover ? `poster="${videoCover}"` : ''}
                 >
                 </video>
-            `;
+            `
         }
     }
 
     if (status.parent_status) {
-        description += showEmojiForRetweet ? ' 🔁 ' : ' Fw: ';
+        description += showEmojiForRetweet ? ' 🔁 ' : ' Fw: '
         if (showRetweetTextInTitle) {
-            title += showEmojiForRetweet ? ' 🔁 ' : ' Fw: ';
+            title += showEmojiForRetweet ? ' 🔁 ' : ' Fw: '
         }
 
-        const { isFixSuccess: isParentFixSuccess, why: parentWhy } = tryFixStatus(status.parent_status);
+        const { isFixSuccess: isParentFixSuccess, why: parentWhy } = tryFixStatus(status.parent_status)
 
         if (isParentFixSuccess) {
-            let usernameAndAvatar = '';
+            let usernameAndAvatar = ''
 
             if (readable) {
-                usernameAndAvatar += `<a href="${status.parent_status.author.url}">`;
+                usernameAndAvatar += `<a href="${status.parent_status.author.url}">`
             }
             if (authorNameBold) {
-                usernameAndAvatar += `<strong>`;
+                usernameAndAvatar += `<strong>`
             }
-            usernameAndAvatar += status.parent_status.author.name;
+            usernameAndAvatar += status.parent_status.author.name
             if (authorNameBold) {
-                usernameAndAvatar += `</strong>`;
+                usernameAndAvatar += `</strong>`
             }
             if (readable) {
-                usernameAndAvatar += `</a>`;
+                usernameAndAvatar += `</a>`
             }
-            usernameAndAvatar += `:&ensp;`;
-            description += usernameAndAvatar + status.parent_status.text;
+            usernameAndAvatar += `:&ensp;`
+            description += usernameAndAvatar + status.parent_status.text
             if (showRetweetTextInTitle) {
-                title += status.parent_status.author.name + ': ' + status.parent_status.text;
+                title += status.parent_status.author.name + ': ' + status.parent_status.text
             }
         } else {
-            description += parentWhy;
+            description += parentWhy
             if (showRetweetTextInTitle) {
-                title += parentWhy;
+                title += parentWhy
             }
         }
     }
@@ -375,72 +375,70 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
     // card
     if (status.card) {
         if (description) {
-            description += readable
-                ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">`
-                : `<br>`;
+            description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`
         }
         if (!status.card.images_block && status.card.image) {
-            description += `<img src="${status.card.image.large.url}" ${readable ? 'vspace="0" hspace="12" align="left" height="75" style="height: 75px;"' : ''} />`;
+            description += `<img src="${status.card.image.large.url}" ${readable ? 'vspace="0" hspace="12" align="left" height="75" style="height: 75px;"' : ''} />`
         }
 
         // 直接转发 或 带文本转发
-        const isNewReshared = status.activity === '转发小组讨论' || (status.card.type === 'topic' && status.text !== '' && status.activity === '');
-        const isNewStatus = !isNewReshared && status.card.type === 'topic' && status.text === '' && status.activity === '';
+        const isNewReshared = status.activity === '转发小组讨论' || (status.card.type === 'topic' && status.text !== '' && status.activity === '')
+        const isNewStatus = !isNewReshared && status.card.type === 'topic' && status.text === '' && status.activity === ''
         // 覆盖sharing_url，使得RSS条目链接直接指向位于/topic/的新版动态内容
         if (isNewStatus) {
-            status.sharing_url = status.card.url;
+            status.sharing_url = status.card.url
         }
 
-        const cardContents: string[] = [];
+        const cardContents: string[] = []
         if (status.card.title) {
-            let descTitle = `<strong>${status.card.title}</strong>`;
+            let descTitle = `<strong>${status.card.title}</strong>`
             if (status.card.url) {
-                descTitle = `<a href="${status.card.url}" target="_blank" rel="noopener noreferrer">${descTitle}</a>`;
+                descTitle = `<a href="${status.card.url}" target="_blank" rel="noopener noreferrer">${descTitle}</a>`
             }
-            cardContents.push(descTitle);
+            cardContents.push(descTitle)
         }
         if (status.card.subtitle) {
-            const prefix = isNewReshared ? `${status.card.owner_name}：` : '';
-            cardContents.push(prefix + status.card.subtitle);
+            const prefix = isNewReshared ? `${status.card.owner_name}：` : ''
+            cardContents.push(prefix + status.card.subtitle)
         }
         if (status.card.rating) {
-            cardContents.push(`评分：${status.card.rating.value}`);
+            cardContents.push(`评分：${status.card.rating.value}`)
         }
-        description += cardContents.join('<br>');
+        description += cardContents.join('<br>')
         if (readable) {
-            description += `<br clear="both" /><div style="clear: both"></div></blockquote>`;
+            description += `<br clear="both" /><div style="clear: both"></div></blockquote>`
         }
         if (status.card.images_block) {
-            const imageUrls: Array<string | undefined> = [];
+            const imageUrls: Array<string | undefined> = []
             for (const image of status.card.images_block.images) {
-                imageUrls.push(image.image?.large?.url);
+                imageUrls.push(image.image?.large?.url)
             }
-            description += prepareImages(imageUrls);
+            description += prepareImages(imageUrls)
         }
     }
 
     // video_card
     if (status.video_card) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`;
-        const videoCover = status.video_card.video_info && status.video_card.video_info.cover_url;
-        const videoSrc = status.video_card.video_info && status.video_card.video_info.video_url;
+        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`
+        const videoCover = status.video_card.video_info && status.video_card.video_info.cover_url
+        const videoSrc = status.video_card.video_info && status.video_card.video_info.video_url
 
         if (!status.video_card.url) {
-            status.video_card.url = 'https://www.douban.com';
+            status.video_card.url = 'https://www.douban.com'
         }
 
-        description += `${videoSrc ? `<video src="${videoSrc}" ${videoCover ? `poster="${videoCover}"` : ''}></video>` : ''}<br>${status.video_card.title ? `<a href="${status.video_card.url}">${status.video_card.title}</a>` : ''}`;
+        description += `${videoSrc ? `<video src="${videoSrc}" ${videoCover ? `poster="${videoCover}"` : ''}></video>` : ''}<br>${status.video_card.title ? `<a href="${status.video_card.url}">${status.video_card.title}</a>` : ''}`
         if (readable) {
-            description += `</blockquote>`;
+            description += `</blockquote>`
         }
     }
 
     // reshared_status
     if (status.reshared_status) {
-        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`;
+        description += readable ? `<br clear="both" /><div style="clear: both"></div><blockquote style="background: #80808010;border-top:1px solid #80808030;border-bottom:1px solid #80808030;margin:0;padding:5px 20px;">` : `<br>`
 
         if (showRetweetTextInTitle) {
-            title += ' | ';
+            title += ' | '
         }
 
         if (isResharedFixSuccess) {
@@ -453,92 +451,92 @@ function getContentByActivity(ctx, item, params = {}, picsPrefixes = []) {
                     showComments: false,
                     showColonInDesc: true,
                 },
-                picsPrefixes
-            ).description;
-            title += status.reshared_status.text;
-            const reshared_url = status.reshared_status.uri.replace('douban://douban.com', 'https://www.douban.com/doubanapp/dispatch?uri=');
+                picsPrefixes,
+            ).description
+            title += status.reshared_status.text
+            const reshared_url = status.reshared_status.uri.replace('douban://douban.com', 'https://www.douban.com/doubanapp/dispatch?uri=')
 
             if (readable) {
-                description += `<br><small>原动态：<a href="${reshared_url}" target="_blank" rel="noopener noreferrer">${reshared_url}</a></small><br clear="both" /><div style="clear: both"></div></blockquote>`;
+                description += `<br><small>原动态：<a href="${reshared_url}" target="_blank" rel="noopener noreferrer">${reshared_url}</a></small><br clear="both" /><div style="clear: both"></div></blockquote>`
             }
         } else {
-            description += resharedWhy;
-            title += resharedWhy;
+            description += resharedWhy
+            title += resharedWhy
         }
     }
 
     // comments
     if (showComments) {
         if (comments.length > 0) {
-            description += '<hr>';
+            description += '<hr>'
         }
         for (const comment of comments) {
-            description += `<br>${comment.text} - <a href="${comment.author.url}" target="_blank" rel="noopener noreferrer">${comment.author.name}</a>`;
+            description += `<br>${comment.text} - <a href="${comment.author.url}" target="_blank" rel="noopener noreferrer">${comment.author.name}</a>`
         }
     }
 
     if (showAuthorInDesc && showAuthorAvatarInDesc) {
-        description = picsPrefixes.join('') + description;
+        description = picsPrefixes.join('') + description
     }
-    description = description.trim().replaceAll('\n', '<br>');
-    return { title, description };
+    description = description.trim().replaceAll('\n', '<br>')
+    return { title, description }
 }
 
 async function getFullTextItems(items) {
-    const prefix = 'https://m.douban.com/rexxar/api/v2/status/';
+    const prefix = 'https://m.douban.com/rexxar/api/v2/status/'
 
     await Promise.all(
         items.map(async (item) => {
-            let url = prefix + item.status.id;
-            let cacheResult = await cache.get(url);
+            let url = prefix + item.status.id
+            let cacheResult = await cache.get(url)
             if (cacheResult) {
-                item.status.text = cacheResult;
+                item.status.text = cacheResult
             } else {
                 const {
                     data: { text },
-                } = await got({ url, headers });
-                cache.set(url, text);
-                item.status.text = text;
+                } = await got({ url, headers })
+                cache.set(url, text)
+                item.status.text = text
             }
             // retweet
             if (!item.status.reshared_status) {
-                return;
+                return
             }
-            url = prefix + item.status.reshared_status.id;
-            cacheResult = await cache.get(url);
+            url = prefix + item.status.reshared_status.id
+            cacheResult = await cache.get(url)
             if (cacheResult) {
-                item.status.reshared_status.text = cacheResult;
+                item.status.reshared_status.text = cacheResult
             } else if (tryFixStatus(item.status.reshared_status).isFixSuccess) {
                 try {
                     // 存在reshared_status字段正常，但尝试获取时返回403的情况。比如原po被炸号就可能这样。
                     const {
                         data: { text },
-                    } = await got({ url, headers });
-                    cache.set(url, text);
-                    item.status.reshared_status.text = text;
+                    } = await got({ url, headers })
+                    cache.set(url, text)
+                    item.status.reshared_status.text = text
                 } catch {
-                    item.status.reshared_status.text += '\n[获取原动态失败]';
+                    item.status.reshared_status.text += '\n[获取原动态失败]'
                 }
             }
-        })
-    );
+        }),
+    )
 }
 
 async function handler(ctx) {
-    const userid = ctx.req.param('userid');
-    const url = `https://m.douban.com/rexxar/api/v2/status/user_timeline/${userid}`;
+    const userid = ctx.req.param('userid')
+    const url = `https://m.douban.com/rexxar/api/v2/status/user_timeline/${userid}`
     const items = await cache.tryGet(
         url,
         async () => {
-            const _r = await got({ url, headers });
-            return _r.data.items;
+            const _r = await got({ url, headers })
+            return _r.data.items
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     if (items) {
-        await getFullTextItems(items);
+        await getFullTextItems(items)
     }
 
     return {
@@ -549,13 +547,13 @@ async function handler(ctx) {
             items
                 .filter((item) => !item.deleted)
                 .map((item) => {
-                    const r = getContentByActivity(ctx, item);
+                    const r = getContentByActivity(ctx, item)
                     return {
                         title: r.title,
                         link: item.status.sharing_url.replace(/\?_i=(.*)/, ''),
                         pubDate: new Date(Date.parse(item.status.create_time + ' GMT+0800')).toUTCString(),
                         description: r.description,
-                    };
+                    }
                 }),
-    };
+    }
 }

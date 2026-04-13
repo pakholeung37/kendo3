@@ -1,12 +1,12 @@
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const domain = 'readhub.cn';
-const rootUrl = `https://${domain}`;
-const apiRootUrl = `https://api.${domain}`;
-const apiTopicUrl = new URL('topic/list', apiRootUrl).href;
+const domain = 'readhub.cn'
+const rootUrl = `https://${domain}`
+const apiRootUrl = `https://api.${domain}`
+const apiTopicUrl = new URL('topic/list', apiRootUrl).href
 
 /**
  * Process items asynchronously.
@@ -21,32 +21,32 @@ const processItems = async (items, tryGet) =>
             tryGet(item.link, async () => {
                 try {
                     if (!item.link.startsWith(rootUrl)) {
-                        throw new Error(`"${item.link}" is an external URL`);
+                        throw new Error(`"${item.link}" is an external URL`)
                     }
 
-                    const { data: detailResponse } = await got(item.link);
+                    const { data: detailResponse } = await got(item.link)
 
-                    const data = JSON.parse(detailResponse.match(/{\\"topic\\":(.*?)}]\\n"]\)<\/script>/)[1].replaceAll(String.raw`\"`, '"'));
+                    const data = JSON.parse(detailResponse.match(/{\\"topic\\":(.*?)}]\\n"]\)<\/script>/)[1].replaceAll(String.raw`\"`, '"'))
 
-                    item.title = data.title;
-                    item.link = data.url ?? new URL(`topic/${data.uid}`, rootUrl).href;
+                    item.title = data.title
+                    item.link = data.url ?? new URL(`topic/${data.uid}`, rootUrl).href
                     item.description = renderDescription({
                         description: data.summary,
                         news: data.newsAggList,
                         timeline: data.timeline,
                         rootUrl,
-                    });
-                    item.author = data.siteNameDisplay;
-                    item.category = [...(data.entityList.map((c) => c.name) ?? []), ...(data.tagList.map((c) => c.name) ?? [])];
-                    item.guid = `readhub-${data.uid}`;
-                    item.pubDate = parseDate(data.publishDate.replaceAll(/\s/g, ''));
+                    })
+                    item.author = data.siteNameDisplay
+                    item.category = [...(data.entityList.map((c) => c.name) ?? []), ...(data.tagList.map((c) => c.name) ?? [])]
+                    item.guid = `readhub-${data.uid}`
+                    item.pubDate = parseDate(data.publishDate.replaceAll(/\s/g, ''))
                 } catch {
-                    item.guid = `readhub-${item.guid}`;
+                    item.guid = `readhub-${item.guid}`
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-export { apiRootUrl, apiTopicUrl, processItems, rootUrl };
+export { apiRootUrl, apiTopicUrl, processItems, rootUrl }

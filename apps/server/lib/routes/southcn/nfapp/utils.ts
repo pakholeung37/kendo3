@@ -1,22 +1,22 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
 const parseArticle = (item, tryGet) =>
     tryGet(item.link, async () => {
         const detailResponse = await got({
             method: 'get',
             url: item.link,
-        });
+        })
 
-        const $ = load(detailResponse.data);
+        const $ = load(detailResponse.data)
 
-        $('.article-nfh-icon, .article-crumb, .article-share, .article-copyright').remove();
+        $('.article-nfh-icon, .article-crumb, .article-share, .article-copyright').remove()
 
-        item.description += $('#content').html() ?? '';
-        item.author = $('meta[name="author"]').attr('content');
+        item.description += $('#content').html() ?? ''
+        item.author = $('meta[name="author"]').attr('content')
 
-        return item;
-    });
+        return item
+    })
 
-export { parseArticle };
+export { parseArticle }

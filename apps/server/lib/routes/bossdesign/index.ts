@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -22,19 +22,19 @@ export const route: Route = {
     description: `| Boss 笔记 | 电脑日志        | 素材资源         | 设计师神器      | 设计教程        | 设计资讯            |
 | --------- | --------------- | ---------------- | --------------- | --------------- | ------------------- |
 | note      | computer-skills | design-resources | design-software | design-tutorial | design_information |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const limit = Number.parseInt(ctx.req.query('limit'), 10) || undefined;
-    const baseUrl = 'https://www.bossdesign.cn';
+    const category = ctx.req.param('category')
+    const limit = Number.parseInt(ctx.req.query('limit'), 10) || undefined
+    const baseUrl = 'https://www.bossdesign.cn'
 
     const currentCategory = await cache.tryGet(`bossdesign:categories:${category}`, async () => {
-        const { data: categories } = await got(`${baseUrl}/wp-json/wp/v2/categories`);
-        return categories.find((item) => item.slug === category || item.name === category);
-    });
+        const { data: categories } = await got(`${baseUrl}/wp-json/wp/v2/categories`)
+        return categories.find((item) => item.slug === category || item.name === category)
+    })
 
-    const categoryId = currentCategory?.id;
+    const categoryId = currentCategory?.id
 
     const { data: posts } = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
@@ -42,7 +42,7 @@ async function handler(ctx) {
             per_page: limit,
             _embed: '',
         },
-    });
+    })
 
     const items = posts.map((item) => ({
         title: item.title.rendered,
@@ -52,7 +52,7 @@ async function handler(ctx) {
         link: item.link,
         guid: item.guid.rendered,
         category: [...new Set([...item._embedded['wp:term'][0].map((item) => item.name), ...item._embedded['wp:term'][1].map((item) => item.name)])],
-    }));
+    }))
 
     return {
         title: currentCategory?.name ? `${currentCategory.name} | Boss设计` : 'Boss设计 | 收集国外设计素材网站的资源平台。',
@@ -60,5 +60,5 @@ async function handler(ctx) {
         image: currentCategory?.cover ?? `${baseUrl}/wp-content/themes/pinghsu/images/Bossdesign-ico.ico`,
         link: currentCategory?.link ?? baseUrl,
         item: items,
-    };
+    }
 }

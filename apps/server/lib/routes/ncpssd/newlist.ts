@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/newlist',
@@ -18,34 +18,34 @@ export const route: Route = {
     maintainers: ['LyleLee'],
     handler,
     url: 'ncpssd.cn/',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.ncpssd.cn';
-    const argument = '/newlist?type=0';
+    const baseUrl = 'https://www.ncpssd.cn'
+    const argument = '/newlist?type=0'
 
     const response = await got({
         method: 'get',
         url: baseUrl + argument,
-    });
+    })
 
-    const data = response.data;
-    const $ = load(data);
-    const items = $('.news-list > li');
+    const data = response.data
+    const $ = load(data)
+    const items = $('.news-list > li')
 
     const list = items.toArray().map((p) => {
         const title = $(p)
             .find('a')
             .text()
             .replaceAll(/(\r\n|\n|\r)/gm, '')
-            .trim();
+            .trim()
         const articleUrl =
             baseUrl +
             $(p)
                 .find('a')
                 .attr('onclick')
-                ?.match(/\('(.*?)'\)/)?.[1];
-        const parseUrl = new URL(articleUrl);
+                ?.match(/\('(.*?)'\)/)?.[1]
+        const parseUrl = new URL(articleUrl)
 
         return {
             title,
@@ -53,29 +53,29 @@ async function handler() {
             lngid: parseUrl.searchParams.get('id'),
             type: parseUrl.searchParams.get('typename'),
             pageType: parseUrl.searchParams.get('nav'),
-        };
-    });
+        }
+    })
 
     const paper = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const url = 'https://www.ncpssd.cn/articleinfoHandler/getjournalarticletable'; // Adjust the URL accordingly
+                const url = 'https://www.ncpssd.cn/articleinfoHandler/getjournalarticletable' // Adjust the URL accordingly
                 const headers = {
                     Accept: 'application/json, text/javascript, */*; q=0.01',
                     'Content-Type': 'application/json; charset=UTF-8',
-                };
+                }
 
                 const requestBody = {
                     lngid: item.lngid,
                     type: item.type,
                     pageType: item.pageType,
-                };
+                }
 
                 const response = await got.post(url, {
                     headers,
                     json: requestBody,
                     responseType: 'json', // Set the expected response type
-                });
+                })
 
                 return {
                     title: item.title,
@@ -83,10 +83,10 @@ async function handler() {
                     author: response.data.data.showwriter,
                     description: response.data.data.remarkc,
                     pubDate: parseDate(response.data.data.publishDateTime),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         // 源标题
@@ -95,5 +95,5 @@ async function handler() {
         link: baseUrl + argument,
         // 源文章
         item: paper,
-    };
+    }
 }

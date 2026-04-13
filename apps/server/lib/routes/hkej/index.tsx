@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const cookieJar = new CookieJar();
+const cookieJar = new CookieJar()
 
 const categories = {
     index: {
@@ -54,7 +54,7 @@ const categories = {
         title: '即時香港中國 國際金融 股市經濟新聞',
         description: '全天候即時香港股市、金融、經濟新聞資訊和分析，致力與讀者一起剖釋香港、關注兩岸、放眼全球政經格局',
     },
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -81,12 +81,12 @@ export const route: Route = {
     description: `| index    | stock    | hongkong | china    | international | property | current  |
 | -------- | -------- | -------- | -------- | ------------- | -------- | -------- |
 | 全部新闻 | 港股直击 | 香港财经 | 中国财经 | 国际财经      | 地产新闻 | 时事脉搏 |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'index';
-    const cat = categories[category];
-    const baseUrl = 'https://www2.hkej.com';
+    const category = ctx.req.param('category') ?? 'index'
+    const cat = categories[category]
+    const baseUrl = 'https://www2.hkej.com'
 
     const response = await got({
         method: 'get',
@@ -95,19 +95,19 @@ async function handler(ctx) {
             Referer: baseUrl,
         },
         cookieJar,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('h3.in_news_u_t a, h4.hkej_hl-news_topic_2014 a, div.hkej_toc_listingAll_news2_2014 h3 a, div.hkej_toc_cat_top_detail h3 a, div.allNews div.news h1 a, div#div_listingAll div.news2 h3 a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text().trim(),
                 link: baseUrl + item.attr('href').slice(0, item.attr('href').lastIndexOf('/')),
-            };
-        });
+            }
+        })
 
     const renderDesc = (pics, desc) =>
         renderToString(
@@ -119,8 +119,8 @@ async function handler(ctx) {
                     </figure>
                 ))}
                 {raw(desc ?? '')}
-            </>
-        );
+            </>,
+        )
 
     const items = await Promise.all(
         list &&
@@ -133,37 +133,37 @@ async function handler(ctx) {
                             Referer: cat.link,
                         },
                         cookieJar,
-                    });
-                    const content = load(article.data);
+                    })
+                    const content = load(article.data)
 
                     // remove unwanted elements
-                    content('#ad_popup').remove();
-                    content('[class^=ad-]').remove();
-                    content('[id^=ad-]').remove();
-                    content('[id^=div-gpt-ad-]').remove();
-                    content('.hkej_sub_ex_article_nonsubscriber_ad_2014').remove();
+                    content('#ad_popup').remove()
+                    content('[class^=ad-]').remove()
+                    content('[id^=ad-]').remove()
+                    content('[id^=div-gpt-ad-]').remove()
+                    content('.hkej_sub_ex_article_nonsubscriber_ad_2014').remove()
 
                     // fix article image
                     const articleImg = (content('div.hkej_detail_thumb_2014 td a').length ? content('div.hkej_detail_thumb_2014 td a') : content('div.thumb td a')).toArray().map((e) => {
-                        e = $(e);
+                        e = $(e)
                         return {
                             href: e.attr('href'),
                             title: e.attr('title'),
-                        };
-                    });
+                        }
+                    })
 
-                    const pubDate = content('p.info span.date').text().trim();
+                    const pubDate = content('p.info span.date').text().trim()
 
                     item.category = content('p.info span.cate a')
                         .toArray()
-                        .map((e) => content(e).text().trim());
-                    item.description = renderDesc(articleImg, content('div#article-content').html());
-                    item.pubDate = timezone(/(今|昨)/.test(pubDate) ? parseRelativeDate(pubDate) : parseDate(pubDate, 'YYYY M D'), +8);
+                        .map((e) => content(e).text().trim())
+                    item.description = renderDesc(articleImg, content('div#article-content').html())
+                    item.pubDate = timezone(/(今|昨)/.test(pubDate) ? parseRelativeDate(pubDate) : parseDate(pubDate, 'YYYY M D'), +8)
 
-                    return item;
-                })
-            )
-    );
+                    return item
+                }),
+            ),
+    )
 
     const ret = {
         title: `信報網站 - ${cat.title} - 信報網站 hkej.com`,
@@ -171,11 +171,11 @@ async function handler(ctx) {
         description: `信報網站(www.hkej.com)即時新聞${cat.name}，提供${cat.description}。`,
         item: items,
         language: 'zh-hk',
-    };
+    }
 
     ctx.set('json', {
         ...ret,
         cookieJar,
-    });
-    return ret;
+    })
+    return ret
 }

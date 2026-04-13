@@ -23,6 +23,6 @@ const termsMap = {
         title: 'Raise Pets 養寵物新手',
         slug: '/category/raise-cats',
     },
-};
+}
 
-export { termsMap };
+export { termsMap }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: '主题',
@@ -21,4 +21,4 @@ export const route: Route = {
     description: `::: tip
 完整的主题列表参见 [主题列表](https://www.cnbeta.com.tw/topics.htm)
 :::`,
-};
+}

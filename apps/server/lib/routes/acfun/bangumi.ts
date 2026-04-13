@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/bangumi/:id/:embed?',
@@ -26,16 +26,16 @@ export const route: Route = {
 番剧 id 不包含开头的 aa。
 例如：\`https://www.acfun.cn/bangumi/aa6000617\` 的番剧 id 是 6000617，不包括开头的 aa。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const embed = !ctx.req.param('embed');
-    const link = `https://www.acfun.cn/bangumi/aa${id}`;
+    const id = ctx.req.param('id')
+    const embed = !ctx.req.param('embed')
+    const link = `https://www.acfun.cn/bangumi/aa${id}`
 
-    const bangumiPage = await ofetch(link);
-    const bangumiData = JSON.parse(bangumiPage.match(/window.bangumiData = (.*?);\n/)[1]);
-    const bangumiList = JSON.parse(bangumiPage.match(/window.bangumiList = (.*?);\n/)[1]);
+    const bangumiPage = await ofetch(link)
+    const bangumiData = JSON.parse(bangumiPage.match(/window.bangumiData = (.*?);\n/)[1])
+    const bangumiList = JSON.parse(bangumiPage.match(/window.bangumiList = (.*?);\n/)[1])
 
     return {
         title: bangumiData.bangumiTitle,
@@ -48,5 +48,5 @@ async function handler(ctx) {
             link: `https://www.acfun.cn/bangumi/aa${id}_36188_${item.itemId}`,
             pubDate: parseDate(item.updateTime, 'x'),
         })),
-    };
+    }
 }

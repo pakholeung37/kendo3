@@ -1,10 +1,10 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const currentURL = (catagory: string) => `https://phys.ncku.edu.tw/news/${catagory === '_all' ? '' : catagory}`;
+const currentURL = (catagory: string) => `https://phys.ncku.edu.tw/news/${catagory === '_all' ? '' : catagory}`
 
 const catagories = {
     '24': '物理系',
@@ -19,7 +19,7 @@ const catagories = {
     career: '求才公告',
     others: '其他',
     _all: '所有訊息',
-};
+}
 
 export const route: Route = {
     'zh-TW': {
@@ -67,14 +67,14 @@ export const route: Route = {
     ],
     maintainers: ['simbafs'],
     handler: async (ctx) => {
-        let catagory = ctx.req.param('catagory') ?? '_all';
+        let catagory = ctx.req.param('catagory') ?? '_all'
         if (catagories[catagory] === undefined) {
-            catagory = '_all';
+            catagory = '_all'
         }
 
         const $ = await ofetch<CheerioAPI>(currentURL(catagory), {
             parseResponse: load,
-        });
+        })
 
         const item = $('.newsList .Txt')
             .toArray()
@@ -83,16 +83,16 @@ export const route: Route = {
                 pubDate: new Date(
                     $('.newsDate', e)
                         .text()
-                        .match(/\d{4}(?: \/ \d{2}){2}/)?.[0] || ''
+                        .match(/\d{4}(?: \/ \d{2}){2}/)?.[0] || '',
                 ),
                 link: $('a', e).attr('href'),
                 catagory: $('.newIcon', e).text(),
-            }));
+            }))
 
         return {
             title: `成大物理系公告 - ${catagories[catagory]}`,
             link: currentURL(catagory),
             item,
-        };
+        }
     },
-};
+}

@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import md5 from '@/utils/md5';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import md5 from '@/utils/md5'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/starred_repos/:user',
@@ -26,19 +26,19 @@ export const route: Route = {
     name: 'User Starred Repositories',
     maintainers: ['LanceZhu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
+    const user = ctx.req.param('user')
 
-    const host = `https://github.com/${user}?tab=stars`;
+    const host = `https://github.com/${user}?tab=stars`
 
     const { data: response } = await got(`https://api.github.com/users/${user}/starred`, {
         headers: {
             Accept: 'application/vnd.github.star+json',
             Authorization: config.github?.access_token ? `Bearer ${config.github.access_token}` : undefined,
         },
-    });
+    })
 
     const data = response.map(({ starred_at, repo }) => ({
         title: `${user} starred ${repo.name}`,
@@ -50,7 +50,7 @@ async function handler(ctx) {
         pubDate: parseDate(starred_at),
         link: repo.html_url,
         category: repo.topics,
-    }));
+    }))
 
     return {
         allowEmpty: true,
@@ -58,5 +58,5 @@ async function handler(ctx) {
         link: host,
         description: `${user}'s starred repositories`,
         item: data,
-    };
+    }
 }

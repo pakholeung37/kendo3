@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/blog/:id?/:page?',
@@ -60,34 +60,34 @@ export const route: Route = {
 | 06        | 小池 美波    |
 | 04        | 尾関 梨香    |
 | 03        | 上村 莉菜    |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'all';
-    const page = ctx.req.param('page') ?? '0';
+    const id = ctx.req.param('id') ?? 'all'
+    const page = ctx.req.param('page') ?? '0'
 
-    const rootUrl = 'https://sakurazaka46.com';
-    const params = id === 'all' ? `?page=${page}` : `?page=${page}&ct=${id}`;
-    const currentUrl = `${rootUrl}/s/s46/diary/blog/list${params}`;
+    const rootUrl = 'https://sakurazaka46.com'
+    const params = id === 'all' ? `?page=${page}` : `?page=${page}&ct=${id}`
+    const currentUrl = `${rootUrl}/s/s46/diary/blog/list${params}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.com-blog-part .box a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 author: item.find('.name').text(),
                 link: `${rootUrl}${item.attr('href').split('?')[0]}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -95,21 +95,21 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.box-article').html();
-                item.pubDate = timezone(parseDate(content('.blog-foot .date').text()), +9);
+                item.description = content('.box-article').html()
+                item.pubDate = timezone(parseDate(content('.blog-foot .date').text()), +9)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('title').text()}${id ? ` - ${$('.name').first().text()}` : ''}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

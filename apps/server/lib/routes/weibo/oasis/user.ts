@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
-import weiboUtils from '../utils';
+import weiboUtils from '../utils'
 
 export const route: Route = {
     path: '/oasis/user/:userid',
@@ -25,11 +25,11 @@ export const route: Route = {
     name: '绿洲用户',
     maintainers: ['kt286'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const userid = ctx.req.param('userid');
-    const link = `https://oasis.weibo.cn/v1/h5/share?uid=${userid}`;
+    const userid = ctx.req.param('userid')
+    const link = `https://oasis.weibo.cn/v1/h5/share?uid=${userid}`
     return weiboUtils.sinaimgTvax(
         await buildData({
             link,
@@ -42,6 +42,6 @@ async function handler(ctx) {
                 description: `$('.status-item-title').clone().children().remove().end().text() + '<br>' + $('.status-img').html()`,
                 link: `'https://oasis.weibo.cn/v1/h5/share?sid=' + $('.status-item-title').parent().data('id')`,
             },
-        })
-    );
+        }),
+    )
 }

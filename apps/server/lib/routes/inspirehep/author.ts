@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { AuthorResponse, LiteratureResponse } from './types';
-import { baseUrl, parseLiterature } from './utils';
+import type { AuthorResponse, LiteratureResponse } from './types'
+import { baseUrl, parseLiterature } from './utils'
 
 export const route: Route = {
     path: '/authors/:id',
@@ -17,7 +17,7 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 export const getAuthorById = (id: string) =>
     cache.tryGet(`inspirehep:author:${id}`, () =>
@@ -26,14 +26,14 @@ export const getAuthorById = (id: string) =>
                 accept: 'application/vnd+inspire.record.ui+json',
             },
             parseResponse: JSON.parse,
-        })
-    );
+        }),
+    )
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25
 
-    const authorInfo = (await getAuthorById(id)) as AuthorResponse;
+    const authorInfo = (await getAuthorById(id)) as AuthorResponse
     const response = await ofetch<LiteratureResponse>(`${baseUrl}/api/literature`, {
         query: {
             sort: 'mostrecent',
@@ -42,13 +42,13 @@ async function handler(ctx) {
             search_type: 'hep-author-publication',
             author: authorInfo.metadata.facet_author_name,
         },
-    });
+    })
 
-    const items = parseLiterature(response.hits.hits);
+    const items = parseLiterature(response.hits.hits)
 
     return {
         title: `${authorInfo.metadata.name.preferred_name} - INSPIRE`,
         link: `${baseUrl}/authors/${id}`,
         item: items,
-    };
+    }
 }

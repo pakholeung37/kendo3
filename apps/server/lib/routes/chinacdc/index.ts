@@ -1,59 +1,59 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'zxyw' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '11', 10);
+    const { category = 'zxyw' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '11', 10)
 
-    const rootUrl = 'https://www.chinacdc.cn';
-    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href;
+    const rootUrl = 'https://www.chinacdc.cn'
+    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language: string = $('html').prop('lang');
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language: string = $('html').prop('lang')
 
     let items: DataItem[] = $('ul.xw_list li')
         .slice(0, limit)
         .toArray()
         .map((item): DataItem => {
-            const $item: Cheerio<Element> = $(item);
+            const $item: Cheerio<Element> = $(item)
 
-            const aEl: Cheerio<Element> = $item.find('a');
-            const title: string = aEl.prop('title') === undefined ? aEl.text() : aEl.prop('title');
+            const aEl: Cheerio<Element> = $item.find('a')
+            const title: string = aEl.prop('title') === undefined ? aEl.text() : aEl.prop('title')
 
-            const dateMatch = title.match(/(\d{4}-\d{2}-\d{2})$/);
-            let pubDate;
-            let cleanTitle = title;
+            const dateMatch = title.match(/(\d{4}-\d{2}-\d{2})$/)
+            let pubDate
+            let cleanTitle = title
 
             if (dateMatch) {
-                pubDate = parseDate(dateMatch[0]);
-                cleanTitle = title.replace(/\d{4}-\d{2}-\d{2}$/, '').trim();
+                pubDate = parseDate(dateMatch[0])
+                cleanTitle = title.replace(/\d{4}-\d{2}-\d{2}$/, '').trim()
             } else {
-                const spanText = $item.find('span').text().trim();
-                pubDate = spanText ? parseDate(spanText) : undefined;
+                const spanText = $item.find('span').text().trim()
+                pubDate = spanText ? parseDate(spanText) : undefined
             }
 
             const description: string = renderDescription({
                 intro: $item.find('p.zy').text(),
-            });
+            })
 
-            const imageSrc: string | undefined = $item.find('img').prop('src');
-            const imageType: string | undefined = imageSrc?.split(/\./).pop();
-            const image: string | undefined = imageSrc ? new URL(imageSrc, targetUrl).href : undefined;
-            const media: Record<string, Record<string, string>> = {};
+            const imageSrc: string | undefined = $item.find('img').prop('src')
+            const imageType: string | undefined = imageSrc?.split(/\./).pop()
+            const image: string | undefined = imageSrc ? new URL(imageSrc, targetUrl).href : undefined
+            const media: Record<string, Record<string, string>> = {}
 
             if (imageType && image) {
-                media[imageType] = { url: image };
+                media[imageType] = { url: image }
             }
 
             return {
@@ -69,27 +69,27 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 language,
                 media: Object.keys(media).length > 0 ? media : undefined,
-            };
-        });
+            }
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link && typeof item.link !== 'string') {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const detailTitle: string = $$('h5').text();
+                    const detailTitle: string = $$('h5').text()
                     const description: string = renderDescription({
                         description: $$('div.TRS_Editor').html() || undefined,
-                    });
+                    })
 
-                    const detailDate = $$('span.fb em').text().trim();
-                    const pubDate = detailDate ? parseDate(detailDate) : item.pubDate;
+                    const detailDate = $$('span.fb em').text().trim()
+                    const pubDate = detailDate ? parseDate(detailDate) : item.pubDate
 
                     return {
                         title: detailTitle || item.title, // Use original title as fallback
@@ -104,15 +104,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: item.banner,
                         language,
                         media: item.media,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const author: string = $('title').text();
-    const title: string = $('div.erjiCurNav').text();
-    const feedImage: string = new URL($('img.logo').prop('src') as string, targetUrl).href;
+    const author: string = $('title').text()
+    const title: string = $('div.erjiCurNav').text()
+    const feedImage: string = new URL($('img.logo').prop('src') as string, targetUrl).href
 
     return {
         title: `${author} - ${title}`,
@@ -124,8 +124,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -228,9 +228,9 @@ export const route: Route = {
         {
             source: ['www.chinacdc.cn/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/chinacdc${category ? `/${category}` : ''}`;
+                return `/chinacdc${category ? `/${category}` : ''}`
             },
         },
         {
@@ -500,4 +500,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

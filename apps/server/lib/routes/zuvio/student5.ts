@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { apiUrl, getBoards, renderDesc, rootUrl, token } from './utils';
+import { apiUrl, getBoards, renderDesc, rootUrl, token } from './utils'
 
 export const route: Route = {
     path: '/student5/:board?',
@@ -22,11 +22,11 @@ export const route: Route = {
     name: '校園話題',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { board = '' } = ctx.req.param();
-    const title = board ? (await getBoards(cache.tryGet)).find((i) => i.boardId === board).title : '全部';
+    const { board = '' } = ctx.req.param()
+    const title = board ? (await getBoards(cache.tryGet)).find((i) => i.boardId === board).title : '全部'
 
     const { data } = await got(`${apiUrl}/article`, {
         searchParams: {
@@ -38,7 +38,7 @@ async function handler(ctx) {
             device: 'web',
             my_school_opinion: '1',
         },
-    });
+    })
 
     const items = data.articles.map((item) => ({
         title: item.title,
@@ -48,7 +48,7 @@ async function handler(ctx) {
         api: `${apiUrl}/article/${item.id}`,
         author: `${item.university} ${item.user_name}`,
         category: item.board_name,
-    }));
+    }))
 
     await Promise.all(
         items.map((item) =>
@@ -60,13 +60,13 @@ async function handler(ctx) {
                         device: 'web',
                         ref: '',
                     },
-                });
-                item.description = renderDesc(data);
-                delete item.api;
-                return item;
-            })
-        )
-    );
+                })
+                item.description = renderDesc(data)
+                delete item.api
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `Zuvio 校園${title}話題 - 大學生論壇`,
@@ -75,5 +75,5 @@ async function handler(ctx) {
         link: `${rootUrl}/articles`,
         item: items,
         language: 'zh-Hant',
-    };
+    }
 }

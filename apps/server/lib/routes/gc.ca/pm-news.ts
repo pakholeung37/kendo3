@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/pm/:language?',
@@ -27,9 +27,9 @@ export const route: Route = {
     name: 'News',
     maintainers: ['elibroftw'],
     handler: async (ctx: Context): Promise<Data> => {
-        const { language = 'en' } = ctx.req.param();
+        const { language = 'en' } = ctx.req.param()
 
-        const ajaxURL = language === 'fr' ? 'https://www.pm.gc.ca/fr/views/ajax' : 'https://www.pm.gc.ca/views/ajax';
+        const ajaxURL = language === 'fr' ? 'https://www.pm.gc.ca/fr/views/ajax' : 'https://www.pm.gc.ca/views/ajax'
 
         const response = await ofetch(ajaxURL, {
             method: 'post',
@@ -37,26 +37,26 @@ export const route: Route = {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-        });
+        })
 
-        const replaceItem = response.find((item: any) => item.method === 'replaceWith');
+        const replaceItem = response.find((item: any) => item.method === 'replaceWith')
         if (!replaceItem) {
-            throw new Error('failed to parse AJAX response');
+            throw new Error('failed to parse AJAX response')
         }
 
-        const $ = load(replaceItem.data);
+        const $ = load(replaceItem.data)
         const items: DataItem[] = $('.news-row')
             .toArray()
             .map((element) => {
-                const $element = $(element);
-                const $titleLink = $element.find('.title a');
-                const $category = $element.find('.category');
-                const $date = $element.find('.location-date time');
+                const $element = $(element)
+                const $titleLink = $element.find('.title a')
+                const $category = $element.find('.category')
+                const $date = $element.find('.location-date time')
 
-                const title = $titleLink.text().trim();
-                const link = $titleLink.attr('href')!;
-                const category = $category.text().trim();
-                const date = $date.attr('datetime') || '';
+                const title = $titleLink.text().trim()
+                const link = $titleLink.attr('href')!
+                const category = $category.text().trim()
+                const date = $date.attr('datetime') || ''
 
                 if (title && link) {
                     return {
@@ -64,16 +64,16 @@ export const route: Route = {
                         link,
                         category: [category],
                         pubDate: date ? parseDate(date) : undefined,
-                    } as DataItem;
+                    } as DataItem
                 }
-                return null;
+                return null
             })
-            .filter((item) => item !== null);
+            .filter((item) => item !== null)
 
         return {
             title: language === 'fr' ? 'Premier ministre du Canada | Nouvelles' : 'Prime Minister of Canada | News',
             link: `https://www.pm.gc.ca/${language}/news`,
             item: items,
-        };
+        }
     },
-};
+}

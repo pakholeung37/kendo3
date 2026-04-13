@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
-import utils, { getVideoUrl } from './utils';
+import cache from './cache'
+import utils, { getVideoUrl } from './utils'
 
 // https://www.bilibili.com/v/popular/rank/all
 
@@ -137,7 +137,7 @@ const ridList = {
         english: 'animal',
         type: 'x/rid',
     },
-};
+}
 
 export const route: Route = {
     path: '/ranking/:rid?/:embed?/:redirect1?/:redirect2?',
@@ -168,11 +168,11 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 function getAPI(isNumericRid: boolean, rid: string | number) {
     if (isNumericRid) {
-        const zone = ridList[rid as number];
+        const zone = ridList[rid as number]
         return {
             apiBase: 'https://api.bilibili.com/x/web-interface/ranking/v2',
             apiParams: `rid=${rid}&type=all&web_location=333.934`,
@@ -180,38 +180,38 @@ function getAPI(isNumericRid: boolean, rid: string | number) {
             ridChinese: zone?.chinese ?? '',
             ridType: 'x/rid',
             link: 'https://www.bilibili.com/v/popular/rank/all',
-        };
+        }
     }
 
-    const zone = Object.entries(ridList).find(([_, v]) => v.english === rid);
+    const zone = Object.entries(ridList).find(([_, v]) => v.english === rid)
     if (!zone) {
-        throw new Error('Invalid rid');
+        throw new Error('Invalid rid')
     }
-    const numericRid = zone[0];
-    const ridType = zone[1].type;
-    const ridChinese = zone[1].chinese;
-    const ridEnglish = zone[1].english;
+    const numericRid = zone[0]
+    const ridType = zone[1].type
+    const ridChinese = zone[1].chinese
+    const ridEnglish = zone[1].english
 
-    let apiBase = 'https://api.bilibili.com/x/web-interface/ranking/v2';
-    let apiParams: string;
+    let apiBase = 'https://api.bilibili.com/x/web-interface/ranking/v2'
+    let apiParams: string
 
     switch (ridType) {
         case 'x/rid':
-            apiParams = `rid=${numericRid}&type=all&web_location=333.934`;
-            break;
+            apiParams = `rid=${numericRid}&type=all&web_location=333.934`
+            break
         case 'pgc/web':
-            apiBase = 'https://api.bilibili.com/pgc/web/rank/list';
-            apiParams = `day=3&season_type=${numericRid}&web_location=333.934`;
-            break;
+            apiBase = 'https://api.bilibili.com/pgc/web/rank/list'
+            apiParams = `day=3&season_type=${numericRid}&web_location=333.934`
+            break
         case 'pgc/season':
-            apiBase = 'https://api.bilibili.com/pgc/season/rank/web/list';
-            apiParams = `day=3&season_type=${numericRid}&web_location=333.934`;
-            break;
+            apiBase = 'https://api.bilibili.com/pgc/season/rank/web/list'
+            apiParams = `day=3&season_type=${numericRid}&web_location=333.934`
+            break
         // case 'x/type':
         //     apiUrl = `https://api.bilibili.com/x/web-interface/ranking?rid=0&type=${numericRid}&web_location=333.934`;
         //     break;
         default:
-            throw new Error('Invalid rid type');
+            throw new Error('Invalid rid type')
     }
 
     return {
@@ -221,26 +221,26 @@ function getAPI(isNumericRid: boolean, rid: string | number) {
         ridChinese,
         ridType,
         link: `https://www.bilibili.com/v/popular/rank/${ridEnglish}`,
-    };
+    }
 }
 
 async function handler(ctx) {
-    const isJsonFeed = ctx.req.query('format') === 'json';
-    const args = ctx.req.param();
+    const isJsonFeed = ctx.req.query('format') === 'json'
+    const args = ctx.req.param()
     if (args.redirect1 || args.redirect2) {
         // redirect old routes like /bilibili/ranking/0/3/1 or /bilibili/ranking/0/3/1/xxx
-        const embedArg = args.redirect2 ? '/' + args.redirect2 : '';
-        ctx.set('redirect', `/bilibili/ranking/${args.rid}${embedArg}`);
-        return null;
+        const embedArg = args.redirect2 ? '/' + args.redirect2 : ''
+        ctx.set('redirect', `/bilibili/ranking/${args.rid}${embedArg}`)
+        return null
     }
 
-    const rid = ctx.req.param('rid') || 'all';
-    const embed = !ctx.req.param('embed');
-    const isNumericRid = /^\d+$/.test(rid);
+    const rid = ctx.req.param('rid') || 'all'
+    const embed = !ctx.req.param('embed')
+    const isNumericRid = /^\d+$/.test(rid)
 
-    const { apiBase, apiParams, referer, ridChinese, link, ridType } = getAPI(isNumericRid, rid);
+    const { apiBase, apiParams, referer, ridChinese, link, ridType } = getAPI(isNumericRid, rid)
     if (ridType.startsWith('pgc/')) {
-        throw new Error('This type of ranking is not supported yet');
+        throw new Error('This type of ranking is not supported yet')
     }
 
     const response = await ofetch(`${apiBase}?${apiParams}`, {
@@ -248,19 +248,19 @@ async function handler(ctx) {
             Referer: referer,
             origin: 'https://www.bilibili.com',
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message);
+        throw new Error(response.message)
     }
-    const data = response.data || response.result;
-    const list = data.list || [];
+    const data = response.data || response.result
+    const list = data.list || []
     return {
         title: `bilibili 排行榜-${ridChinese}`,
         link,
         item: await Promise.all(
             list.map(async (item) => {
-                const subtitles = isJsonFeed && !config.bilibili.excludeSubtitles && item.bvid ? await cache.getVideoSubtitleAttachment(item.bvid) : [];
+                const subtitles = isJsonFeed && !config.bilibili.excludeSubtitles && item.bvid ? await cache.getVideoSubtitleAttachment(item.bvid) : []
                 return {
                     title: item.title,
                     description: utils.renderUGCDescription(embed, item.pic, item.desc || item.title, item.aid, undefined, item.bvid),
@@ -278,8 +278,8 @@ async function handler(ctx) {
                               ...subtitles,
                           ]
                         : undefined,
-                };
-            })
+                }
+            }),
         ),
-    };
+    }
 }

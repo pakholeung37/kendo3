@@ -1,8 +1,8 @@
-import type { MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from 'hono'
 
-import { getPath, time } from '@/utils/helpers';
-import logger from '@/utils/logger';
-import { requestMetric } from '@/utils/otel';
+import { getPath, time } from '@/utils/helpers'
+import logger from '@/utils/logger'
+import { requestMetric } from '@/utils/otel'
 
 enum LogPrefix {
     Outgoing = '-->',
@@ -19,27 +19,27 @@ const colorStatus = (status: number) => {
         2: `\u001B[32m${status}\u001B[0m`,
         1: `\u001B[32m${status}\u001B[0m`,
         0: `\u001B[33m${status}\u001B[0m`,
-    };
+    }
 
-    const calculateStatus = Math.trunc(status / 100);
+    const calculateStatus = Math.trunc(status / 100)
 
-    return out[calculateStatus];
-};
+    return out[calculateStatus]
+}
 
 const middleware: MiddlewareHandler = async (ctx, next) => {
-    const { method, raw, routePath } = ctx.req;
-    const path = getPath(raw);
+    const { method, raw, routePath } = ctx.req
+    const path = getPath(raw)
 
-    logger.info(`${LogPrefix.Incoming} ${method} ${path}`);
+    logger.info(`${LogPrefix.Incoming} ${method} ${path}`)
 
-    const start = Date.now();
+    const start = Date.now()
 
-    await next();
+    await next()
 
-    const status = ctx.res.status;
+    const status = ctx.res.status
 
-    logger.info(`${LogPrefix.Outgoing} ${method} ${path} ${colorStatus(status)} ${time(start)}`);
-    requestMetric.success(Date.now() - start, { path: routePath, method, status });
-};
+    logger.info(`${LogPrefix.Outgoing} ${method} ${path} ${colorStatus(status)} ${time(start)}`)
+    requestMetric.success(Date.now() - start, { path: routePath, method, status })
+}
 
-export default middleware;
+export default middleware

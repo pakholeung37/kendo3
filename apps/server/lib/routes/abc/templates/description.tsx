@@ -1,21 +1,21 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import type { JSX } from 'hono/jsx/jsx-runtime';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import type { JSX } from 'hono/jsx/jsx-runtime'
 
 type DescriptionData = {
     image?: {
-        src: string;
-        alt?: string;
-    };
+        src: string
+        alt?: string
+    }
     enclosure?: {
-        src?: string;
-        type?: string;
-    };
-    description?: string;
-};
+        src?: string
+        type?: string
+    }
+    description?: string
+}
 
 const AbcDescription = ({ image, enclosure, description }: DescriptionData) => {
-    const enclosureTag = enclosure?.type?.split('/')[0] as keyof JSX.IntrinsicElements | undefined;
+    const enclosureTag = enclosure?.type?.split('/')[0] as keyof JSX.IntrinsicElements | undefined
 
     return (
         <>
@@ -28,7 +28,7 @@ const AbcDescription = ({ image, enclosure, description }: DescriptionData) => {
             {enclosure && enclosureTag ? (
                 <>
                     {(() => {
-                        const EnclosureTag = enclosureTag;
+                        const EnclosureTag = enclosureTag
                         return (
                             <EnclosureTag controls>
                                 <source src={enclosure.src} type={enclosure.type} />
@@ -36,13 +36,13 @@ const AbcDescription = ({ image, enclosure, description }: DescriptionData) => {
                                     <embed src={enclosure.src} />
                                 </object>
                             </EnclosureTag>
-                        );
+                        )
                     })()}
                 </>
             ) : null}
             {description ? raw(description) : null}
         </>
-    );
-};
+    )
+}
 
-export const renderDescription = (data: DescriptionData) => renderToString(<AbcDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<AbcDescription {...data} />)

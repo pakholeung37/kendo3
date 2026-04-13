@@ -1,10 +1,10 @@
 const indexPage = (page) => {
-    const fileName = 'index';
-    const fileType = 'html';
+    const fileName = 'index'
+    const fileType = 'html'
 
-    const filePage = page === '1' ? '' : `_${Number.parseInt(page) - 1}`;
+    const filePage = page === '1' ? '' : `_${Number.parseInt(page) - 1}`
 
-    return `${fileName}${filePage}.${fileType}`;
-};
+    return `${fileName}${filePage}.${fileType}`
+}
 
-export default indexPage;
+export default indexPage

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { baseUrl, getBoards } from './utils';
+import { baseUrl, getBoards } from './utils'
 
 export const route: Route = {
     path: '/boards',
@@ -25,14 +25,14 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'meteor.today/',
-};
+}
 
 async function handler() {
-    const items = await getBoards(cache.tryGet);
+    const items = await getBoards(cache.tryGet)
 
     return {
         title: '看板列表',
         link: `${baseUrl}/board/all`,
         item: items,
-    };
+    }
 }

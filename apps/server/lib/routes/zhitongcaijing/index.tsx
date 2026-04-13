@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const ids = {
     recommend: {
@@ -65,7 +65,7 @@ const ids = {
         url: 'company',
         title: '公司',
     },
-};
+}
 
 export const route: Route = {
     path: '/:id?/:category?',
@@ -100,22 +100,22 @@ export const route: Route = {
 | shares       | 新股 |
 | bazaar       | 市场 |
 | company      | 公司 |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'recommend';
-    const category = ctx.req.param('category') ?? '';
+    const id = ctx.req.param('id') ?? 'recommend'
+    const category = ctx.req.param('category') ?? ''
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
 
-    const rootUrl = 'https://www.zhitongcaijing.com';
-    const currentUrl = `${rootUrl}/${ids[id].url}.html${category === '' ? '' : `?category_key=${category}`}`;
-    const apiUrl = `${rootUrl}/${ids[id].url}.html?data_type=1&page=1${category === '' ? '' : `&category_key=${category}`}`;
+    const rootUrl = 'https://www.zhitongcaijing.com'
+    const currentUrl = `${rootUrl}/${ids[id].url}.html${category === '' ? '' : `?category_key=${category}`}`
+    const apiUrl = `${rootUrl}/${ids[id].url}.html?data_type=1&page=1${category === '' ? '' : `&category_key=${category}`}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     let items = response.data.data.slice(0, limit).map((item) => ({
         title: item.title,
@@ -124,7 +124,7 @@ async function handler(ctx) {
         author: item.author_info.author_name,
         pubDate: parseDate((item.create_time ?? Number.parseInt(item.original_time)) * 1000),
         category: [...(item.keywords?.split(',') ?? []), item.category_name ?? item.type_tag],
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -132,30 +132,30 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('#subscribe-vip-box').remove();
-                content('#news-content').remove();
+                content('#subscribe-vip-box').remove()
+                content('#news-content').remove()
 
-                const digest = content('.digetst-box').html() || content('.telegram-origin-contentn').html();
-                const description = content('.news-body-content').html();
+                const digest = content('.digetst-box').html() || content('.telegram-origin-contentn').html()
+                const description = content('.news-body-content').html()
                 item.description = renderToString(
                     <>
                         {digest ? raw(digest) : null}
                         {description ? raw(description) : null}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `智通财经 - ${ids[id].title}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './index';
+import { handler } from './index'
 
 export const route: Route = {
     path: '/:username/playlists/:playlist',
@@ -29,4 +29,4 @@ export const route: Route = {
     name: 'Playlist',
     maintainers: ['Misaka13514'],
     handler,
-};
+}

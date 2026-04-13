@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/jwc/:category?',
@@ -28,41 +28,41 @@ export const route: Route = {
 | 通知公告 | 新闻动态 | 规章制度 | 竞赛结果公示 | 竞赛获奖通知 | 竞赛信息 | 公开公示 |
 | :------: | :------: | :------: | :----------: | :----------: | :------: | :------: |
 |   tzgg   |   xwdt   |   gzzd   |     jggs     |     jsjg     |   jsxx   |   gkgs   |`,
-};
+}
 
 async function handler(ctx) {
-    let category = ctx.req.param('category');
-    const rootUrl = 'http://jwc.xaut.edu.cn/';
-    const dic_html = { tzgg: 'tzgg.htm', xwdt: 'xwdt.htm', gzzd: 'gzzd.htm', jggs: 'xkjs/jggs.htm', jsjg: 'xkjs/jsjg.htm', jsxx: 'xkjs/jsxx.htm', gkgs: 'gkgs.htm' };
-    const dic_title = { tzgg: '通知公告', xwdt: '新闻动态', gzzd: '规章制度', jggs: '竞赛结果公示', jsjg: '竞赛获奖通知', jsxx: '竞赛信息', gkgs: '公开公示' };
+    let category = ctx.req.param('category')
+    const rootUrl = 'http://jwc.xaut.edu.cn/'
+    const dic_html = { tzgg: 'tzgg.htm', xwdt: 'xwdt.htm', gzzd: 'gzzd.htm', jggs: 'xkjs/jggs.htm', jsjg: 'xkjs/jsjg.htm', jsxx: 'xkjs/jsxx.htm', gkgs: 'gkgs.htm' }
+    const dic_title = { tzgg: '通知公告', xwdt: '新闻动态', gzzd: '规章制度', jggs: '竞赛结果公示', jsjg: '竞赛获奖通知', jsxx: '竞赛信息', gkgs: '公开公示' }
 
     // 设置默认值
     if (dic_title[category] === undefined) {
-        category = 'tzgg';
+        category = 'tzgg'
     }
 
     const response = await got({
         method: 'get',
         url: rootUrl + dic_html[category],
-    });
-    const data = response.body;
-    const $ = load(data);
+    })
+    const data = response.body
+    const $ = load(data)
 
     const list = $('.main_conRCb a')
         .slice(0, 20)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             const link = item
                 .attr('href')
                 .replace(/^\.\./, rootUrl)
-                .replace(/^(info)/, rootUrl + 'info');
+                .replace(/^(info)/, rootUrl + 'info')
             return {
                 title: item.find('em').text(),
                 link,
                 pubDate: parseDate(item.find('span').text()),
-            };
-        });
+            }
+        })
 
     return {
         // 源标题
@@ -79,15 +79,15 @@ async function handler(ctx) {
                         const res = await got({
                             method: 'get',
                             url: item.link,
-                        });
-                        const content = load(res.body);
-                        item.description = content('#vsb_content').html();
+                        })
+                        const content = load(res.body)
+                        item.description = content('#vsb_content').html()
                     } else {
-                        item.description = '请在校内或校园VPN内查看内容';
+                        item.description = '请在校内或校园VPN内查看内容'
                     }
-                    return item;
-                })
-            )
+                    return item
+                }),
+            ),
         ),
-    };
+    }
 }

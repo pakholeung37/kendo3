@@ -1,13 +1,13 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import getToken from './_access';
-import constants from './_constants';
+import getToken from './_access'
+import constants from './_constants'
 
 const getSetting = async () => {
-    const accessToken = await getToken();
+    const accessToken = await getToken()
 
     return cache.tryGet(
         'mangadex:settings',
@@ -17,31 +17,31 @@ const getSetting = async () => {
                     Authorization: `Bearer ${accessToken}`,
                     'User-Agent': config.trueUA,
                 },
-            });
+            })
 
-            const setting = response?.data?.settings;
+            const setting = response?.data?.settings
             if (!setting) {
-                throw new Error('Failed to retrieve user settings from MangaDex API.');
+                throw new Error('Failed to retrieve user settings from MangaDex API.')
             }
 
-            return setting;
+            return setting
         },
         config.cache.contentExpire,
-        false
-    );
-};
+        false,
+    )
+}
 
 const getFilteredLanguages = async (ingoreConfigNotFountError: boolean = true) => {
     try {
-        const settings = (await getSetting()) as any;
-        return settings.userPreferences.filteredLanguages as string[];
+        const settings = (await getSetting()) as any
+        return settings.userPreferences.filteredLanguages as string[]
     } catch (error) {
         if (ingoreConfigNotFountError && error instanceof ConfigNotFoundError) {
-            return [];
+            return []
         }
-        throw error;
+        throw error
     }
-};
+}
 
-export default getSetting;
-export { getFilteredLanguages };
+export default getSetting
+export { getFilteredLanguages }

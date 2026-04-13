@@ -1,13 +1,13 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type Image = {
-    src: string;
-};
+    src: string
+}
 
 type PostData = {
-    content?: string;
-    images?: Image[];
-};
+    content?: string
+    images?: Image[]
+}
 
 export const renderPost = ({ content, images = [] }: PostData): string =>
     renderToString(
@@ -16,5 +16,5 @@ export const renderPost = ({ content, images = [] }: PostData): string =>
             {images.map((image) => (
                 <img src={image.src} />
             ))}
-        </>
-    );
+        </>,
+    )

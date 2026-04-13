@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -15,12 +15,12 @@ export const route: Route = {
     maintainers: ['cnkmmk'],
     handler,
     url: 'pianyivps.com/',
-};
+}
 
 async function handler() {
-    const url = 'https://www.pianyivps.com';
-    const response = await got(`${url}/wp-json/wp/v2/posts`);
-    const list = response.data;
+    const url = 'https://www.pianyivps.com'
+    const response = await got(`${url}/wp-json/wp/v2/posts`)
+    const list = response.data
     return {
         title: '便宜VPS网',
         link: url,
@@ -31,5 +31,5 @@ async function handler() {
             pubDate: parseDate(item.date_gmt),
             description: item.content.rendered,
         })),
-    };
+    }
 }

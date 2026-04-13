@@ -1,16 +1,16 @@
-import MarkdownIt from 'markdown-it';
-import queryString from 'query-string';
+import MarkdownIt from 'markdown-it'
+import queryString from 'query-string'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/issue/:user/:repo/:state?/:labels?',
@@ -49,21 +49,21 @@ export const route: Route = {
     name: 'Repo Issues',
     maintainers: ['HenryQW', 'AndreyMZ'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
-    const repo = ctx.req.param('repo');
-    const state = ctx.req.param('state');
-    const labels = ctx.req.param('labels');
-    const limit = ctx.req.query('limit') ? Math.min(Number.parseInt(ctx.req.query('limit')), 100) : 100;
+    const user = ctx.req.param('user')
+    const repo = ctx.req.param('repo')
+    const state = ctx.req.param('state')
+    const labels = ctx.req.param('labels')
+    const limit = ctx.req.query('limit') ? Math.min(Number.parseInt(ctx.req.query('limit')), 100) : 100
 
-    const host = `https://github.com/${user}/${repo}/issues`;
-    const url = `https://api.github.com/repos/${user}/${repo}/issues`;
+    const host = `https://github.com/${user}/${repo}/issues`
+    const url = `https://api.github.com/repos/${user}/${repo}/issues`
 
-    const headers = { Accept: 'application/vnd.github.v3+json' };
+    const headers = { Accept: 'application/vnd.github.v3+json' }
     if (config.github && config.github.access_token) {
-        headers.Authorization = `token ${config.github.access_token}`;
+        headers.Authorization = `token ${config.github.access_token}`
     }
     const response = await got({
         method: 'get',
@@ -76,8 +76,8 @@ async function handler(ctx) {
             per_page: limit,
         }),
         headers,
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
     return {
         allowEmpty: true,
@@ -92,5 +92,5 @@ async function handler(ctx) {
                 author: item.user.login,
                 link: `${host}/${item.number}`,
             })),
-    };
+    }
 }

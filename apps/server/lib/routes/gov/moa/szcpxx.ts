@@ -1,53 +1,53 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 6;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 6
 
-    const rootUrl = 'http://www.moa.gov.cn';
-    const currentUrl = new URL(`ztzl/szcpxx/zyzc/index.htm`, rootUrl).href;
+    const rootUrl = 'http://www.moa.gov.cn'
+    const currentUrl = new URL(`ztzl/szcpxx/zyzc/index.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.ztst_list_contBox_inner ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a.content');
+            const a = item.find('a.content')
 
             return {
                 title: a.prop('title'),
                 pubDate: parseDate(item.find('div.pubTime').text().split(/：/).pop(), 'YYYY.MM.DD'),
                 link: new URL(a.prop('href'), currentUrl).href,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h2.xxgk_title, h1.bjjMTitle').text();
-                const description = $$('div.gsj_htmlcon_bot, div.TRS_Editor').html();
-                const guid = `moa-${$$('meta[name="contentid"]').prop('content')}`;
+                const title = $$('h2.xxgk_title, h1.bjjMTitle').text()
+                const description = $$('div.gsj_htmlcon_bot, div.TRS_Editor').html()
+                const guid = `moa-${$$('meta[name="contentid"]').prop('content')}`
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8)
                 item.category = [
                     ...new Set([
                         $$('meta[name="SiteName"]').prop('content'),
@@ -56,23 +56,23 @@ export const handler = async (ctx) => {
                         $$('meta[name="ContentSource"]').prop('content'),
                         $$('meta[name="Keywords"]').prop('content'),
                     ]),
-                ].filter(Boolean);
-                item.author = $$('meta[name="Author"]').prop('content') || $$('meta[name="source"]').prop('content');
-                item.guid = guid;
-                item.id = guid;
+                ].filter(Boolean)
+                item.author = $$('meta[name="Author"]').prop('content') || $$('meta[name="source"]').prop('content')
+                item.guid = guid
+                item.id = guid
                 item.content = {
                     html: description,
                     text: $$('div.gsj_htmlcon_bot, div.TRS_Editor').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = `${$('title').text()} - ${$('li.now').text()}`;
-    const image = new URL($('img.leftLogo').prop('src'), currentUrl).href;
+    const title = `${$('title').text()} - ${$('li.now').text()}`
+    const image = new URL($('img.leftLogo').prop('src'), currentUrl).href
 
     return {
         title,
@@ -83,8 +83,8 @@ export const handler = async (ctx) => {
         image,
         author: '中华人民共和国农业农村部',
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/moa/szcpxx',
@@ -112,4 +112,4 @@ export const route: Route = {
             target: '/moa/szcpxx',
         },
     ],
-};
+}

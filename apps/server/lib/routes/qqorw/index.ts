@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:category?',
@@ -30,26 +30,26 @@ export const route: Route = {
     description: `| 首页 | 每日早报 | 国际早报 | 生活冷知识 |
 | ---- | -------- | -------- | ---------- |
 |      | mrzb     | zbapp    | zbzzd      |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://qqorw.cn';
-    const currentUrl = new URL(category, rootUrl).href;
+    const rootUrl = 'https://qqorw.cn'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('article.excerpt')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('h2 a');
+            const a = item.find('h2 a')
 
             return {
                 title: a.text(),
@@ -61,35 +61,35 @@ async function handler(ctx) {
                     .map((c) => $(c).text()),
                 pubDate: timezone(parseDate(item.find('p.auth-span span.muted').first().text().trim()), +8),
                 upvotes: item.find('span.count').text() ? Number.parseInt(item.find('span.count').text(), 10) : 0,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                content('div.contenttxt').prev().nextAll().remove();
+                content('div.contenttxt').prev().nextAll().remove()
 
-                item.title = content('h1.article-title').text();
-                item.description = content('article.article-content').html();
-                item.author = content('i.fa-user').parent().text().trim();
+                item.title = content('h1.article-title').text()
+                item.description = content('article.article-content').html()
+                item.author = content('i.fa-user').parent().text().trim()
                 item.category = content('#mute-category')
                     .toArray()
-                    .map((c) => content(c).text().trim());
-                item.pubDate = item.pubDate ?? parseDate(content('i.fa-clock-o').parent().text().trim());
-                item.upvotes = content('#Addlike span.count').text() ? Number.parseInt(content('#Addlike span.count').text(), 10) : item.upvotes;
+                    .map((c) => content(c).text().trim())
+                item.pubDate = item.pubDate ?? parseDate(content('i.fa-clock-o').parent().text().trim())
+                item.upvotes = content('#Addlike span.count').text() ? Number.parseInt(content('#Addlike span.count').text(), 10) : item.upvotes
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = '早报网';
-    const icon = new URL('favicon.ico', rootUrl).href;
-    const title = $('header.archive-header h1 a').last().text();
+    const author = '早报网'
+    const icon = new URL('favicon.ico', rootUrl).href
+    const title = $('header.archive-header h1 a').last().text()
 
     return {
         item: items,
@@ -102,5 +102,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('meta[name="keywords"]').prop('content'),
         author,
-    };
+    }
 }

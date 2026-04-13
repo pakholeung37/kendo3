@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const rootURL = 'https://gs.bjtu.edu.cn';
-const urlCms = `${rootURL}/cms/item/?tag=`;
-const urlZszt = `${rootURL}/cms/zszt/item/?cat=`;
-const title = ' - 北京交通大学研究生院';
-const zsztRegex = /_zszt/;
+const rootURL = 'https://gs.bjtu.edu.cn'
+const urlCms = `${rootURL}/cms/item/?tag=`
+const urlZszt = `${rootURL}/cms/zszt/item/?cat=`
+const title = ' - 北京交通大学研究生院'
+const zsztRegex = /_zszt/
 const struct = {
     noti_zs: {
         selector: {
@@ -123,30 +123,30 @@ const struct = {
         tag: 5,
         name: '政策法规 - 招生专题',
     },
-};
+}
 
 const getItem = (item, selector) => {
-    const newsInfo = item.find('a');
+    const newsInfo = item.find('a')
     const newsDate = item
         .find('span')
         .text()
-        .match(/\d{4}(-|\/|.)\d{1,2}\1\d{1,2}/)[0];
+        .match(/\d{4}(-|\/|.)\d{1,2}\1\d{1,2}/)[0]
 
-    const infoTitle = newsInfo.text();
-    const link = rootURL + newsInfo.attr('href');
+    const infoTitle = newsInfo.text()
+    const link = rootURL + newsInfo.attr('href')
     return cache.tryGet(link, async () => {
-        const resp = await ofetch(link);
-        const $$ = load(resp);
-        const infoText = $$(selector).html();
+        const resp = await ofetch(link)
+        const $$ = load(resp)
+        const infoText = $$(selector).html()
 
         return {
             title: infoTitle,
             pubDate: parseDate(newsDate),
             link,
             description: infoText,
-        };
-    }) as any;
-};
+        }
+    }) as any
+}
 
 export const route: Route = {
     path: '/gs/:type?',
@@ -193,33 +193,33 @@ export const route: Route = {
   文章来源的命名均来自研究生院网站标题。
   最常用的几项有“通知公告_招生”、“通知公告”、“博士招生 - 招生专题”、“硕士招生 - 招生专题”。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'noti' } = ctx.req.param();
-    let url = urlCms;
-    let selectorArticle = 'div.main_left.main_left_list';
+    const { type = 'noti' } = ctx.req.param()
+    let url = urlCms
+    let selectorArticle = 'div.main_left.main_left_list'
     if (zsztRegex.test(type)) {
-        url = urlZszt;
-        selectorArticle = 'div.mainleft_box';
+        url = urlZszt
+        selectorArticle = 'div.mainleft_box'
     }
-    const urlAddr = `${url}${struct[type].tag}`;
-    const resp = await ofetch(urlAddr);
-    const $ = load(resp);
+    const urlAddr = `${url}${struct[type].tag}`
+    const resp = await ofetch(urlAddr)
+    const $ = load(resp)
 
-    const list = $(struct[type].selector.list);
+    const list = $(struct[type].selector.list)
 
     const items = await Promise.all(
         list.toArray().map((i) => {
-            const item = $(i);
-            return getItem(item, selectorArticle);
-        })
-    );
+            const item = $(i)
+            return getItem(item, selectorArticle)
+        }),
+    )
 
     return {
         title: `${struct[type].name}${title}`,
         link: urlAddr,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

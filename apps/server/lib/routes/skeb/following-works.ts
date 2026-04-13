@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Data, DataItem, Route } from '@/types';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Data, DataItem, Route } from '@/types'
 
-import { getFollowingsItems } from './utils';
+import { getFollowingsItems } from './utils'
 
 export const route: Route = {
     path: '/following_works/:username',
@@ -35,20 +35,20 @@ export const route: Route = {
         },
     ],
     description: "Get the latest works for the specified user's followings on Skeb.",
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const username = ctx.req.param('username');
+    const username = ctx.req.param('username')
 
     if (!config.skeb || !config.skeb.bearerToken) {
-        throw new ConfigNotFoundError('Skeb followings RSS is disabled due to the lack of relevant config');
+        throw new ConfigNotFoundError('Skeb followings RSS is disabled due to the lack of relevant config')
     }
 
-    const items = await getFollowingsItems(username, 'following_works');
+    const items = await getFollowingsItems(username, 'following_works')
 
     return {
         title: `Skeb - ${username} - フォロー中のクリエイターの新着作品`,
         link: `https://skeb.jp/${username}`,
         item: items as DataItem[],
-    };
+    }
 }

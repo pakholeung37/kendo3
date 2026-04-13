@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { generateProductItem, generateRequestHeaders } from './utils';
+import { generateProductItem, generateRequestHeaders } from './utils'
 
 export const route: Route = {
     path: '/cn/low_price',
@@ -25,7 +25,7 @@ export const route: Route = {
     maintainers: ['jzhangdev'],
     handler,
     url: 'ikea.cn/cn/zh/campaigns/wo3-men2-de-chao1-zhi2-di1-jia4-pub8b08af40',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -37,7 +37,7 @@ async function handler() {
             page: 1,
             size: 200,
         },
-    });
+    })
 
     return {
         title: 'IKEA 宜家 - 低价优选',
@@ -45,5 +45,5 @@ async function handler() {
         description: '低价优选',
         allowEmpty: true,
         item: response.data.products.map((element) => generateProductItem(element)),
-    };
+    }
 }

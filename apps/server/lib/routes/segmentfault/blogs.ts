@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { acw_sc__v2, host, parseItems, parseList } from './utils';
+import { acw_sc__v2, host, parseItems, parseList } from './utils'
 
 export const route: Route = {
     path: '/blogs/:tag',
@@ -25,23 +25,23 @@ export const route: Route = {
     name: '博客',
     maintainers: ['shiluanzzz'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
-    const apiURL = `${host}/gateway/tag/${tag}/articles?loadMoreType=pagination&initData=true&page=1&sort=newest&pageSize=30`;
-    const response = await got(apiURL);
-    const data = response.data.rows;
+    const tag = ctx.req.param('tag')
+    const apiURL = `${host}/gateway/tag/${tag}/articles?loadMoreType=pagination&initData=true&page=1&sort=newest&pageSize=30`
+    const response = await got(apiURL)
+    const data = response.data.rows
 
-    const list = parseList(data);
+    const list = parseList(data)
 
-    const acwScV2Cookie = await acw_sc__v2(list[0].link, cache.tryGet);
+    const acwScV2Cookie = await acw_sc__v2(list[0].link, cache.tryGet)
 
-    const items = await Promise.all(list.map((item) => parseItems(acwScV2Cookie, item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItems(acwScV2Cookie, item, cache.tryGet)))
 
     return {
         title: `segmentfault-Blogs-${tag}`,
         link: `${host}/t/${tag}/blogs`,
         item: items,
-    };
+    }
 }

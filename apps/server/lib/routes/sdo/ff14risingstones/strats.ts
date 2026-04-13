@@ -1,10 +1,10 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getPosts } from './api';
-import { INDEX_URL, LOGO_URL, POST_TYPE, REQUIRE_CONFIG, STRAT_PART } from './constant';
-import { checkConfig, generatePostFeeds } from './utils';
+import { getPosts } from './api'
+import { INDEX_URL, LOGO_URL, POST_TYPE, REQUIRE_CONFIG, STRAT_PART } from './constant'
+import { checkConfig, generatePostFeeds } from './utils'
 
 export const route: Route = {
     path: '/ff14risingstones/strats/:pid?/:type?',
@@ -42,22 +42,22 @@ export const route: Route = {
         },
     },
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    checkConfig();
+    checkConfig()
 
-    const limit = ctx.req.query('limit') || 20;
+    const limit = ctx.req.query('limit') || 20
 
     const pid =
         ctx.req
             .param('pid')
             ?.split(',')
-            .filter((i) => STRAT_PART.some((part) => part.value === i)) ?? [];
+            .filter((i) => STRAT_PART.some((part) => part.value === i)) ?? []
 
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
 
-    const stratPart = pid.length ? pid.map((i) => STRAT_PART.find((p) => p.value === i)?.label).join('，') : '';
+    const stratPart = pid.length ? pid.map((i) => STRAT_PART.find((p) => p.value === i)?.label).join('，') : ''
 
     const posts = await getPosts({
         type: 2,
@@ -66,12 +66,12 @@ async function handler(ctx: Context) {
         is_refine: type === 'refine' ? 1 : 0,
         is_top: type === 'top' ? 1 : 0,
         part_id: pid.length ? pid.join(',') : undefined,
-    });
+    })
 
     return {
         title: `石之家 - ${POST_TYPE[type] ?? ''}攻略${stratPart ? ` - ${stratPart}` : ''}`,
         link: `${INDEX_URL}#/strat`,
         image: LOGO_URL,
         item: await generatePostFeeds(posts),
-    };
+    }
 }

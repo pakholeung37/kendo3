@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getMangaDetails } from './_feed';
+import { getMangaDetails } from './_feed'
 
 export const route: Route = {
     path: '/manga/:id/:lang?',
@@ -17,11 +17,11 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { id, lang } = ctx.req.param();
-    const mangaDetail = await getMangaDetails(id, lang);
+    const { id, lang } = ctx.req.param()
+    const mangaDetail = await getMangaDetails(id, lang)
 
     return {
         title: mangaDetail.title,
@@ -33,5 +33,5 @@ async function handler(ctx) {
             pubDate: chapter.pubDate,
             image: mangaDetail.cover,
         })),
-    };
+    }
 }

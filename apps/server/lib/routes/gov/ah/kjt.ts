@@ -1,54 +1,54 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = 'kjzx/tzgg' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { category = 'kjzx/tzgg' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://kjt.ah.gov.cn';
-    const currentUrl = new URL(`${category.replace(/\/$/, '').replace(/\/index\.html$/, '')}/`, rootUrl).href;
+    const rootUrl = 'https://kjt.ah.gov.cn'
+    const currentUrl = new URL(`${category.replace(/\/$/, '').replace(/\/index\.html$/, '')}/`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.doc_list li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
-            const title = a.prop('title') ?? a.text();
+            const title = a.prop('title') ?? a.text()
 
             return {
                 title,
                 pubDate: parseDate(item.find('span.date').text()),
                 link: a.prop('href'),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const description = $$('div.wzcon').html();
+                const description = $$('div.wzcon').html()
 
-                item.title = $$('meta[name="ArticleTitle"]').prop('content');
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8);
+                item.title = $$('meta[name="ArticleTitle"]').prop('content')
+                item.description = description
+                item.pubDate = timezone(parseDate($$('meta[name="PubDate"]').prop('content')), +8)
                 item.category = [
                     ...new Set([
                         $$('meta[name="ColumnName"]').prop('content'),
@@ -57,22 +57,22 @@ export const handler = async (ctx) => {
                         $$('meta[name="ContentSource"]').prop('content'),
                         $$('meta[name="ContentSource"]').prop('content'),
                     ]),
-                ].filter(Boolean);
-                item.author = $$('meta[name="Author"]').prop('content');
+                ].filter(Boolean)
+                item.author = $$('meta[name="Author"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div.wzcon').text(),
-                };
-                item.updated = timezone(parseDate($$('meta[name="HtmlGenerateTime"]').prop('content')), +8);
-                item.language = language;
+                }
+                item.updated = timezone(parseDate($$('meta[name="HtmlGenerateTime"]').prop('content')), +8)
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = $('meta[name="SiteName"]').prop('content');
-    const image = $('span.img_title').first().prev().prop('src');
+    const author = $('meta[name="SiteName"]').prop('content')
+    const image = $('span.img_title').first().prev().prop('src')
 
     return {
         title: `${author} - ${$('meta[name="ColumnName"]').prop('content')}`,
@@ -83,8 +83,8 @@ export const handler = async (ctx) => {
         image,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/ah/kjt/:category{.+}?',
@@ -140,9 +140,9 @@ export const route: Route = {
         {
             source: ['kjt.ah.gov.cn/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/gov/ah/kjt${category ? `/${category}` : ''}`;
+                return `/gov/ah/kjt${category ? `/${category}` : ''}`
             },
         },
         {
@@ -226,4 +226,4 @@ export const route: Route = {
             target: '/ah/kjt/kjzy/kjsj/cxxk',
         },
     ],
-};
+}

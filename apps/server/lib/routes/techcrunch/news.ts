@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const host = 'https://techcrunch.com';
+const host = 'https://techcrunch.com'
 export const route: Route = {
     path: '/news',
     categories: ['new-media'],
@@ -29,14 +29,14 @@ export const route: Route = {
     maintainers: ['EthanWng97'],
     handler,
     url: 'techcrunch.com/',
-};
+}
 
 async function handler() {
-    const { data } = await got(`${host}/wp-json/wp/v2/posts`);
+    const { data } = await got(`${host}/wp-json/wp/v2/posts`)
     const items = data.map((item) => {
-        const head = item.yoast_head_json;
-        const $ = load(item.content.rendered, null, false);
-        $('.wp-block-techcrunch-inline-cta').remove();
+        const head = item.yoast_head_json
+        const $ = load(item.content.rendered, null, false)
+        $('.wp-block-techcrunch-inline-cta').remove()
         return {
             title: item.title.rendered,
             description: renderDescription({
@@ -45,13 +45,13 @@ async function handler() {
             }),
             link: item.link,
             pubDate: parseDate(item.date_gmt),
-        };
-    });
+        }
+    })
 
     return {
         title: 'TechCrunch',
         link: host,
         description: 'Reporting on the business of technology, startups, venture capital funding, and Silicon Valley.',
         item: items,
-    };
+    }
 }

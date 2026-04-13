@@ -1,22 +1,22 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import RejectError from '@/errors/types/reject';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { generateHeaders, PRESETS } from '@/utils/header-generator';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import RejectError from '@/errors/types/reject'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { generateHeaders, PRESETS } from '@/utils/header-generator'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { generate_a_bogus } from './a-bogus';
-import type { Feed } from './types';
+import { generate_a_bogus } from './a-bogus'
+import type { Feed } from './types'
 
 const renderVideo = (url, poster) =>
     renderToString(
         <video controls preload="metadata" poster={poster}>
             <source src={url} type="video/mp4" />
-        </video>
-    );
+        </video>,
+    )
 
 export const route: Route = {
     path: '/user/token/:token',
@@ -34,38 +34,38 @@ export const route: Route = {
     name: '头条主页',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { token } = ctx.req.param();
+    const { token } = ctx.req.param()
 
     const feed = (await cache.tryGet(
         `toutiao:user:${token}`,
         async () => {
-            const query = `category=profile_all&token=${token}&max_behot_time=0&entrance_gid&aid=24&app_name=toutiao_web`;
+            const query = `category=profile_all&token=${token}&max_behot_time=0&entrance_gid&aid=24&app_name=toutiao_web`
 
-            const headers = generateHeaders(PRESETS.MODERN_WINDOWS_CHROME);
-            const userAgent = headers['user-agent'];
+            const headers = generateHeaders(PRESETS.MODERN_WINDOWS_CHROME)
+            const userAgent = headers['user-agent']
 
             const data = await ofetch(`https://www.toutiao.com/api/pc/list/feed?${query}&a_bogus=${generate_a_bogus(query, userAgent)}`, {
                 headerGeneratorOptions: PRESETS.MODERN_WINDOWS_CHROME,
-            });
+            })
 
-            return data.data;
+            return data.data
         },
         config.cache.routeExpire,
-        false
-    )) as Feed[];
+        false,
+    )) as Feed[]
 
     if (!feed) {
-        throw new RejectError('无法获取用户信息');
+        throw new RejectError('无法获取用户信息')
     }
 
     const items = feed.map((item) => {
         switch (item.cell_type) {
             case 0:
             case 49: {
-                const video = item.video.play_addr_list.toSorted((a, b) => b.bitrate - a.bitrate)[0];
+                const video = item.video.play_addr_list.toSorted((a, b) => b.bitrate - a.bitrate)[0]
                 return {
                     title: item.title,
                     description: renderVideo(item.video.play_addr_list.toSorted((a, b) => b.bitrate - a.bitrate)[0].play_url_list[0], item.video.origin_cover.url_list[0]),
@@ -79,12 +79,12 @@ async function handler(ctx) {
                         avatar: item.user?.info.avatar_url,
                         description: item.user?.info.desc,
                     },
-                };
+                }
             }
 
             // text w/o title
             case 32: {
-                const enclosure = item.large_image_list?.pop();
+                const enclosure = item.large_image_list?.pop()
                 return {
                     title: item.content?.split('\n')[0],
                     description: item.rich_content,
@@ -98,7 +98,7 @@ async function handler(ctx) {
                         avatar: item.user?.avatar_url,
                         description: item.user?.desc,
                     },
-                };
+                }
             }
 
             // text w/ title
@@ -115,9 +115,9 @@ async function handler(ctx) {
                         avatar: item.user_info?.avatar_url,
                         description: item.user_info?.description,
                     },
-                };
+                }
         }
-    });
+    })
 
     return {
         title: `${items[0].user.name}的头条主页 - 今日头条(www.toutiao.com)`,
@@ -125,5 +125,5 @@ async function handler(ctx) {
         link: `https://www.toutiao.com/c/user/token/${token}/`,
         image: items[0].user.avatar,
         item: items,
-    };
+    }
 }

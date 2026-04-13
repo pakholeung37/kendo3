@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { extractMiniCards, processWithWp, rootUrl } from './utils';
+import { extractMiniCards, processWithWp, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/collections/:type',
@@ -35,24 +35,24 @@ export const route: Route = {
     name: 'CSS Guides',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 const WPTYPE = {
     '2': 'pages',
     '3': 'posts',
     '4': 'chapters',
-};
+}
 
 async function handler(ctx) {
-    const paramType = ctx.req.param('type');
-    const type = paramType === '1' ? '2' : paramType;
-    const baseSelector = `body > div.page-wrap > section.post-sliders > div:nth-child(${type})`;
-    const titleSelector = `${baseSelector}>div.post-slider-header.header-card > h2`;
-    const descSelector = `${baseSelector}>div.post-slider-header.header-card > p`;
-    const cardselector = `${baseSelector} article.mini-card.module.module-article`;
+    const paramType = ctx.req.param('type')
+    const type = paramType === '1' ? '2' : paramType
+    const baseSelector = `body > div.page-wrap > section.post-sliders > div:nth-child(${type})`
+    const titleSelector = `${baseSelector}>div.post-slider-header.header-card > h2`
+    const descSelector = `${baseSelector}>div.post-slider-header.header-card > p`
+    const cardselector = `${baseSelector} article.mini-card.module.module-article`
 
-    const { title, description, cards } = await extractMiniCards(cardselector, titleSelector, descSelector);
-    const items = await processWithWp(cards, true, WPTYPE[type]);
+    const { title, description, cards } = await extractMiniCards(cardselector, titleSelector, descSelector)
+    const items = await processWithWp(cards, true, WPTYPE[type])
     return {
         title: title || 'Fresh From the Almanac',
         description: description || 'Properties, selectors, rules, and functions!',
@@ -61,5 +61,5 @@ async function handler(ctx) {
         language: 'en',
         logo: `${rootUrl}/favicon.ico`,
         icon: `${rootUrl}/favicon.ico`,
-    } as Data;
+    } as Data
 }

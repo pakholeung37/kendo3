@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 const renderDescription = ({ description, pics }) => {
-    const lines = (description ?? '').split('\n');
+    const lines = (description ?? '').split('\n')
     return renderToString(
         <p>
             {lines.map((line, index) => (
@@ -16,9 +16,9 @@ const renderDescription = ({ description, pics }) => {
             {pics.map((pic) => (
                 <img src={pic} />
             ))}
-        </p>
-    );
-};
+        </p>,
+    )
+}
 
 export const route: Route = {
     path: '/music/user/events/:id',
@@ -26,19 +26,19 @@ export const route: Route = {
     name: '用户动态',
     maintainers: ['Master-Hash'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await got(`https://music.163.com/api/event/get/${id}`, {
         headers: {
             Referer: 'https://music.163.com/',
         },
-    });
+    })
 
-    const { data } = response;
-    const { nickname, signature, avatarUrl } = data.events[0].user;
+    const { data } = response
+    const { nickname, signature, avatarUrl } = data.events[0].user
 
     return {
         title: `${nickname}的云村动态`,
@@ -47,11 +47,11 @@ async function handler(ctx) {
         icon: avatarUrl,
         image: avatarUrl,
         item: data.events.map((item) => {
-            const title = item.info.commentThread.resourceTitle;
-            const userId = item.user.userId;
-            const description = JSON.parse(item.json).msg;
-            const pics = item.pics.map(({ originUrl }) => originUrl);
-            const eventId = item.id;
+            const title = item.info.commentThread.resourceTitle
+            const userId = item.user.userId
+            const description = JSON.parse(item.json).msg
+            const pics = item.pics.map(({ originUrl }) => originUrl)
+            const eventId = item.id
 
             /**
              * @todo 根据 `item.info.commentThread.resourceInfo.eventType` 生成 Media
@@ -71,7 +71,7 @@ async function handler(ctx) {
                 author: nickname,
                 upvotes: item.info.likedCount,
                 comments: item.info.commentCount,
-            };
+            }
         }),
-    };
+    }
 }

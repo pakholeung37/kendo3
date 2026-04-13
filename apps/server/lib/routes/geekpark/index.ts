@@ -1,28 +1,28 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { column } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { column } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://geekpark.net';
-    const apiRootUrl = 'https://mainssl.geekpark.net';
-    const currentUrl = new URL(column ? `column/${column}` : '', rootUrl).href;
-    const apiUrl = new URL(column ? `api/v1/columns/${column}` : 'api/v2', apiRootUrl).href;
+    const rootUrl = 'https://geekpark.net'
+    const apiRootUrl = 'https://mainssl.geekpark.net'
+    const currentUrl = new URL(column ? `column/${column}` : '', rootUrl).href
+    const apiUrl = new URL(column ? `api/v1/columns/${column}` : 'api/v2', apiRootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
     let items = (response.homepage_posts ?? response.column.posts).slice(0, limit).map((item) => {
-        item = item.post ?? item;
+        item = item.post ?? item
 
-        const title = item.title;
-        const image = item.cover_url;
+        const title = item.title
+        const image = item.cover_url
         const description = renderDescription({
             images: image
                 ? [
@@ -33,8 +33,8 @@ export const handler = async (ctx) => {
                   ]
                 : undefined,
             intro: item.abstract,
-        });
-        const guid = `geekpark-${item.id}`;
+        })
+        const guid = `geekpark-${item.id}`
 
         return {
             title,
@@ -51,18 +51,18 @@ export const handler = async (ctx) => {
             },
             image,
             banner: image,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const data = detailResponse.post;
+                const data = detailResponse.post
 
-                const title = data.title;
-                const image = data.cover_url;
+                const title = data.title
+                const image = data.cover_url
                 const description = renderDescription({
                     images: image
                         ? [
@@ -74,29 +74,29 @@ export const handler = async (ctx) => {
                         : undefined,
                     intro: data.abstract,
                     description: data.content,
-                });
-                const guid = `geekpark-${data.id}`;
+                })
+                const guid = `geekpark-${data.id}`
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate(data.published_timestamp, 'X');
-                item.link = new URL(`news/${data.id}`, rootUrl).href;
-                item.category = [...new Set([...data.tags, data.column?.title])].filter(Boolean);
-                item.author = data.authors.map((a) => a.realname ?? a.nickname).join('/');
-                item.guid = guid;
-                item.id = guid;
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate(data.published_timestamp, 'X')
+                item.link = new URL(`news/${data.id}`, rootUrl).href
+                item.category = [...new Set([...data.tags, data.column?.title])].filter(Boolean)
+                item.author = data.authors.map((a) => a.realname ?? a.nickname).join('/')
+                item.guid = guid
+                item.id = guid
                 item.content = {
                     html: description,
                     text: data.content,
-                };
-                item.image = image;
-                item.banner = image;
-                item.updated = parseDate(data.updated_at);
+                }
+                item.image = image
+                item.banner = image
+                item.updated = parseDate(data.updated_at)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     const data = {
         title: '',
@@ -106,25 +106,25 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image: '',
         author: '',
-    };
-
-    if (column) {
-        data.title = `${response.column.title} | 极客公园`;
-        data.description = response.column.description;
-        data.image = response.column.banner_url;
-    } else {
-        const { data: currentResponse } = await got(currentUrl);
-
-        const $ = load(currentResponse);
-
-        data.title = $('title').text();
-        data.description = $('meta[property="og:description"]').prop('content');
-        data.image = `https:${$('meta[name="og:image"]').prop('content')}`;
-        data.author = $('meta[property="og:site_name"]').prop('content');
     }
 
-    return data;
-};
+    if (column) {
+        data.title = `${response.column.title} | 极客公园`
+        data.description = response.column.description
+        data.image = response.column.banner_url
+    } else {
+        const { data: currentResponse } = await got(currentUrl)
+
+        const $ = load(currentResponse)
+
+        data.title = $('title').text()
+        data.description = $('meta[property="og:description"]').prop('content')
+        data.image = `https:${$('meta[name="og:image"]').prop('content')}`
+        data.author = $('meta[property="og:site_name"]').prop('content')
+    }
+
+    return data
+}
 
 export const route: Route = {
     path: '/:column?',
@@ -168,9 +168,9 @@ export const route: Route = {
         {
             source: ['geekpark.net/column/:column?'],
             target: (params) => {
-                const column = params.column;
+                const column = params.column
 
-                return column ? `/${column}` : '';
+                return column ? `/${column}` : ''
             },
         },
         {
@@ -214,4 +214,4 @@ export const route: Route = {
             target: '/2',
         },
     ],
-};
+}

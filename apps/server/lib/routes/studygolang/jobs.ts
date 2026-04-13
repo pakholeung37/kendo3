@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { FetchGoItems } from './utils';
+import { FetchGoItems } from './utils'
 
 export const route: Route = {
     path: '/jobs',
@@ -18,8 +18,8 @@ export const route: Route = {
     name: '招聘',
     maintainers: ['CcccFz', 'nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    return await FetchGoItems(ctx, 'jobs');
+    return await FetchGoItems(ctx, 'jobs')
 }

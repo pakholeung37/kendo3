@@ -1,11 +1,11 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const sorts = {
     hot: '热门',
     last: '最近',
-};
+}
 
 export const route: Route = {
     path: '/article/:sort?',
@@ -26,21 +26,21 @@ export const route: Route = {
     description: `| 热门 | 最近 |
 | ---- | ---- |
 | hot  | last |`,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') ?? 'last';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
+    const sort = ctx.req.param('sort') ?? 'last'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
 
-    const rootUrl = 'https://hellogithub.com';
-    const apiRootUrl = 'https://api.hellogithub.com/v1/article/';
-    const currentUrl = `${rootUrl}/article/?sort_by=${sort}`;
-    const apiUrl = `${apiRootUrl}?sort_by=${sort}&page=1`;
+    const rootUrl = 'https://hellogithub.com'
+    const apiRootUrl = 'https://api.hellogithub.com/v1/article/'
+    const currentUrl = `${rootUrl}/article/?sort_by=${sort}`
+    const apiUrl = `${apiRootUrl}?sort_by=${sort}&page=1`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = response.data.data.slice(0, limit).map((item) => ({
         title: item.title,
@@ -51,11 +51,11 @@ async function handler(ctx) {
         author: item.author,
         guid: item.aid,
         pubDate: parseDate(item.publish_at),
-    }));
+    }))
 
     return {
         title: `HelloGithub - ${sorts[sort]}文章`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

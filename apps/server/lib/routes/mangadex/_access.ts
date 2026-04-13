@@ -1,11 +1,11 @@
-import { FetchError } from 'ofetch';
+import { FetchError } from 'ofetch'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import constants from './_constants';
+import constants from './_constants'
 
 /**
  * Retrieves an access token.
@@ -23,38 +23,38 @@ import constants from './_constants';
  */
 const getToken = () => {
     if (!config.mangadex.clientId || !config.mangadex.clientSecret) {
-        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.');
+        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.')
     }
 
     return cache.tryGet(
         'mangadex:access-token',
         async () => {
             if (!config.mangadex.refreshToken) {
-                return getAccessTokenByUserCredentials();
+                return getAccessTokenByUserCredentials()
             }
 
             try {
-                return await getAccessTokenByRefreshToken();
+                return await getAccessTokenByRefreshToken()
             } catch (error) {
                 if (error instanceof FetchError && error.statusCode === 400) {
                     // If the refresh token is invalid, try to get a new one with the user credentials
-                    return getAccessTokenByUserCredentials();
+                    return getAccessTokenByUserCredentials()
                 }
-                throw error;
+                throw error
             }
         },
         constants.TOKEN_EXPIRE,
-        false
-    );
-};
+        false,
+    )
+}
 
 const getAccessTokenByUserCredentials = async () => {
     if (!config.mangadex.clientId || !config.mangadex.clientSecret) {
-        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.');
+        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.')
     }
 
     if (!config.mangadex.username || !config.mangadex.password) {
-        throw new ConfigNotFoundError('Cannot get refresh token since MangaDex username or password is not set');
+        throw new ConfigNotFoundError('Cannot get refresh token since MangaDex username or password is not set')
     }
 
     const response = await got.post(constants.API.TOKEN, {
@@ -68,26 +68,26 @@ const getAccessTokenByUserCredentials = async () => {
             client_id: config.mangadex.clientId,
             client_secret: config.mangadex.clientSecret,
         },
-    });
+    })
 
-    const refreshToken = response?.data?.refresh_token;
-    const accessToken = response?.data?.access_token;
+    const refreshToken = response?.data?.refresh_token
+    const accessToken = response?.data?.access_token
 
     if (!refreshToken || !accessToken) {
-        throw new Error('Failed to retrieve refresh token from MangaDex API.');
+        throw new Error('Failed to retrieve refresh token from MangaDex API.')
     }
 
-    config.mangadex.refreshToken = refreshToken; // cache the refresh token
-    return accessToken;
-};
+    config.mangadex.refreshToken = refreshToken // cache the refresh token
+    return accessToken
+}
 
 const getAccessTokenByRefreshToken = async () => {
     if (!config.mangadex.clientId || !config.mangadex.clientSecret) {
-        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.');
+        throw new ConfigNotFoundError('Cannot get access token since MangaDex client ID or secret is not set.')
     }
 
     if (!config.mangadex.refreshToken) {
-        throw new ConfigNotFoundError('Cannot get access token since MangaDex refresh token is not set.');
+        throw new ConfigNotFoundError('Cannot get access token since MangaDex refresh token is not set.')
     }
 
     const response = await got.post(constants.API.TOKEN, {
@@ -100,13 +100,13 @@ const getAccessTokenByRefreshToken = async () => {
             client_id: config.mangadex.clientId,
             client_secret: config.mangadex.clientSecret,
         },
-    });
+    })
 
-    const accessToken = response?.data?.access_token;
+    const accessToken = response?.data?.access_token
     if (!accessToken) {
-        throw new Error('Failed to retrieve access token from MangaDex API.');
+        throw new Error('Failed to retrieve access token from MangaDex API.')
     }
-    return accessToken;
-};
+    return accessToken
+}
 
-export default getToken;
+export default getToken

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { getArticle } from './utils';
+import { getArticle } from './utils'
 
 export const route: Route = {
     path: ['/category/:category', '/section/:section'],
@@ -17,13 +17,13 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category, section } = ctx.req.param();
-    const categoryFilter = category ? { categories: { some: { slug: { equals: category } } } } : {};
-    const sectionFilter = section ? { sections: { some: { slug: { equals: section } } } } : {};
-    const rootUrl = 'https://www.mirrormedia.mg';
+    const { category, section } = ctx.req.param()
+    const categoryFilter = category ? { categories: { some: { slug: { equals: category } } } } : {}
+    const sectionFilter = section ? { sections: { some: { slug: { equals: section } } } } : {}
+    const rootUrl = 'https://www.mirrormedia.mg'
 
     const response = await ofetch('https://adam-weekly-api-server-prod-ufaummkd5q-de.a.run.app/content/graphql', {
         method: 'POST',
@@ -82,20 +82,20 @@ query ($take: Int, $skip: Int, $orderBy: [PostOrderByInput!]!, $filter: PostWher
   }
 }`,
         },
-    });
+    })
 
     const items = response.data.posts.map((e) => ({
         title: e.title,
         pubDate: parseDate(e.publishedDate),
         category: [...(e.sections ?? []).map((_) => `section:${_.name}`), ...(e.categories ?? []).map((_) => `category:${_.name}`)],
         link: `${rootUrl}/story/${e.slug}`,
-    }));
+    }))
 
-    const list = await Promise.all(items.map((item) => getArticle(item)));
+    const list = await Promise.all(items.map((item) => getArticle(item)))
 
     return {
         title: `鏡週刊 Mirror Media - ${category}`,
         link: rootUrl,
         item: list,
-    };
+    }
 }

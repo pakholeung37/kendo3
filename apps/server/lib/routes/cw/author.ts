@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, parsePage } from './utils';
+import { baseUrl, parsePage } from './utils'
 
 export const route: Route = {
     path: '/author/:channel',
@@ -24,14 +24,14 @@ export const route: Route = {
     name: '作者',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const browser = await puppeteer();
+    const browser = await puppeteer()
 
-    const { $, items } = await parsePage('author', browser, ctx);
+    const { $, items } = await parsePage('author', browser, ctx)
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: $('head title').text(),
@@ -40,5 +40,5 @@ async function handler(ctx) {
         image: $('.authorPhoto img').attr('src') || `${baseUrl}/assets_new/img/fbshare.jpg'`,
         language: $('meta[property="og:locale"]').attr('content'),
         item: items,
-    };
+    }
 }

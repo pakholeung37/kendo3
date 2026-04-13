@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
 export const route: Route = {
     path: '/subject/:id',
@@ -30,20 +30,20 @@ export const route: Route = {
     name: '主题文章',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const apiUrl = `https://www.gelonghui.com/api/subjects/${id}/contents`;
-    const pageUrl = `https://www.gelonghui.com/subject/${id}`;
-    const { data: response } = await got(pageUrl);
+    const id = ctx.req.param('id')
+    const apiUrl = `https://www.gelonghui.com/api/subjects/${id}/contents`
+    const pageUrl = `https://www.gelonghui.com/subject/${id}`
+    const { data: response } = await got(pageUrl)
     const { data } = await got(apiUrl, {
         searchParams: {
             isChoice: false,
         },
-    });
+    })
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = data.result.map((item) => ({
         title: item.title,
@@ -51,9 +51,9 @@ async function handler(ctx) {
         link: item.link,
         author: item.source,
         pubDate: parseDate(item.timestamp, 'X'),
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)))
 
     return {
         title: `格隆汇 - 主题 ${$('span.user-nick').text()} 的文章`,
@@ -61,5 +61,5 @@ async function handler(ctx) {
         image: $('.subject-list-title').find('img').attr('data-src'),
         link: `https://www.gelonghui.com/subject/${id}`,
         item: items,
-    };
+    }
 }

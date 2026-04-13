@@ -1,10 +1,10 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/subscribe/:user',
@@ -23,17 +23,17 @@ export const route: Route = {
     name: 'Substack Subscription',
     maintainers: ['pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
+    const user = ctx.req.param('user')
 
     if (!isValidHost(user)) {
-        throw new InvalidParameterError('Invalid user');
+        throw new InvalidParameterError('Invalid user')
     }
 
-    const response = await ofetch(`https://${user}.substack.com/feed`);
-    const feed = await parser.parseString(response);
+    const response = await ofetch(`https://${user}.substack.com/feed`)
+    const feed = await parser.parseString(response)
 
     return {
         title: feed.title ?? 'Substack',
@@ -48,5 +48,5 @@ async function handler(ctx) {
             guid: item.guid ?? '',
             author: item.creator ?? user,
         })),
-    };
+    }
 }

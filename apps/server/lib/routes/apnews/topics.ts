@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
-import { fetchArticle, removeDuplicateByKey } from './utils';
+import { fetchArticle, removeDuplicateByKey } from './utils'
 
-const HOME_PAGE = 'https://apnews.com';
+const HOME_PAGE = 'https://apnews.com'
 
 export const route: Route = {
     path: ['/topics/:topic?', '/nav/:nav{.*}?'],
@@ -37,14 +37,14 @@ export const route: Route = {
     name: 'Topics',
     maintainers: ['zoenglinghou', 'mjysci', 'TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { topic = 'trending-news', nav = '' } = ctx.req.param();
-    const useNav = ctx.req.routePath === '/apnews/nav/:nav{.*}?';
-    const url = useNav ? `${HOME_PAGE}/${nav}` : `${HOME_PAGE}/hub/${topic}`;
-    const response = await got(url);
-    const $ = load(response.data);
+    const { topic = 'trending-news', nav = '' } = ctx.req.param()
+    const useNav = ctx.req.routePath === '/apnews/nav/:nav{.*}?'
+    const url = useNav ? `${HOME_PAGE}/${nav}` : `${HOME_PAGE}/hub/${topic}`
+    const response = await got(url)
+    const $ = load(response.data)
 
     const list = $(':is(.PagePromo-content, .PageListStandardE-leadPromo-info) bsp-custom-headline')
         .toArray()
@@ -53,9 +53,9 @@ async function handler(ctx) {
             title: $(e).find('span.PagePromoContentIcons-text').text(),
             link: $(e).find('a').attr('href'),
         }))
-        .filter((e) => typeof e.link === 'string');
+        .filter((e) => typeof e.link === 'string')
 
-    const items = ctx.req.query('fulltext') === 'true' ? await pMap(list, (item) => fetchArticle(item), { concurrency: 10 }) : list;
+    const items = ctx.req.query('fulltext') === 'true' ? await pMap(list, (item) => fetchArticle(item), { concurrency: 10 }) : list
 
     return {
         title: $('title').text(),
@@ -63,5 +63,5 @@ async function handler(ctx) {
         link: url,
         item: removeDuplicateByKey(items, 'link'),
         language: $('html').attr('lang'),
-    };
+    }
 }

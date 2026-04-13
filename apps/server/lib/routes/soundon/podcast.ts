@@ -1,26 +1,26 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Podcast, PodcastInfo } from './types';
+import type { Podcast, PodcastInfo } from './types'
 
 const handler = async (ctx) => {
-    const { id } = ctx.req.param();
+    const { id } = ctx.req.param()
 
-    const apiEndpoint = 'https://api.soundon.fm/v2/client';
-    const apiToken = 'KilpEMLQeNzxmNBL55u5';
+    const apiEndpoint = 'https://api.soundon.fm/v2/client'
+    const apiToken = 'KilpEMLQeNzxmNBL55u5'
 
     const podcastInfo = (await cache.tryGet(`soundon:${id}`, async () => {
         const response = await ofetch(`${apiEndpoint}/podcasts/${id}`, {
             headers: {
                 'api-token': apiToken,
             },
-        });
-        return response.data.data;
-    })) as PodcastInfo;
+        })
+        return response.data.data
+    })) as PodcastInfo
 
     const episodes = (await cache.tryGet(
         `soundon:${id}:episodes`,
@@ -29,12 +29,12 @@ const handler = async (ctx) => {
                 headers: {
                     'api-token': apiToken,
                 },
-            });
-            return response.data;
+            })
+            return response.data
         },
         config.cache.routeExpire,
-        false
-    )) as Podcast[];
+        false,
+    )) as Podcast[]
 
     const items = episodes.map(({ data: item }) => ({
         title: item.title,
@@ -47,7 +47,7 @@ const handler = async (ctx) => {
         enclosure_type: item.audioType,
         itunes_duration: item.duration,
         category: item.itunesKeywords,
-    }));
+    }))
 
     return {
         title: podcastInfo.title,
@@ -59,8 +59,8 @@ const handler = async (ctx) => {
         language: podcastInfo.language,
         link: podcastInfo.url,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/p/:id',
@@ -79,4 +79,4 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     view: ViewType.Audios,
     handler,
-};
+}

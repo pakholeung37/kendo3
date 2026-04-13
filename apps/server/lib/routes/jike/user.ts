@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/user/:id',
@@ -32,10 +32,10 @@ export const route: Route = {
     name: '用户动态',
     maintainers: ['DIYgod', 'prnake'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await got({
         method: 'get',
@@ -43,23 +43,23 @@ async function handler(ctx) {
         headers: {
             Referer: `https://m.okjike.com/users/${id}`,
         },
-    });
+    })
 
-    const html = response.data;
-    const $ = load(html);
-    const raw = $('[type = "application/json"]').html();
-    const data = JSON.parse(raw).props.pageProps;
+    const html = response.data
+    const $ = load(html)
+    const raw = $('[type = "application/json"]').html()
+    const data = JSON.parse(raw).props.pageProps
 
     const getLink = (id, type) => {
         switch (type) {
             case 'REPOST':
-                return `https://m.okjike.com/reposts/${id}`;
+                return `https://m.okjike.com/reposts/${id}`
             case 'MEDIUM':
-                return `https://www.okjike.com/medium/${id}`;
+                return `https://www.okjike.com/medium/${id}`
             default:
-                return `https://m.okjike.com/originalPosts/${id}`;
+                return `https://m.okjike.com/originalPosts/${id}`
         }
-    };
+    }
 
     const items = await Promise.all(
         data.posts.map(async (item) => {
@@ -69,42 +69,42 @@ async function handler(ctx) {
                 ANSWER: '回答',
                 QUESTION: '提问',
                 PERSONAL_UPDATE: '创建新主题',
-            };
-
-            let linkTemplate = '';
-            if (item.linkInfo && item.linkInfo.linkUrl) {
-                linkTemplate = `<a href="${item.linkInfo.linkUrl}">${item.linkInfo.title}</a><br>`;
             }
 
-            let imgTemplate = '';
+            let linkTemplate = ''
+            if (item.linkInfo && item.linkInfo.linkUrl) {
+                linkTemplate = `<a href="${item.linkInfo.linkUrl}">${item.linkInfo.title}</a><br>`
+            }
+
+            let imgTemplate = ''
             if (item.pictures) {
                 for (const picture of item.pictures) {
-                    imgTemplate += `<br><img src="${picture.picUrl}">`;
+                    imgTemplate += `<br><img src="${picture.picUrl}">`
                 }
             }
 
-            let content = item.content || (item.linkInfo && item.linkInfo.title) || (item.question && item.question.title) || item.title || '';
-            content = content.replaceAll(/\r\n|\n|\r/g, '<br>');
+            let content = item.content || (item.linkInfo && item.linkInfo.title) || (item.question && item.question.title) || item.title || ''
+            content = content.replaceAll(/\r\n|\n|\r/g, '<br>')
 
-            let shortenTitle = '一条动态';
+            let shortenTitle = '一条动态'
             if (content) {
-                shortenTitle = content.replaceAll(/(<br>)+/g, ' ');
-                content = `${content}<br><br>`;
+                shortenTitle = content.replaceAll(/(<br>)+/g, ' ')
+                content = `${content}<br><br>`
             }
 
-            let repostContent;
+            let repostContent
             if (item.type === 'REPOST') {
-                const screenNameTemplate = item.target.user ? `<a href="https://m.okjike.com/users/${item.target.user.username}" target="_blank">@${item.target.user.screenName}</a>` : '';
+                const screenNameTemplate = item.target.user ? `<a href="https://m.okjike.com/users/${item.target.user.username}" target="_blank">@${item.target.user.screenName}</a>` : ''
 
-                let repostImgTemplate = '';
+                let repostImgTemplate = ''
                 if (item.target.pictures) {
                     for (const picture of item.target.pictures) {
-                        repostImgTemplate += `<br><img src="${picture.thumbnailUrl}">`;
+                        repostImgTemplate += `<br><img src="${picture.thumbnailUrl}">`
                     }
                 }
 
-                repostContent = `<div class="rsshub-quote">转发 ${screenNameTemplate}: ${item.target.content}${repostImgTemplate}</div>`.replaceAll(/\r\n|\n|\r/g, '<br>');
-                content = `${content}${repostContent}`;
+                repostContent = `<div class="rsshub-quote">转发 ${screenNameTemplate}: ${item.target.content}${repostImgTemplate}</div>`.replaceAll(/\r\n|\n|\r/g, '<br>')
+                content = `${content}${repostContent}`
             }
             // 部分功能未知
             /* else if (item.type === 'ANSWER') {
@@ -150,10 +150,10 @@ async function handler(ctx) {
                         },
                     ],
                 },
-            };
+            }
 
             if (id === 'wenhao1996' && item.topic.id === '553870e8e4b0cafb0a1bef68') {
-                single.link = item.urlsInText[0].url;
+                single.link = item.urlsInText[0].url
 
                 const { data } = await got({
                     method: 'get',
@@ -161,24 +161,24 @@ async function handler(ctx) {
                     headers: {
                         Referer: `https://m.okjike.com/users/${id}`,
                     },
-                });
-                const $$ = load(data);
-                $$('span.num,span.arrow').remove();
+                })
+                const $$ = load(data)
+                $$('span.num,span.arrow').remove()
 
-                single.title = `一觉醒来世界发生了什么 ${$$('title').text()}`;
+                single.title = `一觉醒来世界发生了什么 ${$$('title').text()}`
 
-                single.description = '';
+                single.description = ''
                 $$('div.container')
                     .find('li.item')
                     // eslint-disable-next-line array-callback-return
                     .map((i, j) => {
-                        single.description += `<a href="${$$(j).find('a').attr('href')}">${$$(j).find('a').text()}</a><br>`;
-                    });
+                        single.description += `<a href="${$$(j).find('a').attr('href')}">${$$(j).find('a').text()}</a><br>`
+                    })
             }
 
-            return single;
-        })
-    );
+            return single
+        }),
+    )
 
     return {
         title: `${data.user.screenName}的即刻动态`,
@@ -186,5 +186,5 @@ async function handler(ctx) {
         link: `https://m.okjike.com/users/${id}`,
         image: data.user.avatarImage.picUrl,
         item: items,
-    };
+    }
 }

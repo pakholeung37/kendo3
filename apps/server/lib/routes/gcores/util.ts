@@ -1,18 +1,18 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
 
-import type { Data, DataItem } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseContent } from './parser';
-import { renderDescription } from './templates/description';
+import { parseContent } from './parser'
+import { renderDescription } from './templates/description'
 
-const baseUrl = 'https://www.gcores.com';
-const imageBaseUrl = 'https://image.gcores.com';
-const audioBaseUrl = 'https://alioss.gcores.com';
+const baseUrl = 'https://www.gcores.com'
+const imageBaseUrl = 'https://image.gcores.com'
+const audioBaseUrl = 'https://alioss.gcores.com'
 
-const types = new Set<string>(['radios', 'articles', 'news', 'videos', 'talks']);
+const types = new Set<string>(['radios', 'articles', 'news', 'videos', 'talks'])
 
 const processItems = async (limit: number, query: any, apiUrl: string, targetUrl: string): Promise<Data> => {
     const response = await ofetch(apiUrl, {
@@ -22,33 +22,33 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
             include: 'category,user,media',
             'filter[list-all]': 1,
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
-    const included = response.included;
-    const data = [...response.data, ...included].filter((item) => types.has(item.type));
+    const included = response.included
+    const data = [...response.data, ...included].filter((item) => types.has(item.type))
 
     const items: DataItem[] = data?.slice(0, limit).map((item): DataItem => {
-        const attributes = item.attributes;
-        const relationships = item.relationships;
+        const attributes = item.attributes
+        const relationships = item.relationships
 
-        const title: string = attributes.title;
-        const pubDate: number | string = attributes['published-at'];
-        const linkUrl: string | undefined = `${item.type}/${item.id}`;
+        const title: string = attributes.title
+        const pubDate: number | string = attributes['published-at']
+        const linkUrl: string | undefined = `${item.type}/${item.id}`
 
-        const categoryObjs = [relationships?.category?.data, relationships?.tag?.data, relationships?.topic?.data].filter(Boolean);
+        const categoryObjs = [relationships?.category?.data, relationships?.tag?.data, relationships?.topic?.data].filter(Boolean)
         const categories: string[] = categoryObjs
             .map((obj) => {
-                const attributes = included.find((i) => i.type === obj.type && i.id === obj.id)?.attributes;
-                return attributes?.name ?? attributes?.title;
+                const attributes = included.find((i) => i.type === obj.type && i.id === obj.id)?.attributes
+                return attributes?.name ?? attributes?.title
             })
-            .filter(Boolean);
+            .filter(Boolean)
 
-        const authorObj = relationships?.user?.data;
-        const authorIncluded = authorObj ? included.find((i) => i.type === authorObj.type && i.id === authorObj.id) : undefined;
+        const authorObj = relationships?.user?.data
+        const authorIncluded = authorObj ? included.find((i) => i.type === authorObj.type && i.id === authorObj.id) : undefined
         const authors: DataItem['author'] = authorIncluded
             ? [
                   {
@@ -57,11 +57,11 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
                       avatar: authorIncluded.thumb ? new URL(authorIncluded.thumb, imageBaseUrl).href : undefined,
                   },
               ]
-            : undefined;
+            : undefined
 
-        const guid = `gcores-${item.id}`;
-        const image: string | undefined = (attributes.cover ?? attributes.thumb) ? new URL(attributes.cover ?? attributes.thumb, imageBaseUrl).href : undefined;
-        const updated: number | string = pubDate;
+        const guid = `gcores-${item.id}`
+        const image: string | undefined = (attributes.cover ?? attributes.thumb) ? new URL(attributes.cover ?? attributes.thumb, imageBaseUrl).href : undefined
+        const updated: number | string = pubDate
 
         let processedItem: DataItem = {
             title,
@@ -75,28 +75,28 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
             banner: image,
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        let enclosureUrl: string | undefined;
-        let enclosureType: string | undefined;
+        let enclosureUrl: string | undefined
+        let enclosureType: string | undefined
 
-        const mediaAttrs = included.find((i) => i.id === relationships.media?.data?.id)?.attributes;
+        const mediaAttrs = included.find((i) => i.id === relationships.media?.data?.id)?.attributes
 
         if (attributes['speech-path']) {
-            enclosureUrl = new URL(`uploads/audio/${attributes['speech-path']}`, audioBaseUrl).href;
-            enclosureType = `audio/${enclosureUrl?.split(/\./).pop()}`;
+            enclosureUrl = new URL(`uploads/audio/${attributes['speech-path']}`, audioBaseUrl).href
+            enclosureType = `audio/${enclosureUrl?.split(/\./).pop()}`
         } else if (mediaAttrs) {
             if (mediaAttrs.audio) {
-                enclosureUrl = mediaAttrs.audio;
-                enclosureType = `audio/${enclosureUrl?.split(/\./).pop()}`;
+                enclosureUrl = mediaAttrs.audio
+                enclosureType = `audio/${enclosureUrl?.split(/\./).pop()}`
             } else if (mediaAttrs['original-src']) {
-                enclosureUrl = mediaAttrs['original-src'];
-                enclosureType = `video/${enclosureUrl?.split(/\?/).pop() ? (/^id=\d+$/.test(enclosureUrl?.split(/\?/).pop() as string) ? 'taptap' : enclosureUrl?.split(/\./).pop()) : ''}`;
+                enclosureUrl = mediaAttrs['original-src']
+                enclosureType = `video/${enclosureUrl?.split(/\?/).pop() ? (/^id=\d+$/.test(enclosureUrl?.split(/\?/).pop() as string) ? 'taptap' : enclosureUrl?.split(/\./).pop()) : ''}`
             }
         }
 
         if (enclosureUrl) {
-            const enclosureLength: number = attributes.duration ? Number(attributes.duration) : 0;
+            const enclosureLength: number = attributes.duration ? Number(attributes.duration) : 0
 
             processedItem = {
                 ...processedItem,
@@ -106,7 +106,7 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
                 enclosure_length: enclosureLength,
                 itunes_duration: enclosureLength,
                 itunes_item_image: image,
-            };
+            }
         }
 
         const description: string = renderDescription({
@@ -138,7 +138,7 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
                     : undefined,
             intro: attributes.desc || attributes.excerpt,
             description: attributes.content ? parseContent(JSON.parse(attributes.content)) : undefined,
-        });
+        })
 
         processedItem = {
             ...processedItem,
@@ -148,12 +148,12 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
                 html: description,
                 text: description,
             },
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -164,7 +164,7 @@ const processItems = async (limit: number, query: any, apiUrl: string, targetUrl
         author: title.split(/\|/).pop()?.trim(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
-export { audioBaseUrl, baseUrl, imageBaseUrl, processItems };
+export { audioBaseUrl, baseUrl, imageBaseUrl, processItems }

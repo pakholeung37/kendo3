@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { author, language, processItems, rootUrl } from './util';
+import { author, language, processItems, rootUrl } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = rootUrl;
-    const apiUrl: string = new URL(`api/articles/${id ? 'categoryId' : 'all'}`, rootUrl).href;
-    const apiCategoryUrl: string = new URL('api/categories/all', rootUrl).href;
+    const targetUrl: string = rootUrl
+    const apiUrl: string = new URL(`api/articles/${id ? 'categoryId' : 'all'}`, rootUrl).href
+    const apiCategoryUrl: string = new URL('api/categories/all', rootUrl).href
 
     const apiResponse = await ofetch(apiUrl, {
         query: {
@@ -21,17 +21,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
             size: limit,
             categoryId: id,
         },
-    });
+    })
 
     const apiCategoryResponse = await ofetch(apiCategoryUrl, {
         query: {
             datasrc: 'categories',
         },
-    });
+    })
 
-    const categoryName: string = apiCategoryResponse.data.find((item) => item.categoryid === id)?.category;
+    const categoryName: string = apiCategoryResponse.data.find((item) => item.categoryid === id)?.category
 
-    const items: DataItem[] = processItems(apiResponse.data.records, limit);
+    const items: DataItem[] = processItems(apiResponse.data.records, limit)
 
     return {
         title: `${author}${categoryName ? ` - ${categoryName}` : ''}`,
@@ -41,8 +41,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/n/category/:id?',
@@ -99,4 +99,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

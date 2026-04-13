@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/articles/:type',
@@ -26,14 +26,14 @@ export const route: Route = {
     description: `::: tip
   Freebuf 的文章页面带有反爬虫机制，所以目前无法获取文章的完整内容。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'web' } = ctx.req.param();
+    const { type = 'web' } = ctx.req.param()
 
-    const fapi = 'https://www.freebuf.com/fapi/frontend/category/list';
-    const baseUrl = 'https://www.freebuf.com';
-    const rssLink = `${baseUrl}/articles/${type}`;
+    const fapi = 'https://www.freebuf.com/fapi/frontend/category/list'
+    const baseUrl = 'https://www.freebuf.com'
+    const rssLink = `${baseUrl}/articles/${type}`
 
     const options = {
         headers: {
@@ -48,9 +48,9 @@ async function handler(ctx) {
             order: 0,
             type: 'category',
         },
-    };
+    }
 
-    const response = await ofetch(fapi, options);
+    const response = await ofetch(fapi, options)
 
     const items = response.data.data_list.map((item) => ({
         title: item.post_title,
@@ -58,11 +58,11 @@ async function handler(ctx) {
         description: item.content,
         pubDate: parseDate(item.post_date),
         author: item.nickname,
-    }));
+    }))
 
     return {
         title: `Freebuf ${type}`,
         link: rssLink,
         item: items,
-    };
+    }
 }

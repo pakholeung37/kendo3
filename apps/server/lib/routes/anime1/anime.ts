@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: 'anime/:category/:name',
@@ -30,35 +30,35 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category, name } = ctx.req.param();
+    const { category, name } = ctx.req.param()
 
-    const response = await ofetch(`https://anime1.me/category/${category}/${name}`);
+    const response = await ofetch(`https://anime1.me/category/${category}/${name}`)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const title = $('.page-title').text().trim();
+    const title = $('.page-title').text().trim()
 
     const items = $('article')
         .toArray()
         .map((el) => {
-            const $el = $(el);
-            const title = $el.find('.entry-title a').text().trim();
+            const $el = $(el)
+            const title = $el.find('.entry-title a').text().trim()
             return {
                 title,
                 link: $el.find('.entry-title a').attr('href'),
                 description: title,
                 pubDate: parseDate($el.find('time').attr('datetime') || ''),
                 itunes_item_image: $el.find('video').attr('poster'),
-            };
-        });
+            }
+        })
 
     return {
         title,
         link: `https://anime1.me/category/${category}/${name}`,
         description: title,
         item: items,
-    };
+    }
 }

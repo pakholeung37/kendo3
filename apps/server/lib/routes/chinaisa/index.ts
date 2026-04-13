@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:id?',
@@ -159,17 +159,17 @@ export const route: Route = {
 | 中国钢铁业 | 6440bdfccadf87908b13d8bbd9a66bb89bbd60cc5e175c018ca1c62c7d55e61f |
 | 钢铁信息   | 2b66af0b2cda9b420739e55e255a6f72f277557670ef861c9956da8fde25da05 |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { id = '58af05dfb6b4300151760176d2aad0a04c275aaadbb1315039263f021f920dcd' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { id = '58af05dfb6b4300151760176d2aad0a04c275aaadbb1315039263f021f920dcd' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'https://www.chinaisa.org.cn';
+    const rootUrl = 'https://www.chinaisa.org.cn'
 
-    const apiUrl = new URL('gxportal/xfpt/portal/getColumnList', rootUrl).href;
-    const apiArticleUrl = new URL('gxportal/xfpt/portal/viewArticleById', rootUrl).href;
-    const currentUrl = new URL(`gxportal/xfgl/portal/list.html?columnId=${id}`, rootUrl).href;
+    const apiUrl = new URL('gxportal/xfpt/portal/getColumnList', rootUrl).href
+    const apiArticleUrl = new URL('gxportal/xfpt/portal/viewArticleById', rootUrl).href
+    const currentUrl = new URL(`gxportal/xfgl/portal/list.html?columnId=${id}`, rootUrl).href
 
     const response = await ofetch(apiUrl, {
         method: 'POST',
@@ -180,23 +180,23 @@ async function handler(ctx) {
             params: encodeURI(`{"columnId":"${id}"}`),
         }),
         parseResponse: JSON.parse,
-    });
+    })
 
-    let $ = load(response.articleListHtml);
+    let $ = load(response.articleListHtml)
 
     let items = $('ul.list li a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.prop('title') ?? item.text(),
                 link: new URL(`gxportal/xfgl/portal/${item.prop('href')}`, rootUrl).href,
                 guid: item.prop('href').match(/articleId=(\w+)/)[1],
                 pubDate: parseDate(item.parent().find('span.times').text().replaceAll('[]', '')),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -210,32 +210,32 @@ async function handler(ctx) {
                         params: encodeURI(`{"articleId":"${item.guid}","columnId":"${id}"}`),
                     }),
                     parseResponse: JSON.parse,
-                });
+                })
 
-                const articleContent = detailResponse.article_content;
+                const articleContent = detailResponse.article_content
 
-                const content = load(articleContent);
+                const content = load(articleContent)
 
-                const matches = articleContent.match(/文章来源：(.*?)日期：(\d+-\d+-\d+)/);
+                const matches = articleContent.match(/文章来源：(.*?)日期：(\d+-\d+-\d+)/)
 
-                item.title = content('div.article_title').contents().first().text() || item.title;
-                item.description = content('div.article_main').html();
-                item.author = matches[1].split(/&/)[0];
-                item.guid = `chinaisa-${item.guid}`;
-                item.pubDate = parseDate(matches[2]);
+                item.title = content('div.article_title').contents().first().text() || item.title
+                item.description = content('div.article_main').html()
+                item.author = matches[1].split(/&/)[0]
+                item.guid = `chinaisa-${item.guid}`
+                item.pubDate = parseDate(matches[2])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const subtitle = $('div.head-tit').text();
+    const subtitle = $('div.head-tit').text()
 
-    const currentResponse = await ofetch(currentUrl);
+    const currentResponse = await ofetch(currentUrl)
 
-    $ = load(currentResponse);
+    $ = load(currentResponse)
 
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -248,5 +248,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle,
         allowEmpty: true,
-    };
+    }
 }

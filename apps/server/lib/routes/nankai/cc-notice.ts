@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/cc/:type?',
@@ -33,39 +33,39 @@ export const route: Route = {
     url: 'cc.nankai.edu.cn',
     handler: async (ctx) => {
         // 从 URL 参数中获取通知分类
-        const { type = '13291' } = ctx.req.param();
-        const baseUrl = 'https://cc.nankai.edu.cn';
-        const { data: response } = await got(`${baseUrl}/${type}/list.htm`);
-        const $ = load(response);
+        const { type = '13291' } = ctx.req.param()
+        const baseUrl = 'https://cc.nankai.edu.cn'
+        const { data: response } = await got(`${baseUrl}/${type}/list.htm`)
+        const $ = load(response)
 
         // 获取分类名称
-        const categoryName = $('.accordion .selected a').text().trim() || '最新动态';
+        const categoryName = $('.accordion .selected a').text().trim() || '最新动态'
 
         // 解析新闻列表
         const list = $('#wp_news_w49 table tr')
             .slice(1) // 跳过表头
             .toArray()
             .map((tr) => {
-                const $tr = $(tr);
-                const cells = $tr.find('td');
+                const $tr = $(tr)
+                const cells = $tr.find('td')
 
                 if (cells.length < 5) {
-                    return null;
+                    return null
                 }
 
-                const title = cells.eq(1).text().trim();
-                const publisher = cells.eq(2).text().trim();
-                const dateStr = cells.eq(3).text().trim();
+                const title = cells.eq(1).text().trim()
+                const publisher = cells.eq(2).text().trim()
+                const dateStr = cells.eq(3).text().trim()
 
                 // 从onclick属性中提取链接
-                const onclick = $tr.attr('onclick');
-                let link = '';
+                const onclick = $tr.attr('onclick')
+                let link = ''
                 if (onclick) {
-                    const match = onclick.match(/window\.location\.href='([^']+)';/);
+                    const match = onclick.match(/window\.location\.href='([^']+)';/)
                     if (match) {
-                        link = match[1];
+                        link = match[1]
                         if (!link.startsWith('http')) {
-                            link = `${baseUrl}${link}`;
+                            link = `${baseUrl}${link}`
                         }
                     }
                 }
@@ -75,9 +75,9 @@ export const route: Route = {
                     link,
                     pubDate: timezone(parseDate(dateStr), +8),
                     author: publisher,
-                };
+                }
             })
-            .filter((item) => item && item.link); // 过滤掉空项目和没有链接的项目
+            .filter((item) => item && item.link) // 过滤掉空项目和没有链接的项目
 
         // 获取每篇文章的详细内容
         const items = await Promise.all(
@@ -85,23 +85,23 @@ export const route: Route = {
                 item
                     ? cache.tryGet(item.link, async () => {
                           try {
-                              const { data: response } = await got(item.link);
-                              const $ = load(response);
+                              const { data: response } = await got(item.link)
+                              const $ = load(response)
 
                               // 优化内容选择器逻辑，避免重复选择
-                              let description = $('.wp_articlecontent').html() || $('.body-news-detail').html();
+                              let description = $('.wp_articlecontent').html() || $('.body-news-detail').html()
 
-                              description = description || item.title;
-                              item.description = description;
+                              description = description || item.title
+                              item.description = description
                           } catch {
                               // 如果获取详细内容失败，返回基本信息
-                              item.description = item.title + ' (获取详细内容失败)';
+                              item.description = item.title + ' (获取详细内容失败)'
                           }
-                          return item;
+                          return item
                       })
-                    : null
-            )
-        );
+                    : null,
+            ),
+        )
 
         return {
             // 源标题
@@ -110,6 +110,6 @@ export const route: Route = {
             link: `${baseUrl}/${type}/list.htm`,
             // 源文章
             item: items,
-        };
+        }
     },
-};
+}

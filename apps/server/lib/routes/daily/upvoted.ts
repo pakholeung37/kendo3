@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { baseUrl, getData, getList, variables } from './utils.js';
+import { baseUrl, getData, getList, variables } from './utils.js'
 
 const query = `
     query MostUpvotedFeed(
@@ -118,7 +118,7 @@ const query = `
     downvoted
   }
 
-`;
+`
 
 export const route: Route = {
     path: '/upvoted/:period?/:innerSharedContent?/:dateSort?',
@@ -160,14 +160,14 @@ export const route: Route = {
     maintainers: ['Rjnishant530'],
     handler,
     url: 'app.daily.dev/upvoted',
-};
+}
 
 async function handler(ctx) {
-    const link = `${baseUrl}/posts/upvoted`;
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
-    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false;
-    const dateSort = ctx.req.param('dateSort') ? JSON.parse(ctx.req.param('dateSort')) : true;
-    const period = ctx.req.param('period') ? Number.parseInt(ctx.req.param('period'), 10) : 7;
+    const link = `${baseUrl}/posts/upvoted`
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
+    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false
+    const dateSort = ctx.req.param('dateSort') ? JSON.parse(ctx.req.param('dateSort')) : true
+    const period = ctx.req.param('period') ? Number.parseInt(ctx.req.param('period'), 10) : 7
 
     const data = await getData({
         query,
@@ -176,8 +176,8 @@ async function handler(ctx) {
             period,
             first: limit,
         },
-    });
-    const items = getList(data, innerSharedContent, dateSort);
+    })
+    const items = getList(data, innerSharedContent, dateSort)
 
     return {
         title: 'Most upvoted posts for developers | daily.dev',
@@ -187,5 +187,5 @@ async function handler(ctx) {
         logo: `${baseUrl}/favicon-32x32.png`,
         icon: `${baseUrl}/favicon-32x32.png`,
         language: 'en-us',
-    };
+    }
 }

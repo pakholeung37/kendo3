@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/ele',
@@ -27,11 +27,11 @@ export const route: Route = {
     handler,
     url: 'ciee.cau.edu.cn/col/col26712/index.html',
     description: `#### 信电学院 {#zhong-guo-nong-ye-da-xue-yan-zhao-wang-tong-zhi-gong-gao-xin-dian-xue-yuan}`,
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://ciee.cau.edu.cn';
-    const link = `${baseUrl}/col/col26712/index.html`;
+    const baseUrl = 'https://ciee.cau.edu.cn'
+    const link = `${baseUrl}/col/col26712/index.html`
     const response = await got(`${baseUrl}/module/web/jpage/dataproxy.jsp`, {
         searchParams: {
             page: 1,
@@ -43,9 +43,9 @@ async function handler() {
             webname: '信息与电气工程学院',
             permissiontype: 0,
         },
-    });
-    const $ = load(response.data);
-    const list = $('recordset record');
+    })
+    const $ = load(response.data)
+    const list = $('recordset record')
 
     return {
         title: '中国农业大学信电学院',
@@ -54,16 +54,16 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
-                const title = a.attr('title');
-                const link = `${baseUrl}${a.attr('href')}`;
+                item = $(item)
+                const a = item.find('a')
+                const title = a.attr('title')
+                const link = `${baseUrl}${a.attr('href')}`
                 return {
                     title,
                     link,
                     pubDate: parseDate(item.find('.col-lg-1').text()),
                     guid: `${link}#${title}`,
-                };
+                }
             }),
-    };
+    }
 }

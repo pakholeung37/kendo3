@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderIndexDescription } from './templates/index';
-import { domainValidation } from './utils';
+import { renderIndexDescription } from './templates/index'
+import { domainValidation } from './utils'
 
 export const route: Route = {
     path: '/:lang?',
@@ -35,13 +35,13 @@ export const route: Route = {
     description: `| English | 简体中文 | 繁體中文 |
 | ------- | -------- | -------- |
 | en_US  | cn_CN   | zh_ZH   |`,
-};
+}
 
 async function handler(ctx) {
-    const { domain = '91porn.com' } = ctx.req.query();
-    const siteUrl = `https://${domain}/index.php`;
-    const { lang = 'en_US' } = ctx.req.param();
-    domainValidation(domain);
+    const { domain = '91porn.com' } = ctx.req.query()
+    const siteUrl = `https://${domain}/index.php`
+    const { lang = 'en_US' } = ctx.req.param()
+    domainValidation(domain)
 
     const response = await got.post(siteUrl, {
         form: {
@@ -50,43 +50,43 @@ async function handler(ctx) {
         headers: {
             referer: siteUrl,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.row .well')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.video-title').text(),
                 link: item.find('a').attr('href'),
                 poster: item.find('.img-responsive').attr('src'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(`91porn:${lang}:${new URL(item.link).searchParams.get('viewkey')}`, async () => {
-                const { data } = await got(item.link);
-                const $ = load(data);
+                const { data } = await got(item.link)
+                const $ = load(data)
 
-                item.pubDate = parseDate($('.title-yakov').eq(0).text(), 'YYYY-MM-DD');
+                item.pubDate = parseDate($('.title-yakov').eq(0).text(), 'YYYY-MM-DD')
                 item.description = renderIndexDescription({
                     link: item.link,
                     poster: item.poster,
-                });
-                item.author = $('.title-yakov a span').text();
-                delete item.poster;
+                })
+                item.author = $('.title-yakov a span').text()
+                delete item.poster
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('.login_register_header').text()} - 91porn`,
         link: siteUrl,
         item: items,
-    };
+    }
 }

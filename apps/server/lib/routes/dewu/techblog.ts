@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const categoryMap: Record<string, string> = {
     1: '大前端',
@@ -11,7 +11,7 @@ const categoryMap: Record<string, string> = {
     6: 'AI&数据',
     7: '运维&稳定生产',
     8: '技术思考',
-};
+}
 
 export const route: Route = {
     path: '/techblog/:categoryId?',
@@ -46,19 +46,19 @@ export const route: Route = {
 | AI&数据 | 6 |
 | 运维&稳定生产 | 7 |
 | 技术思考 | 8 |`,
-};
+}
 
 async function handler(ctx) {
-    const categoryId = ctx.req.param('categoryId');
+    const categoryId = ctx.req.param('categoryId')
 
-    const params: Record<string, string> = { page: '1' };
+    const params: Record<string, string> = { page: '1' }
     if (categoryId) {
-        params.category_id = categoryId;
+        params.category_id = categoryId
     }
 
     const response = await ofetch('https://tech.dewu.com/api/v1/article', {
         query: params,
-    });
+    })
 
     const items = response.data.data.map((item) => ({
         title: item.title,
@@ -68,14 +68,14 @@ async function handler(ctx) {
         author: item.operator,
         category: item.category_info?.name ? [item.category_info.name] : [],
         image: item.img_url,
-    }));
+    }))
 
-    const categoryName = categoryId ? categoryMap[categoryId] : '';
-    const titleSuffix = categoryName ? ` - ${categoryName}` : '';
+    const categoryName = categoryId ? categoryMap[categoryId] : ''
+    const titleSuffix = categoryName ? ` - ${categoryName}` : ''
 
     return {
         title: `得物技术博客${titleSuffix}`,
         link: 'https://tech.dewu.com',
         item: items,
-    };
+    }
 }

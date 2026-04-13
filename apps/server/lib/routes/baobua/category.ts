@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import loadArticle from './article';
-import { SUB_NAME_PREFIX, SUB_URL } from './const';
+import loadArticle from './article'
+import { SUB_NAME_PREFIX, SUB_URL } from './const'
 
 export const route: Route = {
     path: '/category/:category',
@@ -30,15 +30,15 @@ export const route: Route = {
     maintainers: ['AiraNadih'],
     handler,
     url: 'baobua.com/',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const url = `${SUB_URL}cat/${category}/`;
+    const category = ctx.req.param('category')
+    const url = `${SUB_URL}cat/${category}/`
 
-    const response = await got(url);
-    const $ = load(response.body);
-    const itemRaw = $('.thcovering-video').toArray();
+    const response = await got(url)
+    const $ = load(response.body)
+    const itemRaw = $('.thcovering-video').toArray()
 
     return {
         title: `${SUB_NAME_PREFIX} - Category: ${category}`,
@@ -46,17 +46,17 @@ async function handler(ctx) {
         item: await Promise.all(
             itemRaw
                 .map((e) => {
-                    const item = $(e);
-                    let link = item.find('a').attr('href');
+                    const item = $(e)
+                    let link = item.find('a').attr('href')
                     if (!link) {
-                        return null;
+                        return null
                     }
                     if (link.startsWith('/')) {
-                        link = new URL(link, SUB_URL).href;
+                        link = new URL(link, SUB_URL).href
                     }
-                    return cache.tryGet(link, () => loadArticle(link));
+                    return cache.tryGet(link, () => loadArticle(link))
                 })
-                .filter(Boolean)
+                .filter(Boolean),
         ),
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { processContent } from './utils';
+import { processContent } from './utils'
 
 export const route: Route = {
     path: '/post/:thread/:postId',
@@ -41,30 +41,30 @@ Note: This route does not support Radar auto-detection because the post ID is in
     },
     radar: [],
     handler: async (ctx) => {
-        const { thread, postId } = ctx.req.param();
-        const baseUrl = 'https://f95zone.to';
-        const link = `${baseUrl}/threads/${thread}/#${postId}`;
+        const { thread, postId } = ctx.req.param()
+        const baseUrl = 'https://f95zone.to'
+        const link = `${baseUrl}/threads/${thread}/#${postId}`
 
         const response = await ofetch(link, {
             headers: {
                 referer: baseUrl,
                 ...(config.f95zone.cookie ? { cookie: config.f95zone.cookie } : {}),
             },
-        });
+        })
 
-        const $ = load(response);
-        const title = $('h1.p-title-value').text().trim();
-        const post = $(`article[data-content="${postId}"]`);
-        const content = post.find('.bbWrapper').html() || '';
-        const author = post.attr('data-author') || '';
-        const postDate = post.find('time.u-dt').first().attr('datetime');
+        const $ = load(response)
+        const title = $('h1.p-title-value').text().trim()
+        const post = $(`article[data-content="${postId}"]`)
+        const content = post.find('.bbWrapper').html() || ''
+        const author = post.attr('data-author') || ''
+        const postDate = post.find('time.u-dt').first().attr('datetime')
         const tags = $('a.tagItem')
             .toArray()
-            .map((el) => $(el).text().trim());
+            .map((el) => $(el).text().trim())
 
         // Extract [yyyy-mm-dd] from title for update tracking
-        const dateMatch = title.match(/\[(\d{4}-\d{2}-\d{2})\]/);
-        const updateDate = dateMatch?.[1];
+        const dateMatch = title.match(/\[(\d{4}-\d{2}-\d{2})\]/)
+        const updateDate = dateMatch?.[1]
 
         return {
             title: `[F95zone] ${title}`,
@@ -80,6 +80,6 @@ Note: This route does not support Radar auto-detection because the post ID is in
                     category: tags,
                 },
             ],
-        };
+        }
     },
-};
+}

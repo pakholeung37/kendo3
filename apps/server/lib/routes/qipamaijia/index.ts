@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const rootUrl = 'https://www.qipamaijia.com';
+const rootUrl = 'https://www.qipamaijia.com'
 
 export const route: Route = {
     path: '/:cate?',
@@ -29,26 +29,26 @@ export const route: Route = {
     maintainers: ['Fatpandac', 'nczitzk'],
     handler,
     url: 'qipamaijia.com/',
-};
+}
 
 async function handler(ctx) {
-    const cate = ctx.req.param('cate') ?? '';
-    const url = `${rootUrl}/${cate}`;
+    const cate = ctx.req.param('cate') ?? ''
+    const url = `${rootUrl}/${cate}`
 
-    const response = await got(url);
-    const $ = load(response.data);
-    const title = $('#highlight').text();
+    const response = await got(url)
+    const $ = load(response.data)
+    const title = $('#highlight').text()
     const items = $('div.col_l > div.block')
         .toArray()
         .map((item) => ({
             title: $(item).find('div.content').text(),
             link: $(item).find('a').attr('href'),
             description: $(item).find('div.content').html() + $(item).find('div.thumb').html(),
-        }));
+        }))
 
     return {
         title: `奇葩买家秀 - ${title}`,
         link: url,
         item: items,
-    };
+    }
 }

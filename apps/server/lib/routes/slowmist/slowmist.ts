@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { finishArticleItem } from '@/utils/wechat-mp';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { finishArticleItem } from '@/utils/wechat-mp'
 
-const baseUrl = 'https://www.slowmist.com';
+const baseUrl = 'https://www.slowmist.com'
 
 export const route: Route = {
     path: '/:type?',
@@ -30,49 +30,49 @@ export const route: Route = {
     description: `| 公司新闻 | 漏洞披露 | 技术研究 |
 | -------- | -------- | -------- |
 | news     | vul      | research |`,
-};
+}
 
 async function handler(ctx) {
-    let type = ctx.req.param('type');
+    let type = ctx.req.param('type')
 
-    let title = '慢雾科技 - ';
+    let title = '慢雾科技 - '
     switch (type) {
         case 'news':
-            title += '公司新闻';
+            title += '公司新闻'
 
-            break;
+            break
 
         case 'vul':
-            title += '漏洞披露';
+            title += '漏洞披露'
 
-            break;
+            break
 
         case 'research':
-            title += '技术研究';
+            title += '技术研究'
 
-            break;
+            break
 
         default:
-            type = 'news';
-            title += '公司新闻';
+            type = 'news'
+            title += '公司新闻'
     }
 
-    const url = `${baseUrl}/api/get_list?type=${type}`;
+    const url = `${baseUrl}/api/get_list?type=${type}`
 
-    const response = await got(url);
+    const response = await got(url)
 
     let items = (response.data.data || []).map((item) => ({
         title: item.title,
         link: item.url,
         description: item.desc,
         pubDate: parseDate(item.date),
-    }));
+    }))
 
-    items = await Promise.all(items.map((item) => finishArticleItem(item)));
+    items = await Promise.all(items.map((item) => finishArticleItem(item)))
 
     return {
         title,
         link: url,
         item: items,
-    };
+    }
 }

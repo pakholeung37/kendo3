@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/jinan/healthcommission/medical_exam_notice',
@@ -27,10 +27,10 @@ export const route: Route = {
     maintainers: ['tzjyxb'],
     handler,
     url: 'jnmhc.jinan.gov.cn/*',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://jnmhc.jinan.gov.cn';
+    const baseUrl = 'https://jnmhc.jinan.gov.cn'
 
     const res = await got('https://jnmhc.jinan.gov.cn/module/web/jpage/dataproxy.jsp', {
         searchParams: {
@@ -42,32 +42,32 @@ async function handler() {
             webname: '济南市卫生健康委员会',
             permissiontype: 0,
         },
-    });
+    })
 
-    const $ = load(res.data, { xmlMode: true });
+    const $ = load(res.data, { xmlMode: true })
 
-    const list = $('record');
+    const list = $('record')
 
     return {
         title: '济南卫建委-执业考试通知',
         link: `${baseUrl}/col/col14418/index.html`,
         item: list.toArray().map((item) => {
             // 获取每个item对应的html字符串
-            item = $(item).text();
+            item = $(item).text()
 
             // 解析上一步中的html
-            const html = load(item);
+            const html = load(item)
 
-            const title = html('td[width="620"] a').attr('title');
-            const link = html('td[width="620"] a').attr('href');
-            const date = timezone(parseDate(html('td[width="100"]').text()), +8);
+            const title = html('td[width="620"] a').attr('title')
+            const link = html('td[width="620"] a').attr('href')
+            const date = timezone(parseDate(html('td[width="100"]').text()), +8)
             return {
                 title,
                 description: title,
                 pubDate: date,
                 link,
                 author: '济南市卫生健康委员会',
-            };
+            }
         }),
-    };
+    }
 }

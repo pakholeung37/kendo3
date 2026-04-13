@@ -1,56 +1,56 @@
 const fallback = (a, b, c) => {
     if (a !== undefined && a !== null) {
-        return a;
+        return a
     }
     if (b !== undefined && b !== null) {
-        return b;
+        return b
     }
-    return c;
-};
+    return c
+}
 
 const queryToBoolean = (s) => {
     if (s === undefined || s === null) {
-        return s;
+        return s
     }
     if (Array.isArray(s)) {
         if (s.length === 0) {
-            return;
+            return
         }
-        s = s[0];
+        s = s[0]
     }
-    s = s.toString();
+    s = s.toString()
     if (s.toLowerCase() === 'false' || s === '0') {
-        return false;
+        return false
     }
-    return true;
-};
+    return true
+}
 
 const queryToInteger = (s) => {
     if (s === undefined || s === null) {
-        return s;
+        return s
     }
     if (Array.isArray(s)) {
         if (s.length === 0) {
-            return;
+            return
         }
-        s = s[0];
+        s = s[0]
     }
-    s = s.toString();
-    return Number.parseInt(s);
-};
+    s = s.toString()
+    return Number.parseInt(s)
+}
 
 const queryToFloat = (s) => {
     if (s === undefined || s === null) {
-        return s;
+        return s
     }
     if (Array.isArray(s)) {
         if (s.length === 0) {
-            return;
+            return
         }
-        s = s[0];
+        s = s[0]
     }
-    s = s.toString();
-    return Number.parseFloat(s);
-};
+    s = s.toString()
+    return Number.parseFloat(s)
+}
 
-export { fallback, queryToBoolean, queryToFloat, queryToInteger };
+export { fallback, queryToBoolean, queryToFloat, queryToInteger }

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/activity/:category?/:language?/:latestAdditions?/:latestEdits?/:latestAlerts?/:latestPictures?',
@@ -62,34 +62,34 @@ export const route: Route = {
 | ru | Русский    |
 | sv | Svenska    |
 | zh | 中文       |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '-1';
-    const language = ctx.req.param('language') ?? '';
-    const latestAdditions = ctx.req.param('latestAdditions') ?? '1';
-    const latestEdits = ctx.req.param('latestEdits') ?? '1';
-    const latestAlerts = ctx.req.param('latestAlerts') ?? '1';
-    const latestPictures = ctx.req.param('latestPictures') ?? '1';
+    const category = ctx.req.param('category') ?? '-1'
+    const language = ctx.req.param('language') ?? ''
+    const latestAdditions = ctx.req.param('latestAdditions') ?? '1'
+    const latestEdits = ctx.req.param('latestEdits') ?? '1'
+    const latestAlerts = ctx.req.param('latestAlerts') ?? '1'
+    const latestPictures = ctx.req.param('latestPictures') ?? '1'
 
     if (language && !isValidHost(language)) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
 
-    const rootUrl = `https://${language === 'en' || language === '' ? '' : `${language}.`}myfigurecollection.net`;
-    const currentUrl = `${rootUrl}/browse.v4.php?mode=activity&latestAdditions=${latestAdditions}&latestEdits=${latestEdits}&latestAlerts=${latestAlerts}&latestPictures=${latestPictures}&rootId=${category}`;
+    const rootUrl = `https://${language === 'en' || language === '' ? '' : `${language}.`}myfigurecollection.net`
+    const currentUrl = `${rootUrl}/browse.v4.php?mode=activity&latestAdditions=${latestAdditions}&latestEdits=${latestEdits}&latestAlerts=${latestAlerts}&latestPictures=${latestPictures}&rootId=${category}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.activity-wrapper')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: `${item.find('.activity-label').text().split(' • ')[0]}: ${item.find('.stamp-anchor').text()}`,
@@ -105,11 +105,11 @@ async function handler(ctx) {
                             $(image)
                                 .html()
                                 .match(/url\((.*)\)/)[1]
-                                .replace(/\/thumbnails/, '')
-                        )
+                                .replace(/\/thumbnails/, ''),
+                        ),
                 ),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title')
@@ -117,7 +117,7 @@ async function handler(ctx) {
             .replace(/ \(.*\)/, ''),
         link: currentUrl,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (changelog: string, pictures: string[]): string =>
@@ -127,5 +127,5 @@ const renderDescription = (changelog: string, pictures: string[]): string =>
             {pictures?.map((picture, index) => (
                 <img key={`${picture}-${index}`} src={picture} />
             ))}
-        </>
-    );
+        </>,
+    )

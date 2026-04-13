@@ -1,17 +1,17 @@
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchNewsItems, fetchTag } from './utils';
+import { fetchNewsItems, fetchTag } from './utils'
 
 export const handler = async (ctx): Promise<Data> => {
-    const slug = ctx.req.param('slug');
+    const slug = ctx.req.param('slug')
 
-    const { id, name } = await fetchTag(slug);
+    const { id, name } = await fetchTag(slug)
 
-    const rootUrl = 'https://www.iplaysoft.com/';
-    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed&tags=${id}`;
+    const rootUrl = 'https://www.iplaysoft.com/'
+    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed&tags=${id}`
 
-    const items: DataItem[] = await fetchNewsItems(postApiUrl);
+    const items: DataItem[] = await fetchNewsItems(postApiUrl)
 
     return {
         title: `${name} - 异次元软件世界`,
@@ -19,8 +19,8 @@ export const handler = async (ctx): Promise<Data> => {
         language: 'zh-CN',
         link: `${rootUrl}tag/${slug}`,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/tag/:slug',
@@ -48,4 +48,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

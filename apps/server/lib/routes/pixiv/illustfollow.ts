@@ -1,12 +1,12 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import getIllustFollows from './api/get-illust-follows';
-import { getToken } from './token';
-import pixivUtils from './utils';
+import getIllustFollows from './api/get-illust-follows'
+import { getToken } from './token'
+import pixivUtils from './utils'
 
 export const route: Route = {
     path: '/user/illustfollows',
@@ -39,26 +39,26 @@ export const route: Route = {
     description: `::: warning
   Only for self-hosted
 :::`,
-};
+}
 
 async function handler() {
     if (!config.pixiv || !config.pixiv.refreshToken) {
-        throw new ConfigNotFoundError('pixiv RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('pixiv RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
 
-    const token = await getToken(cache.tryGet);
+    const token = await getToken(cache.tryGet)
     if (!token) {
-        throw new ConfigNotFoundError('pixiv not login');
+        throw new ConfigNotFoundError('pixiv not login')
     }
 
-    const response = await getIllustFollows(token);
-    const illusts = response.data.illusts;
+    const response = await getIllustFollows(token)
+    const illusts = response.data.illusts
     return {
         title: `Pixiv关注的新作品`,
         link: 'https://www.pixiv.net/bookmark_new_illust.php',
         description: `Pixiv关注的画师们的最新作品`,
         item: illusts.map((illust) => {
-            const images = pixivUtils.getImgs(illust);
+            const images = pixivUtils.getImgs(illust)
             return {
                 title: illust.title,
                 author: illust.user.name,
@@ -66,7 +66,7 @@ async function handler() {
                 description: `${illust.caption}<br><p>画师：${illust.user.name} - 阅览数：${illust.total_view} - 收藏数：${illust.total_bookmarks}</p>${images.join('')}`,
                 link: `https://www.pixiv.net/artworks/${illust.id}`,
                 category: illust.tags.map((tag) => tag.name),
-            };
+            }
         }),
-    };
+    }
 }

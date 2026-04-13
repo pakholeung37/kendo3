@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { fallback, queryToFloat, queryToInteger } from '@/utils/readable-social';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { fallback, queryToFloat, queryToInteger } from '@/utils/readable-social'
 
-import { renderListDescription } from '../templates/list-description';
+import { renderListDescription } from '../templates/list-description'
 
 export const route: Route = {
     path: '/list/:type?/:routeParams?',
@@ -60,21 +60,21 @@ export const route: Route = {
   > 如何找到榜单对应的路由参数：
   > 在豆瓣手机 APP 中，对应地榜单页面右上角，点击分享链接。链接路径 \`subject_collection\` 后的路径就是路由参数 \`type\`。
   > 如：小说热门榜的分享链接为：\`https://m.douban.com/subject_collection/ECDIHUN4A\`，其对应本 RSS 路由的 \`type\` 为 \`ECDIHUN4A\`，对应的订阅链接路由：[\`/douban/list/ECDIHUN4A\`](https://rsshub.app/douban/list/ECDIHUN4A)`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'subject_real_time_hotest';
-    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')));
-    const playable = fallback(undefined, queryToInteger(routeParams.playable), 0);
-    const score = fallback(undefined, queryToFloat(routeParams.score), 0);
-    let start = 0;
-    const count = 50;
-    let items = [];
-    let title = '';
-    let description = '';
-    let total = null;
+    const type = ctx.req.param('type') || 'subject_real_time_hotest'
+    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')))
+    const playable = fallback(undefined, queryToInteger(routeParams.playable), 0)
+    const score = fallback(undefined, queryToFloat(routeParams.score), 0)
+    let start = 0
+    const count = 50
+    let items = []
+    let title = ''
+    let description = ''
+    let total = null
     while (total === null || start < total) {
-        const url = `https://m.douban.com/rexxar/api/v2/subject_collection/${type}/items?playable=${playable}&start=${start}&count=${count}`;
+        const url = `https://m.douban.com/rexxar/api/v2/subject_collection/${type}/items?playable=${playable}&start=${start}&count=${count}`
         // eslint-disable-next-line no-await-in-loop
         const response = await got({
             method: 'get',
@@ -82,18 +82,18 @@ async function handler(ctx) {
             headers: {
                 Referer: `https://m.douban.com/subject_collection/${type}`,
             },
-        });
-        title = response.data.subject_collection.name;
-        description = response.data.subject_collection.description;
-        total = response.data.total;
+        })
+        title = response.data.subject_collection.name
+        description = response.data.subject_collection.description
+        total = response.data.total
         const newItems = response.data.subject_collection_items
             .filter((item) => {
-                const rate = item.rating ? item.rating.value : 0;
-                return rate >= score; // 保留rate大于等于score的项and过滤无评分项
+                const rate = item.rating ? item.rating.value : 0
+                return rate >= score // 保留rate大于等于score的项and过滤无评分项
             })
             .map((item) => {
-                const title = item.title;
-                const link = item.url;
+                const title = item.title
+                const link = item.url
                 const description = renderListDescription({
                     ranking_value: item.ranking_value,
                     title,
@@ -102,15 +102,15 @@ async function handler(ctx) {
                     card_subtitle: item.card_subtitle,
                     description: item.cards ? item.cards[0].content : item.abstract,
                     cover: item.cover_url || item.cover?.url,
-                });
+                })
                 return {
                     title,
                     link,
                     description,
-                };
-            });
-        items = [...items, ...newItems];
-        start += count;
+                }
+            })
+        items = [...items, ...newItems]
+        start += count
     }
 
     return {
@@ -118,5 +118,5 @@ async function handler(ctx) {
         link: `https://m.douban.com/subject_collection/${type}`,
         item: items,
         description,
-    };
+    }
 }

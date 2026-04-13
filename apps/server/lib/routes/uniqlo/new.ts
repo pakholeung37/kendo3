@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/new/:country/:category',
@@ -17,10 +17,10 @@ export const route: Route = {
     name: 'New Arrivals',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { country, category } = ctx.req.param();
+    const { country, category } = ctx.req.param()
 
     const map = {
         sg: {
@@ -54,7 +54,7 @@ async function handler(ctx) {
             },
             lang: 'ja',
         },
-    };
+    }
     const { data } = await got(map[country].url, {
         searchParams: {
             path: map[country].path[category],
@@ -63,7 +63,7 @@ async function handler(ctx) {
             limit: 24,
             offset: 0,
         },
-    });
+    })
 
     const items = data.result.items.map((item) => ({
         title: item.name,
@@ -71,11 +71,11 @@ async function handler(ctx) {
         description: `${item.longDescription || item.name}<br><br>Price: ${(item.prices.base || item.prices.promo).currency.symbol}${(item.prices.base || item.prices.promo).value}<br><br>${
             item.images.main.length ? item.images.main.map((image) => `<img src="${image.url || image.image}">`).join('') : ''
         }${item.images.sub.map((image) => `<img src="${image.url || image.image}">`).join('')}`,
-    }));
+    }))
 
     return {
         title: `Uniqlo ${category} new arrivals in ${country}`,
         link: `https://www.uniqlo.com/${country}/${map[country].lang || 'en'}/feature/new/${category}`,
         item: items,
-    };
+    }
 }

@@ -1,22 +1,22 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { buildApiUrl, processItems, rootUrl } from './util';
+import { buildApiUrl, processItems, rootUrl } from './util'
 
 export const handler = async (ctx) => {
-    const { id, filter = 'id' } = ctx.req.param();
+    const { id, filter = 'id' } = ctx.req.param()
 
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const currentUrl = new URL(id ? `topic/${id}` : 'discover', rootUrl).href;
+    const currentUrl = new URL(id ? `topic/${id}` : 'discover', rootUrl).href
 
-    const currentHtml = await ofetch(currentUrl);
+    const currentHtml = await ofetch(currentUrl)
 
-    const $ = load(currentHtml);
+    const $ = load(currentHtml)
 
-    const { apiTagProcUrl } = await buildApiUrl($);
+    const { apiTagProcUrl } = await buildApiUrl($)
 
     const {
         data: { results: apiTagProcs },
@@ -29,13 +29,13 @@ export const handler = async (ctx) => {
             o: 'desc',
             ticket: '',
         },
-    });
+    })
 
-    const items = processItems(apiTagProcs?.slice(0, limit) ?? []);
+    const items = processItems(apiTagProcs?.slice(0, limit) ?? [])
 
-    const image = new URL($('img.logo').prop('src'), rootUrl).href;
+    const image = new URL($('img.logo').prop('src'), rootUrl).href
 
-    const author = $('title').text().split(/_/).pop();
+    const author = $('title').text().split(/_/).pop()
 
     return {
         title: `${author}${id ? ` | ${id}` : ''}`,
@@ -45,8 +45,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/topic/:id?/:filter?',
@@ -105,9 +105,9 @@ export const route: Route = {
         {
             source: ['top.aibase.com/topic/:id'],
             target: (params) => {
-                const id = params.id;
+                const id = params.id
 
-                return `/topic${id ? `/${id}` : ''}`;
+                return `/topic${id ? `/${id}` : ''}`
             },
         },
         {
@@ -611,4 +611,4 @@ export const route: Route = {
             target: '/topic/室内设计',
         },
     ],
-};
+}

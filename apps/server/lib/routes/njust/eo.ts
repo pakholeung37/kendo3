@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getContent } from './utils';
+import { getContent } from './utils'
 
 const map = new Map([
     ['16tz', { title: '南京理工大学电光16 -- 通知公告', id: '/_t217/tzgg' }],
@@ -15,9 +15,9 @@ const map = new Map([
     ['18dt', { title: '南京理工大学电光18 -- 主任寄语', id: '/_t900/zrjy_10251' }],
     ['19tz', { title: '南京理工大学电光19 -- 通知公告', id: '/_t1163/tzgg_11606' }],
     ['19dt', { title: '南京理工大学电光19 -- 每日动态', id: '/_t1163/mrdt_11608' }],
-]);
+])
 
-const host = 'https://dgxg.njust.edu.cn';
+const host = 'https://dgxg.njust.edu.cn'
 
 export const route: Route = {
     path: '/eo/:grade?/:type?',
@@ -49,25 +49,25 @@ export const route: Route = {
 | 年级通知（通知公告） | 每日动态（主任寄语） |
 | -------------------- | -------------------- |
 | tz                   | dt                   |`,
-};
+}
 
 async function handler(ctx) {
-    const grade = ctx.req.param('grade') ?? '17';
-    const type = ctx.req.param('type') ?? 'tz';
-    let info = map.get(grade + type);
+    const grade = ctx.req.param('grade') ?? '17'
+    const type = ctx.req.param('type') ?? 'tz'
+    let info = map.get(grade + type)
     if (!info) {
         // throw new Error('invalid type');
-        info = { title: '', id: '/' + grade + '/' + type };
+        info = { title: '', id: '/' + grade + '/' + type }
     }
-    const id = info.id;
-    const siteUrl = host + id + '/list.htm';
+    const id = info.id
+    const siteUrl = host + id + '/list.htm'
 
-    const html = await getContent(siteUrl, true);
-    const $ = load(html);
+    const html = await getContent(siteUrl, true)
+    const $ = load(html)
     if (!info.title) {
-        info.title = $('title').text();
+        info.title = $('title').text()
     }
-    const list = $('li.list_item');
+    const list = $('li.list_item')
 
     return {
         title: info.title,
@@ -77,5 +77,5 @@ async function handler(ctx) {
             pubDate: timezone(parseDate($(item).find('span.Article_PublishDate').text(), 'YYYY-MM-DD'), +8),
             link: $(item).find('a').attr('href'),
         })),
-    };
+    }
 }

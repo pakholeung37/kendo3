@@ -1,31 +1,31 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'https://iehou.com';
-    const currentUrl = new URL(category ? `page-${category}.htm` : '', rootUrl).href;
+    const rootUrl = 'https://iehou.com'
+    const currentUrl = new URL(category ? `page-${category}.htm` : '', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('li.list-group-item div.subject h2')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.text();
+            const title = item.text()
 
             return {
                 title,
@@ -36,36 +36,36 @@ export const handler = async (ctx) => {
                     .toArray()
                     .map((c) => $(c).text()),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.title').text();
-                const description = $$('div.thread-content').html();
-                const image = $$('div.thread-content img').first().prop('src');
+                const title = $$('h1.title').text()
+                const description = $$('div.thread-content').html()
+                const image = $$('div.thread-content img').first().prop('src')
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('i.icon-clock-o').parent().contents().last().text().trim(), 'MM-DD HH:mm', 'YYYY-MM-DD HH:mm'), +8);
-                item.author = $$('img.avatar-1').parent().contents().last().text().trim();
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('i.icon-clock-o').parent().contents().last().text().trim(), 'MM-DD HH:mm', 'YYYY-MM-DD HH:mm'), +8)
+                item.author = $$('img.avatar-1').parent().contents().last().text().trim()
                 item.content = {
                     html: description,
                     text: $$('div.thread-content').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         author: $('h1').text(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -122,4 +122,4 @@ export const route: Route = {
             target: '/weekhot',
         },
     ],
-};
+}

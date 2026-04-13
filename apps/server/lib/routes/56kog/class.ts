@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { fetchItems, rootUrl } from './util';
+import { fetchItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/class/:category?',
@@ -26,13 +26,13 @@ export const route: Route = {
 | [恐怖灵异](https://www.56kog.com/class/8_1.html) | [都市言情](https://www.56kog.com/class/3_1.html) | [科幻](https://www.56kog.com/class/7_1.html) | [女生小说](https://www.56kog.com/class/9_1.html) | [其他](https://www.56kog.com/class/10_1.html) |
 | ------------------------------------------------ | ------------------------------------------------ | -------------------------------------------- | ------------------------------------------------ | --------------------------------------------- |
 | 8_1                                             | 3_1                                             | 7_1                                         | 9_1                                             | 10_1                                         |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '1_1' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = '1_1' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const currentUrl = new URL(`class/${category}.html`, rootUrl).href;
+    const currentUrl = new URL(`class/${category}.html`, rootUrl).href
 
-    return await fetchItems(limit, currentUrl, cache.tryGet);
+    return await fetchItems(limit, currentUrl, cache.tryGet)
 }

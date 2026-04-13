@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -20,28 +20,28 @@ export const route: Route = {
     name: '新闻',
     maintainers: ['HankChow'],
     handler,
-};
+}
 
 async function handler() {
-    const newsUrl = 'https://www.gzmtr.com/ygwm/xwzx/gsxw/';
-    const response = await got(newsUrl);
-    const data = response.data;
+    const newsUrl = 'https://www.gzmtr.com/ygwm/xwzx/gsxw/'
+    const response = await got(newsUrl)
+    const data = response.data
 
-    const $ = load(data);
+    const $ = load(data)
     const list = $('ul.ag_h_w li')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const url = newsUrl + item.find('a').attr('href').slice(2);
-            const title = item.find('a').text();
-            const publishTime = parseDate(item.find('span').text());
+            item = $(item)
+            const url = newsUrl + item.find('a').attr('href').slice(2)
+            const title = item.find('a').text()
+            const publishTime = parseDate(item.find('span').text())
             return {
                 title,
                 link: url,
                 author: '广州地铁',
                 pubtime: publishTime,
-            };
-        });
+            }
+        })
 
     return {
         title: '广州地铁新闻',
@@ -53,5 +53,5 @@ async function handler() {
             link: item.link,
             author: item.author,
         })),
-    };
+    }
 }

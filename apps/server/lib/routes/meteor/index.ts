@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getBoards, renderDesc } from './utils';
+import { baseUrl, getBoards, renderDesc } from './utils'
 
 export const route: Route = {
     path: '/:board?',
@@ -21,16 +21,16 @@ export const route: Route = {
     name: '看板',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let { board = 'all' } = ctx.req.param();
+    let { board = 'all' } = ctx.req.param()
 
-    const boards = await getBoards(cache.tryGet);
-    let boardInfo;
+    const boards = await getBoards(cache.tryGet)
+    let boardInfo
     if (board !== 'all') {
-        boardInfo = boards.find((b) => b.id === board || b.alias === board);
-        board = boardInfo.id;
+        boardInfo = boards.find((b) => b.id === board || b.alias === board)
+        board = boardInfo.id
     }
 
     const { data: response } = await got.post(`${baseUrl}/article/get_new_articles`, {
@@ -40,9 +40,9 @@ async function handler(ctx) {
             page: 0,
             pageSize: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30,
         },
-    });
+    })
 
-    const result = JSON.parse(decodeURIComponent(response.result));
+    const result = JSON.parse(decodeURIComponent(response.result))
 
     const items = await Promise.all(
         result.map((item) =>
@@ -52,9 +52,9 @@ async function handler(ctx) {
                 link: `${baseUrl}/article/${item.shortId}`,
                 author: item.authorAlias,
                 pubDate: parseDate(item.createdAt),
-            }))
-        )
-    );
+            })),
+        ),
+    )
 
     return {
         title: `${board === 'all' ? '全部看板' : boardInfo.title} | Meteor 學生社群`,
@@ -62,5 +62,5 @@ async function handler(ctx) {
         image: board === 'all' ? null : boardInfo.imgUrl === 'not_set' ? null : boardInfo.imgUrl,
         link: `${board === 'all' ? `${baseUrl}/board/all` : boardInfo.link}/new`,
         item: items,
-    };
+    }
 }

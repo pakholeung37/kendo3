@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/scratch/user-projects/:username',
@@ -24,18 +24,18 @@ export const route: Route = {
     name: 'Scratch User Projects',
     maintainers: ['Skota11'],
     handler: async (ctx) => {
-        const { username } = ctx.req.param();
+        const { username } = ctx.req.param()
 
-        const limitQuery = ctx.req.query('limit') ?? '40';
-        const limit = Math.min(Number.parseInt(limitQuery, 10) || 40, 40);
+        const limitQuery = ctx.req.query('limit') ?? '40'
+        const limit = Math.min(Number.parseInt(limitQuery, 10) || 40, 40)
 
-        const apiUrl = `https://api.scratch.mit.edu/users/${username}/projects/?limit=${limit}`;
+        const apiUrl = `https://api.scratch.mit.edu/users/${username}/projects/?limit=${limit}`
 
-        const data = await ofetch(apiUrl);
+        const data = await ofetch(apiUrl)
 
         const items = data.map((item) => {
-            const parts = [item.instructions ? `Instructions:<br>${item.instructions}` : '', item.description ? `Notes and Credits:<br>${item.description}` : ''].filter(Boolean);
-            const descriptionText = parts.join('<br><br>').replaceAll('\n', '<br>');
+            const parts = [item.instructions ? `Instructions:<br>${item.instructions}` : '', item.description ? `Notes and Credits:<br>${item.description}` : ''].filter(Boolean)
+            const descriptionText = parts.join('<br><br>').replaceAll('\n', '<br>')
 
             return {
                 title: item.title,
@@ -46,13 +46,13 @@ export const route: Route = {
                 guid: `scratch-project-${item.id}`,
                 image: item.image,
                 author: username,
-            };
-        });
+            }
+        })
 
         return {
             title: `Scratch User Projects - ${username}`,
             link: `https://scratch.mit.edu/users/${username}/projects/`,
             item: items,
-        };
+        }
     },
-};
+}

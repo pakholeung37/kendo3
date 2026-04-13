@@ -6,45 +6,45 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
 function i(e, t, n) {
-    (t[n] = 255 & (e >>> 24)), (t[n + 1] = 255 & (e >>> 16)), (t[n + 2] = 255 & (e >>> 8)), (t[n + 3] = 255 & e);
+    ;(t[n] = 255 & (e >>> 24)), (t[n + 1] = 255 & (e >>> 16)), (t[n + 2] = 255 & (e >>> 8)), (t[n + 3] = 255 & e)
 }
 function B(e, t) {
-    return ((255 & e[t]) << 24) | ((255 & e[t + 1]) << 16) | ((255 & e[t + 2]) << 8) | (255 & e[t + 3]);
+    return ((255 & e[t]) << 24) | ((255 & e[t + 1]) << 16) | ((255 & e[t + 2]) << 8) | (255 & e[t + 3])
 }
 function Q(e, t) {
-    return ((4_294_967_295 & e) << t) | (e >>> (32 - t));
+    return ((4_294_967_295 & e) << t) | (e >>> (32 - t))
 }
 function G(e) {
-    const t = Array.from({ length: 4 });
-    const n = Array.from({ length: 4 });
-    i(e, t, 0), (n[0] = h.zb[255 & t[0]]), (n[1] = h.zb[255 & t[1]]), (n[2] = h.zb[255 & t[2]]), (n[3] = h.zb[255 & t[3]]);
-    const r = B(n, 0);
-    return r ^ Q(r, 2) ^ Q(r, 10) ^ Q(r, 18) ^ Q(r, 24);
+    const t = Array.from({ length: 4 })
+    const n = Array.from({ length: 4 })
+    i(e, t, 0), (n[0] = h.zb[255 & t[0]]), (n[1] = h.zb[255 & t[1]]), (n[2] = h.zb[255 & t[2]]), (n[3] = h.zb[255 & t[3]])
+    const r = B(n, 0)
+    return r ^ Q(r, 2) ^ Q(r, 10) ^ Q(r, 18) ^ Q(r, 24)
 }
 const __g = {
     x(e, t) {
-        let n = [];
+        let n = []
         for (let r = e.length, i = 0; 0 < r; r -= 16) {
-            const a = Array.from({ length: 16 });
+            const a = Array.from({ length: 16 })
             for (let o = e.slice(16 * i, 16 * (i + 1)), c = 0; c < 16; c++) {
-                a[c] = o[c] ^ t[c];
+                a[c] = o[c] ^ t[c]
             }
             // eslint-disable-next-line unicorn/prefer-spread
-            (t = __g.r(a)), (n = n.concat(t)), i++;
+            ;(t = __g.r(a)), (n = n.concat(t)), i++
         }
-        return n;
+        return n
     },
     r(e) {
-        const t = Array.from({ length: 16 });
-        const n = Array.from({ length: 36 });
-        (n[0] = B(e, 0)), (n[1] = B(e, 4)), (n[2] = B(e, 8)), (n[3] = B(e, 12));
+        const t = Array.from({ length: 16 })
+        const n = Array.from({ length: 36 })
+        ;(n[0] = B(e, 0)), (n[1] = B(e, 4)), (n[2] = B(e, 8)), (n[3] = B(e, 12))
         for (let r = 0; r < 32; r++) {
-            const o = G(n[r + 1] ^ n[r + 2] ^ n[r + 3] ^ h.zk[r]);
-            n[r + 4] = n[r] ^ o;
+            const o = G(n[r + 1] ^ n[r + 2] ^ n[r + 3] ^ h.zk[r])
+            n[r + 4] = n[r] ^ o
         }
-        return i(n[35], t, 0), i(n[34], t, 4), i(n[33], t, 8), i(n[32], t, 12), t;
+        return i(n[35], t, 0), i(n[34], t, 4), i(n[33], t, 8), i(n[32], t, 12), t
     },
-};
+}
 const h = {
     zk: [
         1_170_614_578, 1_024_848_638, 1_413_669_199, -343_334_464, -766_094_290, -1_373_058_082, -143_119_608, -297_228_157, 1_933_479_194, -971_186_181, -406_453_910, 460_404_854, -547_427_574, -1_891_326_262, -1_679_095_901,
@@ -60,69 +60,69 @@ const h = {
         89, 216, 202, 220, 50, 221, 152, 140, 33, 235, 214,
     ],
     // zm: [120, 50, 98, 101, 99, 98, 119, 100, 103, 107, 99, 119, 97, 99, 110, 111], // not used
-};
+}
 const encode = (param) => {
-    const salt = '6fpLRqJO8M/c3jnYxFkUVC4ZIG12SiH=5v0mXDazWBTsuw7QetbKdoPyAl+hN9rgE';
-    let result = '';
+    const salt = '6fpLRqJO8M/c3jnYxFkUVC4ZIG12SiH=5v0mXDazWBTsuw7QetbKdoPyAl+hN9rgE'
+    let result = ''
     for (const x of [0, 6, 12, 18]) {
-        const a = param >>> x;
-        const b = a & 63;
-        const c = salt.charAt(b);
-        result += c;
+        const a = param >>> x
+        const b = a & 63
+        const c = salt.charAt(b)
+        result += c
     }
-    return result;
-};
+    return result
+}
 
 const preProcess = (md5Str) => {
-    const md5CharCodeAtArr = [];
+    const md5CharCodeAtArr = []
     for (let i = 0; i < md5Str.length; i++) {
-        md5CharCodeAtArr.push(md5Str.charCodeAt(i));
+        md5CharCodeAtArr.push(md5Str.charCodeAt(i))
     }
 
-    md5CharCodeAtArr.unshift(0);
-    md5CharCodeAtArr.unshift(Math.random() * 127);
+    md5CharCodeAtArr.unshift(0)
+    md5CharCodeAtArr.unshift(Math.random() * 127)
     for (let i = 0; i < 15; i++) {
-        md5CharCodeAtArr.push(14);
+        md5CharCodeAtArr.push(14)
     }
 
-    const md5CharCodeAtFrontArr = md5CharCodeAtArr.slice(0, 16);
-    const fixArr = [48, 53, 57, 48, 53, 51, 102, 55, 100, 49, 53, 101, 48, 49, 100, 55];
-    const new_md5_charCodeAt_arr = [];
+    const md5CharCodeAtFrontArr = md5CharCodeAtArr.slice(0, 16)
+    const fixArr = [48, 53, 57, 48, 53, 51, 102, 55, 100, 49, 53, 101, 48, 49, 100, 55]
+    const new_md5_charCodeAt_arr = []
     for (const [i, element] of md5CharCodeAtFrontArr.entries()) {
-        new_md5_charCodeAt_arr.push(element ^ fixArr[i] ^ 42);
+        new_md5_charCodeAt_arr.push(element ^ fixArr[i] ^ 42)
     }
 
-    const __g_r = __g.r(new_md5_charCodeAt_arr);
-    const md5CharCodeAtBackArr = md5CharCodeAtArr.slice(16, 48);
-    const __g_x = __g.x(md5CharCodeAtBackArr, __g_r);
+    const __g_r = __g.r(new_md5_charCodeAt_arr)
+    const md5CharCodeAtBackArr = md5CharCodeAtArr.slice(16, 48)
+    const __g_x = __g.x(md5CharCodeAtBackArr, __g_r)
     // eslint-disable-next-line unicorn/prefer-spread
-    return __g_r.concat(__g_x);
-};
+    return __g_r.concat(__g_x)
+}
 
 const encrypt = (md5Str) => {
-    const processed = preProcess(md5Str);
+    const processed = preProcess(md5Str)
 
-    let current = 0;
-    let resultStr = '';
+    let current = 0
+    let resultStr = ''
     for (let i = 0; i < processed.length; i++) {
-        const pop = processed[processed.length - i - 1];
-        const i_mod_4 = i % 4;
-        const i_mod_3 = i % 3;
+        const pop = processed[processed.length - i - 1]
+        const i_mod_4 = i % 4
+        const i_mod_3 = i % 3
 
-        const a = 8 * i_mod_4;
-        const b = 58 >>> a;
-        const c = b & 255;
-        const d = pop ^ c;
-        const e = d << (8 * i_mod_3);
+        const a = 8 * i_mod_4
+        const b = 58 >>> a
+        const c = b & 255
+        const d = pop ^ c
+        const e = d << (8 * i_mod_3)
 
-        current |= e;
+        current |= e
 
         if (i_mod_3 === 2) {
-            resultStr += encode(current);
-            current = 0;
+            resultStr += encode(current)
+            current = 0
         }
     }
-    return resultStr;
-};
+    return resultStr
+}
 
-export default encrypt;
+export default encrypt

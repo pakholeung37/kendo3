@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/xiaoshan',
@@ -25,32 +25,32 @@ export const route: Route = {
     maintainers: ['znhocn'],
     handler,
     url: 'www.xswater.com/gongshui/channels/227.html',
-};
+}
 
 async function handler() {
     // const area = ctx.req.param('area');
-    const url = 'https://www.xswater.com/gongshui/channels/227.html';
+    const url = 'https://www.xswater.com/gongshui/channels/227.html'
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
-    const data = response.data;
-    const $ = load(data);
-    const list = $('.ul-list li');
+    const data = response.data
+    const $ = load(data)
+    const list = $('.ul-list li')
 
     return {
         title: $('title').text(),
         link: 'https://www.xswater.com/gongshui/channels/227.html',
         description: $('meta[name="description"]').attr('content') || $('title').text(),
         item: list.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').text(),
                 description: `萧山区停水通知：${item.find('a').text()}`,
                 pubDate: new Date(item.find('span').text().slice(1, 11)).toUTCString(),
                 link: `https://www.xswater.com${item.find('a').attr('href')}`,
-            };
+            }
         }),
-    };
+    }
 }

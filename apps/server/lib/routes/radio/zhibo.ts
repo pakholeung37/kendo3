@@ -1,17 +1,17 @@
-import CryptoJS from 'crypto-js';
+import CryptoJS from 'crypto-js'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const audio_types = {
     m3u8: 'x-mpegURL',
     mp3: 'mpeg',
     mp4: 'mp4',
     m4a: 'mp4',
-};
+}
 
 export const route: Route = {
     path: '/zhibo/:id',
@@ -36,25 +36,25 @@ export const route: Route = {
 ::: tip
   查看更多电台直播节目，可前往 [电台直播](http://www.radio.cn/pc-portal/erji/radioStation.html)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const KEY = 'f0fc4c668392f9f9a447e48584c214ee';
+    const KEY = 'f0fc4c668392f9f9a447e48584c214ee'
 
-    const id = ctx.req.param('id');
-    const size = ctx.req.query('limit') ?? '100';
+    const id = ctx.req.param('id')
+    const size = ctx.req.query('limit') ?? '100'
 
-    const params = `columnId=${id}&pageNo=0&pageSize=${size}`;
+    const params = `columnId=${id}&pageNo=0&pageSize=${size}`
 
-    const rootUrl = 'https://www.radio.cn';
-    const apiRootUrl = 'https://ytmsout.radio.cn';
+    const rootUrl = 'https://www.radio.cn'
+    const apiRootUrl = 'https://ytmsout.radio.cn'
 
-    const iconUrl = `${rootUrl}/pc-portal/image/icon_32.jpg`;
-    const currentUrl = `${rootUrl}/pc-portal/sanji/zhibo_2.html?name=${id}`;
-    const apiUrl = `${apiRootUrl}/web/appProgram/pageByColumn?${params}`;
+    const iconUrl = `${rootUrl}/pc-portal/image/icon_32.jpg`
+    const currentUrl = `${rootUrl}/pc-portal/sanji/zhibo_2.html?name=${id}`
+    const apiUrl = `${apiRootUrl}/web/appProgram/pageByColumn?${params}`
 
-    const timestamp = Date.now();
-    const sign = CryptoJS.MD5(`${params}&timestamp=${timestamp}&key=${KEY}`).toString().toUpperCase();
+    const timestamp = Date.now()
+    const sign = CryptoJS.MD5(`${params}&timestamp=${timestamp}&key=${KEY}`).toString().toUpperCase()
 
     const response = await got({
         method: 'get',
@@ -66,18 +66,18 @@ async function handler(ctx) {
             equipmentId: '0000',
             platformCode: 'WEB',
         },
-    });
+    })
 
-    const data = response.data.data.data;
+    const data = response.data.data.data
 
     const items = data.map((item) => {
-        let enclosure_url = item.playUrlHigh ?? item.playUrlLow;
-        enclosure_url = enclosure_url.endsWith('.m3u8') ? item.downloadUrl : enclosure_url;
-        const file_ext = new URL(enclosure_url).pathname.split('.').pop();
-        const enclosure_type = file_ext ? `audio/${audio_types[file_ext]}` : '';
+        let enclosure_url = item.playUrlHigh ?? item.playUrlLow
+        enclosure_url = enclosure_url.endsWith('.m3u8') ? item.downloadUrl : enclosure_url
+        const file_ext = new URL(enclosure_url).pathname.split('.').pop()
+        const enclosure_type = file_ext ? `audio/${audio_types[file_ext]}` : ''
 
-        const date = new Date(item.startTime);
-        const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+        const date = new Date(item.startTime)
+        const dateString = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 
         return {
             guid: item.id,
@@ -89,8 +89,8 @@ async function handler(ctx) {
             enclosure_type,
             itunes_duration: item.durationStr,
             itunes_item_image: iconUrl,
-        };
-    });
+        }
+    })
 
     return {
         title: `云听 - ${data[0].name}`,
@@ -99,5 +99,5 @@ async function handler(ctx) {
         image: iconUrl,
         itunes_author: 'radio.cn',
         description: data[0].des,
-    };
+    }
 }

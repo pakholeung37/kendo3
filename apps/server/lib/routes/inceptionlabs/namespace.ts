@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Inception Labs',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     categories: ['programming'],
     description: 'Inception Labs - AI research company developing diffusion-based LLMs',
     lang: 'en',
-};
+}

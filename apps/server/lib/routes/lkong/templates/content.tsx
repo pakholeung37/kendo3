@@ -1,17 +1,17 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ContentChild = {
-    text?: string;
-    color?: string;
-    bold?: boolean;
-    type?: string;
-    id?: string | number;
-};
+    text?: string
+    color?: string
+    bold?: boolean
+    type?: string
+    id?: string | number
+}
 
 type ContentParagraph = {
-    type?: string;
-    children?: ContentChild[];
-};
+    type?: string
+    children?: ContentChild[]
+}
 
 const LkongContent = ({ content }: { content: ContentParagraph[] }) => (
     <>
@@ -20,17 +20,17 @@ const LkongContent = ({ content }: { content: ContentParagraph[] }) => (
                 <p>
                     {paragraph.children?.map((child) => {
                         if (child.text) {
-                            return <span style={child.color ? `color: ${child.color}` : undefined}>{child.bold ? <strong>{child.text}</strong> : child.text}</span>;
+                            return <span style={child.color ? `color: ${child.color}` : undefined}>{child.bold ? <strong>{child.text}</strong> : child.text}</span>
                         }
                         if (child.type === 'emotion') {
-                            return <img src={`https://image.lkong.com/bq/em${child.id}.gif`} />;
+                            return <img src={`https://image.lkong.com/bq/em${child.id}.gif`} />
                         }
-                        return null;
+                        return null
                     })}
                 </p>
-            ) : null
+            ) : null,
         )}
     </>
-);
+)
 
-export const renderContent = (content: ContentParagraph[]) => renderToString(<LkongContent content={content} />);
+export const renderContent = (content: ContentParagraph[]) => renderToString(<LkongContent content={content} />)

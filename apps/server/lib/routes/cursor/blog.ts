@@ -1,47 +1,47 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { topic, locale } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10);
+    const { topic, locale } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10)
 
-    const baseUrl = 'https://cursor.com';
-    const normalizedTopic = topic === 'all' ? undefined : topic;
-    const localeSegment = locale ? `/${locale}` : '';
-    const path = normalizedTopic ? `${localeSegment}/blog/topic/${normalizedTopic}` : `${localeSegment}/blog`;
-    const targetUrl = new URL(path, baseUrl).href;
+    const baseUrl = 'https://cursor.com'
+    const normalizedTopic = topic === 'all' ? undefined : topic
+    const localeSegment = locale ? `/${locale}` : ''
+    const path = normalizedTopic ? `${localeSegment}/blog/topic/${normalizedTopic}` : `${localeSegment}/blog`
+    const targetUrl = new URL(path, baseUrl).href
 
-    const html = await ofetch(targetUrl);
-    const $ = load(html);
+    const html = await ofetch(targetUrl)
+    const $ = load(html)
 
-    const main = $('#main').last(); // there are two main tags before hydration
+    const main = $('#main').last() // there are two main tags before hydration
     const items = main
         .find('article')
         .slice(0, limit)
         .toArray()
         .map((el) => {
-            const $el = $(el);
-            const $link = $el.find('a').first();
+            const $el = $(el)
+            const $link = $el.find('a').first()
 
-            const title = $link.find('p').first().text().trim();
-            const description = $link.find('p').eq(1).text().trim();
-            const pubDate = parseDate($el.find('time').first().text().trim());
+            const title = $link.find('p').first().text().trim()
+            const description = $link.find('p').eq(1).text().trim()
+            const pubDate = parseDate($el.find('time').first().text().trim())
 
-            const href = $link.attr('href');
-            const link = href ? new URL(href, baseUrl).href : undefined;
+            const href = $link.attr('href')
+            const link = href ? new URL(href, baseUrl).href : undefined
 
             return {
                 title,
                 description,
                 pubDate,
                 link,
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text() || 'Cursor Blog',
@@ -50,8 +50,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         item: items,
         allowEmpty: true,
         image: $('meta[property="og:image"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/blog/:topic?/:locale?',
@@ -94,4 +94,4 @@ export const route: Route = {
     ],
     view: ViewType.Articles,
     handler,
-};
+}

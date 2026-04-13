@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -37,36 +37,36 @@ export const route: Route = {
 | 核心五篇 | 读者投稿 | 读书随笔 | 财报浅析 | 出行游记 | 巴芒连载 |
 | -------- | -------- | -------- | -------- | -------- | -------- |
 | hexin    | tougao   | suibi    | caibao   | youji    | bamang   |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10;
+    const category = ctx.req.param('category') ?? ''
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10
 
-    const rootUrl = 'https://www.tangshufang.com';
-    const currentUrl = `${rootUrl}${category ? `/${category}` : ''}`;
+    const rootUrl = 'https://www.tangshufang.com'
+    const currentUrl = `${rootUrl}${category ? `/${category}` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('article')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('h2 a');
+            const a = item.find('h2 a')
 
             return {
                 title: a.text(),
                 link: a.attr('href'),
                 pubDate: parseDate(item.find('time').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -74,23 +74,23 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.wxsyncmain').html();
+                item.description = content('.wxsyncmain').html()
                 item.category = content('a[rel="category tag"]')
                     .toArray()
-                    .map((a) => content(a).text());
+                    .map((a) => content(a).text())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

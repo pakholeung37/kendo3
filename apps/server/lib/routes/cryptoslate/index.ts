@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import logger from '@/utils/logger';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Data, Route } from '@/types'
+import logger from '@/utils/logger'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/',
@@ -28,25 +28,25 @@ export const route: Route = {
         },
     ],
     description: 'Get latest news from CryptoSlate.',
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
-    const rssUrl = 'https://cryptoslate.com/feed/';
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
+    const rssUrl = 'https://cryptoslate.com/feed/'
 
-    const feed = await parser.parseURL(rssUrl);
+    const feed = await parser.parseURL(rssUrl)
 
     const items = feed.items
         .filter((item) => !item.link?.includes('/feed') && !item.link?.includes('#respond'))
         .slice(0, limit)
         .map((item) => {
             if (!item.link) {
-                return {};
+                return {}
             }
 
             try {
                 // Clean URL by removing query parameters
-                const cleanUrl = item.link.split('?')[0];
+                const cleanUrl = item.link.split('?')[0]
 
                 return {
                     title: item.title || 'Untitled',
@@ -57,15 +57,15 @@ async function handler(ctx): Promise<Data> {
                     category: item.categories || [],
                     guid: item.guid || item.link,
                     image: item.enclosure?.url,
-                };
+                }
             } catch (error: any) {
-                logger.warn(`Couldn't process article from CryptoSlate: ${item.link}: ${error.message}`);
-                return {};
+                logger.warn(`Couldn't process article from CryptoSlate: ${item.link}: ${error.message}`)
+                return {}
             }
-        });
+        })
 
     // Filter out empty items
-    const filteredItems = items.filter((item) => item && Object.keys(item).length > 0);
+    const filteredItems = items.filter((item) => item && Object.keys(item).length > 0)
 
     return {
         title: feed.title || 'CryptoSlate',
@@ -74,26 +74,26 @@ async function handler(ctx): Promise<Data> {
         item: filteredItems,
         language: feed.language || 'en',
         image: feed.image?.url,
-    } as Data;
+    } as Data
 }
 
 function extractFullTextFromRSS(entry: any): string | null {
     try {
-        const contentEncoded = entry['content:encoded'] || entry['content:encodedSnippet'] || entry.content || entry.contentSnippet;
+        const contentEncoded = entry['content:encoded'] || entry['content:encodedSnippet'] || entry.content || entry.contentSnippet
 
         if (!contentEncoded) {
-            return null;
+            return null
         }
 
-        const $ = load(contentEncoded);
+        const $ = load(contentEncoded)
 
         // Remove unwanted elements
-        $('img').remove();
-        $('figure').remove();
+        $('img').remove()
+        $('figure').remove()
 
-        return $.html() || null;
+        return $.html() || null
     } catch (error) {
-        logger.error(`Error extracting full text from RSS: ${error}`);
-        return null;
+        logger.error(`Error extracting full text from RSS: ${error}`)
+        return null
     }
 }

@@ -212,7 +212,7 @@ export const pageByNavigationPathQuery = /* GraphQL */ `
             }
         }
     }
-`;
+`
 
 export const assetsConnectionByCriteriaQuery = /* GraphQL */ `
     query assetsConnectionByCriteria($after: ID, $brand: Brand!, $categories: [Int!], $first: Int!, $render: Render!, $types: [AssetType!]!) {
@@ -332,4 +332,4 @@ export const assetsConnectionByCriteriaQuery = /* GraphQL */ `
             zoom
         }
     }
-`;
+`

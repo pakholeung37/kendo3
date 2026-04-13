@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { CreatorFragment, PostReelNode } from './types';
+import type { CreatorFragment, PostReelNode } from './types'
 
-export const baseUrl = 'https://www.fantube.tokyo';
+export const baseUrl = 'https://www.fantube.tokyo'
 
 export const getCreatorFragment = (username: string) =>
     cache.tryGet(`fantube:creator:${username}`, async () => {
@@ -13,24 +13,24 @@ export const getCreatorFragment = (username: string) =>
             headers: {
                 cookie: 'fantube-ageVerified=1;',
             },
-        });
-        const $ = load(response);
+        })
+        const $ = load(response)
 
         const selfPushString = JSON.parse(
             $('script:contains("creatorFragment")')
                 .text()
-                .match(/^self\.__next_f\.push\((.+?)\)$/)?.[1] || '{}'
-        );
-        const selfPushData = JSON.parse(selfPushString[1].slice(2));
+                .match(/^self\.__next_f\.push\((.+?)\)$/)?.[1] || '{}',
+        )
+        const selfPushData = JSON.parse(selfPushString[1].slice(2))
         // const creatorFragment = selfPushData[3].children.find((c) => c[1] === 'div')[3].children[3].creatorFragment;
         const creatorFragment = selfPushData
             .find((d) => d?.hasOwnProperty('children'))
             .children.find((child) => Object.values(child).includes('div'))
             .find((c) => c?.hasOwnProperty('children'))
-            .children.find((c) => c?.hasOwnProperty('creatorFragment')).creatorFragment;
+            .children.find((c) => c?.hasOwnProperty('creatorFragment')).creatorFragment
 
-        return creatorFragment as CreatorFragment;
-    });
+        return creatorFragment as CreatorFragment
+    })
 
 export const getCreatorPostReelList = (identifier: string, limit: number): Promise<PostReelNode[]> =>
     cache.tryGet(`fantube:creatorPostReelList:${identifier}:${limit}`, async () => {
@@ -258,7 +258,7 @@ export const getCreatorPostReelList = (identifier: string, limit: number): Promi
                 operationName: 'CreatorPostReelList',
             }),
             method: 'POST',
-        });
+        })
 
-        return response.data.posts.nodes as PostReelNode[];
-    });
+        return response.data.posts.nodes as PostReelNode[]
+    })

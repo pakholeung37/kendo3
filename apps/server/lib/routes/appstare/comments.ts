@@ -1,11 +1,11 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const handler = async (ctx) => {
-    const country = ctx.req.param('country');
-    const appid = ctx.req.param('appid');
-    const url = `https://monitor.appstare.net/spider/appComments?country=${country}&appId=${appid}`;
-    const data = await ofetch(url);
+    const country = ctx.req.param('country')
+    const appid = ctx.req.param('appid')
+    const url = `https://monitor.appstare.net/spider/appComments?country=${country}&appId=${appid}`
+    const data = await ofetch(url)
 
     const items = data.map((item) => ({
         title: item.title,
@@ -14,9 +14,9 @@ export const handler = async (ctx) => {
             <p>${item.review}</p>
         `,
         pubDate: new Date(item.date).toUTCString(),
-    }));
+    }))
 
-    const link = `https://appstare.net/data/app/comment/${appid}/${country}`;
+    const link = `https://appstare.net/data/app/comment/${appid}/${country}`
 
     return {
         title: 'App Comments',
@@ -25,8 +25,8 @@ export const handler = async (ctx) => {
         item: items,
         link,
         allowEmpty: true,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/comments/:country/:appid',
@@ -54,4 +54,4 @@ export const route: Route = {
         },
     ],
     description: 'Retrieve only the comments of the app from the past 7 days.',
-};
+}

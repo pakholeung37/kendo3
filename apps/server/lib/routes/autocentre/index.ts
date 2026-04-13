@@ -1,5 +1,5 @@
-import type { Data, Route } from '@/types';
-import parser from '@/utils/rss-parser';
+import type { Data, Route } from '@/types'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/',
@@ -8,16 +8,16 @@ export const route: Route = {
     maintainers: ['driversti'],
     example: '/autocentre',
     handler,
-};
+}
 
 const createItem = (item) => ({
     title: item.title,
     link: item.link,
     description: item.contentSnippet,
-});
+})
 
 async function handler(): Promise<Data> {
-    const feed = await parser.parseURL('https://www.autocentre.ua/rss');
+    const feed = await parser.parseURL('https://www.autocentre.ua/rss')
 
     return {
         title: feed.title as string,
@@ -25,5 +25,5 @@ async function handler(): Promise<Data> {
         description: feed.description,
         language: 'uk',
         item: await Promise.all(feed.items.map((item) => createItem(item))),
-    };
+    }
 }

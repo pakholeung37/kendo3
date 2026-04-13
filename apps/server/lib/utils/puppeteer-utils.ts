@@ -7,15 +7,15 @@
  */
 const parseCookieArray = (cookies, domainFilter?: string | RegExp) => {
     if (typeof domainFilter === 'string') {
-        const dotDomain = '.' + domainFilter;
-        cookies = cookies.filter(({ domain }) => domain === domainFilter || domain.endsWith(dotDomain));
+        const dotDomain = '.' + domainFilter
+        cookies = cookies.filter(({ domain }) => domain === domainFilter || domain.endsWith(dotDomain))
     } else if (domainFilter && domainFilter.test !== undefined) {
-        cookies = cookies.filter(({ domain }) => domainFilter.test(domain));
+        cookies = cookies.filter(({ domain }) => domainFilter.test(domain))
     }
     // {name: '', value: 'foobar'} => 'foobar' // https://stackoverflow.com/questions/42531198/cookie-without-a-name
     // {name: 'foo', value: 'bar'} => 'foo=bar'
-    return cookies.map(({ name, value }) => (name ? `${name}=${value}` : value)).join('; ');
-};
+    return cookies.map(({ name, value }) => (name ? `${name}=${value}` : value)).join('; ')
+}
 
 /**
  * Construct a puppeteer-style cookie array from a Cookie-header-style cookie string
@@ -26,9 +26,9 @@ const parseCookieArray = (cookies, domainFilter?: string | RegExp) => {
  */
 const constructCookieArray = (cookieStr, domain) =>
     cookieStr.split('; ').map((item) => {
-        const [name, value] = item.split('=');
-        return value === undefined ? { name: '', value: name, domain } : { name, value, domain };
-    });
+        const [name, value] = item.split('=')
+        return value === undefined ? { name: '', value: name, domain } : { name, value, domain }
+    })
 
 /**
  * Set cookies for a page
@@ -39,9 +39,9 @@ const constructCookieArray = (cookieStr, domain) =>
  * @return {Promise<void>}
  */
 const setCookies = async (page, cookieStr, domain) => {
-    const cookies = constructCookieArray(cookieStr, domain);
-    await page.setCookie(...cookies);
-};
+    const cookies = constructCookieArray(cookieStr, domain)
+    await page.setCookie(...cookies)
+}
 
 /**
  * Get Cookie-header-style cookie string from a page
@@ -51,8 +51,8 @@ const setCookies = async (page, cookieStr, domain) => {
  * @return {Promise<string>} Cookie-header-style cookie string
  */
 const getCookies = async (page, domainFilter?: string) => {
-    const cookies = await page.cookies();
-    return parseCookieArray(cookies, domainFilter);
-};
+    const cookies = await page.cookies()
+    return parseCookieArray(cookies, domainFilter)
+}
 
-export { constructCookieArray, getCookies, parseCookieArray, setCookies };
+export { constructCookieArray, getCookies, parseCookieArray, setCookies }

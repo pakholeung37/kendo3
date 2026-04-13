@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/zxdt/:id?',
@@ -28,17 +28,17 @@ export const route: Route = {
     maintainers: ['LogicJake'],
     handler,
     url: 'www.12306.cn/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') || -1;
+    const id = ctx.req.param('id') || -1
 
-    const link = id === -1 ? 'https://www.12306.cn/mormhweb/zxdt/index_zxdt.html' : `https://www.12306.cn/mormhweb/1/${id}/index_fl.html`;
+    const link = id === -1 ? 'https://www.12306.cn/mormhweb/zxdt/index_zxdt.html' : `https://www.12306.cn/mormhweb/1/${id}/index_fl.html`
 
-    const response = await got.get(link);
-    const data = response.data;
-    const $ = load(data);
-    const name = $('div.nav_center > a:nth-child(4)').text();
+    const response = await got.get(link)
+    const data = response.data
+    const $ = load(data)
+    const name = $('div.nav_center > a:nth-child(4)').text()
 
     const list = $('#newList > ul > li')
         .toArray()
@@ -46,23 +46,23 @@ async function handler(ctx) {
             title: $(item).find('a').text(),
             link: new URL($(item).find('a').attr('href'), link).href,
             pubDate: parseDate($(item).find('span').text().slice(1, -1)),
-        }));
+        }))
 
     const out = await Promise.all(
         list.map((info) =>
             cache.tryGet(info.link, async () => {
-                const response = await got.get(info.link);
-                const $ = load(response.data);
-                info.description = $('.article-box').html() || $('.content_text').html() || '文章已被删除';
+                const response = await got.get(info.link)
+                const $ = load(response.data)
+                info.description = $('.article-box').html() || $('.content_text').html() || '文章已被删除'
 
-                return info;
-            })
-        )
-    );
+                return info
+            }),
+        ),
+    )
 
     return {
         title: `${name}最新动态`,
         link,
         item: out,
-    };
+    }
 }

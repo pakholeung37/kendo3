@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const domain = 'otobanana.com';
-const apiBase = `https://api.${domain}`;
-const baseUrl = `https://${domain}`;
+const domain = 'otobanana.com'
+const apiBase = `https://api.${domain}`
+const baseUrl = `https://${domain}`
 
 const getUserInfo = (id, tryGet) =>
     tryGet(`otobanana:user:${id}`, async () => {
-        const { data } = await got(`${apiBase}/users/${id}/`);
-        return data;
-    });
+        const { data } = await got(`${apiBase}/users/${id}/`)
+        return data
+    })
 
 const renderCast = (cast) => ({
     title: cast.title,
@@ -27,7 +27,7 @@ const renderCast = (cast) => ({
             {`💬 ${cast.comment_count} ❤️ ${cast.like_count} 🍌 ${cast.gift_banana} ${cast.play_count} 再生`}
             <br />
             {cast.text ? raw(cast.text.replaceAll('\n', '<br>')) : null}
-        </>
+        </>,
     ),
     pubDate: parseDate(cast.created_at),
     link: `https://otobanana.com/cast/${cast.id}`,
@@ -38,7 +38,7 @@ const renderCast = (cast) => ({
     enclosure_type: 'audio/x-m4a',
     upvotes: cast.like_count,
     comments: cast.comment_count,
-});
+})
 
 const renderLive = (live) => ({
     title: live.title,
@@ -49,12 +49,12 @@ const renderLive = (live) => ({
     author: `${live.user.name} (@${live.user.username})`,
     upvotes: live.like_count,
     comments: live.comment_count,
-});
+})
 
 const renderPost = ({ id, type_label: type, cast, /** livestream  */ message /** , event */ }) => {
     switch (type) {
         case 'cast':
-            return renderCast(cast);
+            return renderCast(cast)
         case 'message':
             return {
                 title: message.text.split('\n')[0],
@@ -64,10 +64,10 @@ const renderPost = ({ id, type_label: type, cast, /** livestream  */ message /**
                 author: `${message.user.name} (@${message.user.username})`,
                 upvotes: message.like_count,
                 comments: message.comment_count,
-            };
+            }
         default:
-            throw new Error(`Unknown post type: ${type}`);
+            throw new Error(`Unknown post type: ${type}`)
     }
-};
+}
 
-export { apiBase, baseUrl, getUserInfo, renderCast, renderLive, renderPost };
+export { apiBase, baseUrl, getUserInfo, renderCast, renderLive, renderPost }

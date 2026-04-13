@@ -1,16 +1,16 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/desc';
+import { renderDescription } from './templates/desc'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/datasets',
@@ -34,11 +34,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'modelscope.cn/datasets',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://modelscope.cn';
-    const link = `${baseUrl}/datasets`;
+    const baseUrl = 'https://modelscope.cn'
+    const link = `${baseUrl}/datasets`
 
     const { data } = await got(`${baseUrl}/api/v1/dolphin/datasets`, {
         searchParams: {
@@ -47,7 +47,7 @@ async function handler(ctx) {
             Target: '',
             Sort: 'gmt_modified',
         },
-    });
+    })
 
     const datasets = data.Data.map((dataset) => ({
         title: dataset.ChineseName,
@@ -57,22 +57,22 @@ async function handler(ctx) {
         pubDate: parseDate(dataset.GmtCreate, 'X'),
         category: dataset.UserDefineTags.split(','),
         slug: `/${dataset.Namespace}/${dataset.Name}`,
-    }));
+    }))
 
     const items = await Promise.all(
         datasets.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${baseUrl}/api/v1/datasets${item.slug}`);
+                const { data } = await got(`${baseUrl}/api/v1/datasets${item.slug}`)
 
-                const content = data.Data.ReadmeContent.replaceAll(/img src="(?!http)(.*?)"/g, `img src="${baseUrl}/api/v1/datasets${item.slug}/repo?Revision=master&FilePath=$1&View=true"`);
+                const content = data.Data.ReadmeContent.replaceAll(/img src="(?!http)(.*?)"/g, `img src="${baseUrl}/api/v1/datasets${item.slug}/repo?Revision=master&FilePath=$1&View=true"`)
                 item.description = renderDescription({
                     description: item.description,
                     md: md.render(content),
-                });
-                return item;
-            })
-        )
-    );
+                })
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '数据集首页 · 魔搭社区',
@@ -80,5 +80,5 @@ async function handler(ctx) {
         image: 'https://g.alicdn.com/sail-web/maas/0.8.10/favicon/128.ico',
         link,
         item: items,
-    };
+    }
 }

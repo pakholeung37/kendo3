@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    image?: string;
-    video?: string;
-    digest?: string;
-};
+    image?: string
+    video?: string
+    digest?: string
+}
 
 export const renderExclusiveDescription = ({ image, video, digest }: DescriptionData) =>
     renderToString(
@@ -16,5 +16,5 @@ export const renderExclusiveDescription = ({ image, video, digest }: Description
                 </video>
             ) : null}
             {digest ? <p>{digest}</p> : null}
-        </>
-    );
+        </>,
+    )

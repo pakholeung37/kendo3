@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderNote } from '../templates/note';
-import { notesUrl, ssoUrl } from '../utils';
+import { renderNote } from '../templates/note'
+import { notesUrl, ssoUrl } from '../utils'
 
 export const route: Route = {
     path: '/notes/:lang?/note/:id',
@@ -23,15 +23,15 @@ export const route: Route = {
     name: 'Note Comments',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const api = `${ssoUrl}/api/v1/comments`;
-    const link = `${notesUrl}/note/${id}`;
+    const id = ctx.req.param('id')
+    const api = `${ssoUrl}/api/v1/comments`
+    const link = `${notesUrl}/note/${id}`
 
-    const { data: response } = await got(link);
-    const $ = load(response);
+    const { data: response } = await got(link)
+    const $ = load(response)
 
     const { data } = await got(api, {
         searchParams: {
@@ -41,7 +41,7 @@ async function handler(ctx) {
             type: 'note',
             object_id: id,
         },
-    });
+    })
 
     const items = data.data.map((item) => ({
         title: item.content,
@@ -52,12 +52,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.created_timestamp),
         author: item.user.name,
         guid: `qoo-app:notes:note:${id}:${item.id}`,
-    }));
+    }))
 
     return {
         title: $('head title').text(),
         link,
         language: $('html').attr('lang'),
         item: items,
-    };
+    }
 }

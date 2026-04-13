@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { apiRootUrl, icon, image, processItems, rootUrl } from './util';
+import { apiRootUrl, icon, image, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/column/:id',
@@ -24,20 +24,20 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'foresightnews.pro/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const apiUrl = new URL('v1/articles', apiRootUrl).href;
-    const currentUrl = new URL(`column/detail/${id}`, rootUrl).href;
+    const apiUrl = new URL('v1/articles', apiRootUrl).href
+    const currentUrl = new URL(`column/detail/${id}`, rootUrl).href
 
     const { items, info } = await processItems(apiUrl, limit, {
         column_id: id,
-    });
+    })
 
-    const column = info.column;
+    const column = info.column
 
     return {
         item: items,
@@ -50,5 +50,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: column,
         author: 'Foresight News',
-    };
+    }
 }

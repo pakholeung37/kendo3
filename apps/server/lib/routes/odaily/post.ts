@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { rootUrl } from './utils';
+import { rootUrl } from './utils'
 
 const titles = {
     280: '最新',
@@ -17,7 +17,7 @@ const titles = {
     330: '波卡',
     297: '行情',
     296: '活动',
-};
+}
 
 export const route: Route = {
     path: '/:id?',
@@ -44,14 +44,14 @@ export const route: Route = {
     description: `| 最新 | 新品 | DeFi | NFT | 存储 | 波卡 | 行情 | 活动 |
 | ---- | ---- | ---- | --- | ---- | ---- | ---- | ---- |
 | 280  | 333  | 331  | 334 | 332  | 330  | 297  | 296  |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '280';
+    const id = ctx.req.param('id') ?? '280'
 
-    const currentUrl = `${rootUrl}/api/pp/api/app-front/feed-stream?feed_id=${id}&b_id=&per_page=${ctx.req.query('limit') ?? 25}`;
+    const currentUrl = `${rootUrl}/api/pp/api/app-front/feed-stream?feed_id=${id}&b_id=&per_page=${ctx.req.query('limit') ?? 25}`
 
-    const response = await got(currentUrl);
+    const response = await got(currentUrl)
 
     let items = response.data.data.items
         .map((item) => ({
@@ -61,34 +61,34 @@ async function handler(ctx) {
             link: `${rootUrl}/${item.entity_type}/${item.entity_id}`,
             pubDate: timezone(parseDate(item.published_at), +8),
         }))
-        .filter((item) => item.type !== 'newsflash');
+        .filter((item) => item.type !== 'newsflash')
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await got(item.link);
+                const detailResponse = await got(item.link)
 
-                const ssr = JSON.parse(`{${detailResponse.data.match(/window\.__INITIAL_STATE__ = {(.*)}/)[1]}}`);
+                const ssr = JSON.parse(`{${detailResponse.data.match(/window\.__INITIAL_STATE__ = {(.*)}/)[1]}}`)
 
-                const content = load(ssr.post.detail.content, null, false);
+                const content = load(ssr.post.detail.content, null, false)
                 content('img').each((_, img) => {
-                    img.attribs.src = img.attribs.src.split('?x-oss-process')[0];
-                    img.attribs.src = img.attribs.src.split('!heading')[0];
-                });
+                    img.attribs.src = img.attribs.src.split('?x-oss-process')[0]
+                    img.attribs.src = img.attribs.src.split('!heading')[0]
+                })
 
-                item.description = content.html();
-                item.author = ssr.post.user.name;
+                item.description = content.html()
+                item.author = ssr.post.user.name
 
-                delete item.type;
+                delete item.type
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${titles[id]} - Odaily星球日报`,
         link: rootUrl,
         item: items,
-    };
+    }
 }

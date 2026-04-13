@@ -1,7 +1,7 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
 
-import { doGot, genSize } from './util';
+import { doGot, genSize } from './util'
 
 export const route: Route = {
     path: '/mv/:number/:domain?',
@@ -24,23 +24,23 @@ export const route: Route = {
     name: '影视资源下载列表',
     maintainers: ['miemieYaho'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const domain = ctx.req.param('domain') ?? '2';
-    const number = ctx.req.param('number');
+    const domain = ctx.req.param('domain') ?? '2'
+    const number = ctx.req.param('number')
     if (!/^[1-9]$/.test(domain)) {
-        throw new InvalidParameterError('Invalid domain');
+        throw new InvalidParameterError('Invalid domain')
     }
-    const regex = /^\d{6,}$/;
+    const regex = /^\d{6,}$/
     if (!regex.test(number)) {
-        throw new InvalidParameterError('Invalid number');
+        throw new InvalidParameterError('Invalid number')
     }
 
-    const host = `https://www.${domain}bt0.com`;
-    const _link = `${host}/prod/core/system/getVideoDetail/${number}`;
+    const host = `https://www.${domain}bt0.com`
+    const _link = `${host}/prod/core/system/getVideoDetail/${number}`
 
-    const data = (await doGot(0, host, _link)).data;
+    const data = (await doGot(0, host, _link)).data
     const items = Object.values(data.ecca).flatMap((item) =>
         item.map((i) => ({
             title: i.zname,
@@ -52,15 +52,15 @@ async function handler(ctx) {
             enclosure_url: i.zlink,
             enclosure_length: genSize(i.zsize),
             category: strsJoin(i.zqxd, i.text_html, i.audio_html, i.new === 1 ? '新' : ''),
-        }))
-    );
+        })),
+    )
     return {
         title: data.title,
         link: `${host}/mv/${number}.html`,
         item: items,
-    };
+    }
 }
 
 function strsJoin(...strings) {
-    return strings.filter((str) => str !== '').join(',');
+    return strings.filter((str) => str !== '').join(',')
 }

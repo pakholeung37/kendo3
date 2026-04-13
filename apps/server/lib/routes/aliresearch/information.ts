@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/information/:type?',
@@ -29,15 +29,15 @@ export const route: Route = {
     url: 'aliresearch.com/cn/information',
     description: `| 新闻 | 观点 | 案例 |
 | ---- | ---- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? '新闻';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const type = ctx.req.param('type') ?? '新闻'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
-    const rootUrl = 'http://www.aliresearch.com';
-    const currentUrl = `${rootUrl}/cn/information`;
-    const apiUrl = `${rootUrl}/ch/listArticle`;
+    const rootUrl = 'http://www.aliresearch.com'
+    const currentUrl = `${rootUrl}/cn/information`
+    const apiUrl = `${rootUrl}/ch/listArticle`
 
     const response = await got({
         method: 'post',
@@ -47,14 +47,14 @@ async function handler(ctx) {
             pageSize: 10,
             type,
         },
-    });
+    })
 
     let items = response.data.data.slice(0, limit).map((item) => ({
         title: item.articleCode,
         author: item.author,
         pubDate: timezone(parseDate(item.gmtCreated), +8),
         link: `${rootUrl}/ch/information/informationdetails?articleCode=${item.articleCode}`,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -65,22 +65,22 @@ async function handler(ctx) {
                     json: {
                         articleCode: item.title,
                     },
-                });
+                })
 
-                const data = detailResponse.data.data;
+                const data = detailResponse.data.data
 
-                item.title = data.title;
-                item.description = data.content;
-                item.category = data.special.split(',');
+                item.title = data.title
+                item.description = data.content
+                item.category = data.special.split(',')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `阿里研究院 - ${type}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

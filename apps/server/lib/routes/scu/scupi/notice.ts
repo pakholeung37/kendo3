@@ -1,9 +1,9 @@
 // Warning: The author still knows nothing about javascript!
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getArticle, getNotifList } from './_utils';
+import { getArticle, getNotifList } from './_utils'
 
 export const route: Route = {
     path: '/scupi',
@@ -23,12 +23,12 @@ export const route: Route = {
     url: 'scupi.scu.edu.cn/activities/notice',
     handler,
     description: ``,
-};
+}
 
 async function handler() {
     // feed the data to rss
-    const items = await getNotifList();
-    const itemsWithContent = await Promise.all(items.map((item) => cache.tryGet(item.link, () => getArticle(item))));
+    const items = await getNotifList()
+    const itemsWithContent = await Promise.all(items.map((item) => cache.tryGet(item.link, () => getArticle(item))))
 
     return {
         title: '四川大学匹兹堡学院',
@@ -38,5 +38,5 @@ async function handler() {
         logo: 'https://upload.wikimedia.org/wikipedia/zh/4/45/Sichuan_University_logo.svg',
         link: 'https://scupi.scu.edu.cn/',
         item: itemsWithContent,
-    };
+    }
 }

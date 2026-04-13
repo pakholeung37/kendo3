@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const getRollNewsList = (pageid, lid, limit) =>
     got('https://feed.mix.sina.com.cn/api/roll/get', {
@@ -19,7 +19,7 @@ const getRollNewsList = (pageid, lid, limit) =>
             r: Math.random(),
             _: Date.now(),
         },
-    });
+    })
 
 const parseRollNewsList = (data) =>
     data.map((item) => ({
@@ -29,38 +29,38 @@ const parseRollNewsList = (data) =>
         author: item.media_name,
         pubDate: parseDate(item.intime, 'X'),
         updated: parseDate(item.mtime, 'X'),
-    }));
+    }))
 
 const parseArticle = (item, tryGet) =>
     tryGet(item.link, async () => {
-        const detailResponse = await got(item.link);
-        const $ = load(detailResponse.data);
-        $('#left_hzh_ad, .appendQr_wrap, .app-kaihu-qr, .tech-quotation').remove();
+        const detailResponse = await got(item.link)
+        const $ = load(detailResponse.data)
+        $('#left_hzh_ad, .appendQr_wrap, .app-kaihu-qr, .tech-quotation').remove()
 
-        const metaPublishTime = $('meta[property="article:published_time"]');
-        const htmlPubDate = $('#pub_date, .date');
-        const htmlDate = htmlPubDate.length ? timezone(parseDate(htmlPubDate.text(), ['YYYY年MM月DD日 HH:mm', 'YYYY年MM月DD日HH:mm']), 8) : null;
-        const metaDate = metaPublishTime.length ? parseDate(metaPublishTime.attr('content')) : htmlDate; // 2023-05-08T08:39:31+08:00
-        item.pubDate = item.pubDate ?? metaDate;
-        item.author = $('meta[property="article:author"]').attr('content');
+        const metaPublishTime = $('meta[property="article:published_time"]')
+        const htmlPubDate = $('#pub_date, .date')
+        const htmlDate = htmlPubDate.length ? timezone(parseDate(htmlPubDate.text(), ['YYYY年MM月DD日 HH:mm', 'YYYY年MM月DD日HH:mm']), 8) : null
+        const metaDate = metaPublishTime.length ? parseDate(metaPublishTime.attr('content')) : htmlDate // 2023-05-08T08:39:31+08:00
+        item.pubDate = item.pubDate ?? metaDate
+        item.author = $('meta[property="article:author"]').attr('content')
 
         if (item.link.startsWith('https://slide.sports.sina.com.cn/') || item.link.startsWith('https://slide.tech.sina.com.cn/')) {
             const slideData = JSON.parse(
                 $('script')
                     .text()
-                    .match(/var slide_data = ({.*?})\s/)[1]
-            );
+                    .match(/var slide_data = ({.*?})\s/)[1],
+            )
             item.description = renderToString(
                 <>
                     {slideData.images.map((img) => (
                         <img src={img.download_img} alt={img.intro} />
                     ))}
-                </>
-            );
+                </>,
+            )
         } else if (item.link.startsWith('https://video.sina.com.cn/')) {
             const videoId = $('script')
                 .text()
-                .match(/video_id:'?(.*?)'?,/)[1];
+                .match(/video_id:'?(.*?)'?,/)[1]
 
             const { data: videoResponse } = await got('https://api.ivideo.sina.com.cn/public/video/play', {
                 searchParams: {
@@ -82,11 +82,11 @@ const parseArticle = (item, tryGet) =>
                     uu: '',
                     isAuto: 1,
                 },
-            });
+            })
 
-            const videoData = videoResponse.data;
-            const poster = videoData.image;
-            const videoUrl = videoData.videos.find((v) => v.type === 'mp4').dispatch_result.url;
+            const videoData = videoResponse.data
+            const poster = videoData.image
+            const videoUrl = videoData.videos.find((v) => v.type === 'mp4').dispatch_result.url
             item.description = renderToString(
                 <>
                     {videoUrl ? (
@@ -94,21 +94,21 @@ const parseArticle = (item, tryGet) =>
                             <source src={videoUrl} />
                         </video>
                     ) : null}
-                </>
-            );
-            item.pubDate = parseDate(videoData.create_time, 'X');
+                </>,
+            )
+            item.pubDate = parseDate(videoData.create_time, 'X')
         } else if (item.link.startsWith('https://news.sina.com.cn/') || item.link.startsWith('https://mil.news.sina.com.cn/')) {
-            item.description = $('#article').html();
-            item.category = $('meta[name="keywords"]').attr('content').split(',');
+            item.description = $('#article').html()
+            item.category = $('meta[name="keywords"]').attr('content').split(',')
         } else {
             // https://ent.sina.com.cn
             // https://finance.sina.com.cn
             // https://sports.sina.com.cn
-            item.description = $('#artibody').html();
-            item.category = $('#keywords').data('wbkey')?.split(',');
+            item.description = $('#artibody').html()
+            item.category = $('#keywords').data('wbkey')?.split(',')
         }
 
-        return item;
-    });
+        return item
+    })
 
-export { getRollNewsList, parseArticle, parseRollNewsList };
+export { getRollNewsList, parseArticle, parseRollNewsList }

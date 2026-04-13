@@ -1,11 +1,11 @@
-import bbobHTML from '@bbob/html';
-import presetHTML5 from '@bbob/preset-html5';
-import type { BBobCoreTagNodeTree, PresetFactory } from '@bbob/types';
-import { load } from 'cheerio';
+import bbobHTML from '@bbob/html'
+import presetHTML5 from '@bbob/preset-html5'
+import type { BBobCoreTagNodeTree, PresetFactory } from '@bbob/types'
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const swapLinebreak = (tree: BBobCoreTagNodeTree) =>
     tree.walk((node) => {
@@ -13,10 +13,10 @@ const swapLinebreak = (tree: BBobCoreTagNodeTree) =>
             return {
                 tag: 'br',
                 content: null,
-            };
+            }
         }
-        return node;
-    });
+        return node
+    })
 
 const customPreset: PresetFactory = presetHTML5.extend((tags) => ({
     ...tags,
@@ -46,20 +46,20 @@ const customPreset: PresetFactory = presetHTML5.extend((tags) => ({
                     src: node.attrs?.[key],
                     type,
                 },
-            }))
+            })),
         ),
     }),
-}));
+}))
 
 export const handler = async (ctx) => {
-    const { category = 'all', language = 'english' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const { category = 'all', language = 'english' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'https://www.counter-strike.net';
-    const apiRootUrl = 'https://store.steampowered.com';
-    const cdnRootUrl = 'https://media.st.dl.eccdnx.com';
-    const currentUrl = new URL(`news${category && category !== 'all' ? `/${category}` : ''}${language ? `?l=${language}` : ''}`, rootUrl).href;
-    const apiUrl = new URL('events/ajaxgetpartnereventspageable/', apiRootUrl).href;
+    const rootUrl = 'https://www.counter-strike.net'
+    const apiRootUrl = 'https://store.steampowered.com'
+    const cdnRootUrl = 'https://media.st.dl.eccdnx.com'
+    const currentUrl = new URL(`news${category && category !== 'all' ? `/${category}` : ''}${language ? `?l=${language}` : ''}`, rootUrl).href
+    const apiUrl = new URL('events/ajaxgetpartnereventspageable/', apiRootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -69,15 +69,15 @@ export const handler = async (ctx) => {
             count: limit,
             l: language,
         },
-    });
+    })
 
     const items = response.events
         .filter((item) => (category === 'updates' ? item.event_type === 12 : item.event_type))
         .slice(0, limit)
         .map((item) => {
-            const title = item.event_name;
-            const description = bbobHTML(item.announcement_body.body, [customPreset(), swapLinebreak]);
-            const guid = `counter-strike-news-${item.gid}`;
+            const title = item.event_name
+            const description = bbobHTML(item.announcement_body.body, [customPreset(), swapLinebreak])
+            const guid = `counter-strike-news-${item.gid}`
 
             return {
                 title,
@@ -92,15 +92,15 @@ export const handler = async (ctx) => {
                     text: item.announcement_body.body,
                 },
                 updated: parseDate(item.announcement_body.updatetime, 'X'),
-            };
-        });
+            }
+        })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = 'Counter Strike';
-    const image = new URL('apps/csgo/images/dota_react//blog/default_cover.jpg', cdnRootUrl).href;
+    const author = 'Counter Strike'
+    const image = new URL('apps/csgo/images/dota_react//blog/default_cover.jpg', cdnRootUrl).href
 
     return {
         title: `${author} - ${category === 'updates' ? 'Updates' : 'News'}`,
@@ -111,8 +111,8 @@ export const handler = async (ctx) => {
         image,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:category?/:language?',
@@ -177,12 +177,12 @@ export const route: Route = {
         {
             source: ['www.counter-strike.net/news/:category'],
             target: (params, url) => {
-                url = new URL(url);
-                const category = params.category;
-                const language = url.searchParams.get('l');
+                url = new URL(url)
+                const category = params.category
+                const language = url.searchParams.get('l')
 
-                return `/news${category ? `/${category}${language ? `/${language}` : ''}` : ''}`;
+                return `/news${category ? `/${category}${language ? `/${language}` : ''}` : ''}`
             },
         },
     ],
-};
+}

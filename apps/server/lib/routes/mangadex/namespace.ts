@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'MangaDex',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     lang: 'en',
     categories: ['anime'],
     description: 'MangaDex is an non-profit and ad-free manga reader offering high-quality images.',
-};
+}

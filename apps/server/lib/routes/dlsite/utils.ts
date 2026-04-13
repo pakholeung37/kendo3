@@ -1,63 +1,63 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
 
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const rootUrl = 'https://www.dlsite.com';
+const rootUrl = 'https://www.dlsite.com'
 
 const defaultFilters = {
     show_type: 1,
     show_layout: 1,
     per_page: 100,
-};
+}
 
 const addFilters = (url, filters) => {
-    const keys = Object.keys(filters);
-    const filterStr = keys.map((k) => `/${k}/${filters[k]}`).join('');
-    const newUrl = url.replaceAll(new RegExp(String.raw`(/${keys.join(String.raw`/\w+|/`)}/\w+)`, 'g'), '');
-    return `${newUrl}${/=/.test(newUrl) ? '' : '/='}${filterStr}`;
-};
+    const keys = Object.keys(filters)
+    const filterStr = keys.map((k) => `/${k}/${filters[k]}`).join('')
+    const newUrl = url.replaceAll(new RegExp(String.raw`(/${keys.join(String.raw`/\w+|/`)}/\w+)`, 'g'), '')
+    return `${newUrl}${/=/.test(newUrl) ? '' : '/='}${filterStr}`
+}
 
 const getPubDate = (raw) => {
-    const dateMatches = raw.match(/(\d{4}).*(\d{2}).*(\d{2})/);
+    const dateMatches = raw.match(/(\d{4}).*(\d{2}).*(\d{2})/)
     if (dateMatches) {
-        return parseDate(`${dateMatches[1]}-${dateMatches[2]}-${dateMatches[3]}`, 'YYYY-MM-DD');
+        return parseDate(`${dateMatches[1]}-${dateMatches[2]}-${dateMatches[3]}`, 'YYYY-MM-DD')
     }
-    return parseDate(raw.split(':').pop().trim(), 'MMM/DD/YYYY');
-};
+    return parseDate(raw.split(':').pop().trim(), 'MMM/DD/YYYY')
+}
 
 const getDetails = async (works) => {
-    const apiUrl = `${rootUrl}/home-touch/product/info/ajax?product_id=${works}`;
+    const apiUrl = `${rootUrl}/home-touch/product/info/ajax?product_id=${works}`
 
     const detailResponse = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    return detailResponse.data;
-};
+    return detailResponse.data
+}
 
 const ProcessItems = async (ctx) => {
-    const subPath = getSubPath(ctx) === '/' ? '/home/new' : getSubPath(ctx);
+    const subPath = getSubPath(ctx) === '/' ? '/home/new' : getSubPath(ctx)
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100
 
-    const currentUrl = `${rootUrl}${addFilters(subPath, defaultFilters)}`;
+    const currentUrl = `${rootUrl}${addFilters(subPath, defaultFilters)}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const works = $('dt.work_name').slice(0, limit);
-    const updatedDate = $('.work_update').length === 0 ? undefined : getPubDate($('.work_update').text());
+    const works = $('dt.work_name').slice(0, limit)
+    const updatedDate = $('.work_update').length === 0 ? undefined : getPubDate($('.work_update').text())
 
     const details = await getDetails(
         works
@@ -67,29 +67,29 @@ const ProcessItems = async (ctx) => {
                     $(item)
                         .find('a')
                         .attr('href')
-                        .match(/_id\/(.*?)\.html/)[1]
+                        .match(/_id\/(.*?)\.html/)[1],
             )
-            .join(',')
-    );
+            .join(','),
+    )
 
     const items = works.toArray().map((item) => {
-        item = $(item).parentsUntil('tbody, ul');
+        item = $(item).parentsUntil('tbody, ul')
 
-        const a = item.find('.work_name a');
+        const a = item.find('.work_name a')
 
-        const title = a.text();
-        const link = a.attr('href');
-        const guid = link.match(/_id\/(.*?)\.html/)[1];
+        const title = a.text()
+        const link = a.attr('href')
+        const guid = link.match(/_id\/(.*?)\.html/)[1]
 
-        const description = item.find('.work_text').text();
+        const description = item.find('.work_text').text()
         const authors = item
             .find('.maker_name a')
             .toArray()
             .map((a) => ({
                 name: $(a).text(),
                 link: $(a).attr('href'),
-            }));
-        let images = item.find('div[data-samples]').length === 0 ? [] : JSON.parse(item.find('div[data-samples]').attr('data-samples').replaceAll("'", '"')).map((s) => s.thumb);
+            }))
+        let images = item.find('div[data-samples]').length === 0 ? [] : JSON.parse(item.find('div[data-samples]').attr('data-samples').replaceAll("'", '"')).map((s) => s.thumb)
 
         const workCategories = item
             .find('.work_category')
@@ -98,7 +98,7 @@ const ProcessItems = async (ctx) => {
             .map((i) => ({
                 text: $(i).text(),
                 link: $(i).attr('href'),
-            }));
+            }))
 
         const workGenres = item
             .find('.work_genre')
@@ -106,7 +106,7 @@ const ProcessItems = async (ctx) => {
             .toArray()
             .map((i) => ({
                 text: $(i).text(),
-            }));
+            }))
 
         const searchTags = item
             .find('.search_tag')
@@ -115,7 +115,7 @@ const ProcessItems = async (ctx) => {
             .map((i) => ({
                 text: $(i).text(),
                 link: $(i).attr('href'),
-            }));
+            }))
 
         const nameTags = item
             .find('.icon_wrap')
@@ -123,14 +123,14 @@ const ProcessItems = async (ctx) => {
             .toArray()
             .map((i) => ({
                 text: $(i).text(),
-            }));
+            }))
 
-        const detail = details[guid];
+        const detail = details[guid]
 
-        const pubDate = timezone(parseDate(detail.regist_date), +9);
-        const discountRate = detail.discount_rate;
-        const discountEndDate = detail.discount_end_date ? timezone(parseDate(detail.discount_end_date, 'MM/DD HH:mm'), +9) : undefined;
-        images = images.length === 0 ? [detail.work_image] : images;
+        const pubDate = timezone(parseDate(detail.regist_date), +9)
+        const discountRate = detail.discount_rate
+        const discountEndDate = detail.discount_end_date ? timezone(parseDate(detail.discount_end_date, 'MM/DD HH:mm'), +9) : undefined
+        images = images.length === 0 ? [detail.work_image] : images
 
         return {
             title: `${discountRate ? `${discountRate}% OFF ${discountEndDate ? `${dayjs(discountEndDate).format('YYYY-MM-DD HH:mm')} まで` : ''}` : ' '}${title}`,
@@ -151,8 +151,8 @@ const ProcessItems = async (ctx) => {
                 searchTags,
                 description,
             }),
-        };
-    });
+        }
+    })
 
     return {
         title: $('title').text(),
@@ -160,7 +160,7 @@ const ProcessItems = async (ctx) => {
         link: currentUrl,
         item: items,
         allowEmpty: true,
-    };
-};
+    }
+}
 
-export { ProcessItems };
+export { ProcessItems }

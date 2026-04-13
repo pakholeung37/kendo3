@@ -15,7 +15,7 @@ const sorts = {
         id: 'releaseDate',
         name: 'Releases',
     },
-};
+}
 
 const types = {
     game: {
@@ -34,6 +34,6 @@ const types = {
         id: 'albums',
         name: 'Music',
     },
-};
+}
 
-export { sorts, types };
+export { sorts, types }

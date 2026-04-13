@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/ttjj/user/:uid',
@@ -22,18 +22,18 @@ export const route: Route = {
     name: '天天基金用户动态',
     maintainers: ['zidekuls'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
+    const uid = ctx.req.param('uid')
 
-    const urlPrefix = 'https://jijinbaapi.eastmoney.com/gubaapi/v3/read';
+    const urlPrefix = 'https://jijinbaapi.eastmoney.com/gubaapi/v3/read'
 
-    const userProfileUrl = `${urlPrefix}/User/UserInfo.ashx?ServerVersion=1.0.0&PhoneType=windows&Location=zh-CN&ctoken=&utoken=&deviceid=000000&ps=8&plat=Wap&product=Fund&version=201&followuid=`;
-    const userProfileResponse = await got(`${userProfileUrl}${uid}`);
-    const username = userProfileResponse.data.user_nickname || '不存在的用户';
+    const userProfileUrl = `${urlPrefix}/User/UserInfo.ashx?ServerVersion=1.0.0&PhoneType=windows&Location=zh-CN&ctoken=&utoken=&deviceid=000000&ps=8&plat=Wap&product=Fund&version=201&followuid=`
+    const userProfileResponse = await got(`${userProfileUrl}${uid}`)
+    const username = userProfileResponse.data.user_nickname || '不存在的用户'
 
-    const userPostListUrl = `${urlPrefix}/Article/Post/UserPostList.ashx`;
+    const userPostListUrl = `${urlPrefix}/Article/Post/UserPostList.ashx`
 
     const listResponse = await got({
         method: 'post',
@@ -49,11 +49,11 @@ async function handler(ctx) {
             p: 1,
             ps: 20,
         },
-    });
+    })
 
-    const data = listResponse.data.re;
+    const data = listResponse.data.re
 
-    const userArticleUrl = `${urlPrefix}/Article/Post/ArticleContent.ashx`;
+    const userArticleUrl = `${urlPrefix}/Article/Post/ArticleContent.ashx`
 
     const result = await Promise.all(
         data.map((item) =>
@@ -66,22 +66,22 @@ async function handler(ctx) {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: `postid=${item.post_id}&ServerVersion=1.0.0&PhoneType=windows&Location=zh-CN&ctoken=&utoken=&deviceId=000000&userId=&plat=Wap&product=Fund&version=201`,
-                });
-                const description = detailResponse.data.post.post_content;
+                })
+                const description = detailResponse.data.post.post_content
                 const single = {
                     title: item.post_title,
                     description,
                     pubDate: timezone(parseDate(item.post_display_time, 'YYYY-MM-DD HH:mm:ss'), +8),
                     link: `https://fundbarmob.eastmoney.com/index.html?goPage=articleView&lastPage=personDetailView&aid=${item.post_id}`,
-                };
-                return single;
-            })
-        )
-    );
+                }
+                return single
+            }),
+        ),
+    )
     return {
         title: `天天基金-${username}的主页`,
         link: `https://fundbarmob.eastmoney.com/index.html?goPage=personDetailView&userid=${uid}`,
         description: `${username} 的动态`,
         item: result,
-    };
+    }
 }

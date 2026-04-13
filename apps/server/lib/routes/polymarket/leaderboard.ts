@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import type { LeaderboardEntry } from './types';
-import { DATA_API } from './types';
+import type { LeaderboardEntry } from './types'
+import { DATA_API } from './types'
 
 export const route: Route = {
     path: '/leaderboard/:category?/:timePeriod?',
@@ -30,11 +30,11 @@ export const route: Route = {
     url: 'polymarket.com',
     maintainers: ['heqi201255'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') || 'OVERALL';
-    const timePeriod = ctx.req.param('timePeriod') || 'DAY';
+    const category = ctx.req.param('category') || 'OVERALL'
+    const timePeriod = ctx.req.param('timePeriod') || 'DAY'
 
     const data = await ofetch<LeaderboardEntry[]>(`${DATA_API}/v1/leaderboard`, {
         query: {
@@ -43,7 +43,7 @@ async function handler(ctx) {
             orderBy: 'PNL',
             limit: 50,
         },
-    });
+    })
 
     const items = data.map((entry) => ({
         title: `#${entry.rank} ${entry.userName || entry.proxyWallet}`,
@@ -57,14 +57,14 @@ async function handler(ctx) {
         `,
         link: `https://polymarket.com/portfolio?address=${entry.proxyWallet}`,
         author: entry.userName || entry.proxyWallet,
-    }));
+    }))
 
-    const categoryName = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
-    const periodName = timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1).toLowerCase();
+    const categoryName = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()
+    const periodName = timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1).toLowerCase()
 
     return {
         title: `Polymarket Leaderboard - ${categoryName} (${periodName})`,
         link: 'https://polymarket.com/leaderboard',
         item: items,
-    };
+    }
 }

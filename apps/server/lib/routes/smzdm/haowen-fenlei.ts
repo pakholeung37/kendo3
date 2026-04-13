@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getHeaders } from './utils';
+import { getHeaders } from './utils'
 
 export const route: Route = {
     path: '/haowen/fenlei/:name/:sort?',
@@ -40,36 +40,36 @@ export const route: Route = {
     description: `| 最新 | 周排行 | 月排行 |
 | ---- | ------ | ------ |
 | 0    | 7      | 30     |`,
-};
+}
 
 async function handler(ctx) {
     if (!config.smzdm.cookie) {
-        throw new ConfigNotFoundError('什么值得买排行榜 is disabled due to the lack of SMZDM_COOKIE');
+        throw new ConfigNotFoundError('什么值得买排行榜 is disabled due to the lack of SMZDM_COOKIE')
     }
 
-    const name = ctx.req.param('name');
-    const sort = ctx.req.param('sort') || '0';
+    const name = ctx.req.param('name')
+    const sort = ctx.req.param('sort') || '0'
 
-    const link = sort === '0' ? `https://post.smzdm.com/fenlei/${name}/` : `https://post.smzdm.com/fenlei/${name}/hot_${sort}/`;
+    const link = sort === '0' ? `https://post.smzdm.com/fenlei/${name}/` : `https://post.smzdm.com/fenlei/${name}/hot_${sort}/`
 
     const response = await got.get(link, {
         headers: getHeaders(),
-    });
-    const $ = load(response.data);
-    const title = $('div.crumbs.nav-crumbs').text().split('>').pop();
+    })
+    const $ = load(response.data)
+    const title = $('div.crumbs.nav-crumbs').text().split('>').pop()
 
     const list = $('div.list.post-list')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h2.item-name a').text(),
                 link: item.find('h2.item-name a').attr('href'),
                 description: item.find('.item-info').html(),
                 author: item.find('.nickname').text(),
                 pubDate: timezone(parseDate(item.find('span.time').text(), ['HH:mm', 'MM-DD HH:mm', 'YYYY-MM-DD HH:mm']), 8),
-            };
-        });
+            }
+        })
 
     const out = await Promise.all(
         list.map((item) =>
@@ -77,23 +77,23 @@ async function handler(ctx) {
                 try {
                     const response = await got(item.link, {
                         headers: getHeaders(),
-                    });
-                    const $ = load(response.data);
-                    item.description = $('article').html();
-                    item.pubDate = timezone(parseDate($('meta[property="og:release_date"]').attr('content')), 8);
-                    item.author = $('meta[property="og:author"]').attr('content');
+                    })
+                    const $ = load(response.data)
+                    item.description = $('article').html()
+                    item.pubDate = timezone(parseDate($('meta[property="og:release_date"]').attr('content')), 8)
+                    item.author = $('meta[property="og:author"]').attr('content')
                 } catch {
                     // 404
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${title}- 什么值得买好文分类`,
         link,
         item: out,
-    };
+    }
 }

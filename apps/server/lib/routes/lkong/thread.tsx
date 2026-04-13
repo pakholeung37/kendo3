@@ -1,12 +1,12 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { countReplies, viewThread } from './query';
-import { renderContent } from './templates/content';
+import { countReplies, viewThread } from './query'
+import { renderContent } from './templates/content'
 
 export const route: Route = {
     path: '/thread/:id',
@@ -18,30 +18,30 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['nczitzk', 'ma6254'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://www.lkong.com';
-    const apiUrl = 'https://api.lkong.com/api';
-    const currentUrl = `${rootUrl}/thread/${id}`;
+    const rootUrl = 'https://www.lkong.com'
+    const apiUrl = 'https://api.lkong.com/api'
+    const currentUrl = `${rootUrl}/thread/${id}`
 
     const countResponse = await got({
         method: 'post',
         url: apiUrl,
         json: countReplies(id),
-    });
+    })
 
     if (countResponse.data.errors) {
-        throw new Error(countResponse.data.errors[0].message);
+        throw new Error(countResponse.data.errors[0].message)
     }
 
     const response = await got({
         method: 'post',
         url: apiUrl,
         json: viewThread(id, Math.ceil(countResponse.data.data.thread.replies / 20)),
-    });
+    })
 
     const items = response.data.data.posts.map((item) => ({
         guid: item.pid,
@@ -52,13 +52,13 @@ async function handler(ctx) {
         description:
             (item.quote ? renderToString(<LkongQuote target={`${rootUrl}/thread/${id}?pid=${item.quote.pid}`} author={item.quote.author.name} content={renderContent(JSON.parse(item.quote.content))} />) : '') +
             renderContent(JSON.parse(item.content)),
-    }));
+    }))
 
     return {
         title: `${response.data.data.thread.title} - 龙空`,
         link: currentUrl,
         item: items,
-    };
+    }
 }
 
 const quoteStyles = `
@@ -76,7 +76,7 @@ const quoteStyles = `
     color: #1890ff;
     text-decoration: none;
 }
-`;
+`
 
 const LkongQuote = ({ target, author, content }: { target: string; author: string; content: string }) => (
     <>
@@ -91,4 +91,4 @@ const LkongQuote = ({ target, author, content }: { target: string; author: strin
         </div>
         <style>{quoteStyles}</style>
     </>
-);
+)

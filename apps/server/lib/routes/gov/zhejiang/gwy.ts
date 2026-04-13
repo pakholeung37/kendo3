@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/zhejiang/gwy/:category?/:column?',
@@ -51,15 +51,15 @@ export const route: Route = {
 | 浙江省台州市 | 13310 |
 | 浙江省丽水市 | 13311 |
 | 省级单位     | 13317 |`,
-};
+}
 
 async function handler(ctx) {
-    const { category, column } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { category, column } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'http://gwy.zjks.gov.cn';
-    const currentUrl = new URL(`zjgwy/website/${category ? 'queryMore' : 'init'}.htm`, rootUrl).href;
-    const detailUrl = new URL('zjgwy/website/queryDetail.htm', rootUrl).href;
+    const rootUrl = 'http://gwy.zjks.gov.cn'
+    const currentUrl = new URL(`zjgwy/website/${category ? 'queryMore' : 'init'}.htm`, rootUrl).href
+    const detailUrl = new URL('zjgwy/website/queryDetail.htm', rootUrl).href
 
     const { data: response } = await got.post(currentUrl, {
         form: {
@@ -67,17 +67,17 @@ async function handler(ctx) {
             mkxh: category,
             oldornew: 'new',
         },
-    });
+    })
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a[onclick^="queryDetail"]')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const matches = item.prop('onclick').match(/queryDetail\('?(\d+)'?, '?(\d+)'?\);/);
+            const matches = item.prop('onclick').match(/queryDetail\('?(\d+)'?, '?(\d+)'?\);/)
 
             return {
                 title: item.text(),
@@ -86,8 +86,8 @@ async function handler(ctx) {
                 guid: `zjks-${matches[1]}-${matches[2]}`,
                 pubDate: parseDate(item.parent().next().text()),
                 tzid: matches[2],
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -99,29 +99,29 @@ async function handler(ctx) {
                         dsdm: column,
                         tzid: item.tzid,
                     },
-                });
+                })
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.description = content('div.ibox-content').last().html();
-                item.category = [content('div.ibox-title').last().find('h5').first().text()];
+                item.description = content('div.ibox-content').last().html()
+                item.category = [content('div.ibox-title').last().find('h5').first().text()]
 
-                const files = content('a.ke-insertfile');
+                const files = content('a.ke-insertfile')
 
                 if (files.length > 0) {
-                    const file = files.first();
-                    item.enclosure_url = file.prop('href');
+                    const file = files.first()
+                    item.enclosure_url = file.prop('href')
                 }
 
-                delete item.tzid;
+                delete item.tzid
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const columnName = $('button.btn-success').last().text();
-    const categoryName = $('table').parent().prev().find('h5').text();
+    const columnName = $('button.btn-success').last().text()
+    const categoryName = $('table').parent().prev().find('h5').text()
 
     return {
         item: items,
@@ -131,5 +131,5 @@ async function handler(ctx) {
         subtitle: `${columnName}${categoryName}`,
         author: $('div.title-font').text(),
         allowEmpty: true,
-    };
+    }
 }

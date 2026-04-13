@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const host = 'https://magazinelib.com';
+const host = 'https://magazinelib.com'
 const renderImage = (imgUrl) =>
     renderToString(
         <div>
             <img src={imgUrl} />
-        </div>
-    );
+        </div>,
+    )
 export const route: Route = {
     path: '/latest-magazine/:query?',
     categories: ['reading'],
@@ -28,11 +28,11 @@ export const route: Route = {
     maintainers: ['EthanWng97'],
     handler,
     description: `For instance, when doing search at [https://magazinelib.com](https://magazinelib.com) and you get url \`https://magazinelib.com/?s=new+yorker\`, the query is \`new+yorker\``,
-};
+}
 
 async function handler(ctx) {
-    const query = ctx.req.param('query');
-    const url = `${host}/wp-json/wp/v2/posts/`;
+    const query = ctx.req.param('query')
+    const url = `${host}/wp-json/wp/v2/posts/`
     const response = await got({
         method: 'get',
         url,
@@ -41,13 +41,13 @@ async function handler(ctx) {
             per_page: 30,
             _embed: 1,
         },
-    });
-    let subTitle = query;
+    })
+    let subTitle = query
     if (subTitle === undefined) {
-        subTitle = '';
+        subTitle = ''
     } else {
-        subTitle = subTitle.replaceAll(/[^\dA-Za-z]+/g, ' ').toUpperCase();
-        subTitle = ` - ${subTitle}`;
+        subTitle = subTitle.replaceAll(/[^\dA-Za-z]+/g, ' ').toUpperCase()
+        subTitle = ` - ${subTitle}`
     }
 
     const items = response.data.map((obj) => {
@@ -56,16 +56,16 @@ async function handler(ctx) {
             link: obj.link,
             featuredMediaLink: obj._links['wp:featuredmedia'][0].href,
             title: obj.title.rendered,
-        };
-        const $ = load(obj.content.rendered);
-        const content = $('.vk-att');
-        content.find('img[src="https://magazinelib.com/wp-includes/images/media/default.png"]').remove();
-        data.content = content.html();
-        const imgUrl = obj._embedded['wp:featuredmedia'][0].source_url;
-        data.description = data.content + renderImage(imgUrl);
-        data.categories = obj._embedded['wp:term'][0].map((item) => item.name);
-        return data;
-    });
+        }
+        const $ = load(obj.content.rendered)
+        const content = $('.vk-att')
+        content.find('img[src="https://magazinelib.com/wp-includes/images/media/default.png"]').remove()
+        data.content = content.html()
+        const imgUrl = obj._embedded['wp:featuredmedia'][0].source_url
+        data.description = data.content + renderImage(imgUrl)
+        data.categories = obj._embedded['wp:term'][0].map((item) => item.name)
+        return data
+    })
 
     return {
         title: `MagazineLib - Latest Magazines${subTitle}`,
@@ -78,5 +78,5 @@ async function handler(ctx) {
             pubDate: new Date(item.pubDate).toUTCString(),
             description: item.description,
         })),
-    };
+    }
 }

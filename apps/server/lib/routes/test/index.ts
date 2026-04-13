@@ -1,47 +1,47 @@
-import { config } from '@/config';
-import CaptchaError from '@/errors/types/captcha';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import wait from '@/utils/wait';
-import { fetchArticle } from '@/utils/wechat-mp';
+import { config } from '@/config'
+import CaptchaError from '@/errors/types/captcha'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import wait from '@/utils/wait'
+import { fetchArticle } from '@/utils/wechat-mp'
 
-let cacheIndex = 0;
+let cacheIndex = 0
 
 export const route: Route = {
     path: '/:id/:params?',
     name: 'Test',
     maintainers: ['DIYgod', 'NeverBehave'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (ctx.req.param('id') === 'error') {
-        throw new Error('Error test');
+        throw new Error('Error test')
     }
     if (ctx.req.param('id') === 'httperror') {
         await got({
             method: 'get',
             url: 'https://httpbingo.org/status/404',
-        });
+        })
     }
     if (ctx.req.param('id') === 'config-not-found-error') {
-        throw new ConfigNotFoundError('Test config not found error');
+        throw new ConfigNotFoundError('Test config not found error')
     }
     if (ctx.req.param('id') === 'invalid-parameter-error') {
-        throw new InvalidParameterError('Test invalid parameter error');
+        throw new InvalidParameterError('Test invalid parameter error')
     }
     if (ctx.req.param('id') === 'captcha-error') {
-        throw new CaptchaError('Test captcha error');
+        throw new CaptchaError('Test captcha error')
     }
     if (ctx.req.param('id') === 'redirect') {
-        ctx.set('redirect', '/test/1');
-        return;
+        ctx.set('redirect', '/test/1')
+        return
     }
-    let item: DataItem[] = [];
-    let image: string | null = null;
+    let item: DataItem[] = []
+    let image: string | null = null
     switch (ctx.req.param('id')) {
         case 'filter':
             item = [
@@ -69,9 +69,9 @@ async function handler(ctx) {
                     author: `DIYgod0`,
                     category: 'Category3',
                 },
-            ];
+            ]
 
-            break;
+            break
 
         case 'filter-illegal-category':
             item.push({
@@ -81,9 +81,9 @@ async function handler(ctx) {
                 link: `https://github.com/DIYgod/RSSHub/issues/1`,
                 author: `DIYgod0`,
                 category: [1, 'CategoryIllegal', true, null, undefined, { type: 'object' }],
-            });
+            })
 
-            break;
+            break
 
         case 'long':
             item.push({
@@ -92,34 +92,34 @@ async function handler(ctx) {
                 pubDate: new Date(`2019-3-1`).toUTCString(),
                 link: `https://github.com/DIYgod/RSSHub/issues/0`,
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
 
         case 'cache': {
             const description = await cache.tryGet('test', () => ({
                 text: `Cache${++cacheIndex}`,
-            }));
+            }))
             item.push({
                 title: 'Cache Title',
                 description: description.text,
                 pubDate: new Date(`2019-3-1`).toUTCString(),
                 link: `https://github.com/DIYgod/RSSHub/issues/0`,
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
         }
         case 'refreshCache': {
-            let refresh = await cache.get('refreshCache');
-            let noRefresh = await cache.get('noRefreshCache', false);
+            let refresh = await cache.get('refreshCache')
+            let noRefresh = await cache.get('noRefreshCache', false)
             if (!refresh) {
-                refresh = '0';
-                await cache.set('refreshCache', '1');
+                refresh = '0'
+                await cache.set('refreshCache', '1')
             }
             if (!noRefresh) {
-                noRefresh = '0';
-                await cache.set('noRefreshCache', '1', undefined);
+                noRefresh = '0'
+                await cache.set('noRefreshCache', '1', undefined)
             }
             item.push({
                 title: 'Cache Title',
@@ -127,9 +127,9 @@ async function handler(ctx) {
                 pubDate: new Date(`2019-3-1`).toUTCString(),
                 link: `https://github.com/DIYgod/RSSHub/issues/0`,
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
         }
         case 'cacheUrlKey': {
             const description = await cache.tryGet(
@@ -137,20 +137,20 @@ async function handler(ctx) {
                 () => ({
                     text: `Cache${++cacheIndex}`,
                 }),
-                config.cache.routeExpire * 2
-            );
+                config.cache.routeExpire * 2,
+            )
             item.push({
                 title: 'Cache Title',
                 description: description.text,
                 pubDate: new Date(`2019-3-1`).toUTCString(),
                 link: `https://github.com/DIYgod/RSSHub/issues/0`,
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
         }
         case 'complicated':
-            image = 'https://mock.com/DIYgod/RSSHub.png';
+            image = 'https://mock.com/DIYgod/RSSHub.png'
             item.push(
                 {
                     title: `Complicated Title`,
@@ -198,10 +198,10 @@ async function handler(ctx) {
                     link: `//mock.com/DIYgod/RSSHub`,
                     author: `DIYgod`,
                     image: 'https://mock.com/DIYgod/RSSHub.jpg',
-                }
-            );
+                },
+            )
 
-            break;
+            break
 
         case 'multimedia':
             item.push(
@@ -228,10 +228,10 @@ async function handler(ctx) {
                     author: `DIYgod`,
                     enclosure_url: 'https://mock.com/DIYgod/RSSHub.mp4',
                     enclosure_type: 'video/mp4',
-                }
-            );
+                },
+            )
 
-            break;
+            break
 
         case 'sort':
             item.push(
@@ -256,10 +256,10 @@ async function handler(ctx) {
                     link: `https://github.com/DIYgod/RSSHub/issues/s3`,
                     pubDate: new Date(1_546_272_000_000).toUTCString(),
                     author: `DIYgod0`,
-                }
-            );
+                },
+            )
 
-            break;
+            break
 
         case 'mess':
             item.push({
@@ -267,9 +267,9 @@ async function handler(ctx) {
                 link: `/DIYgod/RSSHub/issues/0`,
                 pubDate: 1_546_272_000_000,
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
 
         case 'opencc':
             item.push({
@@ -278,9 +278,9 @@ async function handler(ctx) {
                 link: `/DIYgod/RSSHub/issues/0`,
                 pubDate: new Date(1_546_272_000_000).toUTCString(),
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
 
         case 'brief':
             item.push({
@@ -289,9 +289,9 @@ async function handler(ctx) {
                 link: `/DIYgod/RSSHub/issues/0`,
                 pubDate: new Date(1_546_272_000_000).toUTCString(),
                 author: `DIYgod0`,
-            });
+            })
 
-            break;
+            break
 
         case 'json':
             item.push(
@@ -337,10 +337,10 @@ async function handler(ctx) {
                     pubDate: new Date(`2019-3-1`).toUTCString(),
                     link: `https://github.com/DIYgod/RSSHub/pull/11555`,
                     author: null,
-                }
-            );
+                },
+            )
 
-            break;
+            break
 
         case 'gpt':
             item.push({
@@ -348,9 +348,9 @@ async function handler(ctx) {
                 description: 'Description0',
                 pubDate: new Date(`2019-3-1`).toUTCString(),
                 link: 'https://github.com/DIYgod/RSSHub/issues/0',
-            });
+            })
 
-            break;
+            break
 
         default:
         // Do nothing
@@ -363,15 +363,15 @@ async function handler(ctx) {
             pubDate: new Date((ctx.req.param('id') === 'current_time' ? new Date() : 1_546_272_000_000) - i * 10 * 1000).toUTCString(),
             link: `https://github.com/DIYgod/RSSHub/issues/${i}`,
             author: `DIYgod${i}`,
-        });
+        })
     }
 
     if (ctx.req.param('id') === 'empty') {
-        item = null;
+        item = null
     }
 
     if (ctx.req.param('id') === 'allow_empty') {
-        item = null;
+        item = null
     }
 
     if (ctx.req.param('id') === 'enclosure') {
@@ -383,15 +383,15 @@ async function handler(ctx) {
                 enclosure_length: 3661,
                 itunes_duration: 36610,
             },
-        ];
+        ]
     }
 
     if (ctx.req.param('id') === 'slow') {
-        await wait(1000);
+        await wait(1000)
     }
 
     if (ctx.req.param('id') === 'slow4') {
-        await wait(4000);
+        await wait(4000)
     }
 
     if (ctx.req.query('mode') === 'fulltext') {
@@ -400,16 +400,16 @@ async function handler(ctx) {
                 title: '',
                 link: 'https://m.thepaper.cn/newsDetail_forward_4059298',
             },
-        ];
+        ]
     }
 
     if (ctx.req.param('id') === 'wechat-mp') {
-        const params = ctx.req.param('params');
+        const params = ctx.req.param('params')
         if (!params) {
-            throw new InvalidParameterError('Invalid parameter');
+            throw new InvalidParameterError('Invalid parameter')
         }
-        const mpUrl = 'https:/mp.weixin.qq.com/s' + (params.includes('&') ? '?' : '/') + params;
-        item = [await fetchArticle(mpUrl)];
+        const mpUrl = 'https:/mp.weixin.qq.com/s' + (params.includes('&') ? '?' : '/') + params
+        item = [await fetchArticle(mpUrl)]
     }
 
     return {
@@ -421,5 +421,5 @@ async function handler(ctx) {
         allowEmpty: ctx.req.param('id') === 'allow_empty',
         description:
             ctx.req.param('id') === 'complicated' ? '<img src="http://mock.com/DIYgod/DIYgod/RSSHub">' : ctx.req.param('id') === 'multimedia' ? '<video src="http://mock.com/DIYgod/DIYgod/RSSHub"></video>' : 'A test route for RSSHub',
-    };
+    }
 }

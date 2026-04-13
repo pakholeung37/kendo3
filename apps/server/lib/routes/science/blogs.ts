@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl } from './utils';
+import { baseUrl } from './utils'
 
 export const route: Route = {
     path: '/blogs/:name?',
@@ -31,55 +31,55 @@ export const route: Route = {
     maintainers: ['TomHodson'],
     handler,
     description: `To subscribe to [IN THE PIPELINE by Derek Lowe’s](https://science.org/blogs/pipeline) or the [science editor's blog](https://science.org/blogs/editors-blog), use the name parameter \`pipeline\` or \`editors-blog\`.`,
-};
+}
 
 async function handler(ctx) {
-    const { name = 'pipeline' } = ctx.req.param();
-    const link = `${baseUrl}/blogs/${name}/feed`;
+    const { name = 'pipeline' } = ctx.req.param()
+    const link = `${baseUrl}/blogs/${name}/feed`
 
     const response = await cache.tryGet(
         link,
         async () => {
-            const browser = await puppeteer();
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
+            const browser = await puppeteer()
+            const page = await browser.newPage()
+            await page.setRequestInterception(true)
 
             page.on('request', (request) => {
-                request.resourceType() === 'document' ? request.continue() : request.abort();
-            });
+                request.resourceType() === 'document' ? request.continue() : request.abort()
+            })
 
             await page.goto(link, {
                 waitUntil: 'domcontentloaded',
-            });
+            })
 
-            const response = await page.content();
+            const response = await page.content()
 
-            await page.close();
-            await browser.close();
-            return response;
+            await page.close()
+            await browser.close()
+            return response
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const $ = load(response, { xmlMode: true });
+    const $ = load(response, { xmlMode: true })
     const items = $('item')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('title').text().trim(),
                 link: item.find('link').text().trim(),
                 author: item.find(String.raw`dc\:creator`).text().trim(),
                 pubDate: parseDate(item.find('pubDate').text().trim()),
                 description: item.find(String.raw`content\:encoded`).text().trim(),
-            };
-        });
+            }
+        })
 
     // The RSS feed is implemented by a keyword search on the science.org end
     // so the description field of the feed looks like this:
-    const name_re = /Keyword search result for Blog Series: (?<blog_name>[^-]+) --/;
-    const { blog_name = 'Unknown Title' } = $('channel > description').text().match(name_re).groups;
+    const name_re = /Keyword search result for Blog Series: (?<blog_name>[^-]+) --/
+    const { blog_name = 'Unknown Title' } = $('channel > description').text().match(name_re).groups
 
     return {
         title: `Science Blogs: ${blog_name}`,
@@ -88,5 +88,5 @@ async function handler(ctx) {
         link: `${baseUrl}/blogs/${name}`,
         language: 'en-US',
         item: items,
-    };
+    }
 }

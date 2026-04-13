@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/lm/:id?',
@@ -39,31 +39,31 @@ export const route: Route = {
 ::: tip
   更多栏目请看 [这里](https://tv.cctv.com/lm)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'xwzk';
+    const id = ctx.req.param('id') ?? 'xwzk'
 
-    const rootUrl = 'https://tv.cctv.com';
-    const apiRootUrl = 'https://api.cntv.cn';
-    const vdnRootUrl = 'https://vdn.apps.cntv.cn';
+    const rootUrl = 'https://tv.cctv.com'
+    const apiRootUrl = 'https://api.cntv.cn'
+    const vdnRootUrl = 'https://vdn.apps.cntv.cn'
 
-    const currentUrl = `${rootUrl}/lm/${id}/videoset`;
+    const currentUrl = `${rootUrl}/lm/${id}/videoset`
 
     const titleResponse = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(titleResponse.data);
+    const $ = load(titleResponse.data)
 
-    const topId = titleResponse.data.match(/(TOPC\d{16})/)[1];
-    const apiUrl = `${apiRootUrl}/NewVideo/getVideoListByColumn?id=${topId}&n=20&sort=desc&p=1&mode=0&serviceId=tvcctv`;
+    const topId = titleResponse.data.match(/(TOPC\d{16})/)[1]
+    const apiUrl = `${apiRootUrl}/NewVideo/getVideoListByColumn?id=${topId}&n=20&sort=desc&p=1&mode=0&serviceId=tvcctv`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const list = response.data.data.list.map((item) => ({
         url: item.url,
@@ -73,7 +73,7 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.time), +8),
         link: `${vdnRootUrl}/api/getHttpVideoInfo.do?pid=${item.guid}`,
         description: `<p>${item.brief.replaceAll('\r\n', '</p><p>')}</p>`,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -81,35 +81,35 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const data = detailResponse.data;
+                })
+                const data = detailResponse.data
 
-                item.description += `<video src="${data.hls_url}" controls="controls" poster="${item.image}" width="100%"></video><br>`;
+                item.description += `<video src="${data.hls_url}" controls="controls" poster="${item.image}" width="100%"></video><br>`
 
                 for (const c of data.video.chapters) {
-                    item.description += `<video src="${c.url}" controls="controls" poster="${c.image}" width="100%"></video><br>`;
+                    item.description += `<video src="${c.url}" controls="controls" poster="${c.image}" width="100%"></video><br>`
                 }
 
                 for (let i = 2; data.video[`chapters${i}`]; i++) {
                     for (const c of data.video[`chapters${i}`]) {
-                        item.description += `<video src="${c.url}" controls="controls" poster="${c.image}" width="100%"></video><br>`;
+                        item.description += `<video src="${c.url}" controls="controls" poster="${c.image}" width="100%"></video><br>`
                     }
                 }
 
-                item.link = item.url;
+                item.link = item.url
 
-                delete item.url;
-                delete item.image;
+                delete item.url
+                delete item.image
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
         description: $('meta[name=description]').attr('content'),
-    };
+    }
 }

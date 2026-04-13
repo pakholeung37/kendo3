@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
 /**
  * This function should be used by RSSHub middleware only.
@@ -6,16 +6,16 @@ import dayjs from 'dayjs';
  * @returns `JSON.stringify`-ed [UMS Result](https://docs.rss3.io/docs/unified-metadata-schemas)
  */
 
-const NETWORK = 'rsshub';
-const TAG = 'RSS';
-const TYPE = 'feed';
-const PLATFORM = 'RSSHub';
+const NETWORK = 'rsshub'
+const TAG = 'RSS'
+const TYPE = 'feed'
+const PLATFORM = 'RSSHub'
 
 const rss3 = (data) => {
-    const currentUnixTsp = dayjs().unix();
+    const currentUnixTsp = dayjs().unix()
     const umsResult = {
         data: data.item.map((item) => {
-            const owner = getOwnershipFieldFromURL(item);
+            const owner = getOwnershipFieldFromURL(item)
             return {
                 owner,
                 id: item.link,
@@ -44,20 +44,20 @@ const rss3 = (data) => {
                     },
                 ],
                 timestamp: dayjs(item.updated).unix() || currentUnixTsp,
-            };
+            }
         }),
-    };
-    return umsResult;
-};
+    }
+    return umsResult
+}
 
 // we treat the domain as the owner of the content
 function getOwnershipFieldFromURL(item) {
     try {
-        const urlObj = new URL(item.link);
-        return urlObj.hostname;
+        const urlObj = new URL(item.link)
+        return urlObj.hostname
     } catch {
-        return item.link;
+        return item.link
     }
 }
 
-export default rss3;
+export default rss3

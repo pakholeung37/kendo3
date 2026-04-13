@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 // import cache from '@/utils/cache';
 
 export const route: Route = {
@@ -28,23 +28,23 @@ export const route: Route = {
     ],
     maintainers: ['Fgju'],
     handler: async (/* ctx*/) => {
-        const host = 'https://jwc.cupl.edu.cn/';
-        const response = await ofetch(host + 'index/tzgg.htm');
-        const $ = load(response);
+        const host = 'https://jwc.cupl.edu.cn/'
+        const response = await ofetch(host + 'index/tzgg.htm')
+        const $ = load(response)
 
         const list = $('li[id^=line_u8_]')
             .toArray()
             .map((elem) => {
-                const elem_ = $(elem);
-                const a = elem_.find('a');
+                const elem_ = $(elem)
+                const a = elem_.find('a')
                 return {
                     link: a[1].attribs.href,
                     title: $(a[1]).text(),
                     pubDate: parseDate(elem_.find('span').text(), 'YYYY-MM-DD'),
                     category: $(a[0]).text().slice(0, -1),
                     description: '',
-                };
-            });
+                }
+            })
         /*
         const items = await Promise.all(
             list.map((item) => {
@@ -65,6 +65,6 @@ export const route: Route = {
             description: '中国政法大学教务处通知公告',
             language: 'zh-CN',
             item: list,
-        };
+        }
     },
-};
+}

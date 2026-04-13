@@ -1,9 +1,9 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const titles = {
     focus: {
@@ -42,7 +42,7 @@ const titles = {
         tc: '天氣',
         sc: '天气',
     },
-};
+}
 
 export const route: Route = {
     path: '/news/:category?/:language?',
@@ -76,16 +76,16 @@ export const route: Route = {
 | 繁 | 简 |
 | -- | -- |
 | tc | sc |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'focus';
-    const language = ctx.req.param('language') ?? 'tc';
+    const category = ctx.req.param('category') ?? 'focus'
+    const language = ctx.req.param('language') ?? 'tc'
 
-    const rootUrl = 'https://inews-api.tvb.com';
-    const linkRootUrl = 'https://news.tvb.com';
-    const apiUrl = `${rootUrl}/news/entry/category`;
-    const currentUrl = `${rootUrl}/${language}/${category}`;
+    const rootUrl = 'https://inews-api.tvb.com'
+    const linkRootUrl = 'https://news.tvb.com'
+    const apiUrl = `${rootUrl}/news/entry/category`
+    const currentUrl = `${rootUrl}/${language}/${category}`
 
     const response = await got({
         method: 'get',
@@ -97,7 +97,7 @@ async function handler(ctx) {
             limit: ctx.req.query('limit') ?? 50,
             country: 'HK',
         },
-    });
+    })
 
     const items = response.data.content.map((item) => ({
         title: item.title,
@@ -108,13 +108,13 @@ async function handler(ctx) {
             <>
                 {item.desc ? raw(item.desc) : null}
                 {item.media.image?.map((image) => <img src={image.thumbnail.replace(/_\\d+x\\d+\\./, '.')} />) ?? null}
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `${response.data.meta.title} - ${titles[category][language]}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,31 +1,31 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://chinese.joins.com';
-    const currentUrl = new URL(`news/articleList.html?view_type=s${category ? `&sc_section_code=${category}` : ''}`, rootUrl).href;
+    const rootUrl = 'https://chinese.joins.com'
+    const currentUrl = new URL(`news/articleList.html?view_type=s${category ? `&sc_section_code=${category}` : ''}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('section.article-list-content div.table-row')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('strong').text(),
@@ -33,20 +33,20 @@ export const handler = async (ctx) => {
                 link: new URL(item.find('a.links').prop('href'), rootUrl).href,
                 author: item.find('div.list-dated').text().split(/\|/)[0],
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('a.articles').remove();
-                $$('div.view-copyright, div.ad-template, div.view-editors, div.tag-group').remove();
+                $$('a.articles').remove()
+                $$('div.view-copyright, div.ad-template, div.view-editors, div.tag-group').remove()
 
-                const title = $$('div.article-head-title, div.viewer-titles').text();
+                const title = $$('div.article-head-title, div.viewer-titles').text()
                 const description = renderToString(
                     <>
                         {$$('div.photo-box').length === 0
@@ -54,39 +54,39 @@ export const handler = async (ctx) => {
                             : $$('div.photo-box')
                                   .toArray()
                                   .map((i) => {
-                                      const image = $$(i).find('img');
-                                      const src = image.prop('src');
+                                      const image = $$(i).find('img')
+                                      const src = image.prop('src')
 
                                       return src ? (
                                           <figure>
                                               <img src={src} />
                                           </figure>
-                                      ) : null;
+                                      ) : null
                                   })}
                         {$$('div#article-view-content-div').html() ? raw($$('div#article-view-content-div').html()) : null}
-                    </>
-                );
-                const image = $$('meta[property="og:image"]').prop('content');
+                    </>,
+                )
+                const image = $$('meta[property="og:image"]').prop('content')
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('meta[property="article:published_time"]').prop('content'));
-                item.category = $$('meta[name="keywords"]').prop('content')?.split(/,/) ?? $$('meta[name="news_keywords"]').prop('content')?.split(/,/) ?? [];
-                item.author = $$('meta[property="og:article:author"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('meta[property="article:published_time"]').prop('content'))
+                item.category = $$('meta[name="keywords"]').prop('content')?.split(/,/) ?? $$('meta[name="news_keywords"]').prop('content')?.split(/,/) ?? []
+                item.author = $$('meta[property="og:article:author"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div#article-view-content-div').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.user-logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.user-logo img').prop('src'), rootUrl).href
 
     return {
         title: `${$(`a[data-code="${category}"]`)?.text() || $('ul#user-menu a').first().text()} - ${$('title').text()}`,
@@ -97,8 +97,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/chinese/:category?',
@@ -144,9 +144,9 @@ export const route: Route = {
         {
             source: ['chinese.joins.com/news/articleList.html'],
             target: (url) => {
-                const category = url.searchParams.get('sc_section_code');
+                const category = url.searchParams.get('sc_section_code')
 
-                return `/joins/chinese${category ? `/${category}` : ''}`;
+                return `/joins/chinese${category ? `/${category}` : ''}`
             },
         },
         {
@@ -215,4 +215,4 @@ export const route: Route = {
             target: '/chinese/S1N12',
         },
     ],
-};
+}

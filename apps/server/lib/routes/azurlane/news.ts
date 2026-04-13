@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-type Mapping = Record<string, string>;
+type Mapping = Record<string, string>
 
 const JP: Mapping = {
     '0': 'すべて',
@@ -10,35 +10,35 @@ const JP: Mapping = {
     '2': 'イベント',
     '3': 'メインテナンス',
     '4': '重要',
-};
+}
 
 const mkTable = (mapping: Mapping): string => {
-    const heading: string[] = [];
-    const separator: string[] = [];
-    const body: string[] = [];
+    const heading: string[] = []
+    const separator: string[] = []
+    const body: string[] = []
 
     for (const key in mapping) {
-        heading.push(mapping[key]);
-        separator.push(':--:');
-        body.push(key);
+        heading.push(mapping[key])
+        separator.push(':--:')
+        body.push(key)
     }
 
-    return [heading.join(' | '), separator.join(' | '), body.join(' | ')].map((s) => `| ${s} |`).join('\n');
-};
+    return [heading.join(' | '), separator.join(' | '), body.join(' | ')].map((s) => `| ${s} |`).join('\n')
+}
 
 const handler: Route['handler'] = async (ctx) => {
-    const { server } = ctx.req.param();
+    const { server } = ctx.req.param()
 
     switch (server.toUpperCase()) {
         case 'JP':
-            return await ja(ctx);
+            return await ja(ctx)
         default:
-            throw new Error('Unsupported server');
+            throw new Error('Unsupported server')
     }
-};
+}
 
 const ja: Route['handler'] = async (ctx) => {
-    const { type = '0' } = ctx.req.param();
+    const { type = '0' } = ctx.req.param()
 
     const response = await ofetch<{ data: { rows: Array<{ id: number; content: string; title: string; publishTime: number }> } }>('https://www.azurlane.jp/api/news/list', {
         query: {
@@ -46,15 +46,15 @@ const ja: Route['handler'] = async (ctx) => {
             index: 1,
             size: 15,
         },
-    });
+    })
 
-    const list = response.data?.rows || [];
+    const list = response.data?.rows || []
     const items = list.map((item) => ({
         title: item.title,
         description: item.content,
         link: `https://www.azurlane.jp/news/${item.id}`,
         pubDate: parseDate(item.publishTime),
-    }));
+    }))
 
     return {
         title: `アズールレーン - ${JP[type]}`,
@@ -64,8 +64,8 @@ const ja: Route['handler'] = async (ctx) => {
         icon: 'https://play-lh.googleusercontent.com/9QTLYD2_Jd6OIKHwRHkEBnFAgPmVKJwf2xmHjzPk-5w0SRLZumsCoQZGlO8d_kB3Gdld=w480-h960-rw',
         logo: 'https://play-lh.googleusercontent.com/9QTLYD2_Jd6OIKHwRHkEBnFAgPmVKJwf2xmHjzPk-5w0SRLZumsCoQZGlO8d_kB3Gdld=w480-h960-rw',
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:server/:type?',
@@ -87,4 +87,4 @@ export const route: Route = {
     },
     handler,
     description: mkTable(JP),
-};
+}

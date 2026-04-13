@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat.js'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-dayjs.extend(customParseFormat);
+dayjs.extend(customParseFormat)
 
 export const route: Route = {
     path: '/:site/:category/:name',
@@ -45,57 +45,57 @@ export const route: Route = {
     handler,
     url: 'tv.cctv.com/lm/xwlb',
     description: `新闻联播内容摘要。`,
-};
+}
 
 async function handler(ctx) {
-    const { site, category, name } = ctx.req.param();
-    let responseData;
+    const { site, category, name } = ctx.req.param()
+    let responseData
     if (site === 'tv' && category === 'lm' && name === 'xwlb') {
-        responseData = await getXWLB();
+        responseData = await getXWLB()
     }
-    return responseData;
+    return responseData
 }
 
 const getXWLB = async () => {
-    const res = await got({ method: 'get', url: 'https://tv.cctv.com/lm/xwlb/' });
-    const $ = load(res.data);
+    const res = await got({ method: 'get', url: 'https://tv.cctv.com/lm/xwlb/' })
+    const $ = load(res.data)
     // 解析最新一期新闻联播的日期
-    const latestDate = dayjs($('.rilititle p').text(), 'YYYY-MM-DD');
-    const count: number[] = [];
+    const latestDate = dayjs($('.rilititle p').text(), 'YYYY-MM-DD')
+    const count: number[] = []
     for (let i = 0; i < 20; i++) {
-        count.push(i);
+        count.push(i)
     }
     const resultItems = await Promise.all(
         count.map(async (i) => {
-            const newsDate = latestDate.subtract(i, 'days').hour(19);
-            const url = `https://tv.cctv.com/lm/xwlb/day/${newsDate.format('YYYYMMDD')}.shtml`;
+            const newsDate = latestDate.subtract(i, 'days').hour(19)
+            const url = `https://tv.cctv.com/lm/xwlb/day/${newsDate.format('YYYYMMDD')}.shtml`
             const item = {
                 title: `新闻联播 ${newsDate.format('YYYY/MM/DD')}`,
                 link: url,
                 pubDate: timezone(parseDate(newsDate.format()), +8),
                 description: await cache.tryGet(url, async () => {
-                    const res = await got(url);
-                    const content = load(res.data);
-                    const list: string[] = [];
+                    const res = await got(url)
+                    const content = load(res.data)
+                    const list: string[] = []
                     content('body li').map((i, elem) => {
-                        const e = content(elem);
-                        const href = e.find('a').attr('href');
-                        const title = e.find('a').attr('title');
-                        const dur = e.find('span').text();
-                        list.push(`<a href="${href}">${title} ⏱${dur}</a>`);
-                        return i;
-                    });
-                    return list.join('<br/>\n');
+                        const e = content(elem)
+                        const href = e.find('a').attr('href')
+                        const title = e.find('a').attr('title')
+                        const dur = e.find('span').text()
+                        list.push(`<a href="${href}">${title} ⏱${dur}</a>`)
+                        return i
+                    })
+                    return list.join('<br/>\n')
                 }),
-            };
-            return item;
-        })
-    );
+            }
+            return item
+        }),
+    )
 
     return {
         title: 'CCTV 新闻联播',
         link: 'http://tv.cctv.com/lm/xwlb/',
         item: resultItems,
-    };
-};
-export default getXWLB;
+    }
+}
+export default getXWLB

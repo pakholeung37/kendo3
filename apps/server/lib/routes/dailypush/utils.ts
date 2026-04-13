@@ -1,54 +1,54 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Browser, Page } from 'rebrowser-puppeteer';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Browser, Page } from 'rebrowser-puppeteer'
 
-import type { DataItem } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import { parseRelativeDate } from '@/utils/parse-date';
+import type { DataItem } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import { parseRelativeDate } from '@/utils/parse-date'
 
-export const BASE_URL = 'https://www.dailypush.dev';
+export const BASE_URL = 'https://www.dailypush.dev'
 
 export interface ArticleItem {
-    title: string;
-    link: string;
-    author: DataItem['author'];
-    pubDate?: Date;
-    category?: string[];
-    description?: string;
-    articleUrl: string;
-    dailyPushUrl?: string;
+    title: string
+    link: string
+    author: DataItem['author']
+    pubDate?: Date
+    category?: string[]
+    description?: string
+    articleUrl: string
+    dailyPushUrl?: string
 }
 
-const allowedRequestTypes = new Set(['document']);
+const allowedRequestTypes = new Set(['document'])
 
 async function preparePage(page: Page) {
-    await page.setRequestInterception(true);
+    await page.setRequestInterception(true)
     page.on('request', (request) => {
         if (allowedRequestTypes.has(request.resourceType())) {
-            request.continue();
-            return;
+            request.continue()
+            return
         }
 
-        request.abort();
-    });
+        request.abort()
+    })
 }
 
 export async function fetchPageHtml(browser: Browser, url: string, waitForSelector?: string): Promise<string> {
-    const page = await browser.newPage();
-    await preparePage(page);
+    const page = await browser.newPage()
+    await preparePage(page)
 
     try {
-        logger.http(`Requesting ${url}`);
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
+        logger.http(`Requesting ${url}`)
+        await page.goto(url, { waitUntil: 'domcontentloaded' })
 
         if (waitForSelector) {
-            await page.waitForSelector(waitForSelector);
+            await page.waitForSelector(waitForSelector)
         }
 
-        return await page.content();
+        return await page.content()
     } finally {
-        await page.close();
+        await page.close()
     }
 }
 
@@ -57,10 +57,10 @@ export async function fetchPageHtml(browser: Browser, url: string, waitForSelect
  */
 function tryParseAsDate(text: string): Date | undefined {
     try {
-        const date = parseRelativeDate(text);
-        return Number.isNaN(date.getTime()) ? undefined : date;
+        const date = parseRelativeDate(text)
+        return Number.isNaN(date.getTime()) ? undefined : date
     } catch {
-        return undefined;
+        return undefined
     }
 }
 
@@ -68,21 +68,21 @@ function tryParseAsDate(text: string): Date | undefined {
  * Extract author from article element
  */
 function extractAuthor(article: ReturnType<CheerioAPI>): DataItem['author'] {
-    const container = article.find('.flex.items-center.gap-3').first();
+    const container = article.find('.flex.items-center.gap-3').first()
     if (container.length === 0) {
-        return undefined;
+        return undefined
     }
 
     // Get all content spans (exclude separator spans with "•")
-    const allSpans = container.find('span');
-    const contentSpans: string[] = [];
+    const allSpans = container.find('span')
+    const contentSpans: string[] = []
 
     for (let i = 0; i < allSpans.length; i++) {
-        const $span = allSpans.eq(i);
-        const text = $span.text().trim();
+        const $span = allSpans.eq(i)
+        const text = $span.text().trim()
         // Skip separator spans (contain only "•" or have separator classes)
         if (text !== '•' && !$span.hasClass('text-slate-300') && !$span.hasClass('dark:text-slate-600')) {
-            contentSpans.push(text);
+            contentSpans.push(text)
         }
     }
 
@@ -93,41 +93,41 @@ function extractAuthor(article: ReturnType<CheerioAPI>): DataItem['author'] {
             if (contentSpans[0].includes(',')) {
                 const authors: DataItem['author'] = contentSpans[0].split(',').map((author) => ({
                     name: author.trim(),
-                }));
-                return authors;
+                }))
+                return authors
             }
-            return contentSpans[0];
+            return contentSpans[0]
         case 2: {
             // Two cases:
             // 1. date, reading time (no author)
             // 2. author, date (no reading time)
-            const firstText = contentSpans[0];
+            const firstText = contentSpans[0]
             if (tryParseAsDate(firstText)) {
                 // First is date, so no author
-                break;
+                break
             }
             // First is author
-            return firstText;
+            return firstText
         }
         case 1: {
             // Could be date or author
-            const text = contentSpans[0];
+            const text = contentSpans[0]
             if (tryParseAsDate(text)) {
-                return undefined;
+                return undefined
             }
-            return text;
+            return text
         }
         default:
-            break;
+            break
     }
 
     // Fallback: use the post source as author
-    const sourceSpan = article.find('span.text-xs.font-medium.uppercase').first();
+    const sourceSpan = article.find('span.text-xs.font-medium.uppercase').first()
     if (sourceSpan.length > 0) {
-        return sourceSpan.text().trim();
+        return sourceSpan.text().trim()
     }
 
-    return undefined;
+    return undefined
 }
 
 /**
@@ -138,70 +138,70 @@ function extractCategories(article: ReturnType<CheerioAPI>, $: CheerioAPI): stri
         .find('a[href^="/"]')
         .toArray()
         .map((tagEl) => {
-            const tagElement = $(tagEl);
-            const tagHref = tagElement.attr('href');
-            const tagText = tagElement.text().trim();
+            const tagElement = $(tagEl)
+            const tagHref = tagElement.attr('href')
+            const tagText = tagElement.text().trim()
 
             // Skip summary/stats links and navigation
             if (tagHref && tagText && !tagHref.includes('article/') && !tagHref.includes('Summary') && tagText.length < 50 && !/^(Summary|stats|About|Tags|Toggle|Trending|Latest|Previous|Next)$/i.test(tagText)) {
-                return tagText;
+                return tagText
             }
-            return null;
+            return null
         })
-        .filter((tagText): tagText is string => tagText !== null);
+        .filter((tagText): tagText is string => tagText !== null)
 }
 
 /**
  * Extract publication date from article element
  */
 function extractPubDate(article: ReturnType<CheerioAPI>): Date | undefined {
-    const container = article.find('.flex.items-center.gap-3').first();
+    const container = article.find('.flex.items-center.gap-3').first()
     if (container.length === 0) {
-        return undefined;
+        return undefined
     }
 
     // Get all content spans (exclude separator spans with "•")
-    const allSpans = container.find('span');
-    const contentSpans: string[] = [];
+    const allSpans = container.find('span')
+    const contentSpans: string[] = []
 
     for (let i = 0; i < allSpans.length; i++) {
-        const $span = allSpans.eq(i);
-        const text = $span.text().trim();
+        const $span = allSpans.eq(i)
+        const text = $span.text().trim()
         // Skip separator spans (contain only "•" or have separator classes)
         if (text !== '•' && !$span.hasClass('text-slate-300') && !$span.hasClass('dark:text-slate-600')) {
-            contentSpans.push(text);
+            contentSpans.push(text)
         }
     }
 
-    let dateText: string | undefined;
+    let dateText: string | undefined
 
     // Handle different cases based on number of content spans
     switch (contentSpans.length) {
         case 3:
             // Structure: author, date, reading time
-            dateText = contentSpans[1];
-            break;
+            dateText = contentSpans[1]
+            break
         case 2: {
             // Two cases:
             // 1. date, reading time (no author)
             // 2. author, date (no reading time)
-            const firstText = contentSpans[0];
-            dateText = tryParseAsDate(firstText) ? firstText : contentSpans[1];
-            break;
+            const firstText = contentSpans[0]
+            dateText = tryParseAsDate(firstText) ? firstText : contentSpans[1]
+            break
         }
         case 1: {
             // Could be date or author
-            const text = contentSpans[0];
+            const text = contentSpans[0]
             if (tryParseAsDate(text)) {
-                dateText = text;
+                dateText = text
             }
-            break;
+            break
         }
         default:
-            break;
+            break
     }
 
-    return dateText ? tryParseAsDate(dateText) : undefined;
+    return dateText ? tryParseAsDate(dateText) : undefined
 }
 
 /**
@@ -209,27 +209,27 @@ function extractPubDate(article: ReturnType<CheerioAPI>): Date | undefined {
  */
 function parseArticle(article: ReturnType<CheerioAPI>, $: CheerioAPI, baseUrl: string): (DataItem & ArticleItem) | null {
     // Find the title link in h2 > a
-    const titleLink = article.find('h2 a[href^="http"]').first();
+    const titleLink = article.find('h2 a[href^="http"]').first()
     if (titleLink.length === 0) {
-        return null;
+        return null
     }
 
-    const title = titleLink.text().trim();
-    const link = titleLink.attr('href');
+    const title = titleLink.text().trim()
+    const link = titleLink.attr('href')
 
     if (!title || !link || link.includes('dailypush.dev')) {
-        return null;
+        return null
     }
 
-    const author = extractAuthor(article);
-    const description = article.find('p.text-sm.text-muted-foreground').first().text().trim() || undefined;
-    const categories = extractCategories(article, $);
+    const author = extractAuthor(article)
+    const description = article.find('p.text-sm.text-muted-foreground').first().text().trim() || undefined
+    const categories = extractCategories(article, $)
 
-    const footer = article.find('.flex.items-center.justify-between.gap-4.flex-wrap').first();
-    const summaryLink = footer.find('a[href*="/article/"]').first().attr('href');
-    const dailyPushUrl = summaryLink ? `${baseUrl}${summaryLink}` : undefined;
+    const footer = article.find('.flex.items-center.justify-between.gap-4.flex-wrap').first()
+    const summaryLink = footer.find('a[href*="/article/"]').first().attr('href')
+    const dailyPushUrl = summaryLink ? `${baseUrl}${summaryLink}` : undefined
 
-    const pubDate = extractPubDate(article);
+    const pubDate = extractPubDate(article)
 
     return {
         title,
@@ -241,7 +241,7 @@ function parseArticle(article: ReturnType<CheerioAPI>, $: CheerioAPI, baseUrl: s
         articleUrl: link,
         dailyPushUrl,
         language: 'en',
-    };
+    }
 }
 
 /**
@@ -251,10 +251,10 @@ export function parseArticles($: CheerioAPI, baseUrl: string): ArticleItem[] {
     return $('article')
         .toArray()
         .map((articleEl) => {
-            const article = $(articleEl);
-            return parseArticle(article, $, baseUrl);
+            const article = $(articleEl)
+            return parseArticle(article, $, baseUrl)
         })
-        .filter((parsed): parsed is ArticleItem => parsed !== null);
+        .filter((parsed): parsed is ArticleItem => parsed !== null)
 }
 
 /**
@@ -262,27 +262,27 @@ export function parseArticles($: CheerioAPI, baseUrl: string): ArticleItem[] {
  * Uses the provided browser; opens a new tab per URL (document requests only). Caller must close the browser.
  */
 export async function enhanceItemsWithSummaries(browser: Browser, items: ArticleItem[]): Promise<DataItem[]> {
-    const itemsWithUrl = items.filter((item) => item.dailyPushUrl !== undefined);
-    const itemsWithoutUrl: DataItem[] = items.filter((item) => item.dailyPushUrl === undefined);
+    const itemsWithUrl = items.filter((item) => item.dailyPushUrl !== undefined)
+    const itemsWithoutUrl: DataItem[] = items.filter((item) => item.dailyPushUrl === undefined)
 
     const enhancedItems = await Promise.all(
         itemsWithUrl.map((item) =>
             cache.tryGet(item.dailyPushUrl!, async () => {
                 try {
-                    const html = await fetchPageHtml(browser, item.dailyPushUrl!, 'p.font-ibm-plex-sans.leading-relaxed');
-                    const $ = load(html);
-                    const summary = $('p.font-ibm-plex-sans.leading-relaxed').first();
+                    const html = await fetchPageHtml(browser, item.dailyPushUrl!, 'p.font-ibm-plex-sans.leading-relaxed')
+                    const $ = load(html)
+                    const summary = $('p.font-ibm-plex-sans.leading-relaxed').first()
                     if (summary.length > 0 && summary.text().trim()) {
-                        item.description = summary.text().trim();
+                        item.description = summary.text().trim()
                     }
                 } catch {
                     // If fetching article page fails, keep the original description
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    return [...enhancedItems, ...itemsWithoutUrl];
+    return [...enhancedItems, ...itemsWithoutUrl]
 }

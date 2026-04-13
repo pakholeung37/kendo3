@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    description?: string;
+    description?: string
     image?: {
-        src?: string;
-        title?: string;
-    };
+        src?: string
+        title?: string
+    }
     assets?: Array<{
-        asset_type?: string;
-        player_embedded?: string;
-        image_url?: string;
-    }>;
-};
+        asset_type?: string
+        player_embedded?: string
+        image_url?: string
+    }>
+}
 
 const ArtstationDescription = ({ description, image, assets }: DescriptionData) => (
     <>
@@ -30,7 +30,7 @@ const ArtstationDescription = ({ description, image, assets }: DescriptionData) 
                         {raw(asset.player_embedded)}
                         <br />
                     </>
-                );
+                )
             }
 
             if (asset.asset_type === 'image' || asset.asset_type === 'cover') {
@@ -39,12 +39,12 @@ const ArtstationDescription = ({ description, image, assets }: DescriptionData) 
                         <img src={asset.image_url} />
                         <br />
                     </>
-                );
+                )
             }
 
-            return null;
+            return null
         })}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<ArtstationDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<ArtstationDescription {...data} />)

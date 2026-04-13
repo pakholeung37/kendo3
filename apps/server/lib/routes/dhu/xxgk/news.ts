@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const siteUrl = 'https://xxgk.dhu.edu.cn';
-const baseUrl = 'https://xxgk.dhu.edu.cn/1737/list.htm';
+const siteUrl = 'https://xxgk.dhu.edu.cn'
+const baseUrl = 'https://xxgk.dhu.edu.cn/1737/list.htm'
 
 export const route: Route = {
     path: '/xxgk/news',
@@ -24,40 +24,40 @@ export const route: Route = {
     name: '最新信息公开',
     maintainers: ['KiraKiseki'],
     handler,
-};
+}
 
 async function handler() {
-    const link = baseUrl;
-    const { data: response } = await got(link);
+    const link = baseUrl
+    const { data: response } = await got(link)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const items = await Promise.all(
         $('.cols_list > li')
             .toArray()
             .map(async (item) => {
-                item = $(item);
-                const colsTitle = item.find('.cols_title > a');
-                const colsMeta = item.find('.cols_meta');
+                item = $(item)
+                const colsTitle = item.find('.cols_title > a')
+                const colsMeta = item.find('.cols_meta')
 
                 // article meta
-                const link = colsTitle.attr('href');
-                const title = colsTitle.text();
-                const pubDate = parseDate(colsMeta.text(), 'YYYY-MM-DD', 'zh-cn');
+                const link = colsTitle.attr('href')
+                const title = colsTitle.text()
+                const pubDate = parseDate(colsMeta.text(), 'YYYY-MM-DD', 'zh-cn')
 
                 // fetch article content and return item using cache.tryGet
                 // url as cache key
-                const url = `${siteUrl}${link}`;
+                const url = `${siteUrl}${link}`
                 return await cache.tryGet(url, async () => {
                     // fetch article content
                     // some contents are only available for internal network
-                    let description: string;
+                    let description: string
                     try {
-                        const { data: response } = await got(url);
-                        const $ = load(response);
-                        description = $('.wp_articlecontent').first().html() ?? '';
+                        const { data: response } = await got(url)
+                        const $ = load(response)
+                        description = $('.wp_articlecontent').first().html() ?? ''
                     } catch {
-                        description = '';
+                        description = ''
                     }
 
                     return {
@@ -65,14 +65,14 @@ async function handler() {
                         link,
                         pubDate,
                         description,
-                    };
-                });
-            })
-    );
+                    }
+                })
+            }),
+    )
 
     return {
         title: '东华大学信息公开网-最新公开信息',
         link,
         item: items,
-    };
+    }
 }

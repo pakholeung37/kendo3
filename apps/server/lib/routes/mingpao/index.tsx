@@ -1,12 +1,12 @@
-import * as cheerio from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 const renderFanBox = (media): string =>
     renderToString(
@@ -21,34 +21,34 @@ const renderFanBox = (media): string =>
                         <img src={item.href} alt={item.title} />
                         <figcaption>{item.title}</figcaption>
                     </figure>
-                )
+                ),
             )}
-        </>
-    );
+        </>,
+    )
 
 const renderDesc = (media, desc): string =>
     renderToString(
         <>
             {raw(renderFanBox(media))}
             {raw(desc)}
-        </>
-    );
+        </>,
+    )
 
 const fixFancybox = (element, $) => {
-    const $e = $(element);
-    const url = new URL($e.attr('href'));
-    let video;
+    const $e = $(element)
+    const url = new URL($e.attr('href'))
+    let video
     if (url.hostname === 'videop.mingpao.com') {
-        video = new URL(url.searchParams.get('file'));
-        video.hostname = 'cfrvideo.mingpao.com'; // use cloudflare cdn
-        video = video.href;
+        video = new URL(url.searchParams.get('file'))
+        video.hostname = 'cfrvideo.mingpao.com' // use cloudflare cdn
+        video = video.href
     }
     return {
         href: url.href,
         title: $e.attr('title'),
         video,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:type?/:category?',
@@ -107,14 +107,14 @@ export const route: Route = {
 | s00016   | 娛樂         |
 | s00017   | English      |
 | s00018   | 作家專欄     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'ins';
-    const category = ctx.req.param('category') ?? (type === 'ins' ? 'all' : 's00001');
-    const link = `https://news.mingpao.com/rss/${type}/${category}.xml`;
+    const type = ctx.req.param('type') ?? 'ins'
+    const category = ctx.req.param('category') ?? (type === 'ins' ? 'all' : 's00001')
+    const link = `https://news.mingpao.com/rss/${type}/${category}.xml`
 
-    const feed = await parser.parseURL(link);
+    const feed = await parser.parseURL(link)
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
@@ -122,63 +122,63 @@ async function handler(ctx) {
                     headers: {
                         Referer: 'https://news.mingpao.com/',
                     },
-                });
+                })
 
-                const $ = cheerio.load(response);
+                const $ = cheerio.load(response)
                 const topVideo = $('#topvideo').length
                     ? $('#topvideo iframe')
                           .toArray()
                           .map((e) => $(e).attr('href', $(e).attr('src')))
                           .map((e) => fixFancybox(e, $))
-                    : [];
-                const fancyboxImg = $('a.fancybox').length ? $('a.fancybox') : $('a.fancybox-buttons');
+                    : []
+                const fancyboxImg = $('a.fancybox').length ? $('a.fancybox') : $('a.fancybox-buttons')
 
                 // remove unwanted elements
-                $('div.ad300ins_m').remove();
-                $('div.clear, div.inReadLrecGroup, div.clr').remove();
-                $('div#ssm2').remove();
-                $('iframe').remove();
-                $('p[dir=ltr]').remove();
+                $('div.ad300ins_m').remove()
+                $('div.clear, div.inReadLrecGroup, div.clr').remove()
+                $('div#ssm2').remove()
+                $('iframe').remove()
+                $('p[dir=ltr]').remove()
 
                 // extract categories
-                item.category = item.categories;
+                item.category = item.categories
 
                 // fix fancybox image
-                let fancybox = [...topVideo, ...fancyboxImg.toArray().map((e) => fixFancybox(e, $))];
+                let fancybox = [...topVideo, ...fancyboxImg.toArray().map((e) => fixFancybox(e, $))]
                 const script = $('script')
                     .toArray()
-                    .find((e) => $(e).text()?.includes("$('#lower').prepend('"));
+                    .find((e) => $(e).text()?.includes("$('#lower').prepend('"))
                 const lowerContent = script
                     ? $(script)
                           .text()
                           ?.match(/\$\('#lower'\)\.prepend\('(.*)'\);/)?.[1]
                           ?.replaceAll(String.raw`\"`, '"')
-                    : '';
+                    : ''
                 if (lowerContent) {
-                    const $ = cheerio.load(lowerContent, null, false);
+                    const $ = cheerio.load(lowerContent, null, false)
                     fancybox = [
                         ...fancybox,
                         ...$('a.fancybox')
                             .toArray()
                             .map((e) => fixFancybox(e, $)),
-                    ];
+                    ]
                 }
 
                 // remove unwanted key value
-                delete item.categories;
-                delete item.content;
-                delete item.contentSnippet;
-                delete item.creator;
-                delete item.isoDate;
+                delete item.categories
+                delete item.content
+                delete item.contentSnippet
+                delete item.creator
+                delete item.isoDate
 
-                item.description = renderDesc(fancybox, $('.txt4').html() ?? $('.article_content.line_1_5em').html() ?? $('.txt3').html());
-                item.pubDate = parseDate(item.pubDate);
-                item.guid = item.link.includes('?') ? item.link : item.link.slice(0, item.link.lastIndexOf('/'));
+                item.description = renderDesc(fancybox, $('.txt4').html() ?? $('.article_content.line_1_5em').html() ?? $('.txt3').html())
+                item.pubDate = parseDate(item.pubDate)
+                item.guid = item.link.includes('?') ? item.link : item.link.slice(0, item.link.lastIndexOf('/'))
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -187,5 +187,5 @@ async function handler(ctx) {
         item: items,
         image: feed.image.url,
         language: feed.language,
-    };
+    }
 }

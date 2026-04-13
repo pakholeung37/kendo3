@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { processItems, rootUrl } from './utils';
+import { processItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/actress/:id',
@@ -27,10 +27,10 @@ export const route: Route = {
     handler,
     url: 'projectjav.com/',
     description: 'Fetches the latest movies from a specific actress page on ProjectJAV.',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id').replace(/\/$/, '');
-    const currentUrl = `${rootUrl}/actress/${id}`;
-    return await processItems(currentUrl);
+    const id = ctx.req.param('id').replace(/\/$/, '')
+    const currentUrl = `${rootUrl}/actress/${id}`
+    return await processItems(currentUrl)
 }

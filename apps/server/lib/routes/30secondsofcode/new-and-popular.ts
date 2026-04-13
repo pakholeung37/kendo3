@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { processList, rootUrl } from './utils';
+import { processList, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/latest',
@@ -26,18 +26,18 @@ export const route: Route = {
     name: 'New & Popular Snippets',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler() {
-    const response = await ofetch(rootUrl);
+    const response = await ofetch(rootUrl)
 
-    const $ = load(response);
-    const fullList = $('section.preview-list > ul > li').toArray();
-    const items = await processList(fullList);
+    const $ = load(response)
+    const fullList = $('section.preview-list > ul > li').toArray()
+    const items = await processList(fullList)
     return {
         title: 'New & Popular Snippets',
         description: 'Discover short code snippets for all your development needs.',
         link: rootUrl,
         item: items,
-    } as Data;
+    } as Data
 }

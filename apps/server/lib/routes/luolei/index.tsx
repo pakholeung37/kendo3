@@ -1,22 +1,22 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-    width?: string;
-    height?: string;
-};
+    src?: string
+    alt?: string
+    width?: string
+    height?: string
+}
 
 type DescriptionVideo = {
-    src?: string;
-};
+    src?: string
+}
 
 const renderDescription = ({ images, videos }: { images?: DescriptionImage[]; videos?: DescriptionVideo[] }) =>
     renderToString(
@@ -24,19 +24,19 @@ const renderDescription = ({ images, videos }: { images?: DescriptionImage[]; vi
             {images?.length
                 ? images.map((image) => {
                       if (videos?.[0]?.src || !image?.src) {
-                          return null;
+                          return null
                       }
 
-                      const alt = image.height ?? image.width ?? image.alt;
-                      return <figure>{alt ? <img src={image.src} alt={alt} /> : <img src={image.src} />}</figure>;
+                      const alt = image.height ?? image.width ?? image.alt
+                      return <figure>{alt ? <img src={image.src} alt={alt} /> : <img src={image.src} />}</figure>
                   })
                 : null}
-        </>
-    );
+        </>,
+    )
 
 const unblurImages = ($: CheerioAPI) => {
     $('img[data-original-src]').each((_, el) => {
-        el = $(el);
+        el = $(el)
 
         el.replaceWith(
             renderDescription({
@@ -45,41 +45,41 @@ const unblurImages = ($: CheerioAPI) => {
                         src: el.prop('data-original-src'),
                     },
                 ],
-            })
-        );
-    });
+            }),
+        )
+    })
 
-    return $;
-};
+    return $
+}
 
 export const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://luolei.org';
+    const rootUrl = 'https://luolei.org'
 
-    const { data: response } = await got(rootUrl);
+    const { data: response } = await got(rootUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
     const themeEl = $('link[rel="modulepreload"]')
         .toArray()
-        .findLast((l) => /theme\..*\.js$/.test($(l).prop('href')));
-    const themeUrl = themeEl ? new URL($(themeEl).prop('href'), rootUrl).href : undefined;
+        .findLast((l) => /theme\..*\.js$/.test($(l).prop('href')))
+    const themeUrl = themeEl ? new URL($(themeEl).prop('href'), rootUrl).href : undefined
 
-    const { data: themeResponse } = await got(themeUrl);
+    const { data: themeResponse } = await got(themeUrl)
 
     let items = themeResponse
         .match(/{"title":".*?"string":".*?"}}/g)
         .slice(0, limit)
         .map((item) => {
-            item = JSON.parse(item.replaceAll(String.raw`\\"`, String.raw`\"`).replaceAll(String.raw`\\n`, '').replaceAll('\\`', '`'));
+            item = JSON.parse(item.replaceAll(String.raw`\\"`, String.raw`\"`).replaceAll(String.raw`\\n`, '').replaceAll('\\`', '`'))
 
-            const $$ = unblurImages(load(item.excerpt));
+            const $$ = unblurImages(load(item.excerpt))
 
-            const title = item.title;
-            const description = $$.html();
-            const image = item.cover;
+            const title = item.title
+            const description = $$.html()
+            const image = item.cover
 
             return {
                 title,
@@ -95,39 +95,39 @@ export const handler = async (ctx) => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (item.description.length > 40) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = unblurImages(load(detailResponse));
+                const $$ = unblurImages(load(detailResponse))
 
-                $$('div.tweet-card').remove();
+                $$('div.tweet-card').remove()
 
-                const title = $$('h2').first().text();
-                const description = $$('div.vp-doc').html();
+                const title = $$('h2').first().text()
+                const description = $$('div.vp-doc').html()
 
-                item.title = title;
-                item.description = description;
+                item.title = title
+                item.description = description
                 item.content = {
                     html: description,
                     text: $$('div.vp-doc').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('img.logo').prop('src'), rootUrl).href;
+    const image = new URL($('img.logo').prop('src'), rootUrl).href
 
     return {
         title: $('title').first().text(),
@@ -138,8 +138,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:title"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/',
@@ -166,4 +166,4 @@ export const route: Route = {
             target: '/',
         },
     ],
-};
+}

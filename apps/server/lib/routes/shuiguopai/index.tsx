@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/',
@@ -23,15 +23,15 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://sgptv.vip';
-    const apiRootUrl = 'https://api.cbbee0.com';
-    const listUrl = `${apiRootUrl}/v1_2/homePage`;
-    const filmUrl = `${apiRootUrl}/v1_2/filmInfo`;
+    const rootUrl = 'https://sgptv.vip'
+    const apiRootUrl = 'https://api.cbbee0.com'
+    const listUrl = `${apiRootUrl}/v1_2/homePage`
+    const filmUrl = `${apiRootUrl}/v1_2/filmInfo`
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
     const response = await got({
         method: 'post',
@@ -45,7 +45,7 @@ async function handler(ctx) {
             page: 1,
             userToken: '',
         },
-    });
+    })
 
     let items = response.data.data.list.map((item) => ({
         title: item.title,
@@ -53,7 +53,7 @@ async function handler(ctx) {
         link: `${rootUrl}/play-details/${item.library_id}`,
         pubDate: timezone(parseDate(item.show_time_origin, 'YYYY-MM-DD HH:mm:ss'), +8),
         category: item.tags.map((t) => t.tag_title),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -61,13 +61,13 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
-                content('iframe').remove();
+                const content = load(detailResponse.data)
+                content('iframe').remove()
 
-                let videos;
-                const filmId = detailResponse.data.match(/film_id:"([\d,]+)",/)?.[1];
+                let videos
+                const filmId = detailResponse.data.match(/film_id:"([\d,]+)",/)?.[1]
                 if (filmId) {
                     const infoResponse = await got({
                         method: 'post',
@@ -78,14 +78,14 @@ async function handler(ctx) {
                             hm: '008-api',
                             userToken: '',
                         },
-                    });
+                    })
 
-                    const data = infoResponse.data.data;
+                    const data = infoResponse.data.data
 
-                    videos = data.map((d) => d.download_url);
+                    videos = data.map((d) => d.download_url)
 
-                    item.category = data.flatMap((d) => d.tags.map((t) => t.tag_title));
-                    item.author = data.map((d) => d.actor).join(' ');
+                    item.category = data.flatMap((d) => d.tags.map((t) => t.tag_title))
+                    item.author = data.map((d) => d.actor).join(' ')
                 }
 
                 item.description = renderToString(
@@ -96,17 +96,17 @@ async function handler(ctx) {
                             </video>
                         ))}
                         {raw(content('.content').html())}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '水果派',
         link: rootUrl,
         item: items,
-    };
+    }
 }

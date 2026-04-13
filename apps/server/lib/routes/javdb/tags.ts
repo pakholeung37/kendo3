@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/tags/:query?/:category?',
@@ -43,15 +43,15 @@ export const route: Route = {
 | 有碼     | 無碼       | 歐美    |
 | -------- | ---------- | ------- |
 | censored | uncensored | western |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'censored';
-    const query = ctx.req.param('query') ?? '';
+    const category = ctx.req.param('category') ?? 'censored'
+    const query = ctx.req.param('query') ?? ''
 
-    const currentUrl = `/tags${category === 'censored' ? '' : `/${category}`}?${query}`;
+    const currentUrl = `/tags${category === 'censored' ? '' : `/${category}`}?${query}`
 
-    const title = `JavDB${query === '' ? '' : ` - ${query}`} `;
+    const title = `JavDB${query === '' ? '' : ` - ${query}`} `
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

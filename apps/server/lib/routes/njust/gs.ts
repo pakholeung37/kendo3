@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getContent } from './utils';
+import { getContent } from './utils'
 
-const host = 'https://gs.njust.edu.cn';
+const host = 'https://gs.njust.edu.cn'
 
 export const route: Route = {
     path: '/gs/:type?',
@@ -33,25 +33,25 @@ export const route: Route = {
     description: `| 首页通知公告 | 首页新闻动态 | 最新通知 | 招生信息 | 培养信息 | 学术活动 |
 | ------------ | ------------ | -------- | -------- | -------- | -------- |
 | sytzgg_4568 | sytzgg       | 14686    | 14687    | 14688    | xshdggl  |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'sytzgg_4568';
-    const id = '/' + type;
-    const siteUrl = host + id + '/list.htm';
+    const type = ctx.req.param('type') ?? 'sytzgg_4568'
+    const id = '/' + type
+    const siteUrl = host + id + '/list.htm'
 
-    const html = await getContent(siteUrl);
-    const $ = load(html);
-    const title = '南京理工大学研究生院 -- ' + $('title').text();
-    const list = $('ul.news_ul').find('li');
+    const html = await getContent(siteUrl)
+    const $ = load(html)
+    const title = '南京理工大学研究生院 -- ' + $('title').text()
+    const list = $('ul.news_ul').find('li')
 
     const items = await Promise.all(
         list.map(async (index, item) => {
-            const url = $(item).find('a').attr('href');
-            let desc = '';
+            const url = $(item).find('a').attr('href')
+            let desc = ''
             if (url.startsWith('/')) {
-                const data = await getContent(host + url);
-                desc = load(data)('.wp_articlecontent').html();
+                const data = await getContent(host + url)
+                desc = load(data)('.wp_articlecontent').html()
             }
 
             return {
@@ -59,13 +59,13 @@ async function handler(ctx) {
                 description: desc,
                 pubDate: timezone(parseDate($(item).find('span').text(), 'YYYY-MM-DD'), +8),
                 link: url,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     return {
         title,
         link: siteUrl,
         item: items,
-    };
+    }
 }

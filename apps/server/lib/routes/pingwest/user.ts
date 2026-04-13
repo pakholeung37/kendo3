@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/user/:uid/:type?/:option?',
@@ -37,28 +37,28 @@ export const route: Route = {
   参数
 
   -   \`fulltext\`，全文输出，例如：\`/pingwest/user/7781550877/article/fulltext\``,
-};
+}
 
 async function handler(ctx) {
-    const { uid, type = 'article', option } = ctx.req.param();
-    const baseUrl = 'https://www.pingwest.com';
-    const aimUrl = `${baseUrl}/user/${uid}/${type}`;
+    const { uid, type = 'article', option } = ctx.req.param()
+    const baseUrl = 'https://www.pingwest.com'
+    const aimUrl = `${baseUrl}/user/${uid}/${type}`
     const { userName, realUid, userSign, userAvatar } = await cache.tryGet(`pingwest:user:info:${uid}`, async () => {
         const res = await got(aimUrl, {
             headers: {
                 Referer: baseUrl,
             },
-        });
-        const $ = load(res.data);
-        const userInfoNode = $('#J_userId');
+        })
+        const $ = load(res.data)
+        const userInfoNode = $('#J_userId')
         return {
             userName: userInfoNode.text(),
             realUid: userInfoNode.attr('data-user-id'),
             userSign: $('#J_userSign').text(),
             userAvatar: $('#J_userAvatar').attr('src'),
-        };
-    });
-    const url = `${baseUrl}/api/user_data`;
+        }
+    })
+    const url = `${baseUrl}/api/user_data`
     const response = await got(url, {
         searchParams: {
             page: 1,
@@ -68,31 +68,31 @@ async function handler(ctx) {
         headers: {
             Referer: baseUrl,
         },
-    });
-    const $ = load(response.data.data.list);
+    })
+    const $ = load(response.data.data.list)
 
-    let item: DataItem[];
-    const needFullText = option === 'fulltext';
+    let item: DataItem[]
+    const needFullText = option === 'fulltext'
     switch (type) {
         case 'article':
-            item = await utils.articleListParser($, needFullText, cache);
-            break;
+            item = await utils.articleListParser($, needFullText, cache)
+            break
         case 'state':
-            item = utils.statusListParser($);
-            break;
+            item = utils.statusListParser($)
+            break
         default:
-            throw new Error(`Unknown type: ${type}`);
+            throw new Error(`Unknown type: ${type}`)
     }
 
     const typeToLabel = {
         article: '文章',
         state: '动态',
-    };
+    }
     return {
         title: `品玩 - ${userName} - ${typeToLabel[type]}`,
         description: userSign,
         image: userAvatar,
         link: aimUrl,
         item,
-    };
+    }
 }

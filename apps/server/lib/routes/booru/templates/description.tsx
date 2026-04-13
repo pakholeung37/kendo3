@@ -1,14 +1,14 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    image?: string;
-    title?: string;
-    posted?: string;
-    by?: string;
-    source?: string;
-    rating?: string;
-    score?: string;
-};
+    image?: string
+    title?: string
+    posted?: string
+    by?: string
+    source?: string
+    rating?: string
+    score?: string
+}
 
 export const renderDescription = ({ image, title, posted, by, source, rating, score }: DescriptionData) =>
     renderToString(
@@ -39,5 +39,5 @@ export const renderDescription = ({ image, title, posted, by, source, rating, sc
                     score: <span class="score">{score}</span>
                 </p>
             ) : null}
-        </div>
-    );
+        </div>,
+    )

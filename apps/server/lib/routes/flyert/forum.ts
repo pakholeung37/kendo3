@@ -1,54 +1,54 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { parseArticle, parseArticleList, parsePost, parsePostList, rootUrl } from './util';
+import { parseArticle, parseArticleList, parsePost, parsePostList, rootUrl } from './util'
 
 export const handler = async (ctx) => {
-    const { params } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const { params } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
 
     const decodedParams = params
         ? decodeURIComponent(params)
               .split(/&/)
               .filter((p) => p.split(/=/).length === 2)
               .join('&')
-        : undefined;
+        : undefined
 
-    const currentUrl = new URL(`forum.php${decodedParams ? `?${decodedParams}` : ''}`, rootUrl).href;
+    const currentUrl = new URL(`forum.php${decodedParams ? `?${decodedParams}` : ''}`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
-    const language = $('meta[http-equiv="Content-Language"]').prop('content');
+    const language = $('meta[http-equiv="Content-Language"]').prop('content')
 
-    let items = $('table#threadlisttableid').length === 0 ? parseArticleList($, limit) : parsePostList($, limit);
+    let items = $('table#threadlisttableid').length === 0 ? parseArticleList($, limit) : parsePostList($, limit)
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: detailResponse } = await got(item.link, {
                     responseType: 'buffer',
-                });
+                })
 
-                const $$ = load(iconv.decode(detailResponse, 'gbk').replaceAll(/<\/?ignore_js_op>/g, ''));
+                const $$ = load(iconv.decode(detailResponse, 'gbk').replaceAll(/<\/?ignore_js_op>/g, ''))
 
-                item = $$('div.firstpost').length === 0 ? parseArticle($$, item) : parsePost($$, item);
+                item = $$('div.firstpost').length === 0 ? parseArticle($$, item) : parsePost($$, item)
 
-                item.language = language;
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = `https:${$('div.wp h2 a img').prop('src')}`;
+    const image = `https:${$('div.wp h2 a img').prop('src')}`
 
     return {
         title: `飞客 - ${$('a.forum_name, li.a, li.cur, li.xw1, div.z > a.xw1')
@@ -61,8 +61,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('meta[name="application-name"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/forum/:params{.+}?',
@@ -91,10 +91,10 @@ export const route: Route = {
         {
             source: ['www.flyert.com.cn/forum.php'],
             target: (_, url) => {
-                const params = [...url.searchParams.entries()].map(([key, value]) => key + '=' + value).join('&');
+                const params = [...url.searchParams.entries()].map(([key, value]) => key + '=' + value).join('&')
 
-                return `/forum${params ? `/${encodeURIComponent(params)}` : ''}`;
+                return `/forum${params ? `/${encodeURIComponent(params)}` : ''}`
             },
         },
     ],
-};
+}

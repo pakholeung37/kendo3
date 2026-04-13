@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: '最新',
@@ -17,4 +17,4 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}

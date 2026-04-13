@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { EventsPagination } from './types';
-import { GAMMA_API } from './types';
-import { formatEventDescription } from './utils';
+import type { EventsPagination } from './types'
+import { GAMMA_API } from './types'
+import { formatEventDescription } from './utils'
 
 export const route: Route = {
     path: '/events/:tagSlug?',
@@ -31,11 +31,11 @@ export const route: Route = {
     url: 'polymarket.com',
     maintainers: ['heqi201255'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const tagSlug = ctx.req.param('tagSlug');
-    const limit = 30;
+    const tagSlug = ctx.req.param('tagSlug')
+    const limit = 30
 
     const query: Record<string, unknown> = {
         active: true,
@@ -43,15 +43,15 @@ async function handler(ctx) {
         limit,
         order: 'volume',
         ascending: false,
-    };
-
-    if (tagSlug) {
-        query.tag_slug = tagSlug;
     }
 
-    const response = await ofetch<EventsPagination>(`${GAMMA_API}/events/pagination`, { query });
+    if (tagSlug) {
+        query.tag_slug = tagSlug
+    }
 
-    const data = response.data || [];
+    const response = await ofetch<EventsPagination>(`${GAMMA_API}/events/pagination`, { query })
+
+    const data = response.data || []
 
     const items = data.map((event) => ({
         title: event.title,
@@ -59,11 +59,11 @@ async function handler(ctx) {
         link: `https://polymarket.com/event/${event.slug}`,
         pubDate: event.startDate ? parseDate(event.startDate) : undefined,
         category: event.tags?.map((t) => t.label).filter(Boolean) as string[],
-    }));
+    }))
 
     return {
         title: `Polymarket Events${tagSlug ? ` - ${tagSlug}` : ''}`,
         link: tagSlug ? `https://polymarket.com/${tagSlug}` : 'https://polymarket.com',
         item: items,
-    };
+    }
 }

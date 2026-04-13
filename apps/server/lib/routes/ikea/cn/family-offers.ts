@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { generateProductItem } from './utils';
+import { generateProductItem } from './utils'
 
 const familyPriceProductsRequest = ({ pageIndex = 1 }) =>
     got({
@@ -21,7 +21,7 @@ const familyPriceProductsRequest = ({ pageIndex = 1 }) =>
             pageType: '',
             queryContent: 'family_price',
         },
-    });
+    })
 
 const productRequest = async (productIds) => {
     const response = await got({
@@ -30,9 +30,9 @@ const productRequest = async (productIds) => {
             'X-Client-Platform': 'PcWeb',
         },
         searchParams: new URLSearchParams(productIds),
-    });
-    return response.data;
-};
+    })
+    return response.data
+}
 
 export const route: Route = {
     path: '/cn/family_offers',
@@ -56,41 +56,41 @@ export const route: Route = {
     maintainers: ['jzhangdev'],
     handler,
     url: 'ikea.cn/cn/zh/offers/family-offers',
-};
+}
 
 async function handler() {
-    const familyPriceProductIds = [];
-    const productRequests = [];
+    const familyPriceProductIds = []
+    const productRequests = []
 
     const familyPriceProductsLoadMore = async ({ pageIndex }) => {
-        const response = await familyPriceProductsRequest({ pageIndex });
+        const response = await familyPriceProductsRequest({ pageIndex })
         const {
             data: { productPage, products },
-        } = response.data;
+        } = response.data
 
         for (const { id } of products) {
-            familyPriceProductIds.push(['ids', id]);
+            familyPriceProductIds.push(['ids', id])
         }
 
         if (productPage.end < productPage.total) {
-            await familyPriceProductsLoadMore({ pageIndex: pageIndex + 1 });
+            await familyPriceProductsLoadMore({ pageIndex: pageIndex + 1 })
         }
-        return;
-    };
-
-    await familyPriceProductsLoadMore({ pageIndex: 1 });
-
-    while (familyPriceProductIds.length) {
-        productRequests.push(productRequest(familyPriceProductIds.splice(0, 25)));
+        return
     }
 
-    const productResponses = await Promise.all(productRequests);
-    const products = productResponses.flat();
+    await familyPriceProductsLoadMore({ pageIndex: 1 })
+
+    while (familyPriceProductIds.length) {
+        productRequests.push(productRequest(familyPriceProductIds.splice(0, 25)))
+    }
+
+    const productResponses = await Promise.all(productRequests)
+    const products = productResponses.flat()
 
     return {
         title: 'IKEA 宜家 - 会员特惠',
         link: 'https://www.ikea.cn/cn/zh/offers/family-offers/',
         description: '会员特惠',
         item: products.map((element) => generateProductItem(element)),
-    };
+    }
 }

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/mall/ip/:id',
@@ -17,10 +17,10 @@ export const route: Route = {
     name: '会员购作品',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const detail = await got({
         method: 'get',
@@ -28,7 +28,7 @@ async function handler(ctx) {
         headers: {
             Referer: `https://mall.bilibili.com/ip.html?noTitleBar=1&ip=${id}&from=detail`,
         },
-    });
+    })
 
     const response = await got({
         method: 'get',
@@ -36,9 +36,9 @@ async function handler(ctx) {
         headers: {
             Referer: `https://mall.bilibili.com/ip.html?noTitleBar=1&ip=${id}&from=detail`,
         },
-    });
+    })
 
-    const data = response.data.data;
+    const data = response.data.data
 
     return {
         title: `${detail.data.data.name} - 会员购`,
@@ -49,5 +49,5 @@ async function handler(ctx) {
             description: `${item.name}<br>￥${item.price}<br><img src="${item.itemsImg}">`,
             link: item.jumpUrlH5,
         })),
-    };
+    }
 }

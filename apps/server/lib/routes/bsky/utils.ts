@@ -1,5 +1,5 @@
-import { config } from '@/config';
-import got from '@/utils/got';
+import { config } from '@/config'
+import got from '@/utils/got'
 
 /**
  * docs: https://atproto.com/lexicons/app-bsky
@@ -12,9 +12,9 @@ const resolveHandle = (handle, tryGet) =>
             searchParams: {
                 handle,
             },
-        });
-        return data.did;
-    });
+        })
+        return data.did
+    })
 
 // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/getProfile.json
 const getProfile = (did, tryGet) =>
@@ -23,9 +23,9 @@ const getProfile = (did, tryGet) =>
             searchParams: {
                 actor: did,
             },
-        });
-        return data;
-    });
+        })
+        return data
+    })
 
 // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/getAuthorFeed.json
 const getAuthorFeed = (did, filter, tryGet) =>
@@ -38,12 +38,12 @@ const getAuthorFeed = (did, filter, tryGet) =>
                     filter,
                     limit: 30,
                 },
-            });
-            return data;
+            })
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/getFeed.json
 const getFeed = (uri, tryGet) =>
@@ -55,12 +55,12 @@ const getFeed = (uri, tryGet) =>
                     feed: uri,
                     limit: 30,
                 },
-            });
-            return data;
+            })
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 // https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/getFeedGenerator.json
 const getFeedGenerator = (uri, tryGet) =>
@@ -71,11 +71,11 @@ const getFeedGenerator = (uri, tryGet) =>
                 searchParams: {
                     feed: uri,
                 },
-            });
-            return data;
+            })
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-export { getAuthorFeed, getFeed, getFeedGenerator, getProfile, resolveHandle };
+export { getAuthorFeed, getFeed, getFeedGenerator, getProfile, resolveHandle }

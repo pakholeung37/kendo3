@@ -1,24 +1,24 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { channel = 'allrules/bussiness' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { channel = 'allrules/bussiness' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.szse.cn';
-    const apiUrl = new URL('api/search/content', rootUrl).href;
-    const currentUrl = new URL(`www/lawrules/rule/${channel}/`, rootUrl).href;
+    const rootUrl = 'https://www.szse.cn'
+    const apiUrl = new URL('api/search/content', rootUrl).href
+    const currentUrl = new URL(`www/lawrules/rule/${channel}/`, rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const channelEl = $('ul.side-menu-con li.active').last();
-    const channelCode = channelEl.prop('chnlcode');
+    const channelEl = $('ul.side-menu-con li.active').last()
+    const channelCode = channelEl.prop('chnlcode')
 
     const { data: response } = await got.post(apiUrl, {
         form: {
@@ -30,41 +30,41 @@ export const handler = async (ctx) => {
             pageSize: limit,
             scope: 0,
         },
-    });
+    })
 
     let items = response.data.slice(0, limit).map((item) => ({
         title: item.doctitle,
         pubDate: parseDate(item.docpubtime, 'X'),
         link: item.docpuburl,
         category: item.navigation,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h2.title').text();
-                const description = $$('div#desContent').html();
+                const title = $$('h2.title').text()
+                const description = $$('div#desContent').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = item.pubDate ?? parseDate($$('div.time span').text());
-                item.author = $$('meta[name="author"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = item.pubDate ?? parseDate($$('div.time span').text())
+                item.author = $$('meta[name="author"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div#desContent').text(),
-                };
-                item.language = $$('html').prop('lang');
+                }
+                item.language = $$('html').prop('lang')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = $('a.navbar-brand img').prop('src');
+    const image = $('a.navbar-brand img').prop('src')
 
     return {
         title: `深圳证券交易所 - ${channelEl.text()}`,
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="author"]').prop('content'),
         language: $('html').prop('lang'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/rule/:channel{.+}?',
@@ -176,9 +176,9 @@ export const route: Route = {
         {
             source: ['www.szse.cn/www/lawrules/rule/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/szse/rule${category ? `/${category}` : ''}`;
+                return `/szse/rule${category ? `/${category}` : ''}`
             },
         },
         {
@@ -347,4 +347,4 @@ export const route: Route = {
             target: '/rule/repeal/rules',
         },
     ],
-};
+}

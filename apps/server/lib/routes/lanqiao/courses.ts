@@ -1,10 +1,10 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/courses/:sort/:tag',
@@ -22,19 +22,19 @@ export const route: Route = {
     name: '全站发布的课程',
     maintainers: ['huhuhang'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort');
-    const tag = ctx.req.param('tag');
+    const sort = ctx.req.param('sort')
+    const tag = ctx.req.param('tag')
     // 发起 HTTP GET 请求
     const response = await got({
         method: 'get',
         url: `https://www.lanqiao.cn/api/v2/courses/?sort=${sort}&tag=${tag}&include=name,description,picture_url,id`,
-    });
+    })
 
-    const data = response.data.results; // response.data 为 HTTP GET 请求返回的数据对象
-    const md = new MarkdownIt();
+    const data = response.data.results // response.data 为 HTTP GET 请求返回的数据对象
+    const md = new MarkdownIt()
 
     // 课程类型
     const courseType = {
@@ -45,7 +45,7 @@ async function handler(ctx) {
         bootcamp: '训练营',
         private: '私有课',
         exam: '考试',
-    };
+    }
 
     const items = await Promise.all(
         data.map((item) =>
@@ -53,23 +53,23 @@ async function handler(ctx) {
                 const courseResponse = await got({
                     method: 'get',
                     url: `https://www.lanqiao.cn/api/v2/courses/${item.id}/`,
-                });
-                const course = courseResponse.data;
-                item.title = `${course.name} [${courseType[course.fee_type]}]`;
-                item.description = utils.courseDesc(course.picture_url, md.render(course.long_description));
-                item.author = course.teacher.name;
-                item.link = `https://www.lanqiao.cn/courses/${course.id}/`;
-                return item;
-            })
-        )
-    );
+                })
+                const course = courseResponse.data
+                item.title = `${course.name} [${courseType[course.fee_type]}]`
+                item.description = utils.courseDesc(course.picture_url, md.render(course.long_description))
+                item.author = course.teacher.name
+                item.link = `https://www.lanqiao.cn/courses/${course.id}/`
+                return item
+            }),
+        ),
+    )
 
     // 排序规则
     const sortType = {
         latest: '最新',
         hotest: '最热',
         default: '默认',
-    };
+    }
 
     return {
         // 源标题
@@ -80,5 +80,5 @@ async function handler(ctx) {
         description: `蓝桥云课【${tag}】标签下${sortType[sort]}课程列表`,
         // 遍历此前获取的数据
         item: items,
-    };
+    }
 }

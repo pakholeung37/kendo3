@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, extractNews } from './utils';
+import { baseUrl, extractNews } from './utils'
 
 export const route: Route = {
     path: '/weeklyFocus',
@@ -25,24 +25,24 @@ export const route: Route = {
     name: 'Weekly Focus',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 1;
-    const response = await ofetch(`${baseUrl}/current-affairs/weekly-focus/archive`);
-    const $ = load(response);
-    const cards = $('div.weekly-focus-single-card').slice(0, limit).toArray();
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 1
+    const response = await ofetch(`${baseUrl}/current-affairs/weekly-focus/archive`)
+    const $ = load(response)
+    const cards = $('div.weekly-focus-single-card').slice(0, limit).toArray()
     const individualLinks = cards.flatMap((card) =>
         $(card)
             .find('a:has(p)')
             .toArray()
             .map((item) => {
-                const link = $(item).attr('href');
-                return { link: link?.startsWith('http') ? link : `${baseUrl}${link}` };
-            })
-    );
+                const link = $(item).attr('href')
+                return { link: link?.startsWith('http') ? link : `${baseUrl}${link}` }
+            }),
+    )
 
-    const itemsPromise = await Promise.allSettled(individualLinks.map(({ link }) => extractNews({ link }, 'main > div > div.flex > div.flex.w-full > div.w-full.mt-6')));
+    const itemsPromise = await Promise.allSettled(individualLinks.map(({ link }) => extractNews({ link }, 'main > div > div.flex > div.flex.w-full > div.w-full.mt-6')))
 
     return {
         title: 'Weekly Focus | Current Affairs | Vision IAS',
@@ -54,5 +54,5 @@ async function handler(ctx): Promise<Data> {
         icon: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         logo: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         allowEmpty: true,
-    };
+    }
 }

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-import { renderDescription } from './templates/desc';
+import { renderDescription } from './templates/desc'
 
 const ProcessItem = async (item) => {
-    const detailResponse = await got(item.link);
-    const $ = load(detailResponse.data);
+    const detailResponse = await got(item.link)
+    const $ = load(detailResponse.data)
     item.description = renderDescription({
         author: $('h3.author > span')
             .toArray()
@@ -17,9 +17,9 @@ const ProcessItem = async (item) => {
             .map((item) => $(item).text())
             .join(' '),
         content: $('div.row > span.abstract-text').parent().text(),
-    });
+    })
 
-    return item;
-};
+    return item
+}
 
-export { ProcessItem };
+export { ProcessItem }

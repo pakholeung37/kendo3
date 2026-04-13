@@ -1,20 +1,20 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async () => {
-    const baseUrl = 'http://due.hitsz.edu.cn';
-    const baseListPath = 'index/tzggqb';
+    const baseUrl = 'http://due.hitsz.edu.cn'
+    const baseListPath = 'index/tzggqb'
 
     // 只抓取第一页
-    const firstPageUrl = new URL(`${baseListPath}.htm`, baseUrl).href;
+    const firstPageUrl = new URL(`${baseListPath}.htm`, baseUrl).href
 
-    let response;
+    let response
     try {
-        response = await got(firstPageUrl);
+        response = await got(firstPageUrl)
     } catch {
         // 返回空结果
         return {
@@ -23,37 +23,37 @@ export const handler = async () => {
             link: firstPageUrl,
             item: [],
             author: '哈尔滨工业大学（深圳）教务部',
-        };
+        }
     }
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     // 获取页面标题
-    const pageTitle = $('title').text().trim() || '哈尔滨工业大学（深圳）教务部通知公告';
-    const author = '哈尔滨工业大学（深圳）教务部';
+    const pageTitle = $('title').text().trim() || '哈尔滨工业大学（深圳）教务部通知公告'
+    const author = '哈尔滨工业大学（深圳）教务部'
 
     // 解析第一页的文章列表
-    const listItems = $('ul.list-main-modular li').toArray();
+    const listItems = $('ul.list-main-modular li').toArray()
 
     const items = listItems
         .map((el) => {
-            const $el = $(el);
-            const linkUrl = $el.find('a').attr('href');
+            const $el = $(el)
+            const linkUrl = $el.find('a').attr('href')
             if (!linkUrl) {
-                return null;
+                return null
             }
 
-            const title = $el.find('span').text().trim();
-            const pubDateStr = $el.find('label').text().trim();
+            const title = $el.find('span').text().trim()
+            const pubDateStr = $el.find('label').text().trim()
 
             return {
                 title,
                 link: new URL(linkUrl, baseUrl).href,
                 pubDate: pubDateStr ? timezone(parseDate(pubDateStr), 8) : null,
                 description: title,
-            };
+            }
         })
-        .filter(Boolean);
+        .filter(Boolean)
 
     return {
         title: `${author} - ${pageTitle}`,
@@ -61,8 +61,8 @@ export const handler = async () => {
         link: firstPageUrl,
         item: items,
         author,
-    };
-};
+    }
+}
 
 // 保持 route 定义完全不变
 export const route: Route = {
@@ -108,4 +108,4 @@ export const route: Route = {
             target: '/hitsz/due/tzgg',
         },
     ],
-};
+}

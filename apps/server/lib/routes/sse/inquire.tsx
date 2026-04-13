@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/inquire',
@@ -26,10 +26,10 @@ export const route: Route = {
     maintainers: ['Jeason0228'],
     handler,
     url: 'www.sse.com.cn/disclosure/credibility/supervision/inquiries',
-};
+}
 
 async function handler() {
-    const refererUrl = 'https://www.sse.com.cn/disclosure/credibility/supervision/inquiries/';
+    const refererUrl = 'https://www.sse.com.cn/disclosure/credibility/supervision/inquiries/'
     const response = await got('https://query.sse.com.cn/commonSoaQuery.do', {
         searchParams: {
             isPagination: true,
@@ -50,7 +50,7 @@ async function handler() {
         headers: {
             Referer: refererUrl,
         },
-    });
+    })
 
     const items = response.data.result.map((item) => ({
         title: item.extGSJC,
@@ -58,13 +58,13 @@ async function handler() {
         pubDate: parseDate(item.createTime),
         link: `https://${item.docURL}`,
         author: item.extGSJC,
-    }));
+    }))
 
     return {
         title: '上海证券交易所 - 科创板股票审核',
         link: refererUrl,
         item: items,
-    };
+    }
 }
 
 const SseInquireDescription = ({ item }: { item: any }) => (
@@ -92,4 +92,4 @@ const SseInquireDescription = ({ item }: { item: any }) => (
             </td>
         </tr>
     </table>
-);
+)

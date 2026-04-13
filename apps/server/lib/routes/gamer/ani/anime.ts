@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/ani/anime/:sn',
@@ -25,23 +25,23 @@ export const route: Route = {
     name: '動畫瘋 - 動畫',
     maintainers: ['maple3142', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { sn } = ctx.req.param();
+    const { sn } = ctx.req.param()
 
     const { data: response } = await got('https://api.gamer.com.tw/mobile_app/anime/v3/video.php', {
         searchParams: {
             sn,
         },
-    });
+    })
 
     if (response.error) {
-        throw new Error(response.error.message);
+        throw new Error(response.error.message)
     }
 
-    const anime = response.data.anime;
-    const title = anime.title.replaceAll(/\[\d+?]$/g, '').trim();
+    const anime = response.data.anime
+    const title = anime.title.replaceAll(/\[\d+?]$/g, '').trim()
 
     const items = anime.volumes[0]
         .map((item) => ({
@@ -49,12 +49,12 @@ async function handler(ctx) {
             description: `<img src="${item.cover}">`,
             link: `https://ani.gamer.com.tw/animeVideo.php?sn=${item.video_sn}`,
         }))
-        .toReversed();
+        .toReversed()
 
     return {
         title,
         link: `https://ani.gamer.com.tw/animeRef.php?sn=${anime.anime_sn}`,
         description: anime.content?.trim(),
         item: items,
-    };
+    }
 }

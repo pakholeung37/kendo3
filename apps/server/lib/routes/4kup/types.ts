@@ -1,12 +1,12 @@
 interface WPPost {
     title: {
-        rendered: string;
-    };
+        rendered: string
+    }
     content: {
-        rendered: string;
-    };
-    date_gmt: string;
-    link: string;
+        rendered: string
+    }
+    date_gmt: string
+    link: string
 }
 
-export type { WPPost };
+export type { WPPost }

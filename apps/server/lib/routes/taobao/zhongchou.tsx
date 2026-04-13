@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/zhongchou/:type?',
@@ -22,10 +22,10 @@ export const route: Route = {
     description: `| 全部 | 科技 | 食品        | 动漫 | 设计   | 公益 | 娱乐 | 影音  | 书籍 | 游戏 | 其他  |
 | ---- | ---- | ----------- | ---- | ------ | ---- | ---- | ----- | ---- | ---- | ----- |
 | all  | tech | agriculture | acg  | design | love | tele | music | book | game | other |`,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'all' } = ctx.req.param();
+    const { type = 'all' } = ctx.req.param()
     const map = {
         all: '',
         tech: '121288001',
@@ -38,16 +38,16 @@ async function handler(ctx) {
         book: '121274002',
         game: '122020001',
         other: '125706031,125888001,125886001,123332001',
-    };
-    const url = `https://izhongchou.taobao.com/dream/ajax/getProjectListNew.htm?_input_charset=utf-8&type=6&pageSize=20&page=1&sort=1&status=&projectType=${encodeURIComponent(map[type])}&_=${Date.now()}&callback=`;
+    }
+    const url = `https://izhongchou.taobao.com/dream/ajax/getProjectListNew.htm?_input_charset=utf-8&type=6&pageSize=20&page=1&sort=1&status=&projectType=${encodeURIComponent(map[type])}&_=${Date.now()}&callback=`
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
     const items = response.data.data.map((item) => {
-        const title = item.name;
-        const link = `https://izhongchou.taobao.com/dreamdetail.htm?id=${item.id}`;
+        const title = item.name
+        const link = `https://izhongchou.taobao.com/dreamdetail.htm?id=${item.id}`
         const description = renderToString(
             <>
                 <img src={item.image} />
@@ -59,20 +59,20 @@ async function handler(ctx) {
                 <br />
                 <strong>支持人数:</strong> {item.buy_amount}
                 <br />
-            </>
-        );
+            </>,
+        )
 
         return {
             title,
             link,
             description,
             guid: item.id,
-        };
-    });
+        }
+    })
 
     return {
         title: `淘宝众筹-${type}`,
         link: 'https://izhongchou.taobao.com/index.htm',
         item: items,
-    };
+    }
 }

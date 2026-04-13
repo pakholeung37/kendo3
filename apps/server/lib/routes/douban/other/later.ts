@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/movie/later',
@@ -19,34 +19,34 @@ export const route: Route = {
     name: '即将上映的电影',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler() {
     const response = await got({
         method: 'get',
         url: 'https://movie.douban.com/cinema/later/beijing/',
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     const item = $('#showing-soon .item')
         .toArray()
         .map((ele) => {
-            const description = $(ele).html();
-            const name = $('h3', ele).text().trim();
-            const date = $('ul li', ele).eq(0).text().trim();
-            const type = $('ul li', ele).eq(1).text().trim();
-            const link = $('a.thumb', ele).attr('href');
+            const description = $(ele).html()
+            const name = $('h3', ele).text().trim()
+            const date = $('ul li', ele).eq(0).text().trim()
+            const type = $('ul li', ele).eq(1).text().trim()
+            const link = $('a.thumb', ele).attr('href')
 
             return {
                 title: `${date} - 《${name}》 - ${type}`,
                 link,
                 description,
-            };
-        });
+            }
+        })
 
     return {
         title: '即将上映的电影',
         link: 'https://movie.douban.com/cinema/later/',
         item,
-    };
+    }
 }

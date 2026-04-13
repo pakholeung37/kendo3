@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
 
-import type { Data, Route } from '@/types';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, extractNews } from './utils';
+import { baseUrl, extractNews } from './utils'
 
 export const route: Route = {
     path: '/newsToday/:filter?',
@@ -37,26 +37,26 @@ export const route: Route = {
     name: 'News Today',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const filter = ctx.req.param('filter') ?? 'latest';
-    const currentYear = dayjs().year();
-    const currentMonth = dayjs().month() + 1;
-    logger.debug(`Getting news for month ${currentMonth} and year ${currentYear}`);
-    const response = await ofetch(`${baseUrl}/current-affairs/news-today/getbymonth?year=${currentYear}&month=${currentMonth}`);
+    const filter = ctx.req.param('filter') ?? 'latest'
+    const currentYear = dayjs().year()
+    const currentMonth = dayjs().month() + 1
+    logger.debug(`Getting news for month ${currentMonth} and year ${currentYear}`)
+    const response = await ofetch(`${baseUrl}/current-affairs/news-today/getbymonth?year=${currentYear}&month=${currentMonth}`)
 
-    let items: any = [];
+    let items: any = []
     // let title = 'News Today';
 
     if (response.length !== 0) {
         if (filter === 'latest') {
-            const currentUrl = response[0].url;
+            const currentUrl = response[0].url
             // title = response[0].formatted_published_at;
-            items = await processCurrentNews(currentUrl);
+            items = await processCurrentNews(currentUrl)
         } else {
-            const results = await Promise.all(response.map((element) => processCurrentNews(element.url)));
-            items.push(...results.flat());
+            const results = await Promise.all(response.map((element) => processCurrentNews(element.url)))
+            items.push(...results.flat())
         }
     }
     return {
@@ -69,23 +69,23 @@ async function handler(ctx): Promise<Data> {
         icon: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         logo: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         allowEmpty: true,
-    };
+    }
 }
 
 async function processCurrentNews(currentUrl) {
-    const response = await ofetch(`${baseUrl}${currentUrl}`);
-    const $ = load(response);
+    const response = await ofetch(`${baseUrl}${currentUrl}`)
+    const $ = load(response)
     const items = $(`#table-of-content > ul > li > a`)
         .toArray()
         .map((item) => {
-            const link = $(item).attr('href');
-            const title = $(item).clone().children('span').remove().end().text().trim();
+            const link = $(item).attr('href')
+            const title = $(item).clone().children('span').remove().end().text().trim()
             return {
                 title,
                 link: title === 'Also in News' ? link : `${baseUrl}${link}`,
                 guid: link,
-            };
-        });
-    const newsPromises = await Promise.allSettled(items.map((item) => extractNews(item, 'main > div > div.mt-6 > div.flex > div.flex.mt-6')));
-    return newsPromises.flatMap((news) => (news.status === 'fulfilled' ? (Array.isArray(news.value) ? news.value : [news.value]) : [{ title: 'Error Parse News' }]));
+            }
+        })
+    const newsPromises = await Promise.allSettled(items.map((item) => extractNews(item, 'main > div > div.mt-6 > div.flex > div.flex.mt-6')))
+    return newsPromises.flatMap((news) => (news.status === 'fulfilled' ? (Array.isArray(news.value) ? news.value : [news.value]) : [{ title: 'Error Parse News' }]))
 }

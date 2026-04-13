@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
 export const route: Route = {
     path: '/hot-article/:type?',
@@ -39,28 +39,28 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'gelonghui.com/',
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') === 'week' ? 1 : 0;
-    const baseUrl = `https://www.gelonghui.com`;
-    const { data: response } = await got(baseUrl);
-    const $ = load(response);
+    const type = ctx.req.param('type') === 'week' ? 1 : 0
+    const baseUrl = `https://www.gelonghui.com`
+    const { data: response } = await got(baseUrl)
+    const $ = load(response)
 
     const list = $('#hot-article ul')
         .eq(type)
         .find('li')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            item = $(item)
+            const a = item.find('a')
             return {
                 title: a.text(),
                 link: `${baseUrl}${a.attr('href')}`,
-            };
-        });
+            }
+        })
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)))
 
     return {
         title: `最热文章 - ${type === 0 ? '日排行' : '周排行'} - 格隆汇`,
@@ -68,5 +68,5 @@ async function handler(ctx) {
         image: 'https://cdn.gelonghui.com/static/web/www.ico.la.ico',
         link: baseUrl,
         item: items,
-    };
+    }
 }

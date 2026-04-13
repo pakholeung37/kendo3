@@ -1,13 +1,13 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/releases/:owner/:repo',
@@ -30,10 +30,10 @@ export const route: Route = {
     name: '仓库 Releases',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { owner, repo } = ctx.req.param();
+    const { owner, repo } = ctx.req.param()
 
     const response = await got(`https://gitee.com/api/v5/repos/${owner}/${repo}/releases`, {
         searchParams: {
@@ -41,7 +41,7 @@ async function handler(ctx) {
             per_page: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 100,
             direction: 'desc',
         },
-    });
+    })
 
     const items = response.data.map((item) => ({
         title: item.tag_name,
@@ -50,11 +50,11 @@ async function handler(ctx) {
         pubDate: parseDate(item.created_at),
         guid: item.target_commitish,
         link: `https://gitee.com/${owner}/${repo}/releases/${item.tag_name}`,
-    }));
+    }))
 
     return {
         title: `${owner}/${repo} - 发行版`,
         link: `https://gitee.com/${owner}/${repo}/releases`,
         item: items,
-    };
+    }
 }

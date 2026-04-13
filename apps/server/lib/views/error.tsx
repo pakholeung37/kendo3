@@ -1,13 +1,13 @@
-import type { FC } from 'hono/jsx';
+import type { FC } from 'hono/jsx'
 
-import { gitDate, gitHash } from '@/utils/git-hash';
-import { Layout } from '@/views/layout';
+import { gitDate, gitHash } from '@/utils/git-hash'
+import { Layout } from '@/views/layout'
 
 const Index: FC<{
-    requestPath: string;
-    message: string;
-    errorRoute: string;
-    nodeVersion: string;
+    requestPath: string
+    message: string
+    errorRoute: string
+    nodeVersion: string
 }> = ({ requestPath, message, errorRoute, nodeVersion }) => (
     <Layout>
         <div
@@ -139,6 +139,6 @@ const Index: FC<{
             </p>
         </div>
     </Layout>
-);
+)
 
-export default Index;
+export default Index

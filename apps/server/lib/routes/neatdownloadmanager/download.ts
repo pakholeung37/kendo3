@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/download/:os?',
@@ -25,48 +25,48 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'neatdownloadmanager.com/index.php',
-};
+}
 
 async function handler(ctx) {
-    const os = (ctx.req.param('os') ?? '').toLowerCase();
+    const os = (ctx.req.param('os') ?? '').toLowerCase()
 
-    const rootUrl = 'https://www.neatdownloadmanager.com';
-    const currentUrl = `${rootUrl}/index.php`;
+    const rootUrl = 'https://www.neatdownloadmanager.com'
+    const currentUrl = `${rootUrl}/index.php`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.p1')
         .toArray()
         .filter((item) => {
-            item = $(item);
-            const isMacOS = item.text().startsWith('dmg');
+            item = $(item)
+            const isMacOS = item.text().startsWith('dmg')
 
             if (os !== '') {
-                return os === 'macos' ? isMacOS : !isMacOS;
+                return os === 'macos' ? isMacOS : !isMacOS
             }
 
-            return true;
+            return true
         })
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const text = item.text();
-            const version = text.match(/\(ver (.*?)\)/)[1];
+            const text = item.text()
+            const version = text.match(/\(ver (.*?)\)/)[1]
 
             return {
                 title: `[${text.startsWith('dmg') ? 'macOS' : 'Windows'}] ${text}`,
                 link: `${rootUrl}${item.prev().find('a').attr('href')}#${version}`,
-            };
-        });
+            }
+        })
 
     return {
         title: 'Neat Download Manager',
         link: currentUrl,
         item: items,
-    };
+    }
 }

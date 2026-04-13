@@ -24,7 +24,7 @@ const viewForum = (id) => ({
     variables: {
         fid: Number.parseInt(id),
     },
-});
+})
 
 const viewThread = (id, page) => ({
     operationName: 'ViewThread',
@@ -71,13 +71,13 @@ const viewThread = (id, page) => ({
         tid: Number.parseInt(id),
         page,
     },
-});
+})
 const countReplies = (id) => ({
     operationName: 'ViewThread',
     query: 'query ViewThread($tid: Int!){thread(tid: $tid){...threadComponent}}fragment threadComponent on Thread{replies}',
     variables: {
         tid: Number.parseInt(id),
     },
-});
+})
 
-export { countReplies, viewForum, viewThread };
+export { countReplies, viewForum, viewThread }

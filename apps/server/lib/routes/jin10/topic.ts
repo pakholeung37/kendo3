@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/topic/:id',
@@ -29,10 +29,10 @@ export const route: Route = {
     maintainers: ['miles170'],
     handler,
     url: 'jin10.com/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
     const data = await cache.tryGet(
         `jin10:topic:${id}`,
         async () => {
@@ -41,12 +41,12 @@ async function handler(ctx) {
                     'x-app-id': 'g93rhHb9DcDptyPb',
                     'x-version': '1.0.1',
                 },
-            });
-            return response.data;
+            })
+            return response.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = await Promise.all(
         data.list.map((item) =>
@@ -56,7 +56,7 @@ async function handler(ctx) {
                         'x-app-id': 'g93rhHb9DcDptyPb',
                         'x-version': '1.0.1',
                     },
-                });
+                })
 
                 return {
                     title: item.title,
@@ -64,15 +64,15 @@ async function handler(ctx) {
                     author: item.author.nick,
                     pubDate: timezone(parseDate(item.display_datetime), 8),
                     link: `https://xnews.jin10.com/details/${item.id}`,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: data.title,
         link: `https://xnews.jin10.com/topic/${id}`,
         description: data.introduction,
         item: items,
-    };
+    }
 }

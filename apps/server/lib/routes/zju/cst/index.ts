@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'http://www.cst.zju.edu.cn/';
+const host = 'http://www.cst.zju.edu.cn/'
 
 const map = new Map([
     [0, { id: '', title: '浙大软件学院-全部通知' }],
@@ -19,25 +19,25 @@ const map = new Map([
     [8, { id: '36194/list.htm', title: '浙大软件学院-国内合作科研' }],
     [9, { id: '36246/list.htm', title: '浙大软件学院-国际合作科研' }],
     [10, { id: '36195/list.htm', title: '浙大软件学院-校园服务' }],
-]);
+])
 
 async function getPage(id) {
     const res = await got({
         method: 'get',
         url: host + id,
-    });
+    })
 
-    const $ = load(res.data);
-    const list = $('.lm_new').find('li');
+    const $ = load(res.data)
+    const list = $('.lm_new').find('li')
 
     return list.toArray().map((item) => {
-        item = $(item);
+        item = $(item)
         return {
             title: item.find('a').text(),
             pubDate: parseDate(item.find('.fr').text()),
             link: new URL(item.find('a').attr('href'), host).href,
-        };
-    });
+        }
+    })
 }
 
 export const route: Route = {
@@ -59,23 +59,23 @@ export const route: Route = {
 | 0        | 1        | 2        | 3        | 4        | 5        | 6        | 7        | 8            | 9            | 10       |`,
     maintainers: ['yonvenne', 'zwithz'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const type = Number.parseInt(ctx.req.param('type'));
-    const link = host + map.get(type).id;
-    let items = [];
+    const type = Number.parseInt(ctx.req.param('type'))
+    const link = host + map.get(type).id
+    let items = []
     if (type === 0) {
-        const tasks = [];
+        const tasks = []
         for (const value of map.values()) {
-            tasks.push(getPage(value.id));
+            tasks.push(getPage(value.id))
         }
-        const results = await Promise.all(tasks);
+        const results = await Promise.all(tasks)
         for (const result of results) {
-            items = [...items, ...result];
+            items = [...items, ...result]
         }
     } else {
-        items = await getPage(map.get(type).id);
+        items = await getPage(map.get(type).id)
     }
 
     const out = await Promise.all(
@@ -87,17 +87,17 @@ async function handler(ctx) {
                     headers: {
                         Referer: link,
                     },
-                });
-                const $ = load(response.data);
-                item.description = $('.vid_wz').html();
-                return item;
-            })
-        )
-    );
+                })
+                const $ = load(response.data)
+                item.description = $('.vid_wz').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: map.get(type).title,
         link,
         item: out,
-    };
+    }
 }

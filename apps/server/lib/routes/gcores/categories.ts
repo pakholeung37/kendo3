@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { baseUrl, processItems } from './util';
+import { baseUrl, processItems } from './util'
 
-let viewType: ViewType = ViewType.Articles;
+let viewType: ViewType = ViewType.Articles
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id, tab } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id, tab } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL(`categories/${id}${tab ? `?tab=${tab}` : ''}`, baseUrl).href;
-    const apiUrl: string = new URL(`gapi/v1/categories/${id}/${tab ?? 'originals'}`, baseUrl).href;
+    const targetUrl: string = new URL(`categories/${id}${tab ? `?tab=${tab}` : ''}`, baseUrl).href
+    const apiUrl: string = new URL(`gapi/v1/categories/${id}/${tab ?? 'originals'}`, baseUrl).href
 
     const query = {
         'page[limit]': limit,
@@ -20,16 +20,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
         include: 'category,user,media',
         'filter[list-all]': 1,
         'filter[is-news]': tab === 'news' ? 1 : 0,
-    };
-
-    if (tab === 'radios') {
-        viewType = ViewType.Audios;
-    } else if (tab === 'videos') {
-        viewType = ViewType.Videos;
     }
 
-    return await processItems(limit, query, apiUrl, targetUrl);
-};
+    if (tab === 'radios') {
+        viewType = ViewType.Audios
+    } else if (tab === 'videos') {
+        viewType = ViewType.Videos
+    }
+
+    return await processItems(limit, query, apiUrl, targetUrl)
+}
 
 export const route: Route = {
     path: '/categories/:id/:tab?',
@@ -90,11 +90,11 @@ export const route: Route = {
         {
             source: ['www.gcores.com/categories/:id'],
             target: (params, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string = params.id;
-                const tab: string | undefined = urlObj.searchParams.get('tab') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string = params.id
+                const tab: string | undefined = urlObj.searchParams.get('tab') ?? undefined
 
-                return `/gcores/categories/${id}/${tab ? `/${tab}` : ''}`;
+                return `/gcores/categories/${id}/${tab ? `/${tab}` : ''}`
             },
         },
         {
@@ -124,4 +124,4 @@ export const route: Route = {
         },
     ],
     view: viewType,
-};
+}

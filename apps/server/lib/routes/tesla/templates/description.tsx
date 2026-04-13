@@ -1,44 +1,44 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type Voucher = {
-    title?: string;
-    description?: string;
-    activateDate?: string;
-    expirationDate?: string;
-    totalLimit?: string;
-    hasSurplus?: boolean;
-};
+    title?: string
+    description?: string
+    activateDate?: string
+    expirationDate?: string
+    totalLimit?: string
+    hasSurplus?: boolean
+}
 
 type Merchant = {
-    name?: string;
-    province?: string;
-    city?: string;
-    area?: string;
-    address?: string;
-    contact?: string;
-};
+    name?: string
+    province?: string
+    city?: string
+    area?: string
+    address?: string
+    contact?: string
+}
 
 type DataPayload = {
-    images?: string[];
-    categories?: string[];
-    description?: string;
-    vouchers?: Voucher[];
-    merchants?: Merchant[];
-};
+    images?: string[]
+    categories?: string[]
+    description?: string
+    vouchers?: Voucher[]
+    merchants?: Merchant[]
+}
 
 type ImagePayload = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 type DescriptionParams = {
-    data?: DataPayload;
-    image?: ImagePayload;
-    description?: string;
-    categoryToUrl?: (category: string) => string;
-    mediaToUrl?: (media: string) => string;
-};
+    data?: DataPayload
+    image?: ImagePayload
+    description?: string
+    categoryToUrl?: (category: string) => string
+    mediaToUrl?: (media: string) => string
+}
 
 export const renderDescription = ({ data, image, description, categoryToUrl, mediaToUrl }: DescriptionParams) =>
     renderToString(
@@ -137,5 +137,5 @@ export const renderDescription = ({ data, image, description, categoryToUrl, med
                     {description ? <>{raw(description)}</> : null}
                 </>
             )}
-        </>
-    );
+        </>,
+    )

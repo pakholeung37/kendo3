@@ -1,51 +1,51 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/security-releases';
+import { renderDescription } from './templates/security-releases'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { language = 'en-us' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { language = 'en-us' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://support.apple.com';
-    const targetUrl: string = new URL(`${language}/100100`, baseUrl).href;
+    const baseUrl = 'https://support.apple.com'
+    const targetUrl: string = new URL(`${language}/100100`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
 
-    const $trEls: Cheerio<Element> = $('table.gb-table tbody tr');
+    const $trEls: Cheerio<Element> = $('table.gb-table tbody tr')
     const headers: string[] = $trEls
         .find('th')
         .toArray()
-        .map((el) => $(el).text());
+        .map((el) => $(el).text())
 
     let items: DataItem[] = $trEls
         .slice(1, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const titleEl: Cheerio<Element> = $el.find('td').first();
-            const title: string = titleEl.contents().first().text();
+            const titleEl: Cheerio<Element> = $el.find('td').first()
+            const title: string = titleEl.contents().first().text()
             const description: string | undefined = renderDescription({
                 headers,
                 infos: $el
                     .find('td')
                     .toArray()
                     .map((el) => $(el).html() ?? ''),
-            });
-            const pubDateStr: string | undefined = $el.find('td').last().text();
-            const linkUrl: string | undefined = titleEl.find('a.gb-anchor').attr('href');
-            const authors: DataItem['author'] = $el.find('meta[property="og:site_name"]').attr('content');
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = $el.find('td').last().text()
+            const linkUrl: string | undefined = titleEl.find('a.gb-anchor').attr('href')
+            const authors: DataItem['author'] = $el.find('meta[property="og:site_name"]').attr('content')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -59,33 +59,33 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: upDatedStr ? parseDate(upDatedStr, ['DD MMM YYYY', 'YYYY 年 MM 月 DD 日']) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = item.title ?? $$('h1.gb-header').text();
+                const title: string = item.title ?? $$('h1.gb-header').text()
 
-                $$('h1.gb-header').remove();
+                $$('h1.gb-header').remove()
 
                 const description: string | undefined =
                     item.description +
                     renderDescription({
                         description: $$('div#sections').html(),
-                    });
-                const pubDateStr: string | undefined = detailResponse.match(/publish_date:\s"(\d{8})",/, '')?.[1];
-                const authors: DataItem['author'] = $$('meta[property="og:site_name"]').attr('content');
-                const upDatedStr: string | undefined = $$('.time').text() || pubDateStr;
+                    })
+                const pubDateStr: string | undefined = detailResponse.match(/publish_date:\s"(\d{8})",/, '')?.[1]
+                const authors: DataItem['author'] = $$('meta[property="og:site_name"]').attr('content')
+                const upDatedStr: string | undefined = $$('.time').text() || pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -98,15 +98,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? parseDate(upDatedStr, 'MMDDYYYY') : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -117,8 +117,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/security-releases/:language?',
@@ -150,9 +150,9 @@ To subscribe to [Apple security releases](https://support.apple.com/en-us/100100
         {
             source: ['support.apple.com/:language/100100'],
             target: (params) => {
-                const language: string = params.language;
+                const language: string = params.language
 
-                return `/apple/security-releases${language ? `/${language}` : ''}`;
+                return `/apple/security-releases${language ? `/${language}` : ''}`
             },
         },
     ],
@@ -175,4 +175,4 @@ To subscribe to [Apple security releases](https://support.apple.com/en-us/100100
 :::
 `,
     },
-};
+}

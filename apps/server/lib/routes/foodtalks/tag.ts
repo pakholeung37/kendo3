@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { namespace } from './namespace';
-import { apiBaseUrl, baseUrl, parseList, processItems } from './utils';
+import { namespace } from './namespace'
+import { apiBaseUrl, baseUrl, parseList, processItems } from './utils'
 
 export const route: Route = {
     path: '/news/tag/:tagId',
@@ -20,23 +20,23 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.foodtalks.cn',
-};
+}
 
 const getTagName = async (tagId: string) => {
     const response = await ofetch(`${apiBaseUrl}/basic/tag/${tagId}?language=ZH`, {
         headers: {
             referer: `${baseUrl}/`,
         },
-    });
+    })
     if (!response.data) {
-        throw new Error('Invalid tagId');
+        throw new Error('Invalid tagId')
     }
-    return response.data.name;
-};
+    return response.data.name
+}
 
 async function handler(ctx) {
-    const { tagId } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 15;
+    const { tagId } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 15
 
     const response = await ofetch(`${apiBaseUrl}/news/news/page`, {
         headers: {
@@ -48,11 +48,11 @@ async function handler(ctx) {
             tagId,
             language: 'ZH',
         },
-    });
+    })
 
-    const tagName = await getTagName(tagId);
-    const list = parseList(response.data.records);
-    const items = await processItems(list);
+    const tagName = await getTagName(tagId)
+    const list = parseList(response.data.records)
+    const items = await processItems(list)
 
     return {
         title: `“${tagName}” 相关资讯-${namespace.name}`,
@@ -60,5 +60,5 @@ async function handler(ctx) {
         link: `${baseUrl}/news/tag/${tagId}`,
         item: items,
         image: `${baseUrl}/favicon.ico`,
-    };
+    }
 }

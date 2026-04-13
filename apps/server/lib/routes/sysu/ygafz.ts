@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/ygafz/:type?',
@@ -33,45 +33,45 @@ export const route: Route = {
 | results  | papers   | writings | policy   |`,
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'notice' } = ctx.req.param();
-    const baseUrl = 'https://ygafz.sysu.edu.cn';
-    const url = `${baseUrl}/${type}`;
+    const { type = 'notice' } = ctx.req.param()
+    const baseUrl = 'https://ygafz.sysu.edu.cn'
+    const url = `${baseUrl}/${type}`
 
-    const response = await ofetch(url);
-    const $ = load(response);
+    const response = await ofetch(url)
+    const $ = load(response)
 
     const list = $('.list-content a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('p').text(),
                 link: `${baseUrl}${item.attr('href')}`,
                 pubDate: parseDate(item.find('.date').text()), // 2023-03-22
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const data = await ofetch(item.link);
-                const $ = load(data);
+                const data = await ofetch(item.link)
+                const $ = load(data)
 
                 item.author = $('.article-submit')
                     .text()
-                    .match(/发布人：(.*)/)[1];
-                item.description = $('div[data-block-plugin-id="entity_field:node:body"]').html() + ($('div[data-block-plugin-id="entity_field:node:attachments"]').html() ?? '');
-                return item;
-            })
-        )
-    );
+                    .match(/发布人：(.*)/)[1]
+                item.description = $('div[data-block-plugin-id="entity_field:node:body"]').html() + ($('div[data-block-plugin-id="entity_field:node:attachments"]').html() ?? '')
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: url,
         item: items,
-    };
+    }
 }

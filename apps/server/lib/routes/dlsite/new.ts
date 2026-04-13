@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'https://www.dlsite.com';
+const host = 'https://www.dlsite.com'
 const infos = {
     // 全年齢向け
     home: {
@@ -51,7 +51,7 @@ const infos = {
         name: '「DLsite BL」',
         url: '/bl/new',
     },
-};
+}
 
 export const route: Route = {
     path: '/new/:type',
@@ -79,44 +79,44 @@ export const route: Route = {
     description: `| Doujin | Comics | PC Games | Doujin (R18) | Adult Comics | H Games | Otome | BL |
 | ------ | ------ | -------- | ------------ | ------------ | ------- | ----- | -- |
 | home   | comic  | soft     | maniax       | books        | pro     | girls | bl |`,
-};
+}
 
 async function handler(ctx) {
-    const info = infos[ctx.req.param('type')];
+    const info = infos[ctx.req.param('type')]
     // 判断参数是否合理
     if (info === undefined) {
-        throw new InvalidParameterError('不支持指定类型！');
+        throw new InvalidParameterError('不支持指定类型！')
     }
 
-    const link = info.url.slice(1);
+    const link = info.url.slice(1)
 
     const response = await got(new URL(link, host), {
         method: 'GET',
-    });
-    const data = response.data;
-    const $ = load(data);
+    })
+    const data = response.data
+    const $ = load(data)
 
-    const title = $('title').text();
-    const description = $('meta[name="description"]').attr('content');
-    const list = $('.n_worklist_item');
+    const title = $('title').text()
+    const description = $('meta[name="description"]').attr('content')
+    const list = $('.n_worklist_item')
     const dateText = $('.work_update')
         .text()
         .trim()
-        .replaceAll(/（.*）/g, '');
-    const pubDate = parseDate(dateText, 'YYYY年M月D日');
+        .replaceAll(/（.*）/g, '')
+    const pubDate = parseDate(dateText, 'YYYY年M月D日')
     const item = list.toArray().map((element) => {
-        const title = $('.work_name', element).text();
-        const link = $('.work_name > a', element).attr('href');
+        const title = $('.work_name', element).text()
+        const link = $('.work_name > a', element).attr('href')
         // 使链接
         $('a', element).each((_index, element) => {
-            $(element).attr('target', '_blank');
-        });
-        const description = $(element).html();
-        const arr = $('.search_tag', element);
+            $(element).attr('target', '_blank')
+        })
+        const description = $(element).html()
+        const arr = $('.search_tag', element)
         const category = $('a', arr)
             .toArray()
-            .map((a) => $(a).text());
-        const author = $('.maker_name', element).text();
+            .map((a) => $(a).text())
+        const author = $('.maker_name', element).text()
 
         const signle = {
             title,
@@ -125,9 +125,9 @@ async function handler(ctx) {
             category,
             author,
             pubDate,
-        };
-        return signle;
-    });
+        }
+        return signle
+    })
 
     return {
         title,
@@ -135,5 +135,5 @@ async function handler(ctx) {
         description,
         language: 'ja-jp',
         item,
-    };
+    }
 }

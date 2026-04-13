@@ -1,20 +1,20 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 const getCateName = async (cid = 0) => {
-    const key = 'eleduck-categories';
+    const key = 'eleduck-categories'
     const cates = await cache.tryGet(key, async () => {
-        const res = await got(`https://svc.eleduck.com/api/v1/categories`);
-        const map = {};
+        const res = await got(`https://svc.eleduck.com/api/v1/categories`)
+        const map = {}
         for (const item of res.data.categories) {
-            map[item.id] = item.name;
+            map[item.id] = item.name
         }
-        return map;
-    });
+        return map
+    })
 
-    return cates[cid] || '全部';
-};
+    return cates[cid] || '全部'
+}
 
 export const route: Route = {
     path: '/posts/:id?',
@@ -50,19 +50,19 @@ export const route: Route = {
 | 22 | 人才库   |
 | 23 | Upwork   |
 | 24 | 经验课   |`,
-};
+}
 
 async function handler(ctx) {
-    const cid = ctx.req.param('id') || 0;
+    const cid = ctx.req.param('id') || 0
 
-    const response = await got(`https://svc.eleduck.com/api/v1/posts?category=${cid}&sort=-published_at&page=1`);
+    const response = await got(`https://svc.eleduck.com/api/v1/posts?category=${cid}&sort=-published_at&page=1`)
 
-    const { posts } = response.data;
+    const { posts } = response.data
     if (posts === undefined) {
-        throw new Error('没有获取到数据');
+        throw new Error('没有获取到数据')
     }
 
-    const cname = await getCateName(cid);
+    const cname = await getCateName(cid)
 
     return {
         title: `电鸭社区的文章--${cname}`,
@@ -75,5 +75,5 @@ async function handler(ctx) {
             link: `https://eleduck.com/${item.category.id === 22 ? 'tposts' : 'posts'}/${item.id}`,
             author: item.user.nickname,
         })),
-    };
+    }
 }

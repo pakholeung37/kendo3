@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/message/system/:uid',
@@ -34,44 +34,44 @@ export const route: Route = {
     description: `:::warning
   用户消息需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 interface SystemNotifyItem {
-    id: number;
-    cursor: number;
+    id: number
+    cursor: number
     publisher: {
-        name: string;
-        mid: number;
-        face: string;
-    };
-    type: number;
-    title: string;
-    content: string;
+        name: string
+        mid: number
+        face: string
+    }
+    type: number
+    title: string
+    content: string
     source: {
-        name: string;
-        logo: string;
-    };
-    time_at: string;
-    card_type: number;
-    card_brief: string;
-    card_msg_brief: string;
-    card_cover: string;
-    card_story_title: string;
-    card_link: string;
-    mc: string;
-    is_station: number;
-    is_send: number;
-    notify_cursor: number;
+        name: string
+        logo: string
+    }
+    time_at: string
+    card_type: number
+    card_brief: string
+    card_msg_brief: string
+    card_cover: string
+    card_story_title: string
+    card_link: string
+    mc: string
+    is_station: number
+    is_send: number
+    notify_cursor: number
 }
 
 interface SystemResponse {
-    code: number;
-    msg: string;
-    message: string;
-    ttl: number;
+    code: number
+    msg: string
+    message: string
+    ttl: number
     data: {
-        system_notify_list: SystemNotifyItem[];
-    };
+        system_notify_list: SystemNotifyItem[]
+    }
 }
 
 /**
@@ -80,17 +80,17 @@ interface SystemResponse {
  */
 function parseMessageContent(content: string): string {
     // Match pattern like #{text}{"url"}
-    const linkPattern = /#\{([^}]+)\}\{"([^"]+)"\}/g;
-    return content.replaceAll(linkPattern, '<a href="$2">$1</a>');
+    const linkPattern = /#\{([^}]+)\}\{"([^"]+)"\}/g
+    return content.replaceAll(linkPattern, '<a href="$2">$1</a>')
 }
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const name = await cache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await ofetch<SystemResponse>('https://message.bilibili.com/x/sys-msg/query_user_notify', {
@@ -103,26 +103,26 @@ async function handler(ctx) {
             Referer: 'https://message.bilibili.com/',
             Cookie: cookie,
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message ?? response.msg ?? `Error code ${response.code}`);
+        throw new Error(response.message ?? response.msg ?? `Error code ${response.code}`)
     }
 
     const items: DataItem[] = (response.data.system_notify_list || []).map((item) => {
-        let description = `<p><strong>${item.title}</strong></p>`;
-        const parsedContent = parseMessageContent(item.content);
-        description += `<p>${parsedContent.replaceAll('\n', '<br>')}</p>`;
+        let description = `<p><strong>${item.title}</strong></p>`
+        const parsedContent = parseMessageContent(item.content)
+        description += `<p>${parsedContent.replaceAll('\n', '<br>')}</p>`
 
         if (item.source.logo) {
-            description += `<p><img src="${item.source.logo.replace('http://', 'https://')}" width="40" /></p>`;
+            description += `<p><img src="${item.source.logo.replace('http://', 'https://')}" width="40" /></p>`
         }
 
         if (item.card_cover) {
-            description += `<p><img src="${item.card_cover.replace('http://', 'https://')}" /></p>`;
+            description += `<p><img src="${item.card_cover.replace('http://', 'https://')}" /></p>`
         }
 
-        const link = item.card_link || 'https://message.bilibili.com/#/system';
+        const link = item.card_link || 'https://message.bilibili.com/#/system'
 
         return {
             title: item.title,
@@ -130,8 +130,8 @@ async function handler(ctx) {
             link,
             pubDate: parseDate(item.time_at),
             guid: `bilibili-system-notify-${item.id}-${item.cursor}`,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} 的 B站消息 - 系统通知`,
@@ -139,5 +139,5 @@ async function handler(ctx) {
         description: `${name} 的 B站消息 - 系统通知`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

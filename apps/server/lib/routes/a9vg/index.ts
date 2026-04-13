@@ -1,34 +1,34 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = 'news/All' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { category = 'news/All' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'http://www.a9vg.com';
-    const currentUrl = new URL(`list/${category}`, rootUrl).href;
+    const rootUrl = 'http://www.a9vg.com'
+    const currentUrl = new URL(`list/${category}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('a.a9-rich-card-list_item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const image = item.find('img.a9-rich-card-list_image');
-            const title = item.find('div.a9-rich-card-list_label').text();
+            const image = item.find('img.a9-rich-card-list_image')
+            const title = item.find('div.a9-rich-card-list_label').text()
 
             return {
                 title,
@@ -45,18 +45,18 @@ export const handler = async (ctx) => {
                 }),
                 pubDate: timezone(parseDate(item.find('div.a9-rich-card-list_infos').text()), +8),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
                 $$('ignore_js_op img, p img').each((_, el) => {
-                    el = $$(el);
+                    el = $$(el)
 
                     el.parent().replaceWith(
                         renderDescription({
@@ -68,24 +68,24 @@ export const handler = async (ctx) => {
                                       },
                                   ]
                                 : undefined,
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                item.title = $$('h1.ts, div.c-article-main_content-title').first().text();
+                item.title = $$('h1.ts, div.c-article-main_content-title').first().text()
                 item.description = renderDescription({
                     description: $$('td.t_f, div.c-article-main_contentraw').first().html(),
-                });
+                })
                 item.author =
                     $$('b a.blue').first().text() ||
                     $$(
                         $$('span.c-article-main_content-intro-item')
                             .toArray()
-                            .findLast((i) => $$(i).text().startsWith('作者'))
+                            .findLast((i) => $$(i).text().startsWith('作者')),
                     )
                         .text()
                         .split(/：/)
-                        .pop();
+                        .pop()
                 item.pubDate = timezone(
                     parseDate(
                         $$('div.authi em')
@@ -93,19 +93,19 @@ export const handler = async (ctx) => {
                             .text()
                             .trim()
                             .match(/发表于 (\d+-\d+-\d+ \d+:\d+)/)?.[1] ?? $$('span.c-article-main_content-intro-item').first().text(),
-                        ['YYYY-M-D HH:mm', 'YYYY-MM-DD HH:mm']
+                        ['YYYY-M-D HH:mm', 'YYYY-MM-DD HH:mm'],
                     ),
-                    +8
-                );
-                item.language = language;
+                    +8,
+                )
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL('images/logo.1cee7c0f.svg', rootUrl).href;
+    const title = $('title').text()
+    const image = new URL('images/logo.1cee7c0f.svg', rootUrl).href
 
     return {
         title,
@@ -116,8 +116,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/).pop(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -158,9 +158,9 @@ export const route: Route = {
         {
             source: ['www.a9vg.com/list/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return category ? `/${category}` : '';
+                return category ? `/${category}` : ''
             },
         },
         {
@@ -209,4 +209,4 @@ export const route: Route = {
             target: '/news/Factory',
         },
     ],
-};
+}

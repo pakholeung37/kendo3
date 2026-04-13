@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/:id',
@@ -29,31 +29,31 @@ export const route: Route = {
 
   与适用于 [专辑](#yun-ting-zhuan-ji) 路由的专辑其 \`columnId\` 长度相比，它们的 \`columnId\` 长度较短
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const size = ctx.req.query('limit') ?? '100';
+    const id = ctx.req.param('id')
+    const size = ctx.req.query('limit') ?? '100'
 
-    const rootUrl = 'https://www.radio.cn';
-    const apiRootUrl = 'http://tacc.radio.cn';
-    const apiUrl = `${apiRootUrl}/pcpages/odchannelpages?od_id=${id}&start=1&rows=${size}`;
-    const currentUrl = `${rootUrl}/pc-portal/sanji/detail.html?columnId=${id}`;
+    const rootUrl = 'https://www.radio.cn'
+    const apiRootUrl = 'http://tacc.radio.cn'
+    const apiUrl = `${apiRootUrl}/pcpages/odchannelpages?od_id=${id}&start=1&rows=${size}`
+    const currentUrl = `${rootUrl}/pc-portal/sanji/detail.html?columnId=${id}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     if (/^\(.*\)$/.test(response.data)) {
-        response.data = JSON.parse(response.data.match(/^\((.*)\)$/)[1]);
+        response.data = JSON.parse(response.data.match(/^\((.*)\)$/)[1])
     }
 
-    const data = response.data.data;
+    const data = response.data.data
 
     const items = data.program.map((item) => {
-        const enclosure_url = item.streams[0].url;
-        const enclosure_type = `audio/${enclosure_url.match(/\.(\w+)$/)[1]}`;
+        const enclosure_url = item.streams[0].url
+        const enclosure_type = `audio/${enclosure_url.match(/\.(\w+)$/)[1]}`
 
         return {
             guid: item.id,
@@ -69,8 +69,8 @@ async function handler(ctx) {
             enclosure_type,
             itunes_duration: item.duration,
             itunes_item_image: data.odchannel.imageUrl[0].url,
-        };
-    });
+        }
+    })
 
     return {
         title: `云听 - ${data.odchannel.name}`,
@@ -79,5 +79,5 @@ async function handler(ctx) {
         image: data.odchannel.imageUrl[0].url,
         itunes_author: data.odchannel.commissioningEditorName || data.odchannel.editorName || data.odchannel.source || 'radio.cn',
         description: data.odchannel.description || data.odchannel.sub_title || '',
-    };
+    }
 }

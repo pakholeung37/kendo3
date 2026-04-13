@@ -1,30 +1,30 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '*',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const params = getSubPath(ctx) === '/' ? '' : getSubPath(ctx);
+    const params = getSubPath(ctx) === '/' ? '' : getSubPath(ctx)
 
-    const rootUrl = 'https://web3caff.com';
-    const currentUrl = `${rootUrl}${params}`;
+    const rootUrl = 'https://web3caff.com'
+    const currentUrl = `${rootUrl}${params}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.list-grouped')
         .first()
@@ -32,15 +32,15 @@ async function handler(ctx) {
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 10)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('.list-title');
+            const a = item.find('.list-title')
 
             return {
                 title: a.text(),
                 link: a.attr('href'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -48,27 +48,27 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.ss-inline-share-wrapper').remove();
+                content('.ss-inline-share-wrapper').remove()
 
-                item.description = content('.post-content').html();
-                item.author = content('.author-name .author-popup').text();
+                item.description = content('.post-content').html()
+                item.author = content('.author-name .author-popup').text()
                 item.category = content('a[rel="category tag"]')
                     .toArray()
-                    .map((tag) => $(tag).text());
-                item.pubDate = parseDate(content('meta[property="article:published_time"]').attr('content'));
+                    .map((tag) => $(tag).text())
+                item.pubDate = parseDate(content('meta[property="article:published_time"]').attr('content'))
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

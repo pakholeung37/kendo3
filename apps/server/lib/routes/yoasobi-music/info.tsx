@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseJSONP } from './jsonp-helper';
+import { parseJSONP } from './jsonp-helper'
 
 export const route: Route = {
     path: '/info/:category?',
@@ -30,31 +30,31 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'www.yoasobi-music.jp/',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
     const ARTIST = 'YOASOBI',
         SONYJPURL = 'https://www.sonymusic.co.jp',
         BASEURL = 'https://www.sonymusic.co.jp/json/v2/artist',
-        POSTFIX = category === 'news' ? 'start/0/count/-1' : 'start/0/count/-1/callback/hotCallback';
+        POSTFIX = category === 'news' ? 'start/0/count/-1' : 'start/0/count/-1/callback/hotCallback'
 
-    const officialUrl = `https://www.yoasobi-music.jp/${category}`;
-    const api = `${BASEURL}/${ARTIST}/${category === 'news' ? 'information' : 'hottopic'}/${POSTFIX}`;
-    const title = `LATEST ${category.toUpperCase()}`;
+    const officialUrl = `https://www.yoasobi-music.jp/${category}`
+    const api = `${BASEURL}/${ARTIST}/${category === 'news' ? 'information' : 'hottopic'}/${POSTFIX}`
+    const title = `LATEST ${category.toUpperCase()}`
 
     const response = await got({
         method: 'get',
         url: api,
-    });
+    })
 
     const data = parseJSONP(response.data).items.map((item) => {
-        const isBio = category === 'biography';
+        const isBio = category === 'biography'
         const randomEmoji = (() => {
-            const emojis = ['㊗️', '🎉', '🎊', '🎈', '🎁', '🎂', '🎀', '🎗', '🎆', '🎇', '🎐', '🎑', '🎃'];
-            return emojis[Math.floor(Math.random() * emojis.length)];
-        })();
+            const emojis = ['㊗️', '🎉', '🎊', '🎈', '🎁', '🎂', '🎀', '🎗', '🎆', '🎇', '🎐', '🎑', '🎃']
+            return emojis[Math.floor(Math.random() * emojis.length)]
+        })()
 
         return {
             id: isBio ? null : item.id,
@@ -64,8 +64,8 @@ async function handler(ctx) {
             date: isBio ? item.url : item.date,
             description: isBio ? item.kiji : item.article,
             image: isBio ? (item.image_url === '' ? null : `${SONYJPURL}${item.image_url}`) : null,
-        };
-    });
+        }
+    })
 
     return {
         // the source title
@@ -88,7 +88,7 @@ async function handler(ctx) {
             link: i.id ? `${officialUrl}/${i.id}` : officialUrl,
             category: i.category,
         })),
-    };
+    }
 }
 
 const renderDescription = (image: string | null, category: string | undefined, description: string): string =>
@@ -97,5 +97,5 @@ const renderDescription = (image: string | null, category: string | undefined, d
             {image ? <img src={image} /> : null}
             {category ? <p>Category: {category}</p> : null}
             {raw(description)}
-        </>
-    );
+        </>,
+    )

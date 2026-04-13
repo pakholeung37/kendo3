@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const endPoints = {
     zh: {
@@ -17,17 +17,17 @@ const endPoints = {
         lang: 'en',
         websiteCode: 'global',
     },
-};
+}
 
 const getProductInfo = (model, language) => {
-    const currentEndpoint = endPoints[language] ?? endPoints.zh;
-    const { url, lang, websiteCode } = currentEndpoint;
+    const currentEndpoint = endPoints[language] ?? endPoints.zh
+    const { url, lang, websiteCode } = currentEndpoint
 
-    const searchAPI = `${url}recent-data/apiv2/SearchSuggestion?SystemCode=asus&WebsiteCode=${websiteCode}&SearchKey=${model}&SearchType=ProductsAll&RowLimit=4&sitelang=${lang}`;
+    const searchAPI = `${url}recent-data/apiv2/SearchSuggestion?SystemCode=asus&WebsiteCode=${websiteCode}&SearchKey=${model}&SearchType=ProductsAll&RowLimit=4&sitelang=${lang}`
 
     return cache.tryGet(`asus:bios:${model}:${language}`, async () => {
-        const response = await ofetch(searchAPI);
-        const product = response.Result[0].Content[0];
+        const response = await ofetch(searchAPI)
+        const product = response.Result[0].Content[0]
 
         return {
             productID: product.DataId,
@@ -37,17 +37,17 @@ const getProductInfo = (model, language) => {
             image: product.ImageURL,
             m1Id: product.M1Id,
             productLine: product.ProductLine,
-        };
+        }
     }) as Promise<{
-        productID: string;
-        hashId: string;
-        url: string;
-        title: string;
-        image: string;
-        m1Id: string;
-        productLine: string;
-    }>;
-};
+        productID: string
+        hashId: string
+        url: string
+        title: string
+        image: string
+        m1Id: string
+        productLine: string
+    }>
+}
 
 export const route: Route = {
     path: '/bios/:model/:lang?',
@@ -97,17 +97,17 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'www.asus.com',
-};
+}
 
 async function handler(ctx) {
-    const model = ctx.req.param('model');
-    const language = ctx.req.param('lang') ?? 'en';
-    const productInfo = await getProductInfo(model, language);
+    const model = ctx.req.param('model')
+    const language = ctx.req.param('lang') ?? 'en'
+    const productInfo = await getProductInfo(model, language)
     const biosAPI =
-        language === 'zh' ? `https://www.asus.com.cn/support/api/product.asmx/GetPDBIOS?website=cn&model=${model}&sitelang=cn` : `https://www.asus.com/support/api/product.asmx/GetPDBIOS?website=global&model=${model}&sitelang=en`;
+        language === 'zh' ? `https://www.asus.com.cn/support/api/product.asmx/GetPDBIOS?website=cn&model=${model}&sitelang=cn` : `https://www.asus.com/support/api/product.asmx/GetPDBIOS?website=global&model=${model}&sitelang=en`
 
-    const response = await ofetch(biosAPI);
-    const biosList = response.Result.Obj[0].Files;
+    const response = await ofetch(biosAPI)
+    const biosList = response.Result.Obj[0].Files
 
     const items = biosList.map((item) => ({
         title: item.Title,
@@ -138,17 +138,17 @@ async function handler(ctx) {
                         <b>Download:</b> <a href={item.DownloadUrl.Global}>{item.DownloadUrl.Global.split('/').pop().split('?')[0]}</a>
                     </p>
                 </>
-            )
+            ),
         ),
         guid: productInfo.url + item.Version,
         pubDate: parseDate(item.ReleaseDate, 'YYYY/MM/DD'),
         link: productInfo.url,
-    }));
+    }))
 
     return {
         title: `${productInfo.title} BIOS`,
         link: productInfo.url,
         image: productInfo.image,
         item: items,
-    };
+    }
 }

@@ -1,16 +1,16 @@
-import { buildGqlMap, fallbackIds, resolveQueryIds } from './gql-id-resolver';
+import { buildGqlMap, fallbackIds, resolveQueryIds } from './gql-id-resolver'
 
-const baseUrl = 'https://x.com/i/api';
+const baseUrl = 'https://x.com/i/api'
 
 // Initial gqlMap from fallback IDs, updated dynamically via initGqlMap()
-let gqlMap: Record<string, string> = buildGqlMap(fallbackIds);
+let gqlMap: Record<string, string> = buildGqlMap(fallbackIds)
 
 const initGqlMap = async () => {
-    const queryIds = await resolveQueryIds();
-    gqlMap = buildGqlMap(queryIds);
-};
+    const queryIds = await resolveQueryIds()
+    gqlMap = buildGqlMap(queryIds)
+}
 
-const thirdPartySupportedAPI = ['UserByScreenName', 'UserByRestId', 'UserTweets', 'UserTweetsAndReplies', 'ListLatestTweetsTimeline', 'SearchTimeline', 'UserMedia'];
+const thirdPartySupportedAPI = ['UserByScreenName', 'UserByRestId', 'UserTweets', 'UserTweetsAndReplies', 'ListLatestTweetsTimeline', 'SearchTimeline', 'UserMedia']
 
 const gqlFeatureUser = {
     hidden_profile_subscriptions_enabled: true,
@@ -25,7 +25,7 @@ const gqlFeatureUser = {
     creator_subscriptions_tweet_preview_api_enabled: true,
     responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
     responsive_web_graphql_timeline_navigation_enabled: true,
-};
+}
 const gqlFeatureFeed = {
     rweb_tipjar_consumption_enabled: true,
     responsive_web_graphql_exclude_directive_enabled: true,
@@ -50,7 +50,7 @@ const gqlFeatureFeed = {
     longform_notetweets_rich_text_read_enabled: true,
     longform_notetweets_inline_media_enabled: true,
     responsive_web_enhance_cards_enabled: false,
-};
+}
 
 const TweetDetailFeatures = {
     rweb_tipjar_consumption_enabled: true,
@@ -76,7 +76,7 @@ const TweetDetailFeatures = {
     longform_notetweets_rich_text_read_enabled: true,
     longform_notetweets_inline_media_enabled: true,
     responsive_web_enhance_cards_enabled: false,
-};
+}
 const gqlFeatures = {
     UserByScreenName: gqlFeatureUser,
     UserByRestId: gqlFeatureUser,
@@ -89,7 +89,7 @@ const gqlFeatures = {
     HomeLatestTimeline: TweetDetailFeatures,
     TweetDetail: TweetDetailFeatures,
     Likes: gqlFeatureFeed,
-};
+}
 
 const timelineParams = {
     include_can_media_tag: 1,
@@ -105,8 +105,8 @@ const timelineParams = {
     tweet_mode: 'extended',
     send_error_codes: 1,
     simple_quoted_tweet: 1,
-};
+}
 
-const bearerToken = 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
+const bearerToken = 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA'
 
-export { baseUrl, bearerToken, gqlFeatures, gqlMap, initGqlMap, thirdPartySupportedAPI, timelineParams };
+export { baseUrl, bearerToken, gqlFeatures, gqlMap, initGqlMap, thirdPartySupportedAPI, timelineParams }

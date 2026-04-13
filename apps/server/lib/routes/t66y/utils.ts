@@ -1,19 +1,19 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-export const baseUrl = 'https://www.t66y.com';
+export const baseUrl = 'https://www.t66y.com'
 
 const killRedircdn = (originUrl) => {
-    const decodeStr = /.*\?http/g;
-    const decodeSig = /______/g;
-    const htmlSuffix = '&z';
-    return originUrl.replaceAll(decodeStr, 'http').replaceAll(decodeSig, '.').replace(htmlSuffix, '');
-};
+    const decodeStr = /.*\?http/g
+    const decodeSig = /______/g
+    const htmlSuffix = '&z'
+    return originUrl.replaceAll(decodeStr, 'http').replaceAll(decodeSig, '.').replace(htmlSuffix, '')
+}
 
 export const parseContent = (htmlString) => {
-    const $ = cheerio.load(htmlString);
+    const $ = cheerio.load(htmlString)
 
-    const content = $('div.tpc_content').eq(0);
-    content.find('.t_like').remove();
+    const content = $('div.tpc_content').eq(0)
+    content.find('.t_like').remove()
 
     // Handle video
     // const video = $('a:nth-of-type(2)');
@@ -29,14 +29,14 @@ export const parseContent = (htmlString) => {
     // }
     // Handle img tag
     content.find('img').each((_, ele) => {
-        const $ele = $(ele);
-        const essData = $ele.attr('ess-data');
+        const $ele = $(ele)
+        const essData = $ele.attr('ess-data')
         if (essData) {
-            $ele.attr('src', essData);
+            $ele.attr('src', essData)
         }
-        $ele.removeAttr('ess-data');
-        $ele.removeAttr('iyl-data');
-    });
+        $ele.removeAttr('ess-data')
+        $ele.removeAttr('iyl-data')
+    })
 
     // Handle input tag
     // images = $('input');
@@ -46,12 +46,12 @@ export const parseContent = (htmlString) => {
 
     // Handle links
     content.find('a').each((_, ele) => {
-        const $ele = $(ele);
-        const href = $ele.attr('href');
+        const $ele = $(ele)
+        const href = $ele.attr('href')
         if (href?.includes('redircdn')) {
-            $ele.attr('href', killRedircdn(href));
+            $ele.attr('href', killRedircdn(href))
         }
-    });
+    })
 
-    return content.html();
-};
+    return content.html()
+}

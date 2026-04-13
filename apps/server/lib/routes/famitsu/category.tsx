@@ -1,16 +1,16 @@
-import * as cheerio from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { ArticleDetail, Category, CategoryArticle } from './types';
+import type { ArticleDetail, Category, CategoryArticle } from './types'
 
-const baseUrl = 'https://www.famitsu.com';
+const baseUrl = 'https://www.famitsu.com'
 
 export const route: Route = {
     path: '/category/:category?',
@@ -28,49 +28,49 @@ export const route: Route = {
     description: `| 新着        | Switch | PS5 | PS4 | PC ゲーム | ニュース | 動画   | 特集・企画記事  | インタビュー | 取材・リポート | レビュー | インディーゲーム |
 | ----------- | ------ | --- | --- | --------- | -------- | ------ | --------------- | ------------ | -------------- | -------- | ---------------- |
 | new-article | switch | ps5 | ps4 | pc-game   | news     | videos | special-article | interview    | event-report   | review   | indie-game       |`,
-};
+}
 
 function getBuildId() {
     return cache.tryGet(
         'famitsu:buildId',
         async () => {
-            const data = await ofetch(baseUrl);
-            const $ = cheerio.load(data);
-            const nextData = JSON.parse($('#__NEXT_DATA__').text());
-            return nextData.buildId;
+            const data = await ofetch(baseUrl)
+            const $ = cheerio.load(data)
+            const nextData = JSON.parse($('#__NEXT_DATA__').text())
+            return nextData.buildId
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 }
 
 function render(data: { bannerImage?: string; content?: string }) {
-    return renderToString(<FamitsuDescription bannerImage={data.bannerImage} content={data.content} />);
+    return renderToString(<FamitsuDescription bannerImage={data.bannerImage} content={data.content} />)
 }
 
 function renderJSON(c) {
     if (Array.isArray(c.content)) {
-        return c.content.map((con) => con.type && renderJSON(con)).join('');
+        return c.content.map((con) => con.type && renderJSON(con)).join('')
     }
 
     switch (c.type) {
         case 'B':
         case 'INTERVIEWEE':
         case 'STRONG':
-            return `<b>${c.content}</b>`;
+            return `<b>${c.content}</b>`
         case 'HEAD':
-            return `<h2>${c.content}</h2>`;
+            return `<h2>${c.content}</h2>`
         case 'SHEAD':
-            return `<h3>${c.content}</h3>`;
+            return `<h3>${c.content}</h3>`
         case 'LINK_B':
         case 'LINK_B_TAB':
-            return `<a href="${c.url}"><b>${c.content}</b></a><br>`;
+            return `<a href="${c.url}"><b>${c.content}</b></a><br>`
         case 'IMAGE':
-            return `<img src="${c.path}">`;
+            return `<img src="${c.path}">`
         case 'NEWS':
-            return `<a href="${c.url}">${c.content}<br>${c.description}</a><br>`;
+            return `<a href="${c.url}">${c.content}<br>${c.description}</a><br>`
         case 'HTML':
-            return c.content;
+            return c.content
         case 'ANNOTATION':
         case 'CAPTION':
         case 'ITEMIZATION':
@@ -80,7 +80,7 @@ function renderJSON(c) {
         case 'STRING':
         case 'TWITTER':
         case 'YOUTUBE':
-            return `<div><span>${c.content}</span></div>`;
+            return `<div><span>${c.content}</span></div>`
         case 'BUTTON':
         case 'BUTTON_ANDROID':
         case 'BUTTON_EC':
@@ -89,29 +89,29 @@ function renderJSON(c) {
         case 'BUTTON_TAB':
         case 'LINK':
         case 'LINK_TAB':
-            return `<a href="${c.url}">${c.content}</a><br>`;
+            return `<a href="${c.url}">${c.content}</a><br>`
         default:
-            throw new Error(`Unhandle type: ${c.type}`);
+            throw new Error(`Unhandle type: ${c.type}`)
     }
 }
 
 async function handler(ctx) {
-    const { category = 'new-article' } = ctx.req.param();
-    const url = `${baseUrl}/category/${category}/page/1`;
+    const { category = 'new-article' } = ctx.req.param()
+    const url = `${baseUrl}/category/${category}/page/1`
 
-    const buildId = await getBuildId();
+    const buildId = await getBuildId()
 
     const data = await ofetch(`https://www.famitsu.com/_next/data/${buildId}/category/${category}/page/1.json`, {
         query: {
             categoryCode: category,
             pageNumber: 1,
         },
-    });
+    })
 
     const list = (data.pageProps.categoryArticleDataForPc as CategoryArticle[])
         .filter((item) => !item.advertiserName)
         .map((item) => {
-            const publicationDate = item.publishedAt?.slice(0, 7).replace('-', '');
+            const publicationDate = item.publishedAt?.slice(0, 7).replace('-', '')
             return {
                 title: item.title,
                 link: `https://www.famitsu.com/article/${publicationDate}/${item.id}`,
@@ -119,8 +119,8 @@ async function handler(ctx) {
                 category: [...new Set([item.mainCategory.nameJa, ...(item.subCategories?.map((c) => c.nameJa) ?? [])])],
                 publicationDate,
                 articleId: item.id,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -130,19 +130,19 @@ async function handler(ctx) {
                         publicationDate: item.publicationDate,
                         articleId: item.articleId,
                     },
-                });
+                })
 
-                const articleDetail = data.pageProps.articleDetailData as ArticleDetail;
-                item.author = articleDetail.authors?.map((a) => a.name_ja).join(', ') ?? articleDetail.user.name_ja;
+                const articleDetail = data.pageProps.articleDetailData as ArticleDetail
+                item.author = articleDetail.authors?.map((a) => a.name_ja).join(', ') ?? articleDetail.user.name_ja
                 item.description = render({
                     bannerImage: articleDetail.ogpImageUrl ?? articleDetail.thumbnailUrl,
                     content: articleDetail.content.flatMap((c) => c.contents.map((con) => renderJSON(con))).join(''),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${(data.pageProps.targetCategory as Category).nameJa}の最新記事 | ゲーム・エンタメ最新情報のファミ通.com`,
@@ -150,7 +150,7 @@ async function handler(ctx) {
         link: url,
         item: items,
         language: 'ja',
-    };
+    }
 }
 
 const FamitsuDescription = ({ bannerImage, content }: { bannerImage?: string; content?: string }) => (
@@ -163,4 +163,4 @@ const FamitsuDescription = ({ bannerImage, content }: { bannerImage?: string; co
         ) : null}
         {content ? raw(content) : null}
     </>
-);
+)

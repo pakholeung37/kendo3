@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category, id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category, id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'http://load.grainoil.com.cn';
-    const targetUrl: string = new URL(`${category}/${id}.jspx`, baseUrl).href;
+    const baseUrl = 'http://load.grainoil.com.cn'
+    const targetUrl: string = new URL(`${category}/${id}.jspx`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     let items: DataItem[] = $('div.m_listpagebox ol li a')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('b').text();
-            const pubDateStr: string | undefined = $el.find('span').text().trim();
-            const linkUrl: string | undefined = $el.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $el.find('b').text()
+            const pubDateStr: string | undefined = $el.find('span').text().trim()
+            const linkUrl: string | undefined = $el.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -38,25 +38,25 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl,
                 updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.m_tit h2').text();
-                    const description: string = $$('div.TRS_Editor').html() ?? '';
-                    const authors: DataItem['author'] = $$('div.m_tit h2 a').first().text();
+                    const title: string = $$('div.m_tit h2').text()
+                    const description: string = $$('div.TRS_Editor').html() ?? ''
+                    const authors: DataItem['author'] = $$('div.m_tit h2 a').first().text()
 
                     const processedItem: DataItem = {
                         title,
@@ -67,16 +67,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             text: description,
                         },
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -88,8 +88,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[http-equiv="keywords"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category/:id',
@@ -151,10 +151,10 @@ export const route: Route = {
         {
             source: ['load.grainoil.com.cn/:category/:id'],
             target: (params) => {
-                const category: string = params.category;
-                const id: string = params.id;
+                const category: string = params.category
+                const id: string = params.id
 
-                return `/grainoil/${category}/${id}`;
+                return `/grainoil/${category}/${id}`
             },
         },
         {
@@ -204,4 +204,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

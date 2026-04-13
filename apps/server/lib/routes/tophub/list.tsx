@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import xxhash from 'xxhash-wasm';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import xxhash from 'xxhash-wasm'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/list/:id',
@@ -36,28 +36,28 @@ export const route: Route = {
     description: `::: tip
 将榜单条目集合到一个列表中，且有热度排序，可避免推送大量条目。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { h64ToString } = await xxhash();
-    const id = ctx.req.param('id');
-    const link = `https://tophub.today/n/${id}`;
+    const { h64ToString } = await xxhash()
+    const id = ctx.req.param('id')
+    const link = `https://tophub.today/n/${id}`
     const response = await ofetch(link, {
         headers: {
             Referer: 'https://tophub.today',
             Cookie: config.tophub?.cookie ?? '',
         },
-    });
-    const $ = load(response);
-    const title = $('.tt h3').text().trim();
+    })
+    const $ = load(response)
+    const title = $('.tt h3').text().trim()
     const items = $('.rank-all-item:not(.history-content) .jc-c tr')
         .toArray()
         .map((e) => ({
             title: $(e).find('td a').text().trim(),
             link: $(e).find('td a').attr('href'),
             heatRate: $(e).find('td:nth-child(3)').text().trim(),
-        }));
-    const combinedTitles = items.map((item) => item.title).join('');
+        }))
+    const combinedTitles = items.map((item) => item.title).join('')
     const renderRank = renderToString(
         <table>
             <thead>
@@ -78,8 +78,8 @@ async function handler(ctx) {
                     </tr>
                 ))}
             </tbody>
-        </table>
-    );
+        </table>,
+    )
 
     return {
         title,
@@ -94,5 +94,5 @@ async function handler(ctx) {
                 guid: h64ToString(combinedTitles),
             },
         ],
-    };
+    }
 }

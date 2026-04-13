@@ -1,14 +1,14 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { fetchFeed } from './utils';
+import { fetchFeed } from './utils'
 
 export const handler = (ctx: Context) => {
-    const limit = Number.parseInt(ctx.req.query('limit') || '10');
+    const limit = Number.parseInt(ctx.req.query('limit') || '10')
 
-    return fetchFeed(limit);
-};
+    return fetchFeed(limit)
+}
 
 export const route: Route = {
     path: '/blog',
@@ -25,4 +25,4 @@ export const route: Route = {
     name: 'Blog',
     maintainers: ['goestav'],
     handler,
-};
+}

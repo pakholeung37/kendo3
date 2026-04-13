@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { CategoryParam, CommonDataProperties, CommonRouteProperties, getPostItems, TabMap, TabParam, TimeRangeParam } from './common';
+import { CategoryParam, CommonDataProperties, CommonRouteProperties, getPostItems, TabMap, TabParam, TimeRangeParam } from './common'
 
 export const route: Route = {
     ...CommonRouteProperties,
@@ -30,21 +30,21 @@ export const route: Route = {
     },
     example: '/voronoiapp/popular/most-popular/MONTH',
     handler: async (ctx) => {
-        const { tab = 'most-popular', time_range = 'MONTH', category = '' } = ctx.req.param();
+        const { tab = 'most-popular', time_range = 'MONTH', category = '' } = ctx.req.param()
         if (!TabMap[tab.toLowerCase()]) {
-            throw new Error(`Invalid tab: ${tab}`);
+            throw new Error(`Invalid tab: ${tab}`)
         }
         const items = await getPostItems({
             swimlane: 'POPULAR',
             tab: TabMap[tab.toLowerCase()],
             time_range: time_range === '' ? undefined : time_range.toUpperCase(),
             category: category === '' ? undefined : category,
-        });
+        })
         return {
             ...CommonDataProperties,
             title: `Voronoi ${TabParam.options.find((option) => option.value === tab.toLowerCase())?.label} Posts in ${TimeRangeParam.options.find((option) => option.value === time_range.toUpperCase())?.label}${category ? ` - ${category}` : ''}`,
             link: `https://www.voronoiapp.com/posts/${tab}`,
             item: items,
-        } as Data;
+        } as Data
     },
-};
+}

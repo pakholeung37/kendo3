@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { parseItems } from './utils';
+import { parseItems } from './utils'
 
 export const route: Route = {
     path: '/channel/:id',
@@ -22,15 +22,15 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { id } = ctx.req.param();
-    const html = await ofetch(`https://javtiful.com/channel/${id}`);
-    const $ = load(html as string);
+    const { id } = ctx.req.param()
+    const html = await ofetch(`https://javtiful.com/channel/${id}`)
+    const $ = load(html as string)
     const items: DataItem[] = $('section .card:not(:has(.bg-danger))')
         .toArray()
-        .map((item) => parseItems($(item)));
+        .map((item) => parseItems($(item)))
     return {
         title: $('.channel-item__name_details a').text(),
         link: `https://javtiful.com/channel/${id}`,
@@ -38,5 +38,5 @@ async function handler(ctx): Promise<Data> {
         item: items,
         image: $('.content-section-title img').attr('src'),
         language: $('html').attr('lang'),
-    };
+    }
 }

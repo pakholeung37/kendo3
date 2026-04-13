@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/report/list/:report?',
@@ -27,28 +27,28 @@ export const route: Route = {
             source: ['www.cih-index.com/report/list/:report'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const { report = 'p1-oaddtime-ddesc' } = ctx.req.param();
+    const { report = 'p1-oaddtime-ddesc' } = ctx.req.param()
 
-    const baseUrl = 'https://www.cih-index.com';
-    const currentUrl = `${baseUrl}/report/list/${report}`;
-    const response = await ofetch(currentUrl);
+    const baseUrl = 'https://www.cih-index.com'
+    const currentUrl = `${baseUrl}/report/list/${report}`
+    const response = await ofetch(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
     const initialState = JSON.parse(
         $('script:contains("window.__INITIAL_STATE__")')
             .text()
-            .match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/)?.[1] || '{}'
-    );
-    const { dataResult, indNavLists, secondNameFilter, tagList, param } = initialState.data;
+            .match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/)?.[1] || '{}',
+    )
+    const { dataResult, indNavLists, secondNameFilter, tagList, param } = initialState.data
 
     const items = dataResult.reportInfoDtoList.map((info) => {
-        const pageCount = info.isCharging === 1 ? 3 : info.pageCount;
-        let images = '';
+        const pageCount = info.isCharging === 1 ? 3 : info.pageCount
+        let images = ''
         for (let i = 1; i <= pageCount; i++) {
-            images += `<img src="${baseUrl}/report/bp-creis-report-detail/getImg?id=${info.reportId}&pageNum=${i}"><br>`;
+            images += `<img src="${baseUrl}/report/bp-creis-report-detail/getImg?id=${info.reportId}&pageNum=${i}"><br>`
         }
         return {
             title: info.reportTitle,
@@ -57,12 +57,12 @@ async function handler(ctx) {
             category: [...new Set([...info.reportClassTagDtoList.map((t) => t.tag), ...(info.keywordList || [])])],
             description: `${info.context}<br>${images}`,
             image: `${info.coverFigureUrl}/200`,
-        };
-    });
+        }
+    })
 
-    const category = param.firstId ? indNavLists.find((item) => item.classId === param.firstId)?.className + ' - ' : '';
-    const subCategory = param.secondId ? secondNameFilter.find((item) => item.classId === param.secondId)?.className + ' - ' : '';
-    const tag = param.tagId ? tagList.find((item) => item.tagId === Number.parseInt(param.tagId))?.tag + ' - ' : '';
+    const category = param.firstId ? indNavLists.find((item) => item.classId === param.firstId)?.className + ' - ' : ''
+    const subCategory = param.secondId ? secondNameFilter.find((item) => item.classId === param.secondId)?.className + ' - ' : ''
+    const tag = param.tagId ? tagList.find((item) => item.tagId === Number.parseInt(param.tagId))?.tag + ' - ' : ''
 
     return {
         title: `${category}${subCategory}${tag}中指报告`,
@@ -71,5 +71,5 @@ async function handler(ctx) {
         lang: 'zh-CN',
         link: currentUrl,
         item: items,
-    };
+    }
 }

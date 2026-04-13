@@ -1,51 +1,51 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type SheQiItems = {
-    id?: string;
-    has_money?: boolean;
-    zc_type_text?: string;
-    zc_type_icon?: string;
-    zc_key?: string;
-    company_type_text?: string;
-    industry_text?: string;
-    scale_text?: string;
-};
+    id?: string
+    has_money?: boolean
+    zc_type_text?: string
+    zc_type_icon?: string
+    zc_key?: string
+    company_type_text?: string
+    industry_text?: string
+    scale_text?: string
+}
 
 type JieDuItem = {
-    jd_title?: string;
-    jd_content?: string;
-    attach_items?: Array<{ file_url?: string }>;
-};
+    jd_title?: string
+    jd_content?: string
+    attach_items?: Array<{ file_url?: string }>
+}
 
 type WenDaItem = {
-    question?: string;
-    answer?: string;
-};
+    question?: string
+    answer?: string
+}
 
 type ZcjdptData = {
-    art_title?: string;
-    pub_unite?: string;
-    pub_time?: string;
-    expiry_date?: string;
-    zc_title?: string;
-    summary?: string;
-    link?: string;
-    she_qi_items?: SheQiItems;
-    jie_du_items?: JieDuItem[];
-    wen_da_items?: WenDaItem[];
-};
+    art_title?: string
+    pub_unite?: string
+    pub_time?: string
+    expiry_date?: string
+    zc_title?: string
+    summary?: string
+    link?: string
+    she_qi_items?: SheQiItems
+    jie_du_items?: JieDuItem[]
+    wen_da_items?: WenDaItem[]
+}
 
-const splitValues = (value?: string) => (value ? value.split(',') : []);
+const splitValues = (value?: string) => (value ? value.split(',') : [])
 
 export const renderZcjdpt = (data: ZcjdptData) => {
-    const sheQiItems = data.she_qi_items ?? {};
-    const zcType = splitValues(sheQiItems.zc_type_text);
-    const zcTypeIcon = splitValues(sheQiItems.zc_type_icon);
-    const zcKey = splitValues(sheQiItems.zc_key);
-    const cType = splitValues(sheQiItems.company_type_text);
-    const iType = splitValues(sheQiItems.industry_text);
-    const cScale = splitValues(sheQiItems.scale_text);
+    const sheQiItems = data.she_qi_items ?? {}
+    const zcType = splitValues(sheQiItems.zc_type_text)
+    const zcTypeIcon = splitValues(sheQiItems.zc_type_icon)
+    const zcKey = splitValues(sheQiItems.zc_key)
+    const cType = splitValues(sheQiItems.company_type_text)
+    const iType = splitValues(sheQiItems.industry_text)
+    const cScale = splitValues(sheQiItems.scale_text)
 
     return renderToString(
         <div class="content">
@@ -133,7 +133,7 @@ export const renderZcjdpt = (data: ZcjdptData) => {
                                         <span class="dBlue" style="display: inline-block;vertical-align: middle;line-height: 48px;background: #3B87C7;padding: 0 45px;font-size: 18px;color: #FFF;margin: 10px 4px 0;">
                                             {key}
                                         </span>
-                                    )
+                                    ),
                                 )}
                             </div>
                         </div>
@@ -240,6 +240,6 @@ export const renderZcjdpt = (data: ZcjdptData) => {
                     </div>
                 ) : null}
             </div>
-        </div>
-    );
-};
+        </div>,
+    )
+}

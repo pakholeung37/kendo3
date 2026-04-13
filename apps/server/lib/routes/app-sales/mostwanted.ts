@@ -1,32 +1,32 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, fetchItems } from './util';
+import { baseUrl, fetchItems } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { time = '24h', country = 'us' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { time = '24h', country = 'us' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL('mostwanted/', baseUrl).href;
+    const targetUrl: string = new URL('mostwanted/', baseUrl).href
 
     const response = await ofetch(targetUrl, {
         headers: {
             Cookie: `countryId=${country};`,
         },
-    });
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
-    const selector: string = time ? `div[id$="-${time}"] div.card-panel` : 'div.card-panel';
+    })
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
+    const selector: string = time ? `div[id$="-${time}"] div.card-panel` : 'div.card-panel'
 
-    const items: DataItem[] = await fetchItems($, selector, targetUrl, country, limit);
+    const items: DataItem[] = await fetchItems($, selector, targetUrl, country, limit)
 
-    const title: string = $('title').text();
-    const tabTitle: string = $(`ul.tabs li.tab a[href$="-${time}"]`).text();
+    const title: string = $('title').text()
+    const tabTitle: string = $(`ul.tabs li.tab a[href$="-${time}"]`).text()
 
     return {
         title: `${title}${tabTitle ? ` - ${tabTitle}` : ''}`,
@@ -38,8 +38,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/\|/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/mostwanted/:time?/:country?',
@@ -192,4 +192,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

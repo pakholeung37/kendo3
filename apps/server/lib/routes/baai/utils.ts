@@ -1,25 +1,25 @@
-import { destr } from 'destr';
+import { destr } from 'destr'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const baseUrl = 'https://hub.baai.ac.cn';
-const eventUrl = 'https://event.baai.ac.cn';
-const apiHost = 'https://hub-api.baai.ac.cn';
+const baseUrl = 'https://hub.baai.ac.cn'
+const eventUrl = 'https://event.baai.ac.cn'
+const apiHost = 'https://hub-api.baai.ac.cn'
 
 const getTagsData = () =>
     cache.tryGet('baai:tags', async () => {
-        const { data } = await ofetch(`${apiHost}/api/v1/tags`);
+        const { data } = await ofetch(`${apiHost}/api/v1/tags`)
         return data.map((item) => ({
             id: item.id,
             title: item.title,
             description: item.description,
             brief: item.brief,
             iconUrl: item.icon_url,
-        }));
-    });
+        }))
+    })
 
 const parseItem = (item) => ({
     link: item.is_event ? `${eventUrl}/activities/${item.event_info.id}` : `${baseUrl}/view/${item.story_id}`,
@@ -28,7 +28,7 @@ const parseItem = (item) => ({
     author: item.is_event ? item.event_info.company : item.story_info.user_name,
     category: item.is_event ? null : item.story_info.tag_names.map((tag) => tag.title),
     eventId: item.is_event ? item.event_info.id : null,
-});
+})
 
 const parseEventDetail = async (item) => {
     const data = await ofetch(`${eventUrl}/api/api/Activity/IntroductionTypes`, {
@@ -36,8 +36,8 @@ const parseEventDetail = async (item) => {
             activityId: item.eventId,
         },
         parseResponse: (txt) => destr(txt),
-    });
-    return data.data.ac_desc + data.data.ac_desc_two;
-};
+    })
+    return data.data.ac_desc + data.data.ac_desc_two
+}
 
-export { apiHost, baseUrl, eventUrl, getTagsData, parseEventDetail, parseItem };
+export { apiHost, baseUrl, eventUrl, getTagsData, parseEventDetail, parseItem }

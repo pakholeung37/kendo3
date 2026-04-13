@@ -5,10 +5,10 @@
  */
 const isValidHost = (hostname?: string) => {
     if (typeof hostname !== 'string') {
-        return false;
+        return false
     }
-    const regex = /^[\dA-Za-z]([\dA-Za-z-]{0,61}[\dA-Za-z])?$/;
-    return regex.test(hostname);
-};
+    const regex = /^[\dA-Za-z]([\dA-Za-z-]{0,61}[\dA-Za-z])?$/
+    return regex.test(hostname)
+}
 
-export { isValidHost };
+export { isValidHost }

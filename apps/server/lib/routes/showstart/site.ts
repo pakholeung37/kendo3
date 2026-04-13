@@ -1,9 +1,9 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { HOST, TITLE } from './const';
-import { fetchActivityList, fetchSiteInfo } from './service';
+import { HOST, TITLE } from './const'
+import { fetchActivityList, fetchSiteInfo } from './service'
 
 export const route: Route = {
     path: '/site/:siteId',
@@ -29,15 +29,15 @@ export const route: Route = {
     description: `::: tip
 -   演出场地 ID 查询: \`/showstart/search/site/:keyword\`, 如: [https://rsshub.app/showstart/search/site/酒球会](https://rsshub.app/showstart/search/site/酒球会)
 :::`,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const siteId = Number.parseInt(ctx.req.param('siteId')).toString();
-    const [activityList, siteInfo] = await Promise.all([fetchActivityList({ siteId }), fetchSiteInfo({ siteId })]);
+    const siteId = Number.parseInt(ctx.req.param('siteId')).toString()
+    const [activityList, siteInfo] = await Promise.all([fetchActivityList({ siteId }), fetchSiteInfo({ siteId })])
     return {
         title: `${TITLE} - ${siteInfo.name}`,
         description: siteInfo.address,
         link: HOST,
         item: activityList,
-    };
+    }
 }

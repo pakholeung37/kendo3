@@ -1,16 +1,16 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type AuthorData = {
-    name?: string;
-    url?: string;
-};
+    name?: string
+    url?: string
+}
 
 type DescriptionData = {
-    pdfUrl?: string;
-    kimiUrl?: string;
-    authors?: AuthorData[];
-    summary?: string;
-};
+    pdfUrl?: string
+    kimiUrl?: string
+    authors?: AuthorData[]
+    summary?: string
+}
 
 const PapersDescription = ({ pdfUrl, kimiUrl, authors, summary }: DescriptionData) => (
     <>
@@ -28,6 +28,6 @@ const PapersDescription = ({ pdfUrl, kimiUrl, authors, summary }: DescriptionDat
         ) : null}
         {summary ? <p>{summary}</p> : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<PapersDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<PapersDescription {...data} />)

@@ -1,26 +1,26 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { finishArticleItem } from '@/utils/wechat-mp';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { finishArticleItem } from '@/utils/wechat-mp'
 
-const baseUrl = 'https://nsd.pku.edu.cn/sylm/gd/';
+const baseUrl = 'https://nsd.pku.edu.cn/sylm/gd/'
 
 const pageType = (href) => {
     if (!href.startsWith('http')) {
-        return 'in-site';
+        return 'in-site'
     }
-    const url = new URL(href);
+    const url = new URL(href)
     if (url.hostname === 'mp.weixin.qq.com') {
-        return 'wechat-mp';
+        return 'wechat-mp'
     } else if (url.hostname === 'news.pku.edu.cn') {
-        return 'pku-news';
+        return 'pku-news'
     } else {
-        return 'unknown';
+        return 'unknown'
     }
-};
+}
 
 export const route: Route = {
     path: '/nsd/gd',
@@ -44,53 +44,53 @@ export const route: Route = {
     maintainers: ['MisLink'],
     handler,
     url: 'nsd.pku.edu.cn/',
-};
+}
 
 async function handler() {
-    const response = await got(baseUrl);
+    const response = await got(baseUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const list = $('div.maincontent > ul > li')
         .toArray()
         .map((item) => {
-            const href = $(item).find('a').attr('href');
-            const type = pageType(href);
+            const href = $(item).find('a').attr('href')
+            const type = pageType(href)
             return {
                 title: $(item).find('a').text().trim(),
                 link: type === 'in-site' ? baseUrl + href : href,
                 pubDate: parseDate($(item).find('span').first().text(), 'YYYY-MM-DD'),
                 type,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) => {
             switch (item.type) {
                 case 'wechat-mp':
-                    return finishArticleItem(item);
+                    return finishArticleItem(item)
                 case 'pku-news':
                     return cache.tryGet(item.link, async () => {
-                        const detailResponse = await got(item.link);
-                        const content = load(detailResponse.data);
-                        item.description = content('div.pageArticle > div.col.lf').html();
-                        return item;
-                    });
+                        const detailResponse = await got(item.link)
+                        const content = load(detailResponse.data)
+                        item.description = content('div.pageArticle > div.col.lf').html()
+                        return item
+                    })
                 case 'in-site':
                     return cache.tryGet(item.link, async () => {
-                        const detailResponse = await got(item.link);
-                        const content = load(detailResponse.data);
-                        item.description = content('div.article').html();
-                        return item;
-                    });
+                        const detailResponse = await got(item.link)
+                        const content = load(detailResponse.data)
+                        item.description = content('div.article').html()
+                        return item
+                    })
                 default:
-                    return item;
+                    return item
             }
-        })
-    );
+        }),
+    )
 
     return {
         title: '观点 - 北京大学国家发展研究院',
         link: baseUrl,
         item: items,
-    };
+    }
 }

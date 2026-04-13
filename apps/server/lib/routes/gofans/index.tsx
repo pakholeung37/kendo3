@@ -1,9 +1,9 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:kind?',
@@ -21,11 +21,11 @@ export const route: Route = {
     name: '最新限免 / 促销应用',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { kind = '' } = ctx.req.param();
-    const baseUrl = 'https://gofans.cn';
+    const { kind = '' } = ctx.req.param()
+    const baseUrl = 'https://gofans.cn'
 
     const { data: response } = await got('https://api.gofans.cn/v1/web/app_records', {
         headers: {
@@ -36,7 +36,7 @@ async function handler(ctx) {
             kind: kind && (kind === 'macos' ? 1 : 2),
             page: 1,
         },
-    });
+    })
 
     const items = response.data.map((item) => ({
         title: `「${item.price === '0.00' ? '免费' : '降价'}」-「${item.kind === 1 ? 'macOS' : 'iOS'}」${item.name}`,
@@ -44,14 +44,14 @@ async function handler(ctx) {
         pubDate: parseDate(item.updated_at, 'X'),
         link: new URL(`/app/${item.uuid}`, baseUrl).href,
         category: item.primary_genre_name,
-    }));
+    }))
 
     return {
         title: '最新限免 / 促销应用',
         link: baseUrl,
         description: 'GoFans：最新限免 / 促销应用',
         item: items,
-    };
+    }
 }
 
 const GofansDescription = ({ icon, originalPrice, price, kind, description }: { icon: string; originalPrice: string; price: string; kind: number; description: string }) => (
@@ -64,4 +64,4 @@ const GofansDescription = ({ icon, originalPrice, price, kind, description }: { 
         <br />
         {raw(description)}
     </>
-);
+)

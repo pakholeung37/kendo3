@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 const renderDescription = (image, description, src) =>
     renderToString(
@@ -19,8 +19,8 @@ const renderDescription = (image, description, src) =>
                     <a href={src}>查看歌单</a>
                 </div>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/music/user/playlist/:uid',
@@ -38,10 +38,10 @@ export const route: Route = {
     name: '用户歌单',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
+    const uid = ctx.req.param('uid')
 
     const response = await got.post('https://music.163.com/api/user/playlist', {
         headers: {
@@ -52,13 +52,13 @@ async function handler(ctx) {
             limit: 1000,
             offset: 0,
         },
-    });
+    })
 
-    const playlist = response.data.playlist || [];
+    const playlist = response.data.playlist || []
 
-    const creator = (playlist[0] || {}).creator;
+    const creator = (playlist[0] || {}).creator
 
-    const { nickname, signature, avatarUrl } = creator;
+    const { nickname, signature, avatarUrl } = creator
 
     return {
         title: `${nickname} 的所有歌单`,
@@ -70,9 +70,9 @@ async function handler(ctx) {
         icon: avatarUrl,
         image: avatarUrl,
         item: playlist.map((pl) => {
-            const src = `http://music.163.com/playlist/${pl.id}`;
+            const src = `http://music.163.com/playlist/${pl.id}`
 
-            const html = renderDescription(pl.coverImgUrl, (pl.description || '').split('\n'), src);
+            const html = renderDescription(pl.coverImgUrl, (pl.description || '').split('\n'), src)
 
             return {
                 title: pl.name,
@@ -84,7 +84,7 @@ async function handler(ctx) {
                 description: html,
                 content: { html },
                 category: pl.tags,
-            };
+            }
         }),
-    };
+    }
 }

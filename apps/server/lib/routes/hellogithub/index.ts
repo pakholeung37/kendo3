@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const sorts = {
     featured: '精选',
     all: '全部',
-};
+}
 
 export const route: Route = {
     path: '/home/:sort?/:id?',
@@ -28,35 +28,35 @@ export const route: Route = {
     description: `| 精选 | 全部 |
 | ---- | ---- |
 | featured  | all |`,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') ?? 'featured';
-    const id = ctx.req.param('id') ?? '';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
+    const sort = ctx.req.param('sort') ?? 'featured'
+    const id = ctx.req.param('id') ?? ''
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
 
-    const rootUrl = 'https://hellogithub.com';
-    const apiRootUrl = 'https://api.hellogithub.com';
-    const currentUrl = `${rootUrl}/?sort_by=${sort}${id ? `&tid=${id}` : ''}`;
-    const apiUrl = `${apiRootUrl}/v1/?sort_by=${sort}${id ? `&tid=${id}` : ''}&page=1`;
+    const rootUrl = 'https://hellogithub.com'
+    const apiRootUrl = 'https://api.hellogithub.com'
+    const currentUrl = `${rootUrl}/?sort_by=${sort}${id ? `&tid=${id}` : ''}`
+    const apiUrl = `${apiRootUrl}/v1/?sort_by=${sort}${id ? `&tid=${id}` : ''}&page=1`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    let tag;
+    let tag
     if (id) {
-        const tagUrl = `${rootUrl}/tags/${id}`;
+        const tagUrl = `${rootUrl}/tags/${id}`
 
         const tagResponse = await got({
             method: 'get',
             url: tagUrl,
-        });
+        })
 
-        const $ = load(tagResponse.data);
+        const $ = load(tagResponse.data)
 
-        tag = $('meta[property="og:title"]')?.attr('content')?.split(' ').pop();
+        tag = $('meta[property="og:title"]')?.attr('content')?.split(' ').pop()
     }
 
     const items = response.data.data.slice(0, limit).map((item) => ({
@@ -68,11 +68,11 @@ async function handler(ctx) {
         name: `${item.author}/${item.name}`,
         description: item.summary,
         language: item.primary_lang,
-    }));
+    }))
 
     return {
         title: `HelloGithub - ${sorts[sort]}${tag || ''}开源项目`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/:region?',
@@ -27,38 +27,38 @@ export const route: Route = {
     name: '实时消息',
     maintainers: ['CoderSherlock'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const region = ctx.req.param('region') ?? 'ukraine';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const region = ctx.req.param('region') ?? 'ukraine'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
     if (!isValidHost(region)) {
-        throw new InvalidParameterError('Invalid region');
+        throw new InvalidParameterError('Invalid region')
     }
 
-    const url = `https://${region}.liveuamap.com/`;
+    const url = `https://${region}.liveuamap.com/`
 
     const response = await got({
         method: 'get',
         url,
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     const items = $('div#feedler > div')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('div.title').text(),
                 description: item.find('div.title').text(),
                 link: item.attr('data-link'),
-            };
-        });
+            }
+        })
 
     return {
         title: `Liveuamap - ${region}`,
         link: url,
         item: items,
-    };
+    }
 }

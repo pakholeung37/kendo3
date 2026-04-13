@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest'
 
-import { getContext, requestMetric } from '@/utils/otel/metric';
+import { getContext, requestMetric } from '@/utils/otel/metric'
 
 describe('otel metrics', () => {
     it('serializes prometheus metrics', async () => {
@@ -8,16 +8,16 @@ describe('otel metrics', () => {
             method: 'GET',
             path: '/test',
             status: 200,
-        });
+        })
         requestMetric.error({
             method: 'GET',
             path: '/test',
             status: 500,
-        });
+        })
 
-        const output = await getContext();
+        const output = await getContext()
 
-        expect(output).toContain('rsshub_request_total');
-        expect(output).toContain('rsshub_request_error_total');
-    });
-});
+        expect(output).toContain('rsshub_request_total')
+        expect(output).toContain('rsshub_request_error_total')
+    })
+})

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
 export const route: Route = {
     path: '/seminars/:period',
@@ -22,28 +22,28 @@ export const route: Route = {
 | upcoming   |
 | past       |
 | both       |`,
-};
+}
 
 async function handler(ctx) {
-    const link = 'http://www.aiea.org/0504';
-    const period = ctx.req.param('period') ?? '';
+    const link = 'http://www.aiea.org/0504'
+    const period = ctx.req.param('period') ?? ''
 
-    let nth_child = 'n';
+    let nth_child = 'n'
     switch (period) {
         case 'upcoming':
-            nth_child = '1';
-            break;
+            nth_child = '1'
+            break
 
         case 'past':
-            nth_child = '2';
-            break;
+            nth_child = '2'
+            break
 
         case 'both':
-            nth_child = 'n';
-            break;
+            nth_child = 'n'
+            break
 
         default:
-            break;
+            break
     }
 
     return await buildData({
@@ -59,5 +59,5 @@ async function handler(ctx) {
             link: `$('a[href^="/0504"]').attr('href')`,
             description: `$('.seminar-list .txt > .title').text()`,
         },
-    });
+    })
 }

@@ -1,8 +1,8 @@
-import { destr } from 'destr';
+import { destr } from 'destr'
 
-import ofetch from '@/utils/ofetch';
+import ofetch from '@/utils/ofetch'
 
-import { getSearchParamsString } from './helpers';
+import { getSearchParamsString } from './helpers'
 
 const getFakeGot = (defaultOptions?: any) => {
     const fakeGot = async (request, options?: any) => {
@@ -10,81 +10,81 @@ const getFakeGot = (defaultOptions?: any) => {
             options = {
                 ...request,
                 ...options,
-            };
-            request = request.url;
+            }
+            request = request.url
         }
         if (options?.hooks?.beforeRequest) {
             for (const hook of options.hooks.beforeRequest) {
-                hook(options);
+                hook(options)
             }
-            delete options.hooks;
+            delete options.hooks
         }
 
         options = {
             ...defaultOptions,
             ...options,
-        };
+        }
 
         if (options?.json && !options.body) {
-            options.body = options.json;
-            delete options.json;
+            options.body = options.json
+            delete options.json
         }
         if (options?.form && !options.body) {
-            options.body = new URLSearchParams(options.form as Record<string, string>).toString();
+            options.body = new URLSearchParams(options.form as Record<string, string>).toString()
             if (!options.headers) {
-                options.headers = {};
+                options.headers = {}
             }
-            options.headers['content-type'] = 'application/x-www-form-urlencoded';
-            delete options.form;
+            options.headers['content-type'] = 'application/x-www-form-urlencoded'
+            delete options.form
         }
         if (options?.searchParams) {
-            request += '?' + getSearchParamsString(options.searchParams);
-            delete options.searchParams;
+            request += '?' + getSearchParamsString(options.searchParams)
+            delete options.searchParams
         }
 
         // Add support for buffer responseType, to be compatible with got
         options.parseResponse = (responseText) => ({
             data: destr(responseText),
             body: responseText,
-        });
+        })
 
         if (options?.responseType === 'buffer' || options?.responseType === 'arrayBuffer') {
-            options.responseType = 'arrayBuffer';
-            delete options.parseResponse;
+            options.responseType = 'arrayBuffer'
+            delete options.parseResponse
         }
 
         if (options.cookieJar) {
-            const cookies = options.cookieJar.getCookiesSync(request);
+            const cookies = options.cookieJar.getCookiesSync(request)
             if (cookies.length) {
                 if (!options.headers) {
-                    options.headers = {};
+                    options.headers = {}
                 }
-                options.headers.cookie = cookies.join('; ');
+                options.headers.cookie = cookies.join('; ')
             }
-            delete options.cookieJar;
+            delete options.cookieJar
         }
 
-        const response = ofetch(request, options);
+        const response = ofetch(request, options)
 
         if (options?.responseType === 'arrayBuffer') {
-            const responseData = await response;
+            const responseData = await response
             return {
                 data: Buffer.from(responseData),
                 body: Buffer.from(responseData),
-            };
+            }
         }
-        return response;
-    };
+        return response
+    }
 
-    fakeGot.get = (request, options?) => fakeGot(request, { ...options, method: 'GET' });
-    fakeGot.post = (request, options?) => fakeGot(request, { ...options, method: 'POST' });
-    fakeGot.put = (request, options?) => fakeGot(request, { ...options, method: 'PUT' });
-    fakeGot.patch = (request, options?) => fakeGot(request, { ...options, method: 'PATCH' });
-    fakeGot.head = (request, options?) => fakeGot(request, { ...options, method: 'HEAD' });
-    fakeGot.delete = (request, options?) => fakeGot(request, { ...options, method: 'DELETE' });
-    fakeGot.extend = (options) => getFakeGot(options);
+    fakeGot.get = (request, options?) => fakeGot(request, { ...options, method: 'GET' })
+    fakeGot.post = (request, options?) => fakeGot(request, { ...options, method: 'POST' })
+    fakeGot.put = (request, options?) => fakeGot(request, { ...options, method: 'PUT' })
+    fakeGot.patch = (request, options?) => fakeGot(request, { ...options, method: 'PATCH' })
+    fakeGot.head = (request, options?) => fakeGot(request, { ...options, method: 'HEAD' })
+    fakeGot.delete = (request, options?) => fakeGot(request, { ...options, method: 'DELETE' })
+    fakeGot.extend = (options) => getFakeGot(options)
 
-    return fakeGot;
-};
+    return fakeGot
+}
 
-export default getFakeGot();
+export default getFakeGot()

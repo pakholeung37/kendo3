@@ -1,8 +1,8 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { DataItem } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
 const renderDescription = (excerpt, image, altText, content) =>
     renderToString(
@@ -18,13 +18,13 @@ const renderDescription = (excerpt, image, altText, content) =>
                 </>
             ) : null}
             {content ? <>{raw(content)}</> : null}
-        </>
-    );
+        </>,
+    )
 
 export function mapPostToItem(post): DataItem {
-    const featuredMedia = post._embedded?.['wp:featuredmedia']?.find((v) => v.id === post.featured_media);
-    const image = featuredMedia?.source_url;
-    const altText = featuredMedia?.alt_text || featuredMedia?.title?.rendered || 'Featured Image';
+    const featuredMedia = post._embedded?.['wp:featuredmedia']?.find((v) => v.id === post.featured_media)
+    const image = featuredMedia?.source_url
+    const altText = featuredMedia?.alt_text || featuredMedia?.title?.rendered || 'Featured Image'
     return {
         title: post.title.rendered,
         description: renderDescription(post.excerpt.rendered, image, altText, post.content.rendered),
@@ -42,5 +42,5 @@ export function mapPostToItem(post): DataItem {
                 }))
                 .join(', ') || 'The Wire Hindi',
         category: post._embedded?.['wp:term']?.flat().map((v) => v.name),
-    } as DataItem;
+    } as DataItem
 }

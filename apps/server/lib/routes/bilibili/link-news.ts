@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/link/news/:product',
@@ -17,25 +17,25 @@ export const route: Route = {
     name: 'link 公告',
     maintainers: ['Qixingchen'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const product = ctx.req.param('product');
+    const product = ctx.req.param('product')
 
-    let productTitle: string;
+    let productTitle: string
 
     switch (product) {
         case 'live':
-            productTitle = '直播';
-            break;
+            productTitle = '直播'
+            break
         case 'vc':
-            productTitle = '小视频';
-            break;
+            productTitle = '小视频'
+            break
         case 'wh':
-            productTitle = '相簿';
-            break;
+            productTitle = '相簿'
+            break
         default:
-            throw new Error(`Unknown product: ${product}`);
+            throw new Error(`Unknown product: ${product}`)
     }
 
     const response = await got({
@@ -44,8 +44,8 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://link.bilibili.com/p/eden/news',
         },
-    });
-    const data = response.data.data.items;
+    })
+    const data = response.data.data.items
 
     return {
         title: `bilibili ${productTitle}公告`,
@@ -59,5 +59,5 @@ async function handler(ctx) {
                 pubDate: new Date(item.ctime.replace(' ', 'T') + '+08:00').toUTCString(),
                 link: item.announce_link ?? `https://link.bilibili.com/p/eden/news#/newsdetail?id=${item.id}`,
             })),
-    };
+    }
 }

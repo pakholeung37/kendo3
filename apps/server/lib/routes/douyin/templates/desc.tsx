@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescData = {
-    desc: string;
-    media: string;
-};
+    desc: string
+    media: string
+}
 
 export const renderDesc = ({ desc, media }: DescData): string =>
     renderToString(
@@ -13,5 +13,5 @@ export const renderDesc = ({ desc, media }: DescData): string =>
             <br />
             <br />
             {raw(media)}
-        </>
-    );
+        </>,
+    )

@@ -1,15 +1,15 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { Post, UserProfile } from './types';
+import type { Post, UserProfile } from './types'
 
-const apiBaseUrl = 'https://api.myfans.jp';
-export const baseUrl = 'https://myfans.jp';
+const apiBaseUrl = 'https://api.myfans.jp'
+export const baseUrl = 'https://myfans.jp'
 
 const headers = {
     'google-ga-data': 'event328',
-};
+}
 
 export const showByUsername = (username: string) =>
     cache.tryGet(`myfans:account:${username}`, async () => {
@@ -18,14 +18,14 @@ export const showByUsername = (username: string) =>
             query: {
                 username,
             },
-        });
+        })
 
         if (!accountInfo.id) {
-            throw new InvalidParameterError('This creator does not exist.');
+            throw new InvalidParameterError('This creator does not exist.')
         }
 
-        return accountInfo;
-    }) as Promise<UserProfile>;
+        return accountInfo
+    }) as Promise<UserProfile>
 
 export const getPostByAccountId = async (accountId) => {
     const post = await ofetch(`${apiBaseUrl}/api/v2/users/${accountId}/posts`, {
@@ -34,7 +34,7 @@ export const getPostByAccountId = async (accountId) => {
             sort_key: 'publish_start_at',
             page: 1,
         },
-    });
+    })
 
-    return post.data as Promise<Post[]>;
-};
+    return post.data as Promise<Post[]>
+}

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl } from './utils';
+import { baseUrl } from './utils'
 
 export const route: Route = {
     path: '/dailySummary',
@@ -25,12 +25,12 @@ export const route: Route = {
     name: 'Daily News Summary',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const response = await ofetch(`${baseUrl}/current-affairs/upsc-daily-news-summary`);
+    const response = await ofetch(`${baseUrl}/current-affairs/upsc-daily-news-summary`)
 
-    const items = processNews(response);
+    const items = processNews(response)
 
     return {
         title: 'Daily News Summary | Vision IAS',
@@ -43,24 +43,24 @@ async function handler(): Promise<Data> {
         icon: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         logo: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         allowEmpty: true,
-    };
+    }
 }
 
 function processNews(page) {
-    const $ = load(page);
+    const $ = load(page)
     const items = $(`#quiz-start div[x-data="{ isExpanded: false }"]`)
         .toArray()
         .map((item) => {
-            const title = $(item).find('a>h5').text().trim();
-            const content = $(item).find('a>div').html() ?? '';
-            const link = $(item).find('div>p>a').attr('href') || '';
+            const title = $(item).find('a>h5').text().trim()
+            const content = $(item).find('a>div').html() ?? ''
+            const link = $(item).find('div>p>a').attr('href') || ''
             return {
                 title,
                 link,
                 guid: link,
                 description: content,
-            } as DataItem;
-        });
+            } as DataItem
+        })
 
-    return items;
+    return items
 }

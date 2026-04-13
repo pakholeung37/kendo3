@@ -1,11 +1,11 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { termsMap } from './terms-map';
+import { termsMap } from './terms-map'
 
-const baseUrl = 'https://thepetcity.co';
+const baseUrl = 'https://thepetcity.co'
 
 export const route: Route = {
     path: '/:term?',
@@ -28,12 +28,12 @@ export const route: Route = {
 | Raise Pets 養寵物新手  | 5      |
 | Hot Spot 毛孩打卡點    | 4      |
 | Pet Staff 毛孩好物    | 1      |`,
-};
+}
 
 async function handler(ctx) {
-    const term = ctx.req.param('term');
-    const searchParams = term ? { pageId: 977_080_509_047_743, term } : { pageId: 977_080_509_047_743 };
-    const data = await ofetch(`${baseUrl}/node_api/v1/articles/posts`, { query: { ...searchParams } });
+    const term = ctx.req.param('term')
+    const searchParams = term ? { pageId: 977_080_509_047_743, term } : { pageId: 977_080_509_047_743 }
+    const data = await ofetch(`${baseUrl}/node_api/v1/articles/posts`, { query: { ...searchParams } })
 
     const list = data.data.posts.map((post) => ({
         title: post.title,
@@ -42,7 +42,7 @@ async function handler(ctx) {
         pubDate: parseDate(post.post_date),
         guid: post.guid,
         api: `${baseUrl}/node_api/v1/articles/${post.id}`,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -51,14 +51,14 @@ async function handler(ctx) {
                     query: {
                         pageId: 977_080_509_047_743,
                     },
-                });
-                item.description = data.data.post_content;
-                item.category = [...new Set([...data.data.tags.map((t) => t.name), ...data.data.categories.map((c) => c.name)])];
-                item.author = data.data.author.display_name;
-                return item;
-            })
-        )
-    );
+                })
+                item.description = data.data.post_content
+                item.category = [...new Set([...data.data.tags.map((t) => t.name), ...data.data.categories.map((c) => c.name)])]
+                item.author = data.data.author.display_name
+                return item
+            }),
+        ),
+    )
 
     return {
         title: termsMap[term] ? termsMap[term].title : termsMap[''].title,
@@ -66,5 +66,5 @@ async function handler(ctx) {
         link: baseUrl,
         image: 'https://assets.presslogic.com/presslogic-hk-pc/static/favicon.ico',
         item: items,
-    };
+    }
 }

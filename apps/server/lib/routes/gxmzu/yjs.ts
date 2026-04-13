@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getNoticeList } from './utils';
+import { getNoticeList } from './utils'
 
-const url = 'https://yjs.gxmzu.edu.cn/tzgg/zsgg.htm';
-const host = 'https://yjs.gxmzu.edu.cn';
+const url = 'https://yjs.gxmzu.edu.cn/tzgg/zsgg.htm'
+const host = 'https://yjs.gxmzu.edu.cn'
 
 export const route: Route = {
     path: '/yjszsgg',
@@ -27,18 +27,18 @@ export const route: Route = {
     maintainers: ['real-jiakai'],
     handler,
     url: 'yjs.gxmzu.edu.cn/tzgg/zsgg.htm',
-};
+}
 
 async function handler(ctx) {
     const out = await getNoticeList(ctx, url, host, 'a', '.timestyle55267', {
         title: '.titlestyle55269',
         content: '#vsb_newscontent',
         date: '.timestyle55269',
-    });
+    })
 
     return {
         title: '广西民族大学研究生院 -- 招生公告',
         link: url,
         item: out,
-    };
+    }
 }

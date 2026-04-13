@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getPosts } from './utils';
+import { getPosts } from './utils'
 
 export const route: Route = {
     path: '/top/:k',
@@ -44,27 +44,27 @@ export const route: Route = {
     name: 'Top k days',
     maintainers: ['Urabartin'],
     handler: async (ctx) => {
-        const { k } = ctx.req.param();
+        const { k } = ctx.req.param()
         if (!['3', '7', '30', '60'].includes(k)) {
-            throw new Error(`Invalid k: k=${k}`);
+            throw new Error(`Invalid k: k=${k}`)
         }
-        const topLink = `https://misskon.com/top${k}/`;
-        const response = await ofetch(topLink);
-        const $ = load(response);
+        const topLink = `https://misskon.com/top${k}/`
+        const response = await ofetch(topLink)
+        const $ = load(response)
 
-        const feedTitle = $('.page-title').text();
-        const feedDesc = $('.content > p').first().text();
+        const feedTitle = $('.page-title').text()
+        const feedDesc = $('.content > p').first().text()
         const itemSlugs = $('#main-content article.item-list > h2 a')
             .toArray()
-            .map((link) => new URL($(link).attr('href') || '').pathname.slice(1, -1));
-        const searchParams = new URLSearchParams();
-        searchParams.set('slug', itemSlugs.join(','));
-        searchParams.set('per_page', itemSlugs.length.toString());
+            .map((link) => new URL($(link).attr('href') || '').pathname.slice(1, -1))
+        const searchParams = new URLSearchParams()
+        searchParams.set('slug', itemSlugs.join(','))
+        searchParams.set('per_page', itemSlugs.length.toString())
         return {
             title: `MissKON - ${feedTitle}`,
             link: topLink,
             description: feedDesc,
             item: await getPosts(searchParams),
-        };
+        }
     },
-};
+}

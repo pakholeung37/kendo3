@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { ProcessItems, rootUrl } from './utils';
+import { ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/tab/:tab?',
@@ -27,12 +27,12 @@ export const route: Route = {
     url: '95mm.org/',
     description: `| 最新 | 热门 | 校花 | 森系 | 清纯 | 童颜 | 嫩模 | 少女 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const tab = ctx.req.param('tab') ?? '最新';
+    const tab = ctx.req.param('tab') ?? '最新'
 
-    const currentUrl = `${rootUrl}/home-ajax/index.html?tabcid=${tab}&page=1`;
+    const currentUrl = `${rootUrl}/home-ajax/index.html?tabcid=${tab}&page=1`
 
-    return await ProcessItems(ctx, tab, currentUrl);
+    return await ProcessItems(ctx, tab, currentUrl)
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: '分类',
@@ -21,4 +21,4 @@ export const route: Route = {
     description: `| 影视  | 音乐  | 游戏 | 动漫  | 趣闻  | 科学    | 软件 |
 | ----- | ----- | ---- | ----- | ----- | ------- | ---- |
 | movie | music | game | comic | funny | science | soft |`,
-};
+}

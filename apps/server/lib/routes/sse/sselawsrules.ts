@@ -1,71 +1,71 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = 'latest' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'latest' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.sse.com.cn';
-    const currentUrl = new URL(`lawandrules/sselawsrules/${category}`, rootUrl).href;
+    const rootUrl = 'https://www.sse.com.cn'
+    const currentUrl = new URL(`lawandrules/sselawsrules/${category}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div#sse_list_1 dl dd')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('a').text().trim(),
                 pubDate: parseDate(item.find('span').text().trim()),
                 link: new URL(item.find('a').prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.article-infor h2').text().trim();
-                const description = $$('div.allZoom').html();
+                const title = $$('div.article-infor h2').text().trim()
+                const description = $$('div.allZoom').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('div.article_opt i').text().trim());
-                item.author = $$('meta[name="author"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('div.article_opt i').text().trim())
+                item.author = $$('meta[name="author"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div.allZoom').text(),
-                };
+                }
                 item.updated = $$('meta[name="others"]').prop('content')
                     ? timezone(
                           parseDate(
                               $$('meta[name="others"]')
                                   .prop('content')
                                   .split(/时间\s/)
-                                  .pop()
+                                  .pop(),
                           ),
-                          +8
+                          +8,
                       )
-                    : undefined;
+                    : undefined
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('img.sse_logo').prop('content'), rootUrl).href;
+    const image = new URL($('img.sse_logo').prop('content'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('meta[name="author"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/sselawsrules/:category{.+}?',
@@ -141,9 +141,9 @@ export const route: Route = {
         {
             source: ['www.sse.com.cn/lawandrules/sselawsrules/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/sse/sselawsrules${category ? `/${category}` : ''}`;
+                return `/sse/sselawsrules${category ? `/${category}` : ''}`
             },
         },
         {
@@ -367,4 +367,4 @@ export const route: Route = {
             target: '/sselawsrules/repeal/rules',
         },
     ],
-};
+}

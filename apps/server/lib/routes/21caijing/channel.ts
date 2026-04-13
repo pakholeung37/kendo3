@@ -1,76 +1,76 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const processMenu = (data: any[]) => {
-    const result = {};
+    const result = {}
 
     const processMenuItem = (item, parentPath = '', parentUrl?, parentShort?) => {
-        const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name;
-        const currentUrl = item.url || parentUrl;
-        const currentApiUrl = item.api || item.children?.[0]?.api;
-        const currentShort = parentShort || currentUrl.split('/channel/').pop();
+        const currentPath = parentPath ? `${parentPath}/${item.name}` : item.name
+        const currentUrl = item.url || parentUrl
+        const currentApiUrl = item.api || item.children?.[0]?.api
+        const currentShort = parentShort || currentUrl.split('/channel/').pop()
 
         if (currentUrl && currentApiUrl) {
             result[currentPath] = {
                 url: currentUrl,
                 apiUrl: currentApiUrl,
                 short: currentShort || '',
-            };
+            }
         }
 
         if (item.children && item.children.length > 0) {
             for (const child of item.children) {
-                processMenuItem(child, currentPath, currentUrl, currentShort);
+                processMenuItem(child, currentPath, currentUrl, currentShort)
             }
         }
-    };
+    }
 
     for (const item of data) {
-        processMenuItem(item);
+        processMenuItem(item)
     }
 
-    return result;
-};
+    return result
+}
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { name = '热点' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { name = '热点' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const domain = 'm.21jingji.com';
-    const baseUrl = `https://${domain}`;
-    const staticBaseUrl = 'https://static.21jingji.com';
-    const menuUrl: string = new URL('m/webMenu.json', staticBaseUrl).href;
+    const domain = 'm.21jingji.com'
+    const baseUrl = `https://${domain}`
+    const staticBaseUrl = 'https://static.21jingji.com'
+    const menuUrl: string = new URL('m/webMenu.json', staticBaseUrl).href
 
-    const menuResponse = await ofetch(menuUrl);
-    const menu = processMenu(menuResponse);
+    const menuResponse = await ofetch(menuUrl)
+    const menu = processMenu(menuResponse)
 
     if (!menu.hasOwnProperty(name)) {
-        throw new InvalidParameterError('Invalid channel name');
+        throw new InvalidParameterError('Invalid channel name')
     }
 
-    const currentChannel = menu[name];
+    const currentChannel = menu[name]
 
-    const apiUrl: string = new URL(currentChannel.apiUrl, baseUrl).href;
-    const targetUrl: string = new URL(`#/${currentChannel.url}`, baseUrl).href;
-    const authUrl: string = new URL('reader/cbhChannelAuth', baseUrl).href;
+    const apiUrl: string = new URL(currentChannel.apiUrl, baseUrl).href
+    const targetUrl: string = new URL(`#/${currentChannel.url}`, baseUrl).href
+    const authUrl: string = new URL('reader/cbhChannelAuth', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language: string = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language: string = $('html').attr('lang') ?? 'zh-CN'
 
     const authResponse = await ofetch(authUrl, {
         method: 'POST',
         responseType: 'json',
-    });
+    })
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -83,21 +83,21 @@ export const handler = async (ctx: Context): Promise<Data> => {
             host: domain,
             referer: baseUrl,
         },
-    });
+    })
 
     let items: DataItem[] = JSON.parse(response)
         .slice(0, limit)
         .map((item): DataItem => {
-            const title: string = item.title;
-            const pubDate: string = item.inputtime;
-            const linkUrl: string | undefined = item.url;
-            const categories: string[] = [...new Set(((item.keywords ?? '') as string)?.split(/,/).filter(Boolean))];
+            const title: string = item.title
+            const pubDate: string = item.inputtime
+            const linkUrl: string | undefined = item.url
+            const categories: string[] = [...new Set(((item.keywords ?? '') as string)?.split(/,/).filter(Boolean))]
             const authors: DataItem['author'] = [...new Set([item.mp?.name, item.author, item.editor, item.source].filter(Boolean))].map((name) => ({
                 name,
-            }));
-            const guid = `21jingji-${item.id}`;
-            const image: string | undefined = item.image ?? item.thumb ?? item.listthumb;
-            const updated: number | string = item.updatetime;
+            }))
+            const guid = `21jingji-${item.id}`
+            const image: string | undefined = item.image ?? item.thumb ?? item.listthumb
+            const updated: number | string = item.updatetime
 
             const processedItem: DataItem = {
                 title,
@@ -111,32 +111,32 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: updated ? parseDate(updated, 'X') : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    $$('div.rela-box').remove();
-                    $$('div.copyright').remove();
+                    $$('div.rela-box').remove()
+                    $$('div.copyright').remove()
 
-                    const title: string = $$('div.titleHead h1').text();
-                    const description: string = $$('div.main_content, div.txtContent').html() ?? '';
+                    const title: string = $$('div.titleHead h1').text()
+                    const description: string = $$('div.main_content, div.txtContent').html() ?? ''
                     const pubDateStr: string | undefined = $$('div.author-infos span')
                         .text()
-                        .match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})/)?.[1];
-                    const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? item.category ?? [];
-                    const upDatedStr: string | undefined = pubDateStr;
+                        .match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})/)?.[1]
+                    const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? item.category ?? []
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -149,18 +149,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const author: string = $('title').text();
+    const author: string = $('title').text()
 
     return {
         title: `${author} - ${name}`,
@@ -171,8 +171,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/channel/:name{.+}?',
@@ -1078,4 +1078,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '新榜',
@@ -8,4 +8,4 @@ export const namespace: Namespace = {
 请勿过高频抓取，新榜疑似对每天调用 token 总次数进行了限制，超限会报错
 :::`,
     lang: 'zh-CN',
-};
+}

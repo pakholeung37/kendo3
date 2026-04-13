@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { ProcessFeed, rootUrl } from './utils';
+import { ProcessFeed, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/contributors/:author',
@@ -19,13 +19,13 @@ export const route: Route = {
             source: ['p-articles.com/contributors/:author'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const authorName: string = ctx.req.param('author');
-    const authorUrl = new URL(`/contributors/${authorName}`, rootUrl).href;
-    const response = await ofetch(authorUrl);
-    const $ = load(response);
+    const authorName: string = ctx.req.param('author')
+    const authorUrl = new URL(`/contributors/${authorName}`, rootUrl).href
+    const response = await ofetch(authorUrl)
+    const $ = load(response)
 
     const list = $('div.contect_box_05in > a')
         .toArray()
@@ -33,23 +33,23 @@ async function handler(ctx) {
             const info = {
                 title: $(element).find('h3').text().trim(),
                 link: new URL($(element).attr('href'), rootUrl).href,
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const items = await Promise.all(
         list.map((info) =>
             cache.tryGet(info.link, async () => {
-                const response = await ofetch(info.link);
+                const response = await ofetch(info.link)
                 // const $ = load(response);
-                return ProcessFeed(info, response);
-            })
-        )
-    );
+                return ProcessFeed(info, response)
+            }),
+        ),
+    )
     return {
         title: '虚词 p-articles',
         link: authorUrl,
         item: items,
         language: 'zh-cn',
-    };
+    }
 }

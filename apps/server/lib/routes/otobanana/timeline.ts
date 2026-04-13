@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiBase, baseUrl, getUserInfo, renderPost } from './utils';
+import { apiBase, baseUrl, getUserInfo, renderPost } from './utils'
 
 export const route: Route = {
     path: '/user/:id',
@@ -25,20 +25,20 @@ export const route: Route = {
     name: 'Timeline タイムライン',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const userInfo = await getUserInfo(id, cache.tryGet);
-    const { data: postData } = await got(`${apiBase}/users/${id}/posts/`);
+    const userInfo = await getUserInfo(id, cache.tryGet)
+    const { data: postData } = await got(`${apiBase}/users/${id}/posts/`)
 
-    const posts = postData.results.map((item) => renderPost(item));
+    const posts = postData.results.map((item) => renderPost(item))
 
     ctx.set('json', {
         userInfo,
         postData,
-    });
+    })
 
     return {
         title: `${userInfo.name} (@${userInfo.username}) - タイムライン | OTOBANANA`,
@@ -51,5 +51,5 @@ async function handler(ctx) {
         author: userInfo.name,
         itunes_author: userInfo.name,
         item: posts,
-    };
+    }
 }

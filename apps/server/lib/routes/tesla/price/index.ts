@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getTeslaPrice } from './get-price';
+import { getTeslaPrice } from './get-price'
 
 export const route: Route = {
     path: '/price',
@@ -24,7 +24,7 @@ export const route: Route = {
     maintainers: ['xiaokyo'],
     handler,
     url: 'tesla.cn/model3/design',
-};
+}
 
 async function handler() {
     const cars = [
@@ -48,10 +48,10 @@ async function handler() {
             slug: 'modelx',
             link: 'https://www.dongchedi.com/auto/series/1255',
         },
-    ];
+    ]
 
-    const promises = cars.map((car) => getTeslaPrice(car.link));
-    const prices = await Promise.all(promises);
+    const promises = cars.map((car) => getTeslaPrice(car.link))
+    const prices = await Promise.all(promises)
 
     return {
         title: 'Tesla Model 系列价格更新',
@@ -63,5 +63,5 @@ async function handler() {
             author: 'Tesla',
             guid: `https://www.tesla.cn/${cars[index].slug}/design#overview#${price}`,
         })),
-    };
+    }
 }

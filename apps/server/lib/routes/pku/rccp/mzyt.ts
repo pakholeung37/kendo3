@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.rccp.pku.edu.cn/mzyt/';
+const baseUrl = 'https://www.rccp.pku.edu.cn/mzyt/'
 
 export const route: Route = {
     path: '/rccp/mzyt',
@@ -28,12 +28,12 @@ export const route: Route = {
     maintainers: ['vhxubo'],
     handler,
     url: 'www.rccp.pku.edu.cn/',
-};
+}
 
 async function handler() {
-    const response = await got(baseUrl);
+    const response = await got(baseUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     return {
         title: '每周一推 - 北京大学中国政治学研究中心',
         link: baseUrl,
@@ -46,5 +46,5 @@ async function handler() {
                 pubDate: parseDate($(item).find('span').first().text(), '[YYYY-MM-DD]'),
                 link: baseUrl + $(item).find('a').attr('href'),
             })),
-    };
+    }
 }

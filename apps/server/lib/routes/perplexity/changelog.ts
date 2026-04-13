@@ -1,82 +1,82 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import { parseDate } from '@/utils/parse-date';
-import { getPuppeteerPage } from '@/utils/puppeteer';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import { parseDate } from '@/utils/parse-date'
+import { getPuppeteerPage } from '@/utils/puppeteer'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://www.perplexity.ai';
-    const targetUrl = `${baseUrl}/changelog`;
+    const baseUrl = 'https://www.perplexity.ai'
+    const targetUrl = `${baseUrl}/changelog`
 
-    logger.http(`Fetching Perplexity changelog from ${targetUrl}`);
+    logger.http(`Fetching Perplexity changelog from ${targetUrl}`)
 
     const { page, destroy, browser } = await getPuppeteerPage(targetUrl, {
         onBeforeLoad: async (page) => {
-            await page.setRequestInterception(true);
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                request.resourceType() === 'document' ? request.continue() : request.abort();
-            });
+                request.resourceType() === 'document' ? request.continue() : request.abort()
+            })
         },
-    });
+    })
 
-    const html = await page.evaluate(() => document.documentElement.innerHTML);
-    const $ = load(html);
-    const language = $('html').attr('lang') ?? 'en';
+    const html = await page.evaluate(() => document.documentElement.innerHTML)
+    const $ = load(html)
+    const language = $('html').attr('lang') ?? 'en'
 
-    const seenLinks = new Set<string>();
+    const seenLinks = new Set<string>()
 
     const items = $('a[href^="./changelog/"]')
         .toArray()
         .map((elem) => {
-            const $link = $(elem);
-            const href = $link.attr('href');
+            const $link = $(elem)
+            const href = $link.attr('href')
 
             if (!href || !href.startsWith('./changelog/')) {
-                return null;
+                return null
             }
 
-            const fullLink = href.startsWith('http') ? href : `${baseUrl}${href.replace('./', '/')}`;
+            const fullLink = href.startsWith('http') ? href : `${baseUrl}${href.replace('./', '/')}`
 
             if (seenLinks.has(fullLink)) {
-                return null;
+                return null
             }
 
-            const $title = $link.find('[data-framer-name="Title"]').first();
+            const $title = $link.find('[data-framer-name="Title"]').first()
             // Fallback: extract title from URL slug
-            const title = $title.text().trim() || href.replace('./changelog/', '').replaceAll('-', ' ');
+            const title = $title.text().trim() || href.replace('./changelog/', '').replaceAll('-', ' ')
 
-            const $category = $link.find('[data-framer-name="Category"] p').first();
-            const dateText = $category.text().trim();
+            const $category = $link.find('[data-framer-name="Category"] p').first()
+            const dateText = $category.text().trim()
 
-            let $summary = $link.find('[data-framer-name="Description"] p, [data-framer-name="Summary"] p').first();
+            let $summary = $link.find('[data-framer-name="Description"] p, [data-framer-name="Summary"] p').first()
             if (!$summary.length) {
-                $summary = $link.find('p.framer-text').not($title).not($category).first();
+                $summary = $link.find('p.framer-text').not($title).not($category).first()
             }
-            const summary = $summary.text().trim();
+            const summary = $summary.text().trim()
 
-            seenLinks.add(fullLink);
+            seenLinks.add(fullLink)
 
-            let pubDate: Date | undefined;
+            let pubDate: Date | undefined
             if (dateText) {
                 // Format: MM.DD.YY or MM.DD.YYYY (e.g., 12.12.24 = December 12, 2024)
-                const dateMatch = dateText.match(/(\d{2})\.(\d{2})\.(\d{2,4})/);
+                const dateMatch = dateText.match(/(\d{2})\.(\d{2})\.(\d{2,4})/)
                 if (dateMatch) {
-                    const [, month, day, year] = dateMatch;
-                    const fullYear = year.length === 2 ? `20${year}` : year;
-                    pubDate = parseDate(`${fullYear}-${month}-${day}`);
+                    const [, month, day, year] = dateMatch
+                    const fullYear = year.length === 2 ? `20${year}` : year
+                    pubDate = parseDate(`${fullYear}-${month}-${day}`)
                 } else {
-                    pubDate = parseDate(dateText);
+                    pubDate = parseDate(dateText)
                 }
             } else {
-                const dateMatch = title.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,\s*\d{4}/);
+                const dateMatch = title.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:st|nd|rd|th)?,\s*\d{4}/)
                 if (dateMatch) {
-                    pubDate = parseDate(dateMatch[0]);
+                    pubDate = parseDate(dateMatch[0])
                 }
             }
 
@@ -87,51 +87,51 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 pubDate,
                 guid: `perplexity-changelog-${fullLink}`,
                 id: `perplexity-changelog-${fullLink}`,
-            } as DataItem;
+            } as DataItem
         })
-        .filter((item): item is DataItem => item !== null);
+        .filter((item): item is DataItem => item !== null)
 
     // Fetch full content for each item using the same browser session
     const resultItems = await Promise.all(
         items.slice(0, limit).map(async (item) => {
             if (!item.link) {
-                return item;
+                return item
             }
             return await cache.tryGet(item.link, async () => {
-                logger.http(`Fetching full content for ${item.link!}`);
+                logger.http(`Fetching full content for ${item.link!}`)
 
                 // Create a new page in the same browser session
-                const contentPage = await browser.newPage();
+                const contentPage = await browser.newPage()
 
                 // Set request interception for this page
-                await contentPage.setRequestInterception(true);
+                await contentPage.setRequestInterception(true)
                 contentPage.on('request', (request) => {
-                    request.resourceType() === 'document' ? request.continue() : request.abort();
-                });
+                    request.resourceType() === 'document' ? request.continue() : request.abort()
+                })
 
                 // Navigate to the item link
-                await contentPage.goto(item.link!, { waitUntil: 'domcontentloaded' });
+                await contentPage.goto(item.link!, { waitUntil: 'domcontentloaded' })
 
-                const contentHtml = await contentPage.evaluate(() => document.documentElement.innerHTML);
-                await contentPage.close();
+                const contentHtml = await contentPage.evaluate(() => document.documentElement.innerHTML)
+                await contentPage.close()
 
-                const $content = load(contentHtml);
+                const $content = load(contentHtml)
 
                 // Find the main article content - RichTextContainer with substantial text
                 // Look for elements with framer-text class containing actual content
-                const contentContainer = $content('div#main > div > div > div[data-framer-component-type="RichTextContainer"]').first();
-                const fullContent = contentContainer.html()?.trim() || '';
+                const contentContainer = $content('div#main > div > div > div[data-framer-component-type="RichTextContainer"]').first()
+                const fullContent = contentContainer.html()?.trim() || ''
 
                 return {
                     ...item,
                     description: fullContent || item.description,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     // Close the browser session after all requests are done
-    await destroy();
+    await destroy()
 
     return {
         title: $('title').text() || 'Perplexity Changelog',
@@ -141,8 +141,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         image: $('meta[property="og:image"]').attr('content'),
         language: language as 'en',
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/changelog',
@@ -169,4 +169,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

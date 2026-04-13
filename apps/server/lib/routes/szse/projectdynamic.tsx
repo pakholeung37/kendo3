@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/projectdynamic/:type?/:stage?/:status?',
@@ -61,14 +61,14 @@ export const route: Route = {
 | 中止 | 审核不通过 | 撤回 |
 | ---- | ---------- | ---- |
 | 80   | 90         | 95   |`,
-};
+}
 
 async function handler(ctx) {
     const typeMap = {
         1: 'IPO',
         2: '再融资',
         3: '重大资产重组',
-    };
+    }
 
     const stageMap = {
         10: '受理',
@@ -78,7 +78,7 @@ async function handler(ctx) {
         40: '注册结果',
         50: '中止',
         60: '终止',
-    };
+    }
 
     const statusMap = {
         20: '新受理',
@@ -96,24 +96,24 @@ async function handler(ctx) {
         80: '中止',
         90: '审核不通过',
         95: '撤回',
-    };
+    }
 
-    const type = ctx.req.param('type') ?? '1';
-    const stage = ctx.req.param('stage') ?? '0';
-    const status = ctx.req.param('status') ?? '0';
+    const type = ctx.req.param('type') ?? '1'
+    const stage = ctx.req.param('stage') ?? '0'
+    const status = ctx.req.param('status') ?? '0'
 
-    const rootUrl = 'http://listing.szse.cn';
-    const apiUrl = `${rootUrl}/api/ras/projectrends/query?bizType=${type}${stage === '0' ? '' : `&stage=${stage}`}${status === '0' ? '' : `&status=${status}`}&pageIndex=0&pageSize=20`;
+    const rootUrl = 'http://listing.szse.cn'
+    const apiUrl = `${rootUrl}/api/ras/projectrends/query?bizType=${type}${stage === '0' ? '' : `&stage=${stage}`}${status === '0' ? '' : `&status=${status}`}&pageIndex=0&pageSize=20`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     let items = response.data.data.map((item) => ({
         title: item.prjid,
         link: `${rootUrl}/api/ras/projectrends/details?id=${item.prjid}`,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -121,28 +121,28 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const data = detailResponse.data.data;
-                const current = JSON.parse(data.pjdot)['-1'];
+                const data = detailResponse.data.data
+                const current = JSON.parse(data.pjdot)['-1']
 
-                item.link = `${rootUrl}/projectdynamic/ipo/detail/index.html?id=${item.title}`;
-                item.title = `[${data.prjst}] ${data.cmpnm} (${data.cmpsnm})- ${data.csrcind}`;
+                item.link = `${rootUrl}/projectdynamic/ipo/detail/index.html?id=${item.title}`
+                item.title = `[${data.prjst}] ${data.cmpnm} (${data.cmpsnm})- ${data.csrcind}`
 
-                item.description = renderDescription(data, current);
+                item.description = renderDescription(data, current)
 
-                item.pubDate = timezone(parseDate(current.startTime, 'YYYY-MM-DD HH:mm:ss'), +8);
+                item.pubDate = timezone(parseDate(current.startTime, 'YYYY-MM-DD HH:mm:ss'), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${typeMap[type]}项目动态${status === '0' ? (stage === '0' ? '' : ` (${stageMap[stage]}) `) : ` (${statusMap[status]}) `} - 创业板发行上市审核信息公开网站 - 深圳证券交易所`,
         link: `${rootUrl}/projectdynamic/${type}/index.html`,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (data, current): string =>
@@ -218,5 +218,5 @@ const renderDescription = (data, current): string =>
                     </tr>
                 </tbody>
             </table>
-        </>
-    );
+        </>,
+    )

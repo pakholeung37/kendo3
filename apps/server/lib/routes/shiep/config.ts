@@ -56,6 +56,6 @@ const config = {
     zs: { title: '本科招生网', id: 'zxxx' },
     ztjy: { title: '学习路上', id: '5575' },
     zzb: { title: '组织部（老干部处、党校）', id: '1534' },
-};
+}
 
-export { config };
+export { config }

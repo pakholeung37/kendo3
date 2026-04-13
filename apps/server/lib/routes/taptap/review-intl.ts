@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common/review';
+import { handler } from './common/review'
 
 export const route: Route = {
     path: '/intl/review/:id/:order?/:lang?',
@@ -39,4 +39,4 @@ Language Code
 | English (US) | 繁體中文 | 한국어 | 日本語 |
 | ------------ | -------- | ------ | ------ |
 | en_US       | zh_TW   | ko_KR | ja_JP |`,
-};
+}

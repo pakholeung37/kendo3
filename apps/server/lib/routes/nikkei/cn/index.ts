@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import Parser from 'rss-parser';
+import { load } from 'cheerio'
+import Parser from 'rss-parser'
 
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const parser = new Parser({
     customFields: {
@@ -17,7 +17,7 @@ const parser = new Parser({
         'User-Agent': config.ua,
     },
     defaultRSS: 0.9,
-});
+})
 
 export const route: Route = {
     path: '/cn/*',
@@ -38,11 +38,11 @@ export const route: Route = {
             source: ['cn.nikkei.com/:category/:type', 'cn.nikkei.com/:category', 'cn.nikkei.com/'],
             target: (params) => {
                 if (params.category && params.type) {
-                    return `/nikkei/cn/cn/${params.category}/${params.type.replace('.html', '')}`;
+                    return `/nikkei/cn/cn/${params.category}/${params.type.replace('.html', '')}`
                 } else if (params.category && !params.type) {
-                    return `/nikkei/cn/cn/${params.category.replace('.html', '')}`;
+                    return `/nikkei/cn/cn/${params.category.replace('.html', '')}`
                 } else {
-                    return `/nikkei/cn/cn`;
+                    return `/nikkei/cn/cn`
                 }
             },
         },
@@ -51,72 +51,72 @@ export const route: Route = {
             source: ['zh.cn.nikkei.com/:category/:type', 'zh.cn.nikkei.com/:category', 'zh.cn.nikkei.com/'],
             target: (params) => {
                 if (params.category && params.type) {
-                    return `/nikkei/cn/zh/${params.category}/${params.type.replace('.html', '')}`;
+                    return `/nikkei/cn/zh/${params.category}/${params.type.replace('.html', '')}`
                 } else if (params.category && !params.type) {
-                    return `/nikkei/cn/zh/${params.category.replace('.html', '')}`;
+                    return `/nikkei/cn/zh/${params.category.replace('.html', '')}`
                 } else {
-                    return `/nikkei/cn/zh`;
+                    return `/nikkei/cn/zh`
                 }
             },
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    let language: string;
-    let path = getSubPath(ctx);
+    let language: string
+    let path = getSubPath(ctx)
 
     if (/^\/cn\/(cn|zh)/.test(path)) {
-        language = path.match(/^\/cn\/(cn|zh)/)[1];
-        path = path.match(new RegExp(String.raw`\/cn\/` + language + '(.*)'))[1];
+        language = path.match(/^\/cn\/(cn|zh)/)[1]
+        path = path.match(new RegExp(String.raw`\/cn\/` + language + '(.*)'))[1]
     } else {
-        language = 'cn';
+        language = 'cn'
     }
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25
 
-    const rootUrl = `https://${language === 'zh' ? 'zh.' : ''}cn.nikkei.com`;
-    const isOfficialRSS = path === '/rss';
-    const currentUrl = `${rootUrl}${path}${isOfficialRSS ? '.html' : ''}`;
+    const rootUrl = `https://${language === 'zh' ? 'zh.' : ''}cn.nikkei.com`
+    const isOfficialRSS = path === '/rss'
+    const currentUrl = `${rootUrl}${path}${isOfficialRSS ? '.html' : ''}`
 
-    let officialFeed;
+    let officialFeed
 
-    let items: DataItem[];
-    let $;
+    let items: DataItem[]
+    let $
 
     if (isOfficialRSS) {
-        officialFeed = await parser.parseURL(currentUrl);
+        officialFeed = await parser.parseURL(currentUrl)
         items = officialFeed.items.slice(0, limit).map((item) => ({
             title: item.title,
             link: new URL(item.link, rootUrl).href,
-        }));
+        }))
     } else {
         const response = await got({
             method: 'get',
             url: currentUrl,
-        });
+        })
 
-        $ = load(response.data);
+        $ = load(response.data)
 
-        const seenLinks = new Set<string>();
+        const seenLinks = new Set<string>()
         items = $('dt a')
             .toArray()
             .map((item) => {
-                item = $(item);
+                item = $(item)
 
                 return {
                     title: item.text(),
                     link: new URL(item.attr('href'), currentUrl).href,
-                };
+                }
             })
             .filter((item) => {
                 if (seenLinks.has(item.link)) {
-                    return false;
+                    return false
                 }
-                seenLinks.add(item.link);
-                return true;
+                seenLinks.add(item.link)
+                return true
             })
-            .slice(0, limit);
+            .slice(0, limit)
     }
 
     items = await Promise.all(
@@ -125,29 +125,29 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: `${item.link}?print=1`,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const divs = content('#contentDiv div');
-                divs.first().remove();
-                divs.last().remove();
+                const divs = content('#contentDiv div')
+                divs.first().remove()
+                divs.last().remove()
 
-                item.pubDate = timezone(parseDate(item.link.match(/\/\d+-(.*?)\.html/)[1], 'YYYY-MM-DD-HH-mm-ss'), +9);
+                item.pubDate = timezone(parseDate(item.link.match(/\/\d+-(.*?)\.html/)[1], 'YYYY-MM-DD-HH-mm-ss'), +9)
 
-                item.author = content('meta[name="author"]').attr('content');
-                item.title = item.title ?? content('meta[name="twitter:title"]').attr('content');
-                item.description = content('#contentDiv').html()?.replaceAll('&nbsp;', '').replaceAll('<p></p>', '');
+                item.author = content('meta[name="author"]').attr('content')
+                item.title = item.title ?? content('meta[name="twitter:title"]').attr('content')
+                item.description = content('#contentDiv').html()?.replaceAll('&nbsp;', '').replaceAll('<p></p>', '')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: isOfficialRSS ? officialFeed.title : $('title').first().text(),
         description: isOfficialRSS ? officialFeed.description : '',
         link: currentUrl,
         item: items,
-    };
+    }
 }

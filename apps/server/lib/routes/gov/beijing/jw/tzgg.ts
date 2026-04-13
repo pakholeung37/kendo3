@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/beijing/jw/tzgg',
@@ -28,32 +28,32 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'jw.beijing.gov.cn/tzgg',
-};
+}
 
 async function handler() {
-    const rootUrl = 'http://jw.beijing.gov.cn';
-    const currentUrl = `${rootUrl}/tzgg`;
+    const rootUrl = 'http://jw.beijing.gov.cn'
+    const currentUrl = `${rootUrl}/tzgg`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.col-md a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.attr('href');
+            const link = item.attr('href')
 
             return {
                 title: item.text(),
                 link: link.startsWith('http') ? link : `${rootUrl}${link.replace(/^\./, '/tzgg')}`,
                 pubDate: parseDate(item.parent().find('span').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -61,25 +61,25 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const pubDate = content('meta[name="PubDate"]').attr('content');
+                const pubDate = content('meta[name="PubDate"]').attr('content')
 
-                item.author = content('meta[name="ContentSource"]').attr('content');
-                item.pubDate = pubDate ? timezone(parseDate(content('meta[name="PubDate"]').attr('content')), +8) : item.pubDate;
-                item.description = content('.TRS_UEDITOR').html();
+                item.author = content('meta[name="ContentSource"]').attr('content')
+                item.pubDate = pubDate ? timezone(parseDate(content('meta[name="PubDate"]').attr('content')), +8) : item.pubDate
+                item.description = content('.TRS_UEDITOR').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '北京市教育委员会 - 通知公告',
         link: currentUrl,
         item: items,
         description: $('meta[name="ColumnDescription"]').attr('content'),
-    };
+    }
 }

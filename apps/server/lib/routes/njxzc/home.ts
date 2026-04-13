@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getNoticeList } from './utils';
+import { getNoticeList } from './utils'
 
-const url = 'https://www.njxzc.edu.cn/89/list.htm';
-const host = 'https://www.njxzc.edu.cn';
+const url = 'https://www.njxzc.edu.cn/89/list.htm'
+const host = 'https://www.njxzc.edu.cn'
 
 export const route: Route = {
     path: '/tzgg',
@@ -27,7 +27,7 @@ export const route: Route = {
     maintainers: ['real-jiakai'],
     handler,
     url: 'www.njxzc.edu.cn/89/list.htm',
-};
+}
 
 async function handler(ctx) {
     const out = await getNoticeList(
@@ -41,12 +41,12 @@ async function handler(ctx) {
             content: '.wp_articlecontent',
             date: '.arti_update',
         },
-        '.news_list .news'
-    );
+        '.news_list .news',
+    )
 
     return {
         title: '南京晓庄学院 -- 通知公告',
         link: url,
         item: out,
-    };
+    }
 }

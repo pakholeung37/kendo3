@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
-const baseUrl = 'https://oct0pu5.cn/';
+const baseUrl = 'https://oct0pu5.cn/'
 
 export const route: Route = {
     path: '/',
@@ -24,10 +24,10 @@ export const route: Route = {
     name: 'Oct的小破站',
     maintainers: ['octopus058', 'wiketool'],
     handler,
-};
+}
 
 async function handler() {
-    const link = baseUrl;
+    const link = baseUrl
     return await buildData({
         link,
         url: link,
@@ -44,5 +44,5 @@ async function handler() {
             description: `$('.recent-post-info > .content').text()`,
             pubDate: `Date.parse($('div.recent-post-info > div.article-meta-wrap > span.post-meta-date > time').text().trim())`,
         },
-    });
+    })
 }

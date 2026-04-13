@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -29,27 +29,27 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     url: 'www.tsinghua.edu.cn/news.htm',
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'zxdt' } = ctx.req.param();
-    const baseUrl = 'https://www.tsinghua.edu.cn';
-    const link = `${baseUrl}/news/${category}.htm`;
-    const response = await ofetch(link);
-    const $ = load(response);
+    const { category = 'zxdt' } = ctx.req.param()
+    const baseUrl = 'https://www.tsinghua.edu.cn'
+    const link = `${baseUrl}/news/${category}.htm`
+    const response = await ofetch(link)
+    const $ = load(response)
 
     const list = [
         ...$('.left li a')
             .toArray()
             .map((item) => {
-                const $item = $(item);
-                const sj = $item.find('.sj');
+                const $item = $(item)
+                const sj = $item.find('.sj')
 
                 return {
                     title: $item.find('.bt').text().trim(),
                     link: new URL($item.attr('href'), baseUrl).href?.replace('http://', 'https://'),
                     pubDate: parseDate(`${sj.find('span').text().trim()}.${sj.find('p').text().trim()}`, 'YYYY.MM.DD'),
-                };
+                }
             }),
         ...($('.qhrw2_first').length
             ? [
@@ -60,29 +60,29 @@ async function handler(ctx) {
                   },
               ]
             : []),
-    ];
+    ]
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link?.startsWith('https://www.tsinghua.edu.cn/info/')) {
-                    return item;
+                    return item
                 }
 
-                const response = await ofetch(item.link);
-                const $ = load(response);
+                const response = await ofetch(item.link)
+                const $ = load(response)
 
-                item.description = $('.v_news_content').html();
-                item.pubDate = timezone(parseDate($('.sj p').text().trim(), 'YYYY年MM月DD日 HH:mm:ss'), 8);
+                item.description = $('.v_news_content').html()
+                item.pubDate = timezone(parseDate($('.sj p').text().trim(), 'YYYY年MM月DD日 HH:mm:ss'), 8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         link,
         item: items,
-    };
+    }
 }

@@ -1,13 +1,13 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/users/notes/:username/:routeParams?',
@@ -40,37 +40,37 @@ Examples:
     name: 'User timeline',
     maintainers: ['siygle', 'SnowAgar25', 'HanaokaYuzu'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const username = ctx.req.param('username');
-    const [, pureUsername, site] = username.match(/@?(\w+)@(\w+\.\w+)/) || [];
+    const username = ctx.req.param('username')
+    const [, pureUsername, site] = username.match(/@?(\w+)@(\w+\.\w+)/) || []
     if (!pureUsername || !site) {
-        throw new InvalidParameterError('Provide a valid Misskey username');
+        throw new InvalidParameterError('Provide a valid Misskey username')
     }
     if (!config.feature.allow_user_supply_unsafe_domain && !utils.allowSiteList.includes(site)) {
-        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
     }
 
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
-    const withRenotes = fallback(undefined, queryToBoolean(routeParams.withRenotes), false);
-    const mediaOnly = fallback(undefined, queryToBoolean(routeParams.mediaOnly), false);
-    const simplifyAuthor = fallback(undefined, queryToBoolean(routeParams.simplifyAuthor), false);
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
+    const withRenotes = fallback(undefined, queryToBoolean(routeParams.withRenotes), false)
+    const mediaOnly = fallback(undefined, queryToBoolean(routeParams.mediaOnly), false)
+    const simplifyAuthor = fallback(undefined, queryToBoolean(routeParams.simplifyAuthor), false)
 
     // Check for conflicting parameters
     if (withRenotes && mediaOnly) {
-        throw new InvalidParameterError('withRenotes and mediaOnly cannot both be true.');
+        throw new InvalidParameterError('withRenotes and mediaOnly cannot both be true.')
     }
 
     const { accountData, avatarUrl } = await utils.getUserTimelineByUsername(pureUsername, site, {
         withRenotes,
         mediaOnly,
-    });
+    })
 
     return {
         title: `User timeline for ${username} on ${site}`,
         link: `https://${site}/@${pureUsername}`,
         image: avatarUrl ?? '',
         item: utils.parseNotes(accountData, site, simplifyAuthor),
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
 const feeds = {
     'Top Headlines': 'topheadlines',
@@ -23,7 +23,7 @@ const feeds = {
     Business: 'page-6',
     Sports: 'page-7',
     ShowBiz: 'page-8',
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -53,45 +53,45 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.castanet.net',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'Recent Headlines';
-    const baseUrl = 'https://www.castanet.net';
-    const feedFile = feeds[category] ?? category;
-    const feedUrl = `${baseUrl}/rss/${feedFile}.xml`;
+    const category = ctx.req.param('category') ?? 'Recent Headlines'
+    const baseUrl = 'https://www.castanet.net'
+    const feedFile = feeds[category] ?? category
+    const feedUrl = `${baseUrl}/rss/${feedFile}.xml`
 
-    const feed = await parser.parseURL(feedUrl);
+    const feed = await parser.parseURL(feedUrl)
 
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link as string, async () => {
-                const response = await ofetch(item.link as string);
-                const $ = load(response);
+                const response = await ofetch(item.link as string)
+                const $ = load(response)
 
-                delete item.content;
-                delete item.contentSnippet;
-                delete item.isoDate;
+                delete item.content
+                delete item.contentSnippet
+                delete item.isoDate
 
-                const content = $('.newsstory');
-                content.find('.newsheadlinefull, .newsheadline, .byline, .click_gallery').remove();
+                const content = $('.newsstory')
+                content.find('.newsheadlinefull, .newsheadline, .byline, .click_gallery').remove()
                 if (content.find('.gallery_img1').length) {
-                    const a = content.find('.gallery_img1 a').toArray();
-                    content.find('.gallery_img1').next().remove();
+                    const a = content.find('.gallery_img1 a').toArray()
+                    content.find('.gallery_img1').next().remove()
                     for (const ele of a) {
-                        const $ele = $(ele);
-                        const href = $ele.attr('href');
-                        const figure = `<figure><img src="${href}" alt="${$ele.text().trim()}"><figcaption>${$ele.attr('title')?.trim() ?? ''}</figcaption></figure>`;
-                        $ele.replaceWith(figure);
+                        const $ele = $(ele)
+                        const href = $ele.attr('href')
+                        const figure = `<figure><img src="${href}" alt="${$ele.text().trim()}"><figcaption>${$ele.attr('title')?.trim() ?? ''}</figcaption></figure>`
+                        $ele.replaceWith(figure)
                     }
                 }
 
-                item.description = content.html()?.trim();
+                item.description = content.html()?.trim()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -100,5 +100,5 @@ async function handler(ctx) {
         image: feed.image?.url,
         language: feed.language,
         item: items,
-    };
+    }
 }

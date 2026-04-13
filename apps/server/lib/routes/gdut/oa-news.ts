@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import pMap from 'p-map';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import pMap from 'p-map'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const site = 'https://oas.gdut.edu.cn/seeyon';
+const site = 'https://oas.gdut.edu.cn/seeyon'
 const typeMap = {
     department: {
         id: '-288156881891407086',
@@ -34,13 +34,13 @@ const typeMap = {
         id: '-3656117696093796045',
         name: '招标公告',
     },
-};
+}
 
 function getArg(type) {
     return JSON.stringify([
         { page: 1, size: 50 },
         { subject: '', departmentName: '', newsType: type ? type.id : '', startDate: '', endDate: '', canLogin: 'true' },
-    ]);
+    ])
 }
 
 export const route: Route = {
@@ -79,33 +79,33 @@ export const route: Route = {
 | 招标结果 | tender_result | 否 |
 | 招标公告 | tender_invite | 否 |
 `,
-};
+}
 
 async function handler(ctx) {
-    const typeParam = ctx.req.param('type') ?? 'notice';
+    const typeParam = ctx.req.param('type') ?? 'notice'
     if (typeMap[typeParam] === undefined) {
-        throw new Error('通知类型' + typeParam + '未定义');
+        throw new Error('通知类型' + typeParam + '未定义')
     }
 
-    const type = typeMap[typeParam];
+    const type = typeMap[typeParam]
 
     // 获取cookie
-    const cookieJar = new CookieJar();
+    const cookieJar = new CookieJar()
     await got(site + '/ggIP.do?method=portalSeachMore&subject=&departmentName=&newsType=&startDate=&endDate=', {
         cookieJar,
-    });
+    })
 
     // 获取文章列表
-    const listUrl = '/ajax.do?method=ajaxAction&managerName=ggManager&rnd=1';
+    const listUrl = '/ajax.do?method=ajaxAction&managerName=ggManager&rnd=1'
     const resp = await got.post(site + listUrl, {
         cookieJar,
         form: {
             managerMethod: 'kkFindListDatas',
             arguments: getArg(type),
         },
-    });
+    })
     if (!resp.data.data) {
-        throw new Error('文章列表获取失败，可能是被临时限制了访问，请稍后重试\n' + JSON.stringify(resp.data));
+        throw new Error('文章列表获取失败，可能是被临时限制了访问，请稍后重试\n' + JSON.stringify(resp.data))
     }
 
     // 构造文章数组
@@ -116,38 +116,38 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.publishDate), +8),
         author: item.publishUserDepart,
         category: item.typeName,
-    }));
+    }))
 
     const results = await pMap(
         articles,
         async (data) => {
-            const link = data.link;
+            const link = data.link
             data.description = await cache.tryGet(link, async () => {
                 // 获取数据
                 const response = await got(link, {
                     cookieJar,
-                });
+                })
 
-                const $ = load(response.data);
-                const node = $('#content');
+                const $ = load(response.data)
+                const node = $('#content')
                 // 清理样式
                 node.find('*')
                     .filter(function () {
-                        return this.type === 'comment' || this.tagName === 'meta' || this.tagName === 'style';
+                        return this.type === 'comment' || this.tagName === 'meta' || this.tagName === 'style'
                     })
-                    .remove();
+                    .remove()
                 node.find('*')
                     .contents()
                     .filter(function () {
-                        return this.type === 'comment' || this.tagName === 'meta' || this.tagName === 'style';
+                        return this.type === 'comment' || this.tagName === 'meta' || this.tagName === 'style'
                     })
-                    .remove();
+                    .remove()
                 node.find('*').each(function () {
                     if (this.attribs.style !== undefined) {
                         const newSty = this.attribs.style
                             .split(';')
                             .filter((s) => {
-                                const styBlocklist = ['color:rgb(0,0,0)', 'color:black', 'background:rgb(255,255,255)', 'background:white', 'text-align:left', 'text-align:justify', 'font-style:normal', 'font-weight:normal'];
+                                const styBlocklist = ['color:rgb(0,0,0)', 'color:black', 'background:rgb(255,255,255)', 'background:white', 'text-align:left', 'text-align:justify', 'font-style:normal', 'font-weight:normal']
                                 const styPrefixBlocklist = [
                                     'font-family',
                                     'font-size',
@@ -163,55 +163,55 @@ async function handler(ctx) {
                                     'vertical-align',
                                     'mso-',
                                     '-ms-',
-                                ];
-                                const sty = s.trim();
+                                ]
+                                const sty = s.trim()
                                 if (styBlocklist.includes(sty.replaceAll(/\s+/g, ''))) {
-                                    return false;
+                                    return false
                                 }
                                 for (const prefix of styPrefixBlocklist) {
                                     if (sty.startsWith(prefix)) {
-                                        return false;
+                                        return false
                                     }
                                 }
-                                return true;
+                                return true
                             })
-                            .join(';');
+                            .join(';')
                         if (newSty) {
-                            this.attribs.style = newSty;
+                            this.attribs.style = newSty
                         } else {
-                            delete this.attribs.style;
+                            delete this.attribs.style
                         }
                     }
                     if (this.attribs.class && this.attribs.class.trim().startsWith('Mso')) {
-                        delete this.attribs.class;
+                        delete this.attribs.class
                     }
                     if (this.attribs.lang) {
-                        delete this.attribs.lang;
+                        delete this.attribs.lang
                     }
                     if (this.tagName === 'font' || this.tagName === 'o:p') {
-                        $(this).replaceWith(this.childNodes);
+                        $(this).replaceWith(this.childNodes)
                     }
                     if (this.tagName === 'span' && !this.attribs.style) {
-                        $(this).replaceWith(this.childNodes);
+                        $(this).replaceWith(this.childNodes)
                     }
-                });
+                })
                 node.find('span').each(function () {
                     if (this.childNodes.length === 0) {
-                        $(this).remove();
+                        $(this).remove()
                     }
-                });
+                })
 
-                return node.html();
-            });
-            return data;
+                return node.html()
+            })
+            return data
         },
-        { concurrency: 2 }
-    );
+        { concurrency: 2 },
+    )
 
     return {
         title: `广东工业大学通知公文网 - ` + type.name,
         link: site,
         description: `广东工业大学通知公文网`,
         item: results,
-    };
+    }
 }

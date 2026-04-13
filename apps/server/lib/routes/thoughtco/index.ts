@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/:category?',
@@ -318,44 +318,44 @@ export const route: Route = {
 | Tips For Adult Students | tips-for-adult-students-4132468 |
 | Getting Your Ged        | getting-your-ged-4132466        |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.thoughtco.com';
-    const currentUrl = new URL(category, rootUrl).href;
+    const rootUrl = 'https://www.thoughtco.com'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('a[data-doc-id]')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('span.block-title').text(),
                 link: new URL(item.prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                content('div.adslot').remove();
-                content('div.sources-and-citation, .mntl-figure-caption svg').remove();
+                content('div.adslot').remove()
+                content('div.sources-and-citation, .mntl-figure-caption svg').remove()
                 content('div.figure-media').each((_, e) => {
-                    e = $(e);
+                    e = $(e)
 
-                    const image = e.find('img');
+                    const image = e.find('img')
 
                     e.replaceWith(
                         renderDescription({
@@ -364,37 +364,37 @@ async function handler(ctx) {
                                 width: image.prop('width'),
                                 height: image.prop('height'),
                             },
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                item.title = content('meta[property="og:title"]').prop('content');
+                item.title = content('meta[property="og:title"]').prop('content')
                 item.description = renderDescription({
                     image: {
                         src: content('meta[property="og:image"]').prop('content'),
                     },
                     description: content('div.article-content').html(),
-                });
-                item.author = content('meta[name="sailthru.author"]').prop('content');
+                })
+                item.author = content('meta[name="sailthru.author"]').prop('content')
                 item.category = [
                     ...new Set(
                         content('meta[name="parsely-tags"]')
                             .prop('content')
                             ?.split(/,/)
-                            .map((c) => c.trim())
+                            .map((c) => c.trim()),
                     ),
-                ];
-                item.pubDate = parseDate(detailResponse.match(/"datePublished": "(.*?)"/)[1]);
-                item.updated = parseDate(detailResponse.match(/"dateModified": "(.*?)"/)[1]);
+                ]
+                item.pubDate = parseDate(detailResponse.match(/"datePublished": "(.*?)"/)[1])
+                item.updated = parseDate(detailResponse.match(/"dateModified": "(.*?)"/)[1])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = $('meta[property="og:site_name"]').prop('content');
-    const title = $('meta[property="og:title"]').prop('content');
-    const icon = new URL($('link[rel="apple-touch-icon-precomposed"]').prop('href'), rootUrl).href;
+    const author = $('meta[property="og:site_name"]').prop('content')
+    const title = $('meta[property="og:title"]').prop('content')
+    const icon = new URL($('link[rel="apple-touch-icon-precomposed"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -407,5 +407,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('meta[property="og:title"]').prop('content'),
         author,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/cs',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'cs.ccnu.edu.cn/xwzx/tzgg.htm',
-};
+}
 
 async function handler() {
-    const link = 'http://cs.ccnu.edu.cn/xwzx/tzgg.htm';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.list_box_07 li');
+    const link = 'http://cs.ccnu.edu.cn/xwzx/tzgg.htm'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.list_box_07 li')
 
     return {
         title: '华中师范大学计算机学院',
@@ -41,14 +41,14 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a.attr('title'),
                     description: item.find('.overfloat-dot-2').text(),
                     link: new URL(a.attr('href'), link).href,
                     pubDate: parseDate(item.find('.time').text(), 'DDYYYY-MM'),
-                };
+                }
             }),
-    };
+    }
 }

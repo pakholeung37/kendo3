@@ -1,9 +1,9 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/series/:id',
@@ -21,7 +21,7 @@ export const route: Route = {
     name: 'Series',
     maintainers: ['yuikisaito'],
     handler,
-};
+}
 
 const commonHeaders = {
     Accept: '*/*',
@@ -32,10 +32,10 @@ const commonHeaders = {
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-site',
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { id } = ctx.req.param();
+    const { id } = ctx.req.param()
 
     const { result: browser } = await ofetch('https://platform-api.tver.jp/v2/api/platform_users/browser/create', {
         method: 'POST',
@@ -47,9 +47,9 @@ async function handler(ctx: Context): Promise<Data> {
         referer: 'https://s.tver.jp/',
         credentials: 'omit',
         mode: 'cors',
-    });
+    })
 
-    const { platform_uid, platform_token } = browser;
+    const { platform_uid, platform_token } = browser
 
     const { title, description, broadcastProvider } = await ofetch(`https://statics.tver.jp/content/series/${id}.json`, {
         method: 'GET',
@@ -59,7 +59,7 @@ async function handler(ctx: Context): Promise<Data> {
         referer: 'https://tver.jp/',
         credentials: 'omit',
         mode: 'cors',
-    });
+    })
 
     const { result } = await ofetch(`https://platform-api.tver.jp/service/api/v1/callSeriesEpisodes/${id}?platform_uid=${platform_uid}&platform_token=${platform_token}`, {
         method: 'GET',
@@ -70,22 +70,22 @@ async function handler(ctx: Context): Promise<Data> {
         referer: 'https://tver.jp/',
         credentials: 'omit',
         mode: 'cors',
-    });
+    })
 
     const items: DataItem[] = (result.contents?.[0]?.contents ?? [])
         .filter((i) => i.type === 'episode')
         .map((i) => {
-            const rawPubDate = i.content.broadcastDateLabel;
-            const cleanedPubDate = rawPubDate.replaceAll(/\(.*?\)|放送分/g, '').trim();
-            const parsedPubDate = timezone(parseDate(cleanedPubDate, 'M月D日'), +9).toDateString();
+            const rawPubDate = i.content.broadcastDateLabel
+            const cleanedPubDate = rawPubDate.replaceAll(/\(.*?\)|放送分/g, '').trim()
+            const parsedPubDate = timezone(parseDate(cleanedPubDate, 'M月D日'), +9).toDateString()
 
             return {
                 title: i.content.title,
                 link: `https://tver.jp/episodes/${i.content.id}`,
                 image: `https://statics.tver.jp/images/content/thumbnail/episode/xlarge/${i.content.id}.jpg`,
                 pubDate: parsedPubDate,
-            };
-        });
+            }
+        })
 
     return {
         title: 'TVer - ' + title,
@@ -95,5 +95,5 @@ async function handler(ctx: Context): Promise<Data> {
         image: `https://statics.tver.jp/images/content/thumbnail/series/xlarge/${id}.jpg`,
         language: 'ja',
         item: items,
-    };
+    }
 }

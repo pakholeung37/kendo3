@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -59,37 +59,37 @@ export const route: Route = {
             target: '/',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const categoryParam = ctx.req.param() || { category: 'latest' };
+    const categoryParam = ctx.req.param() || { category: 'latest' }
 
-    let urlPath: string;
+    let urlPath: string
 
-    const category = categoryParam.category || 'latest';
+    const category = categoryParam.category || 'latest'
 
-    const cat = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'latest');
-    const fullName = cat!.fullName;
-    const pushPath = cat!.pushPath;
+    const cat = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'latest')
+    const fullName = cat!.fullName
+    const pushPath = cat!.pushPath
 
     if (category.endsWith('xiaoshi') || category.endsWith('tian')) {
-        urlPath = `${category}-hot.html`;
+        urlPath = `${category}-hot.html`
     } else if (category.endsWith('hot')) {
-        urlPath = `${category}.html`;
+        urlPath = `${category}.html`
     } else {
-        urlPath = category === 'latest' ? '' : `category-${category}`;
+        urlPath = category === 'latest' ? '' : `category-${category}`
     }
 
-    const apiUrl = `http://new.xianbao.fun/plus/json/${pushPath}.json`;
-    const response = await got(apiUrl);
-    const responseData = JSON.parse(response.body);
+    const apiUrl = `http://new.xianbao.fun/plus/json/${pushPath}.json`
+    const response = await got(apiUrl)
+    const responseData = JSON.parse(response.body)
 
-    let parsedData;
+    let parsedData
     if (Array.isArray(responseData)) {
-        parsedData = responseData;
+        parsedData = responseData
     } else {
-        const hotKey = Object.keys(responseData).find((key) => key.startsWith('remen'));
-        parsedData = responseData[hotKey];
+        const hotKey = Object.keys(responseData).find((key) => key.startsWith('remen'))
+        parsedData = responseData[hotKey]
     }
 
     const items = parsedData.map((item) => ({
@@ -99,13 +99,13 @@ async function handler(ctx) {
         pubDate: parseDate(item.shijianchuo * 1000),
         author: item.louzhu,
         category: item.catename,
-    }));
+    }))
 
     return {
         title: `线板酷-${fullName}`,
         link: `http://new.xianbao.fun/${urlPath}`,
         item: items,
-    };
+    }
 }
 
 const CATEGORIES = [
@@ -139,4 +139,4 @@ const CATEGORIES = [
     { id: 'yyok', fullName: 'YYOK大全', pushPath: 'push_7' },
     { id: 'huodong', fullName: '活动资讯网', pushPath: 'push_8' },
     { id: 'mianfei', fullName: '免费赚钱中心', pushPath: 'push_9' },
-];
+]

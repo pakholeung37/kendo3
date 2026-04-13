@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-const BASEURL = 'https://bestofjs.org/rankings/monthly';
+const BASEURL = 'https://bestofjs.org/rankings/monthly'
 
 export const route: Route = {
     path: '/rankings/monthly',
@@ -31,15 +31,15 @@ export const route: Route = {
     maintainers: ['ztkuaikuai'],
     url: 'bestofjs.org/rankings/monthly',
     handler: async () => {
-        const targetMonths = getLastSixMonths();
+        const targetMonths = getLastSixMonths()
         const allNeededMonthlyRankings = await Promise.all(
             targetMonths.map((data) => {
-                const [year, month] = data.split('-');
-                return getMonthlyRankings(year, month);
-            })
-        );
+                const [year, month] = data.split('-')
+                return getMonthlyRankings(year, month)
+            }),
+        )
         const items = allNeededMonthlyRankings.flatMap((oneMonthlyRankings, i) => {
-            const [year, month] = targetMonths[i].split('-');
+            const [year, month] = targetMonths[i].split('-')
             const description = renderToString(
                 <ul>
                     {oneMonthlyRankings.map((item, index) => (
@@ -90,16 +90,16 @@ export const route: Route = {
                             <br />
                         </>
                     ))}
-                </ul>
-            );
+                </ul>,
+            )
             return {
                 title: `Best of JS Monthly Rankings - ${year}/${month}`,
                 description,
                 link: `${BASEURL}/${year}/${month}`,
                 guid: `${BASEURL}/${year}/${month}`,
                 author: 'Best of JS',
-            };
-        });
+            }
+        })
 
         return {
             title: 'Best of JS Monthly Rankings',
@@ -107,73 +107,73 @@ export const route: Route = {
             description: 'Monthly rankings of the most popular JavaScript projects on Best of JS',
             item: items,
             language: 'en',
-        };
+        }
     },
-};
+}
 
 const getLastSixMonths = (): string[] => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // 0-based to 1-based
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1 // 0-based to 1-based
     return Array.from({ length: 6 }, (_, i) => {
-        let month = currentMonth - (i + 1);
-        let year = currentYear;
+        let month = currentMonth - (i + 1)
+        let year = currentYear
         if (month <= 0) {
-            month += 12;
-            year -= 1;
+            month += 12
+            year -= 1
         }
-        return `${year}-${month}`;
-    });
-};
+        return `${year}-${month}`
+    })
+}
 
 interface RankingItem {
-    logo: string;
-    projectName: string;
-    githubLink: string;
-    homepageLink: string;
-    description: string;
-    tags: string[];
-    starCount: string;
-    additionalInfo: string;
+    logo: string
+    projectName: string
+    githubLink: string
+    homepageLink: string
+    description: string
+    tags: string[]
+    starCount: string
+    additionalInfo: string
 }
 
 const getMonthlyRankings = (year: string, month: string): Promise<RankingItem[]> => {
-    const targetUrl = `${BASEURL}/${year}/${month}`;
+    const targetUrl = `${BASEURL}/${year}/${month}`
     return cache.tryGet(targetUrl, async () => {
-        const response = await ofetch(targetUrl);
-        const $ = load(response);
+        const response = await ofetch(targetUrl)
+        const $ = load(response)
         return $('table.w-full tbody tr[data-testid="project-card"]')
             .toArray()
             .map((el) => {
-                const $tr = $(el);
+                const $tr = $(el)
                 // Project logo
                 const logo =
                     $tr
                         .find('td:first img')
                         .attr('src')
-                        ?.replace(/.dark./, '.') || '';
+                        ?.replace(/.dark./, '.') || ''
                 // Project name and link
-                const projectLink = $tr.find('td:nth-child(2) a[href^="/projects/"]').first();
-                const projectName = projectLink.text().trim();
+                const projectLink = $tr.find('td:nth-child(2) a[href^="/projects/"]').first()
+                const projectName = projectLink.text().trim()
                 // GitHub and homepage links
-                const githubLink = $tr.find('td:nth-child(2) a[href*="github.com"]').attr('href') || '';
-                const homepageLink = $tr.find('td:nth-child(2) a[href*="http"]:not([href*="github.com"])').attr('href') || '';
+                const githubLink = $tr.find('td:nth-child(2) a[href*="github.com"]').attr('href') || ''
+                const homepageLink = $tr.find('td:nth-child(2) a[href*="http"]:not([href*="github.com"])').attr('href') || ''
                 // Description
-                const description = $tr.find('td:nth-child(2) .font-serif').text().trim();
+                const description = $tr.find('td:nth-child(2) .font-serif').text().trim()
                 // Tags
                 const tags = $tr
                     .find('td:nth-child(2) [href*="/projects?tags="]')
                     .toArray()
-                    .map((tag) => $(tag).text().trim());
+                    .map((tag) => $(tag).text().trim())
                 // Star count
-                const starCount = $tr.find('td:nth-child(4) span:last').text().trim() || $tr.find('td:nth-child(2) .inline-flex span:last-child').text().trim();
+                const starCount = $tr.find('td:nth-child(4) span:last').text().trim() || $tr.find('td:nth-child(2) .inline-flex span:last-child').text().trim()
                 // Additional info (contributors, created date)
                 const additionalInfo = $tr
                     .find('td:nth-child(3) > div')
                     .toArray()
                     .slice(1)
                     .map((el) => $(el).text().trim())
-                    .join('; ');
+                    .join('; ')
                 return {
                     logo,
                     projectName,
@@ -183,7 +183,7 @@ const getMonthlyRankings = (year: string, month: string): Promise<RankingItem[]>
                     tags,
                     starCount,
                     additionalInfo,
-                };
-            });
-    });
-};
+                }
+            })
+    })
+}

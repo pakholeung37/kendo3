@@ -1,22 +1,22 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { parseItems } from './parser';
+import { parseItems } from './parser'
 
 export const handler = async (): Promise<Data | null> => {
-    const baseUrl = 'https://collabo-cafe.com/';
-    const res = await ofetch(baseUrl);
-    const $ = load(res);
-    const items = parseItems($);
+    const baseUrl = 'https://collabo-cafe.com/'
+    const res = await ofetch(baseUrl)
+    const $ = load(res)
+    const items = parseItems($)
 
     return {
         title: '全部文章',
         link: baseUrl,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/',
@@ -34,4 +34,4 @@ export const route: Route = {
     name: '全部文章',
     maintainers: ['cokemine'],
     handler,
-};
+}

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { ProcessFeed } from './utils';
+import { ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/items/all/:order?',
@@ -40,8 +40,8 @@ export const route: Route = {
     maintainers: ['DIYgod'],
     handler,
     url: 'www.hpoi.net/hobby/all',
-};
+}
 
 async function handler(ctx) {
-    return await ProcessFeed('all', 0, ctx.req.param('order'));
+    return await ProcessFeed('all', 0, ctx.req.param('order'))
 }

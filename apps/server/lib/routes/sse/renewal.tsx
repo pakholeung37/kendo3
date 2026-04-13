@@ -1,16 +1,16 @@
-import 'dayjs/locale/zh-cn.js';
+import 'dayjs/locale/zh-cn.js'
 
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat.js';
-import { renderToString } from 'hono/jsx/dom/server';
+import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat.js'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-dayjs.extend(localizedFormat);
+dayjs.extend(localizedFormat)
 
-const currStatusName = ['全部', '已受理', '已询问', '通过', '未通过', '提交注册', '补充审核', '注册结果', '中止', '终止'];
+const currStatusName = ['全部', '已受理', '已询问', '通过', '未通过', '提交注册', '补充审核', '注册结果', '中止', '终止']
 
 export const route: Route = {
     path: '/renewal',
@@ -34,11 +34,11 @@ export const route: Route = {
     maintainers: ['Jeason0228'],
     handler,
     url: 'kcb.sse.com.cn/home',
-};
+}
 
 async function handler() {
-    const pageUrl = 'https://kcb.sse.com.cn/renewal/';
-    const host = `https://kcb.sse.com.cn`;
+    const pageUrl = 'https://kcb.sse.com.cn/renewal/'
+    const host = `https://kcb.sse.com.cn`
 
     const response = await got('https://query.sse.com.cn/statusAction.do', {
         searchParams: {
@@ -60,7 +60,7 @@ async function handler() {
         headers: {
             Referer: pageUrl,
         },
-    });
+    })
 
     // console.log(response.data.result);
     const items = response.data.result.map((item) => ({
@@ -71,18 +71,18 @@ async function handler() {
                 currStatus={currStatusName[item.currStatus]}
                 updateDate={dayjs(item.updateDate, 'YYYYMMDDHHmmss').locale('zh-cn').format('lll')}
                 auditApplyDate={dayjs(item.auditApplyDate, 'YYYYMMDDHHmmss').locale('zh-cn').format('lll')}
-            />
+            />,
         ),
         pubDate: parseDate(item.updateDate, 'YYYYMMDDHHmmss'),
         link: `${host}/renewal/xmxq/index.shtml?auditId=${item.stockAuditNum}`,
         author: item.stockAuditName,
-    }));
+    }))
 
     return {
         title: '上海证券交易所 - 科创板项目动态',
         link: pageUrl,
         item: items,
-    };
+    }
 }
 
 const SseRenewalDescription = ({ item, currStatus, updateDate, auditApplyDate }: { item: any; currStatus: string; updateDate: string; auditApplyDate: string }) => (
@@ -156,4 +156,4 @@ const SseRenewalDescription = ({ item, currStatus, updateDate, auditApplyDate }:
             </td>
         </tr>
     </table>
-);
+)

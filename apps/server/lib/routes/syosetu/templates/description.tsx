@@ -1,26 +1,26 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
     novel: {
-        story?: string;
-        novel_type: number;
-        end: number;
-        general_all_no: number;
-        keyword: string;
-        general_lastup: string;
-        ncode: string;
-        time: number;
-        length: number;
-        weekly_unique?: number;
-        global_point: number;
-        all_hyoka_cnt: number;
-        all_point: number;
-        fav_novel_cnt: number;
-        sasie_cnt: number;
-    };
-    genreText?: string;
-};
+        story?: string
+        novel_type: number
+        end: number
+        general_all_no: number
+        keyword: string
+        general_lastup: string
+        ncode: string
+        time: number
+        length: number
+        weekly_unique?: number
+        global_point: number
+        all_hyoka_cnt: number
+        all_point: number
+        fav_novel_cnt: number
+        sasie_cnt: number
+    }
+    genreText?: string
+}
 
 const SyosetuDescription = ({ novel, genreText }: DescriptionData) => (
     <>
@@ -91,6 +91,6 @@ const SyosetuDescription = ({ novel, genreText }: DescriptionData) => (
         </table>
         {novel.sasie_cnt > 0 ? <p>挿絵数：{novel.sasie_cnt}枚</p> : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<SyosetuDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<SyosetuDescription {...data} />)

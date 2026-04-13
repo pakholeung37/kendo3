@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 // 导入必要的模组
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const categoryMap = {
     gwxx: { title: '公务信息', tag: '20616' },
@@ -14,7 +14,7 @@ const categoryMap = {
     kysys: { title: '科研实验室', tag: '20618' },
     bksjw: { title: '本科生教务', tag: '20619' },
     yjsjw: { title: '研究生教务', tag: '20620' },
-};
+}
 
 export const route: Route = {
     path: '/smae/:category?',
@@ -35,44 +35,44 @@ export const route: Route = {
     description: `| 公务信息 | 党建工作 | 人事工作 | 学生工作 | 科研实验室 | 本科生教务 | 研究生教务 |
 | -------- | -------- | -------- | -------- | ---------- | ---------- | ---------- |
 | gwxx     | djgz     | rsgz     | xsgz     | kysys      | bksjw      | yjsjw      |`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'http://www2.scut.edu.cn';
+    const baseUrl = 'http://www2.scut.edu.cn'
 
-    const categoryName = ctx.req.param('category') || 'yjsjw';
-    const categoryMeta = categoryMap[categoryName];
-    const url = `${baseUrl}/smae/${categoryMeta.tag}/list.htm`;
+    const categoryName = ctx.req.param('category') || 'yjsjw'
+    const categoryMeta = categoryMap[categoryName]
+    const url = `${baseUrl}/smae/${categoryMeta.tag}/list.htm`
 
-    const { data: response } = await got(url);
-    const $ = load(response);
+    const { data: response } = await got(url)
+    const $ = load(response)
     const list = $('#wp_news_w6 ul li.news')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
-            const pubDate = item.find('span.news_meta');
+            item = $(item)
+            const a = item.find('a')
+            const pubDate = item.find('span.news_meta')
             return {
                 title: a.attr('title'),
                 link: `${baseUrl}${a.attr('href')}`,
                 pubDate: parseDate(pubDate.text()),
-            };
-        });
+            }
+        })
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
+                const { data: response } = await got(item.link)
+                const $ = load(response)
 
-                item.description = $('div.wp_articlecontent').html();
+                item.description = $('div.wp_articlecontent').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
     return {
         title: `华南理工大学机械与汽车工程学院 - ${categoryMeta.title}`,
         link: url,
         item: items,
-    };
+    }
 }

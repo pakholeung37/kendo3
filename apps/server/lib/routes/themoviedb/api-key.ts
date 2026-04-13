@@ -18,7 +18,7 @@ const KEYS = [
     '06f10fc8741a672af455421c239a1ffc',
     'fb7bb23f03b6994dafc674c074d01761',
     '09ad8ace66eec34302943272db0e8d2c',
-];
+]
 
-const keys = () => KEYS[Math.floor(Math.random() * KEYS.length)];
-export default keys;
+const keys = () => KEYS[Math.floor(Math.random() * KEYS.length)]
+export default keys

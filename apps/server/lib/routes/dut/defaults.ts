@@ -54,4 +54,4 @@ export default {
     // 公共基础学院：http://fldpj.dlut.edu.cn/index.htm
     // 默认 -> 重要通知 http://fldpj.dlut.edu.cn/index/zytz.htm
     fldpj: 'index/zytz',
-};
+}

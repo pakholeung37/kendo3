@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { baseUrl, fetchArticles } from './utils';
+import { baseUrl, fetchArticles } from './utils'
 
 export const route: Route = {
     path: '/insights',
@@ -22,10 +22,10 @@ export const route: Route = {
     name: 'Insights',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler() {
-    const items = await fetchArticles('insights');
+    const items = await fetchArticles('insights')
 
     return {
         title: 'Capitalmind Insights',
@@ -37,5 +37,5 @@ async function handler() {
         image: `${baseUrl}/favicons/favicon.ico`,
         icon: `${baseUrl}/favicons/favicon.ico`,
         logo: `${baseUrl}/favicons/favicon.ico`,
-    } as Data;
+    } as Data
 }

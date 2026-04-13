@@ -1,17 +1,17 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 async function getData(category, id) {
-    const url = `https://radio.cgtn.com/downapiRES/radio/v1/program/historyList/programId${id}_category${category}_page1.json`;
-    const response = await got(url);
-    return response.data;
+    const url = `https://radio.cgtn.com/downapiRES/radio/v1/program/historyList/programId${id}_category${category}_page1.json`
+    const response = await got(url)
+    return response.data
 }
 
 function combDate(date, time) {
     // combine date and time, return a Date object
-    return timezone(parseDate(date + ' ' + time), +8);
+    return timezone(parseDate(date + ' ' + time), +8)
 }
 
 export const route: Route = {
@@ -37,12 +37,12 @@ export const route: Route = {
     handler,
     description: `> 类型名与播客 id 可以在播客对应的 URL 中找到
   > 如 URL \`https://radio.cgtn.com/podcast/column/ezfm/More-to-Read/4\` ，其 \`category\` 为 \`ezfm\` ，\`id\` 为 \`4\`，对应的订阅路由为 [\`/podcast/ezfm/4\`](https://rsshub.app/podcast/ezfm/4)`,
-};
+}
 
 async function handler(ctx) {
-    const { category, id } = ctx.req.param();
-    const categoryMap = { ezfm: 1, other: 5 };
-    const data = await getData(categoryMap[category], id);
+    const { category, id } = ctx.req.param()
+    const categoryMap = { ezfm: 1, other: 5 }
+    const data = await getData(categoryMap[category], id)
     const items = data.data.map((item) => ({
         title: item.title,
         pubDate: combDate(item.showDate, item.time.split(' ')[0]),
@@ -51,11 +51,11 @@ async function handler(ctx) {
         itunes_duration: item.duration,
         enclosure_url: item.mediaUrl,
         enclosure_type: 'audio/mpeg',
-    }));
+    }))
     return {
         title: `中国环球电视网 CGTN Podcast - ${data.info}`,
         link: 'https://www.cgtn.com/radio/',
         item: items,
         description: String(data.info),
-    };
+    }
 }

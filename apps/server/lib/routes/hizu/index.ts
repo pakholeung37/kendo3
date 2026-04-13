@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const titles = {
     '5dd92265e4b0bf88dd8c1175': '热点',
@@ -30,7 +30,7 @@ const titles = {
     '5e8c42b4e4b0347c7e5836e0': '金湾',
     '5ee70534e4b07b8a779a1ad6': '斗门',
     '607d37ade4b05c59ac2f3d40': '高新',
-};
+}
 
 export const route: Route = {
     path: '/:column?',
@@ -80,18 +80,18 @@ export const route: Route = {
 | 金湾     | 5e8c42b4e4b0347c7e5836e0 |
 | 斗门     | 5ee70534e4b07b8a779a1ad6 |
 | 高新     | 607d37ade4b05c59ac2f3d40 |`,
-};
+}
 
 async function handler(ctx) {
-    const column = ctx.req.param('column') ?? '5dd92265e4b0bf88dd8c1175';
+    const column = ctx.req.param('column') ?? '5dd92265e4b0bf88dd8c1175'
 
-    const rootUrl = 'https://www.hizh.cn';
-    const currentUrl = `${rootUrl}/channels/zjyapp/columns/${column}/stories.json`;
+    const rootUrl = 'https://www.hizh.cn'
+    const currentUrl = `${rootUrl}/channels/zjyapp/columns/${column}/stories.json`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
     let items = response.data.stories.slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50).map((item) => ({
         title: item.title,
@@ -99,7 +99,7 @@ async function handler(ctx) {
         link: item.jsonUrl,
         category: item.columnName,
         pubDate: parseDate(item.published),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -107,23 +107,23 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data.content);
+                const content = load(detailResponse.data.content)
 
-                content('figure').last().remove();
+                content('figure').last().remove()
 
-                item.description = content.html();
-                item.link = `${rootUrl}/content.html?jsonUrl=${item.link}`;
+                item.description = content.html()
+                item.link = `${rootUrl}/content.html?jsonUrl=${item.link}`
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${titles[column]} - 珠海网`,
         link: rootUrl,
         item: items,
-    };
+    }
 }

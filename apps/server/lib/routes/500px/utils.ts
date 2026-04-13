@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-const baseUrl = 'https://500px.com.cn';
+const baseUrl = 'https://500px.com.cn'
 
 /*
 ty_rum.server = {
@@ -24,18 +24,18 @@ const headers = {
     // {"anonymousId":"","latitude":null,"longitude":null,"manufacturer":"","province":"","area":"","city":""}
     'x-500px-client-info': 'eyJhbm9ueW1vdXNJZCI6IiIsImxhdGl0dWRlIjpudWxsLCJsb25naXR1ZGUiOm51bGwsIm1hbnVmYWN0dXJlciI6IiIsInByb3ZpbmNlIjoiIiwiYXJlYSI6IiIsImNpdHkiOiIifQ==',
     'X-Tingyun-Id': `Fm3hXcTiLT8;r=${Date.now() % 1e8}`,
-};
+}
 
 const getUserInfoFromUsername = (username) =>
     cache.tryGet(`500px:user:${username}`, async () => {
-        const data = await ofetch(`${baseUrl}/${username}`);
-        const $ = load(data);
+        const data = await ofetch(`${baseUrl}/${username}`)
+        const $ = load(data)
         return JSON.parse(
             $('script[type="text/javascript"]')
                 .text()
-                .match(/var cur_user = new Object\((.*?)\);/)?.[1] || '{}'
-        );
-    });
+                .match(/var cur_user = new Object\((.*?)\);/)?.[1] || '{}',
+        )
+    })
 
 const getUserInfoFromId = (id) =>
     cache.tryGet(`500px:user:indexInfo:${id}`, async () => {
@@ -46,9 +46,9 @@ const getUserInfoFromId = (id) =>
             query: {
                 queriedUserId: id,
             },
-        });
-        return data.data;
-    });
+        })
+        return data.data
+    })
 
 const getUserWorks = (id, limit) =>
     cache.tryGet(
@@ -67,12 +67,12 @@ const getUserWorks = (id, limit) =>
                     size: limit,
                     type: 'json',
                 },
-            });
-            return data;
+            })
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 const getTribeDetail = (id) =>
     cache.tryGet(
@@ -85,12 +85,12 @@ const getTribeDetail = (id) =>
                 query: {
                     tribeId: id,
                 },
-            });
-            return data.data;
+            })
+            return data.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 const getTribeSets = (id, limit) =>
     cache.tryGet(
@@ -107,11 +107,11 @@ const getTribeSets = (id, limit) =>
                     size: limit,
                     type: 'json',
                 },
-            });
-            return data.data;
+            })
+            return data.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-export { baseUrl, getTribeDetail, getTribeSets, getUserInfoFromId, getUserInfoFromUsername, getUserWorks };
+export { baseUrl, getTribeDetail, getTribeSets, getUserInfoFromId, getUserInfoFromUsername, getUserWorks }

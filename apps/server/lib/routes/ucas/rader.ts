@@ -8,7 +8,7 @@ export default {
                 source: '/*',
                 target: (params, url) => {
                     if (new URL(url).searchParams.get('c') === '6') {
-                        return '/ucas/job/bsh';
+                        return '/ucas/job/bsh'
                     }
                 },
             },
@@ -18,7 +18,7 @@ export default {
                 source: '/*',
                 target: (params, url) => {
                     if (new URL(url).searchParams.get('c') === '5') {
-                        return '/ucas/job/ktxmpy';
+                        return '/ucas/job/ktxmpy'
                     }
                 },
             },
@@ -28,7 +28,7 @@ export default {
                 source: '/*',
                 target: (params, url) => {
                     if (new URL(url).searchParams.get('c') === '4') {
-                        return '/ucas/job/glzcrc';
+                        return '/ucas/job/glzcrc'
                     }
                 },
             },
@@ -38,10 +38,10 @@ export default {
                 source: '/*',
                 target: (params, url) => {
                     if (new URL(url).searchParams.get('c') === '3') {
-                        return '/ucas/job/jxkyrc';
+                        return '/ucas/job/jxkyrc'
                     }
                 },
             },
         ],
     },
-};
+}

@@ -1,25 +1,25 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import parser from '@/utils/rss-parser'
 
 const getArticleDetail = (link) =>
     cache.tryGet(link, async () => {
-        const response = await got(link);
-        const $ = load(response.data);
-        $('div.article-audio-player__center-tooltip').remove();
-        const nextData = JSON.parse($('head script[type="application/ld+json"]').first().text());
+        const response = await got(link)
+        const $ = load(response.data)
+        $('div.article-audio-player__center-tooltip').remove()
+        const nextData = JSON.parse($('head script[type="application/ld+json"]').first().text())
 
-        const figure = $('figure[class^=css-]').first().parent().parent().html() || '';
-        const body = $('p[data-component="paragraph"]').parent().parent().html();
-        const article = figure + body;
-        const categories = nextData.keywords?.map((k) => k);
+        const figure = $('figure[class^=css-]').first().parent().parent().html() || ''
+        const body = $('p[data-component="paragraph"]').parent().parent().html()
+        const article = figure + body
+        const categories = nextData.keywords?.map((k) => k)
 
-        return { article, categories };
-    });
+        return { article, categories }
+    })
 
 export const route: Route = {
     path: '/:endpoint',
@@ -43,17 +43,17 @@ export const route: Route = {
     name: 'Category',
     maintainers: ['ImSingee'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const endpoint = ctx.req.param('endpoint');
-    const feed = await parser.parseURL(`https://www.economist.com/${endpoint}/rss.xml`);
+    const endpoint = ctx.req.param('endpoint')
+    const feed = await parser.parseURL(`https://www.economist.com/${endpoint}/rss.xml`)
 
     const items = await Promise.all(
         feed.items.slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30).map(async (item) => {
-            const path = item.link.slice(item.link.lastIndexOf('/') + 1);
-            const isNotCollection = !/^\d{4}-\d{2}-\d{2}$/.test(path);
-            const itemDetails = isNotCollection ? await getArticleDetail(item.link) : null;
+            const path = item.link.slice(item.link.lastIndexOf('/') + 1)
+            const isNotCollection = !/^\d{4}-\d{2}-\d{2}$/.test(path)
+            const itemDetails = isNotCollection ? await getArticleDetail(item.link) : null
             return {
                 title: item.title,
                 description: isNotCollection ? itemDetails.article : item.content,
@@ -61,14 +61,14 @@ async function handler(ctx) {
                 guid: item.guid,
                 pubDate: item.pubDate,
                 category: isNotCollection ? itemDetails.categories : null,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     return {
         title: feed.title,
         link: feed.link,
         description: feed.description,
         item: items,
-    };
+    }
 }

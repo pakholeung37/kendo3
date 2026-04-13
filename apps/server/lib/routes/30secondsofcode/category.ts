@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { processList } from './utils';
+import { processList } from './utils'
 
 export const route: Route = {
     path: '/category/:category?/:subCategory?',
@@ -40,29 +40,29 @@ export const route: Route = {
     name: 'Category and Subcategory',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
-    const subCategory = ctx.req.param('subCategory') ?? '';
+    const category = ctx.req.param('category') ?? ''
+    const subCategory = ctx.req.param('subCategory') ?? ''
 
-    const rootUrl = 'https://www.30secondsofcode.org';
-    const currentUrl = `${rootUrl}${category ? `/${category}` : ''}${subCategory ? `/${subCategory}` : ''}${category || subCategory ? '/p/1/' : ''}`;
+    const rootUrl = 'https://www.30secondsofcode.org'
+    const currentUrl = `${rootUrl}${category ? `/${category}` : ''}${subCategory ? `/${subCategory}` : ''}${category || subCategory ? '/p/1/' : ''}`
 
-    const response = await ofetch(currentUrl);
-    const $ = load(response);
-    const heroElement = $('section.hero');
-    const heading = heroElement.find('div > h1').text();
-    const description = heroElement.find('div > p').text();
-    const image = heroElement.find('img').attr('src');
+    const response = await ofetch(currentUrl)
+    const $ = load(response)
+    const heroElement = $('section.hero')
+    const heading = heroElement.find('div > h1').text()
+    const description = heroElement.find('div > p').text()
+    const image = heroElement.find('img').attr('src')
 
-    const fullList = $('section.preview-list > ul > li').toArray();
-    const items = await processList(fullList);
+    const fullList = $('section.preview-list > ul > li').toArray()
+    const items = await processList(fullList)
     return {
         title: heading,
         description,
         image: `${rootUrl}${image}`,
         link: rootUrl,
         item: items,
-    } as Data;
+    } as Data
 }

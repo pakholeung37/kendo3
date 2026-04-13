@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://vocus.cc';
-const apiUrl = 'https://api.vocus.cc';
+const baseUrl = 'https://vocus.cc'
+const apiUrl = 'https://api.vocus.cc'
 
 const processList = (articleData) =>
     articleData.map((item) => ({
@@ -14,7 +14,7 @@ const processList = (articleData) =>
         link: `${baseUrl}/article/${item._id}`,
         author: item.user.fullname,
         _id: item._id,
-    }));
+    }))
 
 const ProcessFeed = (list, tryGet) =>
     Promise.all(
@@ -26,22 +26,22 @@ const ProcessFeed = (list, tryGet) =>
                     headers: {
                         referer: item.link,
                     },
-                });
+                })
 
-                const $ = load(article.content, null, false);
+                const $ = load(article.content, null, false)
 
-                $('div.draft--imgNormal').each((_, elem) => (elem.name = 'figure'));
+                $('div.draft--imgNormal').each((_, elem) => (elem.name = 'figure'))
                 $('.image-block-prerender').each((_, elem) => {
-                    elem.name = 'img';
-                    elem.attribs.src = elem.attribs['data-src'].split('?')[0];
-                });
+                    elem.name = 'img'
+                    elem.attribs.src = elem.attribs['data-src'].split('?')[0]
+                })
 
-                item.description = $.html();
-                item.category = article.tags?.map((tag) => tag.title);
+                item.description = $.html()
+                item.category = article.tags?.map((tag) => tag.title)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-export { apiUrl, baseUrl, ProcessFeed, processList };
+export { apiUrl, baseUrl, ProcessFeed, processList }

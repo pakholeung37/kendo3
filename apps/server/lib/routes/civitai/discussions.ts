@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/discussions/:modelId',
@@ -35,23 +35,23 @@ export const route: Route = {
     description: `::: warning
 Need to configure \`CIVITAI_COOKIE\` to obtain image information of NSFW models.
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const params = ctx.req.param();
-    const modelId = Number.parseInt(params.modelId);
+    const params = ctx.req.param()
+    const modelId = Number.parseInt(params.modelId)
 
     const { data } = await got(
         `https://civitai.com/api/trpc/review.getAll,comment.getAll?batch=1&input=${encodeURIComponent(
-            `{"0":{"json":{"modelId":${modelId},"limit":12,"sort":"newest","cursor":null},"meta":{"values":{"cursor":["undefined"]}}},"1":{"json":{"modelId":${modelId},"limit":12,"sort":"newest","cursor":null},"meta":{"values":{"cursor":["undefined"]}}}}`
+            `{"0":{"json":{"modelId":${modelId},"limit":12,"sort":"newest","cursor":null},"meta":{"values":{"cursor":["undefined"]}}},"1":{"json":{"modelId":${modelId},"limit":12,"sort":"newest","cursor":null},"meta":{"values":{"cursor":["undefined"]}}}}`,
         )}`,
         {
             headers: {
                 Referer: `https://civitai.com/${modelId}`,
                 cookie: config.civitai.cookie,
             },
-        }
-    );
+        },
+    )
 
     const items = [...data[0].result.data.json.reviews, ...data[1].result.data.json.comments]
         .map((item) =>
@@ -64,13 +64,13 @@ async function handler(ctx) {
                       author: item.user?.username,
                       guid: item.id,
                   }
-                : null
+                : null,
         )
-        .filter(Boolean);
+        .filter(Boolean)
 
     return {
         title: `Civitai model ${params.modelId} discussions`,
         link: `https://civitai.com/`,
         item: items,
-    };
+    }
 }

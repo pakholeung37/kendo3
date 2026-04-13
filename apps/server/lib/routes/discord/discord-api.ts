@@ -1,16 +1,16 @@
-import crypto from 'node:crypto';
+import crypto from 'node:crypto'
 
-import type { RESTGetAPIChannelMessagesQuery, RESTGetAPIChannelMessagesResult, RESTGetAPIChannelResult, RESTGetAPIGuildChannelsResult, RESTGetAPIGuildResult } from 'discord-api-types/rest/v10';
-import type { APIMessage } from 'discord-api-types/v10';
+import type { RESTGetAPIChannelMessagesQuery, RESTGetAPIChannelMessagesResult, RESTGetAPIChannelResult, RESTGetAPIGuildChannelsResult, RESTGetAPIGuildResult } from 'discord-api-types/rest/v10'
+import type { APIMessage } from 'discord-api-types/v10'
 
-import { config } from '@/config';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { QuestResponse } from './types';
+import type { QuestResponse } from './types'
 
-export const baseUrl = 'https://discord.com';
-const apiUrl = `${baseUrl}/api/v10`;
+export const baseUrl = 'https://discord.com'
+const apiUrl = `${baseUrl}/api/v10`
 
 export const getGuild = (guildId, authorization) =>
     cache.tryGet(`discord:guilds:${guildId}`, () =>
@@ -18,8 +18,8 @@ export const getGuild = (guildId, authorization) =>
             headers: {
                 authorization,
             },
-        })
-    ) as Promise<RESTGetAPIGuildResult>;
+        }),
+    ) as Promise<RESTGetAPIGuildResult>
 
 export const getGuildChannels = (guildId, authorization) =>
     cache.tryGet(`discord:guilds:${guildId}:channels`, () =>
@@ -27,8 +27,8 @@ export const getGuildChannels = (guildId, authorization) =>
             headers: {
                 authorization,
             },
-        })
-    ) as Promise<RESTGetAPIGuildChannelsResult>;
+        }),
+    ) as Promise<RESTGetAPIGuildChannelsResult>
 
 export const getChannel = (channelId, authorization) =>
     cache.tryGet(`discord:channels:${channelId}`, () =>
@@ -36,8 +36,8 @@ export const getChannel = (channelId, authorization) =>
             headers: {
                 authorization,
             },
-        })
-    ) as Promise<RESTGetAPIChannelResult>;
+        }),
+    ) as Promise<RESTGetAPIChannelResult>
 
 export const getChannelMessages = (channelId, authorization, limit = 100) =>
     cache.tryGet(
@@ -52,29 +52,29 @@ export const getChannelMessages = (channelId, authorization, limit = 100) =>
                 } as RESTGetAPIChannelMessagesQuery,
             }),
         config.cache.routeExpire,
-        false
-    ) as Promise<RESTGetAPIChannelMessagesResult>;
+        false,
+    ) as Promise<RESTGetAPIChannelMessagesResult>
 
 interface SearchGuildMessagesResult {
-    analytics_id: string;
-    doing_deep_historical_index: boolean;
-    total_results: number;
-    messages: APIMessage[][];
+    analytics_id: string
+    doing_deep_historical_index: boolean
+    total_results: number
+    messages: APIMessage[][]
 }
 
-export const VALID_HAS_TYPES = new Set(['link', 'embed', 'poll', 'file', 'video', 'image', 'sound', 'sticker', 'snapshot'] as const);
+export const VALID_HAS_TYPES = new Set(['link', 'embed', 'poll', 'file', 'video', 'image', 'sound', 'sticker', 'snapshot'] as const)
 
-export type HasType = typeof VALID_HAS_TYPES extends Set<infer T> ? T : never;
+export type HasType = typeof VALID_HAS_TYPES extends Set<infer T> ? T : never
 
 export interface SearchGuildMessagesParams {
-    content?: string;
-    author_id?: string;
-    mentions?: string;
-    has?: HasType[];
-    max_id?: string;
-    min_id?: string;
-    channel_id?: string;
-    pinned?: boolean;
+    content?: string
+    author_id?: string
+    mentions?: string
+    has?: HasType[]
+    max_id?: string
+    min_id?: string
+    channel_id?: string
+    pinned?: boolean
 }
 
 export const searchGuildMessages = (guildId: string, authorization: string, params: SearchGuildMessagesParams) =>
@@ -84,16 +84,16 @@ export const searchGuildMessages = (guildId: string, authorization: string, para
             const queryParams = {
                 ...params,
                 has: params.has?.length ? params.has : undefined,
-            };
+            }
 
             return ofetch(`${apiUrl}/guilds/${guildId}/messages/search`, {
                 headers: { authorization },
                 query: queryParams,
-            });
+            })
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<SearchGuildMessagesResult>;
+        false,
+    ) as Promise<SearchGuildMessagesResult>
 
 export const getQuests = (authorization: string) =>
     cache.tryGet(
@@ -121,10 +121,10 @@ export const getQuests = (authorization: string) =>
                             client_event_source: null,
                             client_launch_id: crypto.randomUUID(),
                             client_app_state: 'unfocused',
-                        })
+                        }),
                     ).toString('base64'),
                 },
             }),
         config.cache.routeExpire,
-        false
-    ) as Promise<QuestResponse>;
+        false,
+    ) as Promise<QuestResponse>

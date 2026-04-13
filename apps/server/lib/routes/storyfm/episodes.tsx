@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/episodes',
@@ -29,25 +29,25 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'storyfm.cn/episodes-list',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://storyfm.cn';
-    const currentUrl = `${rootUrl}/episodes-list/`;
+    const rootUrl = 'https://storyfm.cn'
+    const currentUrl = `${rootUrl}/episodes-list/`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.e-ep')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('h2.e-ep__title a');
+            const a = item.find('h2.e-ep__title a')
 
             return {
                 title: a.text(),
@@ -56,8 +56,8 @@ async function handler() {
                 enclosure_type: 'audio/mpeg',
                 enclosure_url: item.find('audio source').attr('src'),
                 itunes_item_image: item.find('.zoom-image-container-progression img').attr('src'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -65,11 +65,11 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.author = content('.rs-post__author').text().replace(/By/, '').trim();
+                item.author = content('.rs-post__author').text().replace(/By/, '').trim()
                 item.description = renderToString(
                     <>
                         {item.enclosure_url ? (
@@ -78,13 +78,13 @@ async function handler() {
                             </audio>
                         ) : null}
                         {content('.rs-post__content').html() ? raw(content('.rs-post__content').html()) : null}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '故事FM',
@@ -92,5 +92,5 @@ async function handler() {
         item: items,
         itunes_author: '故事FM',
         image: $('.custom-logo-link img').attr('src'),
-    };
+    }
 }

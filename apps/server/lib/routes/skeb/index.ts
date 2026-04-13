@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, processCreator, processWork } from './utils';
+import { baseUrl, processCreator, processWork } from './utils'
 
 const categoryMap = {
     // Works categories
@@ -18,9 +18,9 @@ const categoryMap = {
     // Creators categories
     popular_creators: '人気クリエイター',
     new_creators: '新着クリエイター',
-};
+}
 
-const workCategories = new Set(['new_art_works', 'new_voice_works', 'new_novel_works', 'new_video_works', 'new_music_works', 'new_correction_works', 'new_comic_works', 'popular_works']);
+const workCategories = new Set(['new_art_works', 'new_voice_works', 'new_novel_works', 'new_video_works', 'new_music_works', 'new_correction_works', 'new_comic_works', 'popular_works'])
 
 export const route: Route = {
     path: '/:category',
@@ -91,43 +91,43 @@ export const route: Route = {
             target: '/new_creators',
         },
     ],
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const category = ctx.req.param('category') || 'new_art_works';
+    const category = ctx.req.param('category') || 'new_art_works'
 
     if (!(category in categoryMap)) {
-        throw new Error('Invalid category');
+        throw new Error('Invalid category')
     }
 
-    const url = `${baseUrl}/api`;
+    const url = `${baseUrl}/api`
 
     const apiData = await cache.tryGet(
         url,
         async () => {
-            const data = await ofetch(url);
-            return data;
+            const data = await ofetch(url)
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     if (!apiData || typeof apiData !== 'object') {
-        throw new Error('Invalid data received from API');
+        throw new Error('Invalid data received from API')
     }
 
     const items = await cache.tryGet(category, async () => {
         if (!(category in apiData) || !Array.isArray(apiData[category])) {
-            return [];
+            return []
         }
 
-        const processItem = workCategories.has(category) ? processWork : processCreator;
-        return (await Promise.all(apiData[category].map(async (item) => await processItem(item)).filter(Boolean))) as DataItem[];
-    });
+        const processItem = workCategories.has(category) ? processWork : processCreator
+        return (await Promise.all(apiData[category].map(async (item) => await processItem(item)).filter(Boolean))) as DataItem[]
+    })
 
     return {
         title: `Skeb - ${categoryMap[category]}`,
         link: `${baseUrl}/#${category}`,
         item: items as DataItem[],
-    };
+    }
 }

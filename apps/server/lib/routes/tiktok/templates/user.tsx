@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type UserEmbedProps = {
-    useIframe?: boolean;
-    id: string;
-    poster: string;
-    source: string;
-};
+    useIframe?: boolean
+    id: string
+    poster: string
+    source: string
+}
 
 export const renderUserEmbed = ({ useIframe, id, poster, source }: UserEmbedProps): string =>
     renderToString(
@@ -17,5 +17,5 @@ export const renderUserEmbed = ({ useIframe, id, poster, source }: UserEmbedProp
                     <source src={source} />
                 </video>
             )}
-        </>
-    );
+        </>,
+    )

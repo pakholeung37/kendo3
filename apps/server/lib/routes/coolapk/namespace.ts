@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '酷安',
@@ -10,4 +10,4 @@ export const namespace: Namespace = {
 详见 [#16715](https://github.com/DIYgod/RSSHub/issues/16715)
 :::`,
     lang: 'zh-CN',
-};
+}

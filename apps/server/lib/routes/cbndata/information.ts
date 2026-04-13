@@ -1,37 +1,37 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'all' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { id = 'all' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const baseUrl = 'https://www.cbndata.com';
-    const targetUrl: string = new URL(`information?tag_id=${id}`, baseUrl).href;
-    const apiUrl: string = new URL('api/v3/informations', baseUrl).href;
+    const baseUrl = 'https://www.cbndata.com'
+    const targetUrl: string = new URL(`information?tag_id=${id}`, baseUrl).href
+    const apiUrl: string = new URL('api/v3/informations', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
     const response = await ofetch(apiUrl, {
         query: {
             page: 1,
             per_page: limit,
         },
-    });
+    })
 
     let items: DataItem[] = response.data.slice(0, limit).map((item): DataItem => {
-        const title: string = item.title;
-        const image: string | undefined = item.image;
+        const title: string = item.title
+        const image: string | undefined = item.image
         const description: string | undefined = renderDescription({
             images: image
                 ? [
@@ -41,12 +41,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       },
                   ]
                 : undefined,
-        });
-        const pubDate: number | string = item.date;
-        const linkUrl: string | undefined = item.id ? `information/${item.id}` : undefined;
-        const categories: string[] = item.tags;
-        const guid = `cbndata-information-${item.id}`;
-        const updated: number | string = pubDate;
+        })
+        const pubDate: number | string = item.date
+        const linkUrl: string | undefined = item.id ? `information/${item.id}` : undefined
+        const categories: string[] = item.tags
+        const guid = `cbndata-information-${item.id}`
+        const updated: number | string = pubDate
 
         const processedItem: DataItem = {
             title,
@@ -64,51 +64,51 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
+                const detailResponse = await ofetch(item.link)
 
-                const dataStr: string | undefined = detailResponse.match(/<script>window\.__INITIAL_STATE__=(.*?);<\/script>/)?.[1];
+                const dataStr: string | undefined = detailResponse.match(/<script>window\.__INITIAL_STATE__=(.*?);<\/script>/)?.[1]
 
                 if (!dataStr) {
-                    return item;
+                    return item
                 }
 
-                const data = JSON.parse(dataStr)?.data;
+                const data = JSON.parse(dataStr)?.data
 
                 if (!data) {
-                    return item;
+                    return item
                 }
 
-                const title: string = data.title;
+                const title: string = data.title
                 const description: string | undefined =
                     item.description +
                     renderDescription({
                         description: data.content,
-                    });
-                const pubDate: number | string = data.date;
-                const linkUrl: string | undefined = data.id ? `information/${data.id}` : undefined;
-                const categories: string[] = [...new Set(((data.tags?.map((c) => c.name) ?? []) as string[]).filter(Boolean))];
+                    })
+                const pubDate: number | string = data.date
+                const linkUrl: string | undefined = data.id ? `information/${data.id}` : undefined
+                const categories: string[] = [...new Set(((data.tags?.map((c) => c.name) ?? []) as string[]).filter(Boolean))]
                 const authors: DataItem['author'] = [
                     {
                         name: data.author,
                         url: undefined,
                         avatar: undefined,
                     },
-                ];
-                const guid = `cbndata-information-${data.id}`;
-                const image: string | undefined = data.thumbnail_url;
-                const updated: number | string = pubDate;
+                ]
+                const guid = `cbndata-information-${data.id}`
+                const image: string | undefined = data.thumbnail_url
+                const updated: number | string = pubDate
 
                 const processedItem: DataItem = {
                     title,
@@ -127,18 +127,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: updated ? parseDate(updated) : undefined,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const tag: string = response.home_tags.find((t: { id: number; name: string }) => String(t.id) === id)?.name ?? '';
-    const title = `${tag ? `${tag}-` : ''}${$('title').text().trim()}`;
+    const tag: string = response.home_tags.find((t: { id: number; name: string }) => String(t.id) === id)?.name ?? ''
+    const title = `${tag ? `${tag}-` : ''}${$('title').text().trim()}`
 
     return {
         title,
@@ -150,8 +150,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/\|/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/information/:id?',
@@ -213,10 +213,10 @@ export const route: Route = {
         {
             source: ['www.cbndata.com/information'],
             target: (params, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('tag_id') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('tag_id') ?? undefined
 
-                return `/information${id ? `/${id}` : ''}`;
+                return `/information${id ? `/${id}` : ''}`
             },
         },
         {
@@ -246,4 +246,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

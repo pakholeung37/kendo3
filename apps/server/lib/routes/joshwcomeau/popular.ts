@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { getRelativeUrlList, processList, rootUrl } from './utils';
+import { getRelativeUrlList, processList, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/popular',
@@ -23,11 +23,11 @@ export const route: Route = {
     name: 'Popular Content',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler() {
-    const { urls } = await getRelativeUrlList(rootUrl, 'section > ol > li > a');
-    const items = await processList(urls);
+    const { urls } = await getRelativeUrlList(rootUrl, 'section > ol > li > a')
+    const items = await processList(urls)
     return {
         title: 'Popular Content | Josh W. Comeau',
         description: 'Friendly tutorials for developers. Focus on React, CSS, Animation, and more!',
@@ -35,5 +35,5 @@ async function handler() {
         item: items,
         icon: `${rootUrl}/favicon.png`,
         logo: `${rootUrl}/favicon.png`,
-    } as Data;
+    } as Data
 }

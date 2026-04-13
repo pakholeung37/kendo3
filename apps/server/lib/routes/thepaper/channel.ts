@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/channel/:id',
@@ -36,30 +36,30 @@ export const route: Route = {
 | 122908  | 国际   |
 | -21     | 体育   |
 | -24     | 评论   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const channelUrl = `https://m.thepaper.cn/channel/${id}`;
-    const channelUrlResp = await ofetch(channelUrl);
-    const $ = load(channelUrlResp.data);
-    const nextData = $('#__NEXT_DATA__').text();
-    const channelUrlData = JSON.parse(nextData);
+    const id = ctx.req.param('id')
+    const channelUrl = `https://m.thepaper.cn/channel/${id}`
+    const channelUrlResp = await ofetch(channelUrl)
+    const $ = load(channelUrlResp.data)
+    const nextData = $('#__NEXT_DATA__').text()
+    const channelUrlData = JSON.parse(nextData)
 
     const resp = await ofetch('https://api.thepaper.cn/contentapi/nodeCont/getByChannelId', {
         method: 'POST',
         body: {
             channelId: id,
         },
-    });
-    const list = resp.data.list;
+    })
+    const list = resp.data.list
 
-    const items = await Promise.all(list.map((item) => utils.ProcessItem(item, ctx)));
+    const items = await Promise.all(list.map((item) => utils.ProcessItem(item, ctx)))
     return {
         title: `澎湃新闻频道 - ${utils.ChannelIdToName(id, channelUrlData)}`,
         link: channelUrl,
         item: items,
         itunes_author: '澎湃新闻',
         image: utils.ExtractLogo(channelUrlResp),
-    };
+    }
 }

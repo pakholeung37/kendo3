@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'http://www.supplywater.com';
+const baseUrl = 'http://www.supplywater.com'
 
 export const route: Route = {
     path: '/changsha/:channelId?',
@@ -28,28 +28,28 @@ export const route: Route = {
 | --------- | -------- |
 | 78        | 计划停水 |
 | 157       | 抢修停水 |`,
-};
+}
 
 async function handler(ctx) {
-    const { channelId = 78 } = ctx.req.param();
-    const listPage = await got('http://www.supplywater.com/tstz-' + channelId + '.aspx');
-    const $ = load(listPage.data);
-    const pageName = $('.mainRightBox .news-title').text();
+    const { channelId = 78 } = ctx.req.param()
+    const listPage = await got('http://www.supplywater.com/tstz-' + channelId + '.aspx')
+    const $ = load(listPage.data)
+    const pageName = $('.mainRightBox .news-title').text()
     const list = $('.mainRightBox .announcements-title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text().trim(),
                 link: baseUrl + item.attr('href').trim(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map(async (item) => {
-            const postPage = await got(item.link);
-            const $ = load(postPage.data);
+            const postPage = await got(item.link)
+            const $ = load(postPage.data)
 
             const data = {
                 title: item.title,
@@ -57,14 +57,14 @@ async function handler(ctx) {
                 pubDate: parseDate($('.mainRightBox .gxsj span:first').text() + ' +0800', 'YYYY/M/D H:m:s ZZ'),
                 link: item.link,
                 author: $('.mainRightBox .gxsj span:last').text(),
-            };
-            return data;
-        })
-    );
+            }
+            return data
+        }),
+    )
 
     return {
         title: `${pageName}通知 - 长沙水业集团`,
         link: `${baseUrl}/fuwuzhinan.aspx`,
         item: items,
-    };
+    }
 }

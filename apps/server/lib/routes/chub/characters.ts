@@ -1,15 +1,15 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     breaks: true,
     html: true,
     linkify: true,
     typographer: true,
-});
+})
 
 export const route: Route = {
     path: '/characters',
@@ -21,15 +21,15 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 function convertUndefinedToString(value: any): string {
-    return value === undefined ? '' : value.toString();
+    return value === undefined ? '' : value.toString()
 }
 
 async function handler() {
-    const hostURL = 'https://www.chub.ai/characters';
-    const apiURL = 'https://api.chub.ai/search';
+    const hostURL = 'https://www.chub.ai/characters'
+    const apiURL = 'https://api.chub.ai/search'
     const { data } = await ofetch(apiURL, {
         headers: { Accept: 'application/json' },
         query: {
@@ -56,8 +56,8 @@ async function handler() {
             inclusive_or: 'false',
             recommended_verified: 'false',
         },
-    });
-    const nodes = data.nodes;
+    })
+    const nodes = data.nodes
 
     return {
         allowEmpty: true,
@@ -74,5 +74,5 @@ async function handler() {
             enclosure_type: `image/png`,
             category: item.topics,
         })),
-    };
+    }
 }

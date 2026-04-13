@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getFullText } from './utils';
+import { getFullText } from './utils'
 
 export const route: Route = {
     path: '/:id?',
@@ -25,12 +25,12 @@ export const route: Route = {
     description: `| 聚焦      | 即時 | 政治 | 國際 | 兩岸 | 產經 | 證券 | 科技 | 生活 | 社會 | 地方 | 文化 | 運動 | 娛樂 |
 | --------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | headlines | aall | aipl | aopl | acn  | aie  | asc  | ait  | ahel | asoc | aloc | acul | aspt | amov |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') || 'aall';
-    const isTopic = /^\d+$/.test(id);
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const id = ctx.req.param('id') || 'aall'
+    const isTopic = /^\d+$/.test(id)
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
     // The API used by the website when hitting "看更多內容"
     const { data: response } = await got({
@@ -43,19 +43,19 @@ async function handler(ctx) {
             pagesize: limit,
             pageidx: 1,
         },
-    });
+    })
 
     const {
         ResultData: { MetaData: metadata },
         ResultData: resultData,
-    } = response;
+    } = response
     const list = (isTopic ? resultData.Topic.NewsItems : resultData.Items).slice(0, limit).map((item) => ({
         title: item.HeadLine,
         link: item.PageUrl,
         pubDate: timezone(parseDate(item.CreateTime), +8),
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, async () => await getFullText(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, async () => await getFullText(item))))
 
     return {
         title: metadata.Title,
@@ -63,5 +63,5 @@ async function handler(ctx) {
         link: metadata.CanonicalUrl,
         image: metadata.Image,
         item: items,
-    };
+    }
 }

@@ -1,71 +1,71 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = '60847' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12;
+    const { category = '60847' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12
 
-    const rootUrl = 'https://cfhd.cf.qq.com';
-    const rootImageUrl = 'https://game.gtimg.cn';
-    const currentUrl = new URL(`webplat/info/news_version3/37427/59139/59140/${category}/m22510/list_1.shtml`, rootUrl).href;
+    const rootUrl = 'https://cfhd.cf.qq.com'
+    const rootImageUrl = 'https://game.gtimg.cn'
+    const currentUrl = new URL(`webplat/info/news_version3/37427/59139/59140/${category}/m22510/list_1.shtml`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.news-list-item ul li.list-item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('p').text(),
                 pubDate: parseDate(item.find('span.date').text()),
                 link: new URL(item.find('a.clearfix').prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: detailResponse } = await got(item.link, {
                     responseType: 'buffer',
-                });
+                })
 
-                const $$ = load(iconv.decode(detailResponse, 'gbk'));
+                const $$ = load(iconv.decode(detailResponse, 'gbk'))
 
-                const title = $$('div.news-details-title h4').text();
-                const description = $$('div.news-details-cont').html();
-                const image = $$('div.news-details-cont img').first().prop('src');
+                const title = $$('div.news-details-title h4').text()
+                const description = $$('div.news-details-cont').html()
+                const image = $$('div.news-details-cont img').first().prop('src')
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('p.news-details-p1').text().trim()), +8);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('p.news-details-p1').text().trim()), +8)
                 item.content = {
                     html: description,
                     text: $$('div.news-details-cont').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL('images/cfhd/web202305/logo.png', rootImageUrl).href;
+    const image = new URL('images/cfhd/web202305/logo.png', rootImageUrl).href
 
     return {
         title: `${$('title').text().split(/-/)[0]} - ${$('li.cur').text()}`,
@@ -76,8 +76,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="author"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/cfhd/news/:category?',
@@ -137,4 +137,4 @@ export const route: Route = {
             target: '/cfhd/news/59624',
         },
     ],
-};
+}

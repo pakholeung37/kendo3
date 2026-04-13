@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/tag/:id?',
@@ -33,10 +33,10 @@ export const route: Route = {
 | 漫画 | 纪实 | 艺术 | 科学 | 生活 | 职场 | 散文 | 法国 | 互联网 |
 | 营销 | 奇幻 | 二战 | 股票 | 女性 | 德国 | 学习 | 战争 | 创业   |
 | 绘本 | 名著 | 爱情 | 军事 | 理财 | 教育 | 世界 | 人物 | 沟通   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '小说';
+    const id = ctx.req.param('id') ?? '小说'
 
-    return await utils(ctx, `books/tag/${id}`);
+    return await utils(ctx, `books/tag/${id}`)
 }

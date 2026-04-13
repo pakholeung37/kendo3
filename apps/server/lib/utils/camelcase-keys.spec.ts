@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest'
 
-import { camelcase, camelcaseKeys } from './camelcase-keys';
+import { camelcase, camelcaseKeys } from './camelcase-keys'
 
 describe('test camelcase keys', () => {
     it('case 1 normal', () => {
@@ -13,7 +13,7 @@ describe('test camelcase keys', () => {
             b: {
                 c_d: 1,
             },
-        };
+        }
 
         expect(camelcaseKeys(obj)).toStrictEqual({
             tool: 'too',
@@ -24,8 +24,8 @@ describe('test camelcase keys', () => {
             b: {
                 cD: 1,
             },
-        });
-    });
+        })
+    })
 
     it('case 2: key has number', () => {
         const obj = {
@@ -38,7 +38,7 @@ describe('test camelcase keys', () => {
                 },
                 1,
             ],
-        };
+        }
 
         expect(camelcaseKeys(obj)).toStrictEqual({
             b147da0eaecbea00aeb62055: {
@@ -50,24 +50,24 @@ describe('test camelcase keys', () => {
                 },
                 1,
             ],
-        });
-    });
+        })
+    })
 
     it('case 3: not a object', () => {
-        const value = 1;
-        expect(camelcaseKeys(value)).toBe(value);
-    });
+        const value = 1
+        expect(camelcaseKeys(value)).toBe(value)
+    })
 
     it('case 4: nullable value', () => {
-        let value = null as any;
-        expect(camelcaseKeys(value)).toBe(value);
+        let value = null as any
+        expect(camelcaseKeys(value)).toBe(value)
 
-        value = undefined;
-        expect(camelcaseKeys(value)).toBe(value);
+        value = undefined
+        expect(camelcaseKeys(value)).toBe(value)
 
-        value = NaN;
-        expect(camelcaseKeys(value)).toBe(value);
-    });
+        value = NaN
+        expect(camelcaseKeys(value)).toBe(value)
+    })
 
     it('case 5: array', () => {
         const arr = [
@@ -82,7 +82,7 @@ describe('test camelcase keys', () => {
             {
                 a_b: 1,
             },
-        ];
+        ]
 
         expect(camelcaseKeys(arr)).toStrictEqual([
             {
@@ -96,8 +96,8 @@ describe('test camelcase keys', () => {
             {
                 aB: 1,
             },
-        ]);
-    });
+        ])
+    })
 
     it('case 6: filter out mongo id', () => {
         const obj = {
@@ -108,7 +108,7 @@ describe('test camelcase keys', () => {
                     '661bb93307d35005ba96731b': {},
                 },
             },
-        };
+        }
 
         expect(camelcaseKeys(obj)).toStrictEqual({
             id: '123',
@@ -118,10 +118,10 @@ describe('test camelcase keys', () => {
                     '661bb93307d35005ba96731b': {},
                 },
             },
-        });
-    });
+        })
+    })
 
     it('case 7: start with underscore should not camelcase', () => {
-        expect(camelcase('_id')).toBe('id');
-    });
-});
+        expect(camelcase('_id')).toBe('id')
+    })
+})

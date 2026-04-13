@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/hot/:category?',
@@ -26,16 +26,16 @@ export const route: Route = {
     name: '知乎热榜',
     maintainers: ['nczitzk', 'pseudoyu', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
     if (category) {
-        ctx.set('redirect', `/zhihu/hot`);
-        return null;
+        ctx.set('redirect', `/zhihu/hot`)
+        return null
     }
 
-    const cookie = config.zhihu.cookies;
+    const cookie = config.zhihu.cookies
 
     const response = await got({
         method: 'get',
@@ -43,21 +43,21 @@ async function handler(ctx) {
         headers: {
             Cookie: cookie,
         },
-    });
+    })
 
     const items = response.data.data.map((item) => {
-        const questionId = item.target.url ? item.target.url.split('/').pop() : String(item.target.id);
+        const questionId = item.target.url ? item.target.url.split('/').pop() : String(item.target.id)
         return {
             link: `https://www.zhihu.com/question/${questionId}`,
             title: item.target.title,
             pubDate: parseDate(item.target.created * 1000),
             description: item.target.excerpt ? `<p>${item.target.excerpt}</p>` : '',
-        };
-    });
+        }
+    })
 
     return {
         title: `知乎热榜`,
         link: `https://www.zhihu.com/hot`,
         item: items,
-    };
+    }
 }

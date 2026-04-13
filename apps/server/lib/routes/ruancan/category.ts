@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import fetchFeed from './utils';
+import fetchFeed from './utils'
 
 export const route: Route = {
     path: '/category/:category?',
@@ -25,11 +25,11 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'ruancan.com/',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const currentUrl = `/cat/${category}`;
+    const category = ctx.req.param('category')
+    const currentUrl = `/cat/${category}`
 
-    return await fetchFeed(ctx, currentUrl);
+    return await fetchFeed(ctx, currentUrl)
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/topic/:id',
@@ -25,15 +25,15 @@ export const route: Route = {
     name: '话题',
     maintainers: ['brilon'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const paramId = ctx.req.param('id');
-    const apiUrl = 'https://www.infoq.cn/public/v1/article/getList';
-    const infoUrl = 'https://www.infoq.cn/public/v1/topic/getInfo';
-    const pageUrl = `https://www.infoq.cn/topic/${paramId}`;
+    const paramId = ctx.req.param('id')
+    const apiUrl = 'https://www.infoq.cn/public/v1/article/getList'
+    const infoUrl = 'https://www.infoq.cn/public/v1/topic/getInfo'
+    const pageUrl = `https://www.infoq.cn/topic/${paramId}`
 
-    const infoBody = Number.isNaN(Number(paramId)) ? { alias: paramId } : { id: Number.parseInt(paramId) };
+    const infoBody = Number.isNaN(Number(paramId)) ? { alias: paramId } : { id: Number.parseInt(paramId) }
 
     const info = await ofetch(infoUrl, {
         method: 'POST',
@@ -41,9 +41,9 @@ async function handler(ctx) {
             Referer: pageUrl,
         },
         body: infoBody,
-    });
-    const infoData = info.data;
-    const topicName = infoData.name;
+    })
+    const infoData = info.data
+    const topicName = infoData.name
 
     const resp = await ofetch(apiUrl, {
         method: 'POST',
@@ -56,10 +56,10 @@ async function handler(ctx) {
             size: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30,
             type: 0,
         },
-    });
+    })
 
-    const data = resp.data;
-    const items = await utils.ProcessFeed(data, cache);
+    const data = resp.data
+    const items = await utils.ProcessFeed(data, cache)
 
     return {
         title: `InfoQ 话题 - ${topicName}`,
@@ -67,5 +67,5 @@ async function handler(ctx) {
         image: infoData.cover,
         link: pageUrl,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/workshopsearch/:appid?/:routeParams?',
@@ -34,51 +34,51 @@ Language Parameter:
     maintainers: ['NyaaaDoge'],
 
     handler: async (ctx) => {
-        const { appid = 730, routeParams } = ctx.req.param();
+        const { appid = 730, routeParams } = ctx.req.param()
 
-        const url = `https://steamcommunity.com/workshop/browse/?appid=${appid}${routeParams ? `&${routeParams}` : ''}`;
-        const response = await ofetch(url);
-        const $ = load(response);
+        const url = `https://steamcommunity.com/workshop/browse/?appid=${appid}${routeParams ? `&${routeParams}` : ''}`
+        const response = await ofetch(url)
+        const $ = load(response)
 
-        const appName = $('div.apphub_AppName').first().text();
-        const workshopDescription = $('div.customBrowseText').first().text();
-        const appIcon = $('div.apphub_AppIcon').children('img').attr('src');
+        const appName = $('div.apphub_AppName').first().text()
+        const workshopDescription = $('div.customBrowseText').first().text()
+        const appIcon = $('div.apphub_AppIcon').children('img').attr('src')
 
         const items = $('div.workshopBrowseItems .workshopItem')
             .toArray()
             .map((item) => {
-                item = $(item);
-                const publishedFileId = item.find('a').first().attr('data-publishedfileid');
-                const entryTitle = item.find('.workshopItemTitle').first().text();
-                const authorNickName = item.find('.workshop_author_link').first().text();
-                const previewImage = item.find('.workshopItemPreviewImage').first().attr('src');
-                const ratingImage = item.find('.fileRating').first().attr('src');
+                item = $(item)
+                const publishedFileId = item.find('a').first().attr('data-publishedfileid')
+                const entryTitle = item.find('.workshopItemTitle').first().text()
+                const authorNickName = item.find('.workshop_author_link').first().text()
+                const previewImage = item.find('.workshopItemPreviewImage').first().attr('src')
+                const ratingImage = item.find('.fileRating').first().attr('src')
                 // Some items are flaged as 'accepted for game' and 'incompatible item'
-                const checkMarkImages: string[] = [];
+                const checkMarkImages: string[] = []
                 $(item)
                     .find('.workshop_checkmark')
                     .each((index, element) => {
-                        const checkMarkElement = $(element);
-                        const style = checkMarkElement.attr('style');
+                        const checkMarkElement = $(element)
+                        const style = checkMarkElement.attr('style')
                         // Only add checkmark image if it is not set to 'display: none'
                         if (!style || !style.includes('display: none;')) {
-                            checkMarkImages.push(checkMarkElement.attr('src') || '');
+                            checkMarkImages.push(checkMarkElement.attr('src') || '')
                         }
-                    });
+                    })
                 // const script_tag = item.next('script');
                 // console.log(`script_tag:${script_tag.text()}`);
-                const hoverContent = item.next('script').text();
-                const regex = /SharedFileBindMouseHover\(\s*"sharedfile_\d+",\s*(?:true|false),\s*({.*?})\s*\);/;
-                const match = hoverContent.match(regex);
+                const hoverContent = item.next('script').text()
+                const regex = /SharedFileBindMouseHover\(\s*"sharedfile_\d+",\s*(?:true|false),\s*({.*?})\s*\);/
+                const match = hoverContent.match(regex)
 
-                let entryDescription = '';
+                let entryDescription = ''
 
                 if (match) {
-                    const jsonString = match[1];
+                    const jsonString = match[1]
                     // console.log(jsonString);
-                    const data = JSON.parse(jsonString);
+                    const data = JSON.parse(jsonString)
                     if (data.id === publishedFileId) {
-                        entryDescription = data.description;
+                        entryDescription = data.description
                     }
                 }
 
@@ -87,8 +87,8 @@ Language Parameter:
                     link: `https://steamcommunity.com/sharedfiles/filedetails/?id=${publishedFileId}`,
                     description: renderToString(<SteamWorkshopDescription image={previewImage} rating={ratingImage} checkmark={checkMarkImages} description={entryDescription} />),
                     author: authorNickName,
-                };
-            });
+                }
+            })
 
         return {
             title: `${appName} Steam Workshop Content`,
@@ -96,9 +96,9 @@ Language Parameter:
             item: items,
             icon: appIcon,
             description: workshopDescription,
-        };
+        }
     },
-};
+}
 
 const SteamWorkshopDescription = ({ image, rating, checkmark, description }: { image?: string; rating?: string; checkmark?: string[]; description?: string }) => (
     <>
@@ -114,4 +114,4 @@ const SteamWorkshopDescription = ({ image, rating, checkmark, description }: { i
         ))}
         <p>{description}</p>
     </>
-);
+)

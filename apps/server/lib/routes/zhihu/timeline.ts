@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { processImage } from './utils';
+import { processImage } from './utils'
 
 export const route: Route = {
     path: '/timeline',
@@ -30,12 +30,12 @@ export const route: Route = {
     description: `::: warning
   用户关注动态需要登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const cookie = config.zhihu.cookies;
+    const cookie = config.zhihu.cookies
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少知乎用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少知乎用户登录后的 Cookie 值')
     }
     const response = await got({
         method: 'get',
@@ -47,29 +47,29 @@ async function handler(ctx) {
             desktop: true,
             limit: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 15,
         },
-    });
-    const feeds = response.data.data;
+    })
+    const feeds = response.data.data
 
-    const urlBase = 'https://zhihu.com';
+    const urlBase = 'https://zhihu.com'
     const buildLink = (e) => {
         if (!e || !e.target || !e.target.type) {
-            return '';
+            return ''
         }
-        const id = e.target.id;
+        const id = e.target.id
         switch (e.target.type) {
             case 'answer': {
-                const questionId = e.target.question.id;
-                return `${urlBase}/question/${questionId}/answer/${id}`;
+                const questionId = e.target.question.id
+                return `${urlBase}/question/${questionId}/answer/${id}`
             }
             case 'pin':
             case 'article':
-                return e.target.url;
+                return e.target.url
             case 'question':
-                return `${urlBase}/question/${id}`;
+                return `${urlBase}/question/${id}`
             default:
-                return;
+                return
         }
-    };
+    }
 
     /**
      * Returns one non-undefined/null element from a list of items
@@ -77,19 +77,19 @@ async function handler(ctx) {
      *
      * @param {Array} list a list of items to be filtered
      */
-    const getOne = (list) => list.find((e) => e !== undefined && e !== null);
+    const getOne = (list) => list.find((e) => e !== undefined && e !== null)
 
     const buildActors = (e) => {
-        const actors = e.actors;
+        const actors = e.actors
         if (!actors) {
-            return '';
+            return ''
         }
-        return actors.map((e) => e.name).join(', ');
-    };
+        return actors.map((e) => e.name).join(', ')
+    }
 
     const getContent = (content) => {
         if (!content || !Array.isArray(content)) {
-            return content;
+            return content
         }
         // content can be a string or an array of objects
         return (
@@ -99,14 +99,14 @@ async function handler(ctx) {
                 // some content may not be wrapped in tag, it will cause error when parsing
                 .map((e) => `<div>${e}</div>`)
                 .join('')
-        );
-    };
+        )
+    }
 
     const buildItem = (e) => {
         if (!e || !e.target) {
-            return {};
+            return {}
         }
-        const link = buildLink(e);
+        const link = buildLink(e)
         return {
             title: `${e.action_text_tpl.replace('{}', buildActors(e))}: ${getOne([e.target.title, e.target.question ? e.target.question.title : ''])}`,
             description: processImage(`<div>${getOne([e.target.content_html, getContent(e.target.content), e.target.detail, e.target.excerpt, ''])}</div>`),
@@ -115,38 +115,38 @@ async function handler(ctx) {
             author: e.target.author ? e.target.author.name : '',
             guid: link,
             category: [e.verb],
-        };
-    };
+        }
+    }
 
     const out = feeds
         .filter((e) => e.verb)
         .map((e) => {
             if (e && e.type && e.type === 'feed_group') {
                 // A feed group contains a list of feeds whose structure is the same as a single feed
-                const title = e.group_text.replace('{LIST_COUNT}', e.list.length);
+                const title = e.group_text.replace('{LIST_COUNT}', e.list.length)
                 const description =
                     e.list && Array.isArray(e.list)
                         ? e.list
                               .map((e) => buildItem(e))
                               .map((e) => `<a href="${e.link}"><b>${e.title}</b></a><br><p>${e.description}</p><br>`)
                               .join('')
-                        : '';
-                const pubDate = e.list && Array.isArray(e.list) && e.list.length > 0 ? parseDate(e.list[0].updated_time * 1000) : new Date();
-                const guid = e.link;
+                        : ''
+                const pubDate = e.list && Array.isArray(e.list) && e.list.length > 0 ? parseDate(e.list[0].updated_time * 1000) : new Date()
+                const guid = e.link
                 return {
                     title,
                     description,
                     pubDate,
                     guid,
                     category: [e.verb],
-                };
+                }
             }
-            return buildItem(e);
-        });
+            return buildItem(e)
+        })
 
     return {
         title: `知乎关注动态`,
         link: `https://www.zhihu.com/follow`,
         item: out,
-    };
+    }
 }

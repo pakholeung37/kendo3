@@ -1,42 +1,42 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category = 'jgzx/xwzx' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { category = 'jgzx/xwzx' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'https://www.beijingprice.cn';
-    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href;
+    const rootUrl = 'https://www.beijingprice.cn'
+    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.jgzx.rightcontent ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
-            const link = a.prop('href');
-            const msg = a.prop('msg');
+            const a = item.find('a')
+            const link = a.prop('href')
+            const msg = a.prop('msg')
 
-            const title = a.text()?.trim() ?? a.prop('title');
+            const title = a.text()?.trim() ?? a.prop('title')
 
-            let enclosureUrl;
-            let enclosureType;
+            let enclosureUrl
+            let enclosureType
 
             if (msg) {
-                const parsedMsg = JSON.parse(msg);
-                enclosureUrl = new URL(`${parsedMsg.path}${parsedMsg.fileName}`, rootUrl).href;
-                enclosureType = `application/${parsedMsg.suffix}`;
+                const parsedMsg = JSON.parse(msg)
+                enclosureUrl = new URL(`${parsedMsg.path}${parsedMsg.fileName}`, rootUrl).href
+                enclosureType = `application/${parsedMsg.suffix}`
             }
 
             return {
@@ -47,46 +47,46 @@ export const handler = async (ctx) => {
                 enclosure_url: enclosureUrl,
                 enclosure_type: enclosureType,
                 enclosure_title: enclosureUrl ? title : undefined,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.includes('www.beijingprice.cn') || item.link.endsWith('.pdf')) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('p.title').text().trim();
-                const description = $$('div.news-content').html();
+                const title = $$('p.title').text().trim()
+                const description = $$('div.news-content').html()
                 const fromSplits = $$('p.from')
                     .text()
-                    .split(/发布时间：/);
+                    .split(/发布时间：/)
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = fromSplits?.length === 0 ? item.pubDate : parseDate(fromSplits?.pop() ?? '', 'YYYY年MM月DD日');
+                item.title = title
+                item.description = description
+                item.pubDate = fromSplits?.length === 0 ? item.pubDate : parseDate(fromSplits?.pop() ?? '', 'YYYY年MM月DD日')
                 item.category = $$('div.map a')
                     .toArray()
                     .map((c) => $$(c).text())
-                    .slice(1);
-                item.author = fromSplits?.[0]?.replace(/来源：/, '') ?? undefined;
+                    .slice(1)
+                item.author = fromSplits?.[0]?.replace(/来源：/, '') ?? undefined
                 item.content = {
                     html: description,
                     text: $$('div.news-content').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('a.header-logo img').prop('src'), rootUrl).href;
+    const image = new URL($('a.header-logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -97,8 +97,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="keywords"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -139,9 +139,9 @@ export const route: Route = {
         {
             source: ['beijingprice.cn/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/beijingprice${category ? `/${category}` : ''}`;
+                return `/beijingprice${category ? `/${category}` : ''}`
             },
         },
         {
@@ -185,4 +185,4 @@ export const route: Route = {
             target: '/bmys',
         },
     ],
-};
+}

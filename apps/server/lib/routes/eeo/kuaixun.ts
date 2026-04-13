@@ -1,22 +1,22 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const baseUrl = 'https://www.eeo.com.cn';
-    const apiUrl = 'https://app.eeo.com.cn';
-    const targetUrl: string = new URL('kuaixun/', baseUrl).href;
+    const baseUrl = 'https://www.eeo.com.cn'
+    const apiUrl = 'https://app.eeo.com.cn'
+    const targetUrl: string = new URL('kuaixun/', baseUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -28,25 +28,25 @@ export const handler = async (ctx: Context): Promise<Data> => {
             page: 1,
             pageSize: limit,
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'en';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = response.data.slice(0, limit).map((item): DataItem => {
-        const title: string = item.title;
+        const title: string = item.title
         const description: string | undefined = renderDescription({
             intro: item.description,
             description: item.content,
-        });
-        const pubDate: number | string = item.published;
-        const linkUrl: string | undefined = item.url;
-        const categories: string[] = [item.catname].filter(Boolean);
-        const authors: DataItem['author'] = item.author;
-        const guid: string = item.contentid ? `eeo-${item.contentid}` : '';
-        const image: string | undefined = item.thumb;
-        const updated: number | string = pubDate;
+        })
+        const pubDate: number | string = item.published
+        const linkUrl: string | undefined = item.url
+        const categories: string[] = [item.catname].filter(Boolean)
+        const authors: DataItem['author'] = item.author
+        const guid: string = item.contentid ? `eeo-${item.contentid}` : ''
+        const image: string | undefined = item.thumb
+        const updated: number | string = pubDate
 
         const processedItem: DataItem = {
             title,
@@ -65,30 +65,30 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? timezone(parseDate(updated), +8) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1').first().text() || $$('h2.title').text() || item.title;
+                const title: string = $$('h1').first().text() || $$('h2.title').text() || item.title
                 const description: string | undefined =
                     item.description +
                     renderDescription({
                         description: $$('div.xx_boxsing, div#mainBody').html() || undefined,
-                    });
-                const pubDateStr: string | undefined = $$('h1').next().find('span').first().text() || $$('div.from').text();
-                const authors: DataItem['author'] = $$('h1').next().contents().first().text() || $$('span.showMoreAuthor').text() || item.author;
-                const upDatedStr: string | undefined = pubDateStr;
+                    })
+                const pubDateStr: string | undefined = $$('h1').next().find('span').first().text() || $$('div.from').text()
+                const authors: DataItem['author'] = $$('h1').next().contents().first().text() || $$('span.showMoreAuthor').text() || item.author
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -101,15 +101,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -121,8 +121,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="author"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/kuaixun',
@@ -150,4 +150,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

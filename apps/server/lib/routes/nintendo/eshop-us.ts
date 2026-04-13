@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { renderEshopUsDescription } from './templates/eshop-us';
+import { renderEshopUsDescription } from './templates/eshop-us'
 
 export const route: Route = {
     path: '/eshop/us',
@@ -14,7 +14,7 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'nintendo.com/store/games',
-};
+}
 
 async function handler(ctx) {
     const response = await got.post('https://u3b6gr4ua3-dsn.algolia.net/1/indexes/store_game_en_us_release_des/query', {
@@ -29,10 +29,10 @@ async function handler(ctx) {
                 facetFilters: JSON.stringify([['availability:Available now', 'availability:Pre-order']]),
             }).toString(),
         },
-    });
-    const data = response.data.hits;
+    })
+    const data = response.data.hits
 
-    ctx.set('json', response.data);
+    ctx.set('json', response.data)
     return {
         title: `Nintendo eShop（美服）新游戏`,
         link: `https://www.nintendo.com/store/games/`,
@@ -42,5 +42,5 @@ async function handler(ctx) {
             description: renderEshopUsDescription(item),
             link: `https://www.nintendo.com${item.url}`,
         })),
-    };
+    }
 }

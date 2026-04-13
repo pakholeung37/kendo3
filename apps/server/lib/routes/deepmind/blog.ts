@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/blog',
@@ -27,26 +27,26 @@ export const route: Route = {
     maintainers: ['nczitzk', 'TonyRL'],
     handler,
     url: 'deepmind.com/blog',
-};
+}
 
 async function handler() {
-    const feed = await parser.parseURL('https://www.deepmind.com/blog/rss.xml');
+    const feed = await parser.parseURL('https://www.deepmind.com/blog/rss.xml')
 
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(item.link);
-                const $ = load(data);
+                const { data } = await got(item.link)
+                const $ = load(data)
 
-                item.description = $('.e_container .c_rich-text__cms').html();
+                item.description = $('.e_container .c_rich-text__cms').html()
 
-                delete item.content;
-                delete item.contentSnippet;
-                delete item.isoDate;
-                return item;
-            })
-        )
-    );
+                delete item.content
+                delete item.contentSnippet
+                delete item.isoDate
+                return item
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -55,5 +55,5 @@ async function handler() {
         link: `${feed.link}/blog`,
         item: items,
         language: 'en',
-    };
+    }
 }

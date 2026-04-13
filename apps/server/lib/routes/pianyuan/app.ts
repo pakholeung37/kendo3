@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/index/:media?',
@@ -36,36 +36,36 @@ export const route: Route = {
     description: `| 电影 | 剧集 |
 | ---- | ---- |
 | mv   | tv   |`,
-};
+}
 
 async function handler(ctx) {
-    const media = ctx.req.param('media') ?? -1;
-    const link_base = 'https://pianyuan.org/';
-    let description = '电影和剧集';
-    let link = link_base;
+    const media = ctx.req.param('media') ?? -1
+    const link_base = 'https://pianyuan.org/'
+    let description = '电影和剧集'
+    let link = link_base
     if (media !== -1) {
-        link = link_base + `?cat=${media}`;
+        link = link_base + `?cat=${media}`
         if (media === 'mv') {
-            description = '电影';
+            description = '电影'
         } else if (media === 'tv') {
-            description = '剧集';
+            description = '剧集'
         } else {
-            link = link_base;
+            link = link_base
         }
     }
 
-    const response = await utils.request(link, cache);
-    const $ = load(response.data);
+    const response = await utils.request(link, cache)
+    const $ = load(response.data)
     const detailLinks = $('#main-container > div > div.col-md-10 > table > tbody > tr')
         .toArray()
-        .map((tr) => $(tr).find('td.dt.prel.nobr > a').attr('href'));
-    detailLinks.shift();
-    const items = await utils.ProcessFeed(detailLinks, cache);
+        .map((tr) => $(tr).find('td.dt.prel.nobr > a').attr('href'))
+    detailLinks.shift()
+    const items = await utils.ProcessFeed(detailLinks, cache)
 
     return {
         title: '片源网',
         description,
         link: link_base,
         item: items,
-    };
+    }
 }

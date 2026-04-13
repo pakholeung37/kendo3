@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getCookie, rootUrl } from './utils';
+import { getCookie, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/recommend',
@@ -30,29 +30,29 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'yxdown.com/',
-};
+}
 
 async function handler() {
-    const currentUrl = `${rootUrl}/news/`;
-    const cookie = await getCookie();
+    const currentUrl = `${rootUrl}/news/`
+    const cookie = await getCookie()
     const response = await got(currentUrl, {
         headers: {
             cookie,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('ul li a b')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.parent().attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -61,22 +61,22 @@ async function handler() {
                     headers: {
                         cookie,
                     },
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                content('h1, .intro').remove();
+                content('h1, .intro').remove()
 
-                item.description = content('.news').html();
-                item.pubDate = timezone(parseDate(content('meta[property="og:release_date"]').attr('content')), +8);
+                item.description = content('.news').html()
+                item.pubDate = timezone(parseDate(content('meta[property="og:release_date"]').attr('content')), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '精彩推荐 - 游讯网',
         link: currentUrl,
         item: items,
-    };
+    }
 }

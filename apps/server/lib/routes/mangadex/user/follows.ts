@@ -1,14 +1,14 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import getToken from '../_access';
-import { getMangaChapters, getMangaMetaByIds } from '../_feed';
+import getToken from '../_access'
+import { getMangaChapters, getMangaMetaByIds } from '../_feed'
 
-type FollowType = 'reading' | 'plan-to-read' | 'completed' | 'on-hold' | 're-reading' | 'dropped';
-type StatusType = 'reading' | 'plan_to_read' | 'completed' | 'on_hold' | 're_reading' | 'dropped';
-type LabelType = 'Reading' | 'Plan to Read' | 'Completed' | 'On Hold' | 'Re-reading' | 'Dropped';
+type FollowType = 'reading' | 'plan-to-read' | 'completed' | 'on-hold' | 're-reading' | 'dropped'
+type StatusType = 'reading' | 'plan_to_read' | 'completed' | 'on_hold' | 're_reading' | 'dropped'
+type LabelType = 'Reading' | 'Plan to Read' | 'Completed' | 'On Hold' | 'Re-reading' | 'Dropped'
 
 const statusMap: Record<FollowType, StatusType> = {
     reading: 'reading',
@@ -17,7 +17,7 @@ const statusMap: Record<FollowType, StatusType> = {
     'on-hold': 'on_hold',
     're-reading': 're_reading',
     dropped: 'dropped',
-};
+}
 
 const labelMap: Record<FollowType, LabelType> = {
     reading: 'Reading',
@@ -26,7 +26,7 @@ const labelMap: Record<FollowType, LabelType> = {
     'on-hold': 'On Hold',
     're-reading': 'Re-reading',
     dropped: 'Dropped',
-};
+}
 
 export const route: Route = {
     path: '/user/follow/:type?',
@@ -88,16 +88,16 @@ It's recommended to use the \`/mangadex/mdlist/:listId?\` route instead for bett
         nsfw: true,
     },
     handler,
-};
+}
 
 async function handler(ctx) {
-    const userFollowUrl = 'https://api.mangadex.org/manga/status';
+    const userFollowUrl = 'https://api.mangadex.org/manga/status'
 
-    const { type } = ctx.req.param();
+    const { type } = ctx.req.param()
 
-    const followType = (type || 'reading') as FollowType;
+    const followType = (type || 'reading') as FollowType
 
-    const accessToken = await getToken();
+    const accessToken = await getToken()
 
     const statuses = (await cache.tryGet(
         `mangadex:user-follow-${followType}`,
@@ -107,45 +107,45 @@ async function handler(ctx) {
                     Authorization: `Bearer ${accessToken}`,
                     'User-Agent': config.trueUA,
                 },
-            });
+            })
 
-            const statuses = response?.data?.statuses;
+            const statuses = response?.data?.statuses
             if (!statuses) {
-                throw new Error('Failed to retrieve user follows from MangaDex API.');
+                throw new Error('Failed to retrieve user follows from MangaDex API.')
             }
 
-            return statuses;
+            return statuses
         },
         config.cache.routeExpire,
-        false
-    )) as Record<string, string>;
+        false,
+    )) as Record<string, string>
 
-    const mangaIds = filterByValue(statuses, statusMap[followType]);
+    const mangaIds = filterByValue(statuses, statusMap[followType])
 
-    const mangaMetaMap = await getMangaMetaByIds(mangaIds);
+    const mangaMetaMap = await getMangaMetaByIds(mangaIds)
 
-    const mangaChapters = await Promise.all(mangaIds.map((id) => getMangaChapters(id, undefined, 10)));
+    const mangaChapters = await Promise.all(mangaIds.map((id) => getMangaChapters(id, undefined, 10)))
 
     const mangas = mangaChapters.flatMap((chapters, index) => {
-        const mangaMeta = mangaMetaMap.get(mangaIds[index]);
+        const mangaMeta = mangaMetaMap.get(mangaIds[index])
         return chapters.map((chapter) => ({
             title: mangaMeta?.title ?? 'Unknown',
             link: chapter.link,
             pubDate: chapter.pubDate,
             description: chapter.title ?? '',
             image: mangaMeta?.cover ?? '',
-        }));
-    });
+        }))
+    })
 
     return {
         title: `User Follows - ${labelMap[followType]} Mangas`,
         link: `https://mangadex.org/titles/follows?tab=${followType}`,
         description: 'Followed Mangas',
         item: mangas,
-    };
+    }
 }
 
 const filterByValue = (record: Record<string, string>, value: string): string[] =>
     Object.entries(record)
         .filter(([, v]) => v === value)
-        .map(([k]) => k);
+        .map(([k]) => k)

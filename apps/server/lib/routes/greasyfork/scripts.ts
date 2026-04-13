@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/:language/:domain?', '/scripts/sort/:sort/:language?'],
@@ -33,15 +33,15 @@ export const route: Route = {
 | created         | Created date   |
 | updated         | Updated date   |
 | name            | Name           |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') === 'all' ? 'zh-CN' : ctx.req.param('language') || 'zh-CN';
-    const domain = ctx.req.param('domain');
-    const filter_locale = ctx.req.param('language') === 'all' ? 0 : 1;
-    const sort = ctx.req.param('sort') ?? 'updated';
-    const url = domain ? `/by-site/${domain}` : '';
-    const currentUrl = `https://greasyfork.org/${language}/scripts${url}`;
+    const language = ctx.req.param('language') === 'all' ? 'zh-CN' : ctx.req.param('language') || 'zh-CN'
+    const domain = ctx.req.param('domain')
+    const filter_locale = ctx.req.param('language') === 'all' ? 0 : 1
+    const sort = ctx.req.param('sort') ?? 'updated'
+    const url = domain ? `/by-site/${domain}` : ''
+    const currentUrl = `https://greasyfork.org/${language}/scripts${url}`
     const res = await got({
         method: 'get',
         url: currentUrl,
@@ -49,17 +49,17 @@ async function handler(ctx) {
             filter_locale,
             sort,
         },
-    });
-    const $ = load(res.data);
-    const list = $('.script-list').find('article');
+    })
+    const $ = load(res.data)
+    const list = $('.script-list').find('article')
 
     return {
         title: $('title').first().text(),
         link: currentUrl,
         description: $('meta[name=description]').attr('content'),
         item: list?.toArray().map((item) => {
-            item = $(item);
-            const h2 = item.find('h2');
+            item = $(item)
+            const h2 = item.find('h2')
             return {
                 title: h2.find('a').text(),
                 description: h2.find('.description').text(),
@@ -71,7 +71,7 @@ async function handler(ctx) {
                     .toArray()
                     .map((a) => $(a).text())
                     .join(', '),
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import cacheIn from './cache';
-import utils from './utils';
+import cacheIn from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/vsearch/:kw/:order?/:embed?/:tid?',
@@ -41,27 +41,27 @@ export const route: Route = {
 | 全部分区 | 动画 | 番剧 | 国创 | 音乐 | 舞蹈 | 游戏 | 知识 | 科技 | 运动 | 汽车 | 生活 | 美食 | 动物圈 | 鬼畜 | 时尚 | 资讯 | 娱乐 | 影视 | 纪录片 | 电影 | 电视剧 |
 | -------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ------ | ---- | ---- | ---- | ---- | ---- | ------ | ---- | ------ |
 | 0        | 1    | 13   | 167  | 3    | 129  | 4    | 36   | 188  | 234  | 223  | 160  | 211  | 217    | 119  | 155  | 202  | 5    | 181  | 177    | 23   | 11     |`,
-};
+}
 
 const getIframe = (data, embed: boolean = true) => {
     if (!embed) {
-        return '';
+        return ''
     }
-    const aid = data?.aid;
-    const bvid = data?.bvid;
+    const aid = data?.aid
+    const bvid = data?.bvid
     if (aid === undefined && bvid === undefined) {
-        return '';
+        return ''
     }
-    return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid);
-};
+    return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid)
+}
 
 async function handler(ctx) {
-    const kw = ctx.req.param('kw');
-    const order = ctx.req.param('order') || 'pubdate';
-    const embed = !ctx.req.param('embed');
-    const kw_url = encodeURIComponent(kw);
-    const tids = ctx.req.param('tid') ?? 0;
-    const cookie = await cacheIn.getCookie();
+    const kw = ctx.req.param('kw')
+    const order = ctx.req.param('order') || 'pubdate'
+    const embed = !ctx.req.param('embed')
+    const kw_url = encodeURIComponent(kw)
+    const tids = ctx.req.param('tid') ?? 0
+    const cookie = await cacheIn.getCookie()
 
     const response = await got('https://api.bilibili.com/x/web-interface/search/type', {
         headers: {
@@ -75,8 +75,8 @@ async function handler(ctx) {
             order,
             tids,
         },
-    });
-    const data = response.data.data.result;
+    })
+    const data = response.data.data.result
 
     return {
         title: `${kw} - bilibili`,
@@ -86,9 +86,9 @@ async function handler(ctx) {
             const l = item.duration
                 .split(':')
                 .map((i) => [i.length > 1 ? i : ('00' + i).slice(-2)])
-                .join(':');
-            const des = item.description.replaceAll('\n', '<br/>');
-            const img = item.pic.replaceAll(/^\/\//g, 'http://');
+                .join(':')
+            const des = item.description.replaceAll('\n', '<br/>')
+            const img = item.pic.replaceAll(/^\/\//g, 'http://')
             return {
                 title: item.title.replaceAll(/<[ /]?em[^>]*>/g, ''),
                 author: item.author,
@@ -105,7 +105,7 @@ async function handler(ctx) {
                 pubDate: parseDate(item.pubdate, 'X'),
                 guid: item.arcurl,
                 link: item.arcurl,
-            };
+            }
         }),
-    };
+    }
 }

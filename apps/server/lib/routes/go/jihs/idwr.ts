@@ -1,38 +1,38 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { year = new Date().getFullYear() } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { year = new Date().getFullYear() } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://id-info.jihs.go.jp';
-    const targetUrl: string = new URL(`surveillance/idwr/jp/idwr/${year}/`, baseUrl).href;
+    const baseUrl = 'https://id-info.jihs.go.jp'
+    const targetUrl: string = new URL(`surveillance/idwr/jp/idwr/${year}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'ja';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'ja'
 
-    const author: string = $('span.drawer-branding__subtitle').text();
+    const author: string = $('span.drawer-branding__subtitle').text()
 
     const items: DataItem[] = $('a.sizeview')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $pEl: Cheerio<Element> = $el.parent('p');
+            const $el: Cheerio<Element> = $(el)
+            const $pEl: Cheerio<Element> = $el.parent('p')
 
-            const title: string = $pEl.prev('h2').text();
-            const description: string | undefined = $pEl.html() ?? undefined;
-            const pubDateStr: string | undefined = $pEl.text().match(/〔(\d{4}年\d{1,2}月\d{1,2}日)発行〕/)?.[1];
-            const linkUrl: string | undefined = $el.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $pEl.prev('h2').text()
+            const description: string | undefined = $pEl.html() ?? undefined
+            const pubDateStr: string | undefined = $pEl.text().match(/〔(\d{4}年\d{1,2}月\d{1,2}日)発行〕/)?.[1]
+            const linkUrl: string | undefined = $el.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             let processedItem: DataItem = {
                 title,
@@ -46,14 +46,14 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: upDatedStr ? parseDate(upDatedStr, 'YYYY年M月D日') : undefined,
                 language,
-            };
+            }
 
-            const $enclosureEl: Cheerio<Element> = $el;
-            const enclosureUrl: string | undefined = linkUrl ? new URL(linkUrl, targetUrl).href : undefined;
+            const $enclosureEl: Cheerio<Element> = $el
+            const enclosureUrl: string | undefined = linkUrl ? new URL(linkUrl, targetUrl).href : undefined
 
             if (enclosureUrl) {
-                const enclosureType = `application/${enclosureUrl.split(/\./).pop()}`;
-                const enclosureTitle: string = $enclosureEl.text();
+                const enclosureType = `application/${enclosureUrl.split(/\./).pop()}`
+                const enclosureTitle: string = $enclosureEl.text()
 
                 processedItem = {
                     ...processedItem,
@@ -61,11 +61,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     enclosure_type: enclosureType,
                     enclosure_title: enclosureTitle || title,
                     enclosure_length: undefined,
-                };
+                }
             }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -77,8 +77,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/jihs/idwr/:year?',
@@ -109,9 +109,9 @@ To subscribe to [感染症発生動向調査週報](https://id-info.jihs.go.jp/s
         {
             source: ['id-info.jihs.go.jp/surveillance/idwr/jp/idwr/:year'],
             target: (params) => {
-                const year: string = params.year;
+                const year: string = params.year
 
-                return `/go/jihs/idwr${year ? `/${year}` : ''}`;
+                return `/go/jihs/idwr${year ? `/${year}` : ''}`
             },
         },
     ],
@@ -134,4 +134,4 @@ To subscribe to [感染症発生動向調査週報](https://id-info.jihs.go.jp/s
 :::
 `,
     },
-};
+}

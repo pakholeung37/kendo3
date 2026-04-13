@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/calendar/:section?',
@@ -24,9 +24,9 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'wallstreetcn.com/calendar',
-};
+}
 
-const rootUrl = 'https://wallstreetcn.com';
+const rootUrl = 'https://wallstreetcn.com'
 
 const MacrodataSuffix = {
     CA: 'CA10YR.OTC',
@@ -38,16 +38,16 @@ const MacrodataSuffix = {
     JP: 'USDJPY.OTC',
     UK: 'UK100.OTC',
     US: 'DXY.OTC',
-};
+}
 
-const getMacrodataUrl = (countryId, wscnTicker) => `${rootUrl}/data-analyse/${wscnTicker}/${MacrodataSuffix[countryId]}`;
+const getMacrodataUrl = (countryId, wscnTicker) => `${rootUrl}/data-analyse/${wscnTicker}/${MacrodataSuffix[countryId]}`
 
 async function handler(ctx) {
-    const { section = 'macrodatas' } = ctx.req.param();
+    const { section = 'macrodatas' } = ctx.req.param()
 
-    const link = `${rootUrl}/calendar`;
-    const apiRootUrl = section === 'macrodatas' ? 'https://api-one-wscn.awtmt.com' : 'https://api-ddc-wscn.awtmt.com';
-    const apiUrl = section === 'macrodatas' ? `${apiRootUrl}/apiv1/finance/macrodatas` : `${apiRootUrl}/finance/report/list`;
+    const link = `${rootUrl}/calendar`
+    const apiRootUrl = section === 'macrodatas' ? 'https://api-one-wscn.awtmt.com' : 'https://api-ddc-wscn.awtmt.com'
+    const apiUrl = section === 'macrodatas' ? `${apiRootUrl}/apiv1/finance/macrodatas` : `${apiRootUrl}/finance/report/list`
 
     const response = await ofetch(apiUrl, {
         query:
@@ -57,7 +57,7 @@ async function handler(ctx) {
                       end: Math.trunc(new Date().setHours(23, 59, 59, 999) / 1000),
                   }
                 : undefined,
-    });
+    })
 
     const items =
         section === 'macrodatas'
@@ -78,7 +78,7 @@ async function handler(ctx) {
                       link,
                       guid: item.id,
                       pubDate: parseDate(item.public_date, 'X'),
-                  }));
+                  }))
 
     return {
         title: '财经日历 - 华尔街见闻',
@@ -86,5 +86,5 @@ async function handler(ctx) {
         item: items,
         itunes_author: '华尔街见闻',
         image: 'https://static.wscn.net/wscn/_static/favicon.png',
-    };
+    }
 }

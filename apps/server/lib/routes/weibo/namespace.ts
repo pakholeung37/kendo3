@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '微博',
@@ -45,4 +45,4 @@ export const namespace: Namespace = {
 
 <img loading="lazy" src="/img/readable-weibo.png" alt="微博小秘书的可读微博 RSS" />`,
     lang: 'zh-CN',
-};
+}

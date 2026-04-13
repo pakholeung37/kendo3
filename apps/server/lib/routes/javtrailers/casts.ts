@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, getItem, parseList, puppeteerFetch } from './utils';
+import { baseUrl, getItem, parseList, puppeteerFetch } from './utils'
 
 export const route: Route = {
     path: '/casts/:cast',
@@ -22,19 +22,19 @@ export const route: Route = {
         nsfw: true,
         requirePuppeteer: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { cast } = ctx.req.param();
+    const { cast } = ctx.req.param()
 
-    const browser = await puppeteer();
-    const response = await puppeteerFetch(`${baseUrl}/api/casts/${cast}?page=0`, browser);
+    const browser = await puppeteer()
+    const response = await puppeteerFetch(`${baseUrl}/api/casts/${cast}?page=0`, browser)
 
-    const list = parseList(response.videos);
+    const list = parseList(response.videos)
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item, browser))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item, browser))))
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: `Watch ${response.cast.name} Jav Online | Japanese Adult Video - JavTrailers.com`,
@@ -42,5 +42,5 @@ async function handler(ctx) {
         image: response.cast.avatar,
         link: `${baseUrl}/casts/${cast}`,
         item: items,
-    };
+    }
 }

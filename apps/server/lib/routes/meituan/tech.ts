@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
-const rootUrl = 'https://tech.meituan.com/';
+const rootUrl = 'https://tech.meituan.com/'
 
 export const route: Route = {
     path: '/tech',
@@ -30,27 +30,27 @@ export const route: Route = {
     url: 'tech.meituan.com',
     maintainers: ['ktKongTong', 'cscnk52'],
     handler,
-};
+}
 
 async function handler() {
-    const rssUrl = `${rootUrl}feed/`;
-    const feed = await parser.parseURL(rssUrl);
+    const rssUrl = `${rootUrl}feed/`
+    const feed = await parser.parseURL(rssUrl)
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await ofetch(item.link);
-                const $ = load(response);
-                const content = $('div.content').html();
+                const response = await ofetch(item.link)
+                const $ = load(response)
+                const content = $('div.content').html()
                 return {
                     title: item.title,
                     link: item.link,
                     pubDate: item.pubDate,
                     author: item.creator,
                     description: content,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -58,5 +58,5 @@ async function handler() {
         description: feed.description,
         language: feed.language,
         item: items,
-    };
+    }
 }

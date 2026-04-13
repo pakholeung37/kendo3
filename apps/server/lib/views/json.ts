@@ -1,4 +1,4 @@
-import type { Data } from '@/types';
+import type { Data } from '@/types'
 
 /**
  * This function should be used by RSSHub middleware only.
@@ -45,8 +45,8 @@ const json = (data: Data) => {
                     : undefined),
             _extra: item._extra || undefined,
         })),
-    };
-    return JSON.stringify(jsonFeed);
-};
+    }
+    return JSON.stringify(jsonFeed)
+}
 
-export default json;
+export default json

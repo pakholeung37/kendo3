@@ -1,29 +1,29 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { getAcwScV2ByArg1 } from '../5eplay/utils';
+import { getAcwScV2ByArg1 } from '../5eplay/utils'
 
-const host = 'https://segmentfault.com';
+const host = 'https://segmentfault.com'
 
 const acw_sc__v2 = (link, tryGet) =>
     tryGet(
         'segmentfault:acw_sc__v2',
         async () => {
-            const response = await ofetch(link);
+            const response = await ofetch(link)
 
-            let acw_sc__v2 = '';
-            const matches = response.match(/var arg1='(.*?)';/);
+            let acw_sc__v2 = ''
+            const matches = response.match(/var arg1='(.*?)';/)
             if (matches) {
-                acw_sc__v2 = getAcwScV2ByArg1(matches[1]);
+                acw_sc__v2 = getAcwScV2ByArg1(matches[1])
             }
-            return acw_sc__v2;
+            return acw_sc__v2
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 const parseList = (data) =>
     data.map((item) => ({
@@ -32,28 +32,28 @@ const parseList = (data) =>
         author: item.user.name,
         pubDate: parseDate(item.created || item.modified, 'X'),
         description: item.excerpt,
-    }));
+    }))
 
 const parseItems = (cookie, item, tryGet) =>
     tryGet(item.link, async () => {
-        let response;
+        let response
         try {
             response = await ofetch(item.link, {
                 headers: {
                     cookie: `acw_sc__v2=${cookie};`,
                 },
-            });
-            const content = load(response);
+            })
+            const content = load(response)
 
-            item.description = content('article').html();
+            item.description = content('article').html()
             item.category = content('.badge-tag')
                 .toArray()
-                .map((item) => content(item).text());
+                .map((item) => content(item).text())
         } catch {
             // ignore
         }
 
-        return item;
-    });
+        return item
+    })
 
-export { acw_sc__v2, host, parseItems, parseList };
+export { acw_sc__v2, host, parseItems, parseList }

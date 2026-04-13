@@ -1,44 +1,44 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 interface WeatherForecastItem {
-    fxDate: string;
-    textDay: string;
-    textNight: string;
-    tempMin: number;
-    tempMax: number;
-    humidity: number;
-    aqi: number;
-    aqiCategory: string;
-    pressure: number;
-    uvIndex: number;
-    windDirDay: string;
-    windScaleDay: number;
-    windSpeedDay: number;
-    windDirNight: string;
-    windScaleNight: number;
-    windSpeedNight: number;
-    vis: number;
-    sunrise: string;
-    sunset: string;
-    moonPhase: string;
-    moonset: string;
+    fxDate: string
+    textDay: string
+    textNight: string
+    tempMin: number
+    tempMax: number
+    humidity: number
+    aqi: number
+    aqiCategory: string
+    pressure: number
+    uvIndex: number
+    windDirDay: string
+    windScaleDay: number
+    windSpeedDay: number
+    windDirNight: string
+    windScaleNight: number
+    windSpeedNight: number
+    vis: number
+    sunrise: string
+    sunset: string
+    moonPhase: string
+    moonset: string
 }
 
 interface NowItem {
-    text: string;
-    temp: number;
-    feelsLike: number;
-    windDir: string;
-    windScale: number;
-    windSpeed: number;
-    humidity: number;
-    pressure: number;
-    precip: number;
-    vis: number;
+    text: string
+    temp: number
+    feelsLike: number
+    windDir: string
+    windScale: number
+    windSpeed: number
+    humidity: number
+    pressure: number
+    precip: number
+    vis: number
 }
 
-const render3DaysDescription = (item: WeatherForecastItem) => renderToString(<WeatherForecast item={item} />);
-const renderNowDescription = (item: NowItem) => renderToString(<Now item={item} />);
+const render3DaysDescription = (item: WeatherForecastItem) => renderToString(<WeatherForecast item={item} />)
+const renderNowDescription = (item: NowItem) => renderToString(<Now item={item} />)
 
 const WeatherForecast = ({ item }: { item: WeatherForecastItem }) => (
     <p>
@@ -64,7 +64,7 @@ const WeatherForecast = ({ item }: { item: WeatherForecastItem }) => (
         <br />
         月相：{item.moonPhase} 月出：{item.sunrise} 月落：{item.moonset}
     </p>
-);
+)
 
 const Now = ({ item }: { item: NowItem }) => (
     <p>
@@ -84,6 +84,6 @@ const Now = ({ item }: { item: NowItem }) => (
         <br />
         能见度：{item.vis}km
     </p>
-);
+)
 
-export { type NowItem, render3DaysDescription, renderNowDescription, type WeatherForecastItem };
+export { type NowItem, render3DaysDescription, renderNowDescription, type WeatherForecastItem }

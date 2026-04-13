@@ -1,11 +1,11 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import type { EncryptedResponse, WebBlog } from './types';
-import { decrypt, encrypt } from './utils';
+import type { EncryptedResponse, WebBlog } from './types'
+import { decrypt, encrypt } from './utils'
 
 export const route: Route = {
     path: '/search',
@@ -19,11 +19,11 @@ export const route: Route = {
             source: ['www.stream-capital.com/search'],
         },
     ],
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.stream-capital.com';
-    const apiBaseUrl = 'https://api.yuanchuan.cn';
+    const baseUrl = 'https://www.stream-capital.com'
+    const apiBaseUrl = 'https://api.yuanchuan.cn'
 
     const response = await ofetch<EncryptedResponse>(`${apiBaseUrl}/yc/webbloglist`, {
         method: 'POST',
@@ -35,9 +35,9 @@ async function handler() {
                 type: 0,
                 name: null,
                 page: 1,
-            })
+            }),
         ),
-    });
+    })
 
     const list = (JSON.parse(decrypt(response.data)).list as WebBlog[]).map((item) => ({
         title: item.title,
@@ -47,7 +47,7 @@ async function handler() {
         description: item.content,
         category: item.tags.map((t) => t.tagName),
         id: item.id,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -60,21 +60,21 @@ async function handler() {
                     body: encrypt(
                         JSON.stringify({
                             blogId: item.id,
-                        })
+                        }),
                     ),
-                });
+                })
 
-                item.description = (JSON.parse(decrypt(response.data)) as WebBlog).detailInfo.articleContent;
+                item.description = (JSON.parse(decrypt(response.data)) as WebBlog).detailInfo.articleContent
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '最新 - 远川研究所',
         link: `${baseUrl}/search`,
         language: 'zh',
         item: items,
-    };
+    }
 }

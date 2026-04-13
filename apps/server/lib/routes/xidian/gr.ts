@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://gr.xidian.edu.cn';
+const baseUrl = 'https://gr.xidian.edu.cn'
 
 const struct = {
     home_zxdt: {
@@ -171,7 +171,7 @@ const struct = {
         name: '学位授予-资料下载',
         path: '/xwsy/zlxz',
     },
-};
+}
 
 export const route: Route = {
     path: '/gr/:category?',
@@ -222,18 +222,18 @@ export const route: Route = {
             source: ['gr.xidian.edu.cn/'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const { category = 'home_tzgg1' } = ctx.req.param();
-    const url = `${baseUrl}/${struct[category].path}.htm`;
+    const { category = 'home_tzgg1' } = ctx.req.param()
+    const url = `${baseUrl}/${struct[category].path}.htm`
     const response = await got(url, {
         headers: {
             referer: baseUrl,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     if (category === 'yyjs_jbqk' || category === 'yyjs_jbqk1' || category === 'yyjs_jbqk2' || category === 'yyjs_jbqk4') {
         return {
@@ -246,18 +246,18 @@ async function handler(ctx) {
                     description: $('.main-right').html(),
                 },
             ],
-        };
+        }
     } else {
         let items = $(struct[category].selector.list)
             .toArray()
             .map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.find('a').text(),
                     link: new URL(item.find('a').attr('href'), baseUrl).href,
                     pubDate: parseDate(item.find('span').text()),
-                };
-            });
+                }
+            })
 
         items = await Promise.all(
             items.map((item) =>
@@ -266,19 +266,19 @@ async function handler(ctx) {
                         headers: {
                             referer: url,
                         },
-                    });
-                    const content = load(detailResponse.data);
-                    content('.content-sxt').remove();
-                    item.description = content('[name="_newscontent_fromname"]').html();
-                    return item;
-                })
-            )
-        );
+                    })
+                    const content = load(detailResponse.data)
+                    content('.content-sxt').remove()
+                    item.description = content('[name="_newscontent_fromname"]').html()
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: $('title').text(),
             link: url,
             item: items,
-        };
+        }
     }
 }

@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const md = MarkdownIt({ html: true });
+const md = MarkdownIt({ html: true })
 
 export const route: Route = {
     path: '/:community/:sort?',
@@ -58,42 +58,42 @@ export const route: Route = {
     name: 'Community',
     maintainers: ['wb14123', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') ?? 'Active';
-    const community = ctx.req.param('community');
-    const communitySlices = community.split('@');
+    const sort = ctx.req.param('sort') ?? 'Active'
+    const community = ctx.req.param('community')
+    const communitySlices = community.split('@')
     if (communitySlices.length !== 2) {
-        throw new InvalidParameterError(`Invalid community: ${community}`);
+        throw new InvalidParameterError(`Invalid community: ${community}`)
     }
-    const instance = community.split('@')[1];
-    const allowedDomain = ['lemmy.world', 'lemm.ee', 'lemmy.ml', 'sh.itjust.works', 'feddit.de', 'hexbear.net', 'beehaw.org', 'lemmynsfw.com', 'lemmy.ca', 'programming.dev'];
+    const instance = community.split('@')[1]
+    const allowedDomain = ['lemmy.world', 'lemm.ee', 'lemmy.ml', 'sh.itjust.works', 'feddit.de', 'hexbear.net', 'beehaw.org', 'lemmynsfw.com', 'lemmy.ca', 'programming.dev']
     if (!config.feature.allow_user_supply_unsafe_domain && !allowedDomain.includes(new URL(`http://${instance}/`).hostname)) {
-        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
     }
 
-    const communityUrl = `https://${instance}/api/v3/community?name=${community}`;
+    const communityUrl = `https://${instance}/api/v3/community?name=${community}`
     const communityData = await cache.tryGet(communityUrl, async () => {
-        const result = await got({ method: 'get', url: communityUrl, headers: { 'Content-Type': 'application/json' } });
-        return result.data.community_view.community;
-    });
+        const result = await got({ method: 'get', url: communityUrl, headers: { 'Content-Type': 'application/json' } })
+        return result.data.community_view.community
+    })
 
-    const postUrl = `https://${instance}/api/v3/post/list?type_=All&sort=${sort}&community_name=${community}&limit=50`;
+    const postUrl = `https://${instance}/api/v3/post/list?type_=All&sort=${sort}&community_name=${community}&limit=50`
     const postData = await cache.tryGet(
         postUrl,
         async () => {
-            const result = await got({ method: 'get', url: postUrl, headers: { 'Content-Type': 'application/json' } });
-            return result.data;
+            const result = await got({ method: 'get', url: postUrl, headers: { 'Content-Type': 'application/json' } })
+            return result.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = postData.posts.map((e) => {
-        const post = e.post;
-        const creator = e.creator;
-        const counts = e.counts;
+        const post = e.post
+        const creator = e.creator
+        const counts = e.counts
         const item = {
             title: post.name,
             author: creator.name,
@@ -103,21 +103,21 @@ async function handler(ctx) {
             comments: 0,
             upvotes: 0,
             downvotes: 0,
-        };
-        const url = post.url;
-        const urlContent = url ? `<p><a href="${url}">${url}</a></p>` : '';
-        const body = post.body ? md.render(post.body) : '';
-        item.description = urlContent + body;
-        item.comments = counts.comments;
-        item.upvotes = counts.upvotes;
-        item.downvotes = counts.downvotes;
-        return item;
-    });
+        }
+        const url = post.url
+        const urlContent = url ? `<p><a href="${url}">${url}</a></p>` : ''
+        const body = post.body ? md.render(post.body) : ''
+        item.description = urlContent + body
+        item.comments = counts.comments
+        item.upvotes = counts.upvotes
+        item.downvotes = counts.downvotes
+        return item
+    })
 
     return {
         title: `${community} - ${sort} posts`,
         description: communityData.description,
         link: communityData.actor_id,
         item: items,
-    };
+    }
 }

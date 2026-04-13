@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { ProcessFeed, ProcessForm } from './utils';
+import { ProcessFeed, ProcessForm } from './utils'
 
 export const route: Route = {
     path: '/user/:id?',
@@ -16,19 +16,19 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['auto-bot-ty'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const rootUrl = 'https://www.iyingdi.com';
-    const listUrl = 'https://api.iyingdi.com/web/user/event-list';
+    const id = ctx.req.param('id')
+    const rootUrl = 'https://www.iyingdi.com'
+    const listUrl = 'https://api.iyingdi.com/web/user/event-list'
     const form = {
         event_types: 'content',
         page: 1,
         size: 15,
         timestamp: '',
         user_id: id,
-    };
+    }
 
     const response = await got({
         method: 'post',
@@ -41,10 +41,10 @@ async function handler(ctx) {
             Referer: `${rootUrl}/tz/people/${id}/postList`,
         },
         form: ProcessForm(form),
-    });
+    })
 
-    const { data } = response.data;
-    const { nickname } = data[0].author;
+    const { data } = response.data
+    const { nickname } = data[0].author
 
     const articleList = data.map((item) => ({
         title: item.event_data.title,
@@ -52,13 +52,13 @@ async function handler(ctx) {
         link: `${rootUrl}/tz/post/${item.event_data.post_id}`,
         guid: item.event_data.title,
         postId: item.event_data.post_id,
-    }));
+    }))
 
-    const items = await ProcessFeed(cache, articleList);
+    const items = await ProcessFeed(cache, articleList)
 
     return {
         title: `${nickname} - 旅法师营地 `,
         link: `${rootUrl}/tz/people/${id}`,
         item: items,
-    };
+    }
 }

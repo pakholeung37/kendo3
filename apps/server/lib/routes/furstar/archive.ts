@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/archive/:lang?',
@@ -26,13 +26,13 @@ export const route: Route = {
     name: '已经出售的角色列表',
     maintainers: ['NeverBehave'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const base = utils.langBase(ctx.req.param('lang'));
-    const url = `${base}/archive.php`;
-    const res = await got(url);
-    const info = utils.fetchAllCharacters(res.data, base);
+    const base = utils.langBase(ctx.req.param('lang'))
+    const url = `${base}/archive.php`
+    const res = await got(url)
+    const info = utils.fetchAllCharacters(res.data, base)
 
     return {
         title: 'Furstar 已出售角色',
@@ -46,5 +46,5 @@ async function handler(ctx) {
             pubDate: parseDate(new Date().toISOString()), // No Time for now
             link: e.detailPage,
         })),
-    };
+    }
 }

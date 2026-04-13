@@ -1,17 +1,17 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type LocationLink = {
-    length: number;
-    attr: (key: string) => string | undefined;
-    text: () => string;
-};
+    length: number
+    attr: (key: string) => string | undefined
+    text: () => string
+}
 
 type PostData = {
-    media?: string;
-    desc?: string;
-    locationLink?: LocationLink;
-};
+    media?: string
+    desc?: string
+    locationLink?: LocationLink
+}
 
 const PicukiPost = ({ media, desc, locationLink }: PostData) => (
     <>
@@ -32,6 +32,6 @@ const PicukiPost = ({ media, desc, locationLink }: PostData) => (
             )
         ) : null}
     </>
-);
+)
 
-export const renderPost = (data: PostData) => renderToString(<PicukiPost {...data} />);
+export const renderPost = (data: PostData) => renderToString(<PicukiPost {...data} />)

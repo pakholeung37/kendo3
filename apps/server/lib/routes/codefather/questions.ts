@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/questions/:sort?',
@@ -27,12 +27,12 @@ export const route: Route = {
     maintainers: ['JackyST0'],
     handler,
     description: '获取编程导航社区的问答内容，支持按最新、热门排序。',
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') || 'new';
+    const sort = ctx.req.param('sort') || 'new'
 
-    const sortConfig = sort === 'hot' ? { field: 'favourNum', name: '热门' } : { field: 'createTime', name: '最新' };
+    const sortConfig = sort === 'hot' ? { field: 'favourNum', name: '热门' } : { field: 'createTime', name: '最新' }
 
     const response = await ofetch('https://api.codefather.cn/api/qa/list/page/vo', {
         method: 'POST',
@@ -45,30 +45,30 @@ async function handler(ctx) {
             sortField: sortConfig.field,
             sortOrder: 'descend',
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(`API error: ${response.message}`);
+        throw new Error(`API error: ${response.message}`)
     }
 
-    const records = response.data?.records || [];
+    const records = response.data?.records || []
 
     const items = records.map((item: Record<string, unknown>) => {
-        const title = (item.title as string) || '无标题';
-        const content = (item.content as string) || '';
-        const user = (item.user as Record<string, unknown>) || {};
-        const tags = (item.tags as string[]) || [];
-        const bestComment = item.bestComment as Record<string, unknown> | undefined;
+        const title = (item.title as string) || '无标题'
+        const content = (item.content as string) || ''
+        const user = (item.user as Record<string, unknown>) || {}
+        const tags = (item.tags as string[]) || []
+        const bestComment = item.bestComment as Record<string, unknown> | undefined
 
         // Build description content
-        let description = `<div>${content.replaceAll('\n', '<br>')}</div>`;
+        let description = `<div>${content.replaceAll('\n', '<br>')}</div>`
 
         // Add best answer
         if (bestComment) {
-            const answerUser = (bestComment.user as Record<string, unknown>) || {};
-            description += '<hr><h4>💡 最佳回答</h4>';
-            description += `<p><strong>${answerUser.userName || '匿名'}</strong>：</p>`;
-            description += `<p>${(bestComment.plainTextDescription as string) || ''}</p>`;
+            const answerUser = (bestComment.user as Record<string, unknown>) || {}
+            description += '<hr><h4>💡 最佳回答</h4>'
+            description += `<p><strong>${answerUser.userName || '匿名'}</strong>：</p>`
+            description += `<p>${(bestComment.plainTextDescription as string) || ''}</p>`
         }
 
         return {
@@ -80,13 +80,13 @@ async function handler(ctx) {
             category: tags,
             upvotes: item.thumbNum as number,
             comments: item.commentNum as number,
-        };
-    });
+        }
+    })
 
     return {
         title: `编程导航 - ${sortConfig.name}问答`,
         link: 'https://www.codefather.cn/qa',
         description: `编程导航社区${sortConfig.name}问答`,
         item: items,
-    };
+    }
 }

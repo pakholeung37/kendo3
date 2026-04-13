@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/index/:category?',
@@ -25,40 +25,40 @@ export const route: Route = {
     description: `| 学校新闻 | 砥志研思 | 立德树人 | 传道授业 | 校闻周知 |
 | :------: | :------: | :------: | :------: | :------: |
 |   xxxw   |   dzys   |   ldsr   |   cdsy   |   xwzz   |`,
-};
+}
 
 async function handler(ctx) {
-    let category = ctx.req.param('category');
-    const dic_html = { xxxw: 'xxxw.htm', dzys: 'dzys.htm', ldsr: 'ldsr.htm', cdsy: 'cdsy.htm', xwzz: 'xwzz.htm' };
-    const dic_title = { xxxw: '学校新闻', dzys: '砥志研思', ldsr: '立德树人', cdsy: '传道授业', xwzz: '校闻周知' };
+    let category = ctx.req.param('category')
+    const dic_html = { xxxw: 'xxxw.htm', dzys: 'dzys.htm', ldsr: 'ldsr.htm', cdsy: 'cdsy.htm', xwzz: 'xwzz.htm' }
+    const dic_title = { xxxw: '学校新闻', dzys: '砥志研思', ldsr: '立德树人', cdsy: '传道授业', xwzz: '校闻周知' }
 
     // 设置默认值
     if (dic_title[category] === undefined) {
-        category = 'xxxw';
+        category = 'xxxw'
     }
 
     const response = await got({
         method: 'get',
         url: 'http://www.xaut.edu.cn/index/' + dic_html[category],
-    });
-    const data = response.body;
-    const $ = load(data);
+    })
+    const data = response.body
+    const $ = load(data)
 
     const list = $('div.nlist ul li')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             // link原来长这样：'../info/1196/13990.htm'
-            const link = item.find('a').attr('href').replace(/^\.\./, 'http://www.xaut.edu.cn');
-            const pubDate = timezone(parseDate(item.find('div.time').text().trim()), +8);
-            const title = item.find('h5').text();
+            const link = item.find('a').attr('href').replace(/^\.\./, 'http://www.xaut.edu.cn')
+            const pubDate = timezone(parseDate(item.find('div.time').text().trim()), +8)
+            const title = item.find('h5').text()
 
             return {
                 title,
                 link,
                 pubDate,
-            };
-        });
+            }
+        })
 
     return {
         // 源标题
@@ -75,15 +75,15 @@ async function handler(ctx) {
                         const res = await got({
                             method: 'get',
                             url: item.link,
-                        });
-                        const content = load(res.body);
-                        item.description = content('#vsb_content').html();
+                        })
+                        const content = load(res.body)
+                        item.description = content('#vsb_content').html()
                     } else {
-                        item.description = '请在校内或校园VPN内查看内容';
+                        item.description = '请在校内或校园VPN内查看内容'
                     }
-                    return item;
-                })
-            )
+                    return item
+                }),
+            ),
         ),
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/ia/yjs',
@@ -25,13 +25,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'www.ia.cas.cn/yjsjy/zs/sszs',
-};
+}
 
 async function handler() {
-    const link = 'http://www.ia.cas.cn/yjsjy/zs/sszs/';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.col-md-9 li');
+    const link = 'http://www.ia.cas.cn/yjsjy/zs/sszs/'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.col-md-9 li')
 
     return {
         title: '中科院自动化所',
@@ -40,12 +40,12 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.find('li a').text(),
                     description: item.find('li a').text(),
                     link: item.find('li a').attr('href'),
-                };
+                }
             }),
-    };
+    }
 }

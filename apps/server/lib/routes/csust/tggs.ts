@@ -1,12 +1,12 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { createCsustHandler } from './utils';
+import { createCsustHandler } from './utils'
 
 const handler = createCsustHandler({
     listPath: '/tggs.htm',
     feedTitle: '长沙理工大学 - 通告公示',
     feedDescription: '长沙理工大学通告公示',
-});
+})
 
 export const route: Route = {
     path: '/tggs',
@@ -30,4 +30,4 @@ export const route: Route = {
     maintainers: ['powerfullz'],
     handler,
     url: 'www.csust.edu.cn/tggs.htm',
-};
+}

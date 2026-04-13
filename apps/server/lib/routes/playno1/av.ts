@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { cookieJar, processArticle } from './utils';
+import { cookieJar, processArticle } from './utils'
 
-const baseUrl = 'http://www.playno1.com';
+const baseUrl = 'http://www.playno1.com'
 
 export const route: Route = {
     path: '/av/:catid?',
@@ -34,21 +34,21 @@ export const route: Route = {
 | 全部文章 | AV 新聞 | AV 導覽 |
 | -------- | ------- | ------- |
 | 78       | 3       | 5       |`,
-};
+}
 
 async function handler(ctx) {
-    const { catid = '78' } = ctx.req.param();
-    const url = `${baseUrl}/portal.php?mod=list&catid=${catid}`;
+    const { catid = '78' } = ctx.req.param()
+    const url = `${baseUrl}/portal.php?mod=list&catid=${catid}`
     const response = await got(url, {
         cookieJar,
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     let items = $('.fire_float')
         .toArray()
         .filter((i) => $(i).text().length)
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h3 a').attr('title'),
                 link: item.find('h3 a').attr('href'),
@@ -58,15 +58,15 @@ async function handler(ctx) {
                     .text()
                     .match(/作者：(.*)\s*\|/)[1]
                     .trim(),
-            };
-        });
+            }
+        })
 
-    items = await processArticle(items, cache);
+    items = await processArticle(items, cache)
 
     return {
         title: $('head title').text(),
         link: url,
         item: items,
         language: 'zh-TW',
-    };
+    }
 }

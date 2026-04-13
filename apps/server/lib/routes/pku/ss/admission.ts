@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { baseUrl, getArticle, getSingleRecord } from './common';
+import { baseUrl, getArticle, getSingleRecord } from './common'
 
-const host = `${baseUrl}/admission/admnotice/`;
+const host = `${baseUrl}/admission/admnotice/`
 
 export const route: Route = {
     path: '/ss/admission',
@@ -27,16 +27,16 @@ export const route: Route = {
     maintainers: ['legr4ndk'],
     handler,
     url: 'ss.pku.edu.cn/admission/admnotice',
-};
+}
 
 async function handler() {
-    const items = await getSingleRecord(host);
-    const out = await Promise.all(items.map((item) => getArticle(item, cache.tryGet)));
+    const items = await getSingleRecord(host)
+    const out = await Promise.all(items.map((item) => getArticle(item, cache.tryGet)))
 
     return {
         title: '北大软微-招生通知',
         description: '北京大学软件与微电子学院 - 招生通知',
         link: host,
         item: out,
-    };
+    }
 }

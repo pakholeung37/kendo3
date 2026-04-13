@@ -1,35 +1,35 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.wdfxw.net';
-    const targetUrl: string = new URL(`bookfree${id ? `-${id}` : ''}.html`, baseUrl).href;
+    const baseUrl = 'https://www.wdfxw.net'
+    const targetUrl: string = new URL(`bookfree${id ? `-${id}` : ''}.html`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('meta[http-equiv="Content-Language"]').attr('content') ?? 'zh-cn';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('meta[http-equiv="Content-Language"]').attr('content') ?? 'zh-cn'
 
     let items: DataItem[] = $('ul.camWholeBoxUl li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('div.camLiTitleC a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('div.camLiTitleC a')
 
-            const title: string = $aEl.attr('title') ?? $aEl.text();
-            const image: string | undefined = $el.find('div.img img').attr('data-original') ?? $el.find('div.img img').attr('src');
+            const title: string = $aEl.attr('title') ?? $aEl.text()
+            const image: string | undefined = $el.find('div.img img').attr('data-original') ?? $el.find('div.img img').attr('src')
             const description: string | undefined = renderToString(
                 <WdfxwDescription
                     images={
@@ -42,9 +42,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                               ]
                             : undefined
                     }
-                />
-            );
-            const linkUrl: string | undefined = $aEl.attr('href');
+                />,
+            )
+            const linkUrl: string | undefined = $aEl.attr('href')
 
             const processedItem: DataItem = {
                 title,
@@ -57,27 +57,27 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1').text();
+                const title: string = $$('h1').text()
                 const pubDateStr: string | undefined = $$('div.uhit li')
                     .filter((_, el) => $$(el).text().startsWith('上传时间'))
                     .text()
                     .split(/：/)
-                    .pop();
+                    .pop()
                 const categories: string[] = [
                     ...new Set([
                         ...$$('div.nav_uis a')
@@ -86,13 +86,13 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             .map((el) => $$(el).text()),
                         ...($$('meta[name="KeyWords"]').attr('content')?.split(/,/) ?? []),
                     ]),
-                ];
+                ]
                 const authors: DataItem['author'] = $$('div.uhit li')
                     .filter((_, el) => $$(el).text().startsWith('上传人'))
                     .text()
                     .split(/：/)
-                    .pop();
-                const upDatedStr: string | undefined = pubDateStr;
+                    .pop()
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -101,15 +101,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     author: authors,
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -121,8 +121,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('div.xxxk_top img').attr('alt'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/bookfree/:id?',
@@ -527,12 +527,12 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}
 
 type WdfxwImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 const WdfxwDescription = ({ images }: { images?: WdfxwImage[] }) => (
     <>
@@ -541,7 +541,7 @@ const WdfxwDescription = ({ images }: { images?: WdfxwImage[] }) => (
                 <figure>
                     <img src={image.src} alt={image.alt} />
                 </figure>
-            ) : null
+            ) : null,
         )}
     </>
-);
+)

@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const decodeBufferByCharset = (buffer) => {
-    const isGBK = /charset="?'?gb/i.test(buffer.toString());
-    const encoding = isGBK ? 'gbk' : 'utf-8';
+    const isGBK = /charset="?'?gb/i.test(buffer.toString())
+    const encoding = isGBK ? 'gbk' : 'utf-8'
 
-    return iconv.decode(buffer, encoding);
-};
+    return iconv.decode(buffer, encoding)
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -67,33 +67,33 @@ export const route: Route = {
 | sylm/jsbd     | yc/ipojz | yc/gsnjd   |
 </details>`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'xwzx' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'xwzx' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.cs.com.cn';
-    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href;
+    const rootUrl = 'https://www.cs.com.cn'
+    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(decodeBufferByCharset(response));
+    const $ = load(decodeBufferByCharset(response))
 
     let items = $('ul.ch_type3_list li a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('h3').text().trim(),
                 link: new URL(item.prop('href'), currentUrl).href,
                 pubDate: timezone(parseDate(item.find('em').text()), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -101,30 +101,30 @@ async function handler(ctx) {
                 try {
                     const { data: detailResponse } = await got(item.link, {
                         responseType: 'buffer',
-                    });
+                    })
 
-                    const content = load(decodeBufferByCharset(detailResponse));
+                    const content = load(decodeBufferByCharset(detailResponse))
 
-                    item.title = content('article.cont_article header h1').text().trim();
-                    item.description = content('article.cont_article section').html();
-                    item.author = content('div.artc_info em').text().trim();
+                    item.title = content('article.cont_article header h1').text().trim()
+                    item.description = content('article.cont_article section').html()
+                    item.author = content('div.artc_info em').text().trim()
                     item.category = content('div.artc_route div a')
                         .slice(1)
                         .toArray()
-                        .map((c) => content(c).prop('title') ?? content(c).text());
-                    item.pubDate = timezone(parseDate(content('.time').prop('datetime')), +8);
+                        .map((c) => content(c).prop('title') ?? content(c).text())
+                    item.pubDate = timezone(parseDate(content('.time').prop('datetime')), +8)
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('div.logo_cs a img').prop('src'), currentUrl).href;
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('div.logo_cs a img').prop('src'), currentUrl).href
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items,
@@ -137,5 +137,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('meta[name="Keywords"]').prop('content'),
         author: title.split('-').pop().trim(),
-    };
+    }
 }

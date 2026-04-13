@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type CommentData = {
-    rating?: string | number;
-    text?: string;
-};
+    rating?: string | number
+    text?: string
+}
 
 export const renderComment = ({ rating, text }: CommentData) =>
     renderToString(
@@ -12,5 +12,5 @@ export const renderComment = ({ rating, text }: CommentData) =>
             {rating}/5.0
             <br />
             {text ? raw(text) : null}
-        </>
-    );
+        </>,
+    )

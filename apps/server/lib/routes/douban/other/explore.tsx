@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/explore',
@@ -20,35 +20,35 @@ export const route: Route = {
     name: '浏览发现',
     maintainers: ['clarkzsd'],
     handler,
-};
+}
 
 async function handler() {
     const response = await got({
         method: 'get',
         url: 'https://www.douban.com/explore',
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
-    const list = $('div.item');
+    const $ = load(data)
+    const list = $('div.item')
 
     return {
         title: '豆瓣-浏览发现',
         link: 'https://www.douban.com/explore',
         item: list.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('.title a').first().text() ?? '#' + item.find('.icon-topic').text();
-            const desc = item.find('.content p').text();
+            const title = item.find('.title a').first().text() ?? '#' + item.find('.icon-topic').text()
+            const desc = item.find('.content p').text()
             const itemPic = item.find('a.cover').attr('style')
                 ? item
                       .find('a.cover')
                       .attr('style')
                       .match(/\('(.*?)'\)/)[1]
-                : '';
-            const author = item.find('.usr-pic a').last().text();
-            const link = item.find('.title a').attr('href') ?? item.find('.icon-topic a').attr('href');
+                : ''
+            const author = item.find('.usr-pic a').last().text()
+            const link = item.find('.title a').attr('href') ?? item.find('.icon-topic a').attr('href')
 
             return {
                 title,
@@ -59,9 +59,9 @@ async function handler() {
                     itemPic,
                 }),
                 link,
-            };
+            }
         }),
-    };
+    }
 }
 
 const renderDescription = ({ author, desc, itemPic }: { author: string; desc: string; itemPic?: string }): string =>
@@ -72,5 +72,5 @@ const renderDescription = ({ author, desc, itemPic }: { author: string; desc: st
             描述：{desc}
             <br />
             {itemPic ? <img src={itemPic} /> : null}
-        </>
-    );
+        </>,
+    )

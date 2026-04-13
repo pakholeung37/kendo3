@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDepthDescription } from './templates/depth';
-import { getSearchParams, rootUrl } from './utils';
+import { renderDepthDescription } from './templates/depth'
+import { getSearchParams, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/hot',
@@ -30,24 +30,24 @@ export const route: Route = {
     maintainers: ['5upernova-heng', 'nczitzk'],
     handler,
     url: 'cls.cn/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
-    const apiUrl = `${rootUrl}/v2/article/hot/list`;
+    const apiUrl = `${rootUrl}/v2/article/hot/list`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
         searchParams: getSearchParams(),
-    });
+    })
 
     let items = response.data.data.slice(0, limit).map((item) => ({
         title: item.title || item.brief,
         link: `${rootUrl}/detail/${item.id}`,
         pubDate: parseDate(item.ctime * 1000),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -55,24 +55,24 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const nextData = JSON.parse(content('script#__NEXT_DATA__').text());
-                const articleDetail = nextData.props.initialState.detail.articleDetail;
+                const nextData = JSON.parse(content('script#__NEXT_DATA__').text())
+                const articleDetail = nextData.props.initialState.detail.articleDetail
 
-                item.author = articleDetail.author?.name ?? item.author ?? '';
-                item.description = renderDepthDescription(articleDetail);
+                item.author = articleDetail.author?.name ?? item.author ?? ''
+                item.description = renderDepthDescription(articleDetail)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '财联社 - 热门文章排行榜',
         link: rootUrl,
         item: items,
-    };
+    }
 }

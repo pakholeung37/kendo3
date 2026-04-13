@@ -1,68 +1,68 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'daily-news' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = 'daily-news' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.expats.cz';
-    const targetUrl: string = new URL(`czech-news/${category}`, baseUrl).href;
+    const baseUrl = 'https://www.expats.cz'
+    const targetUrl: string = new URL(`czech-news/${category}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('div.main h3 a')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
             const processedItem: DataItem = {
                 title: $el.text(),
                 link: new URL($el.attr('href') as string, baseUrl).href,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                $$('div.promo-widget, div.eas').remove();
+                $$('div.promo-widget, div.eas').remove()
 
-                const title: string = $$('div.title h1').text();
-                const description: string | undefined = $$('div#expats-article-content').html() ?? undefined;
-                const pubDateStr: string | undefined = $$('meta[property="article:published_time"]').attr('content');
-                const categories: string[] = [$$('meta[property="article:section"]').attr('content') ?? ''];
-                const authorEls: Element[] = $$('span.written-by a').toArray();
+                const title: string = $$('div.title h1').text()
+                const description: string | undefined = $$('div#expats-article-content').html() ?? undefined
+                const pubDateStr: string | undefined = $$('meta[property="article:published_time"]').attr('content')
+                const categories: string[] = [$$('meta[property="article:section"]').attr('content') ?? '']
+                const authorEls: Element[] = $$('span.written-by a').toArray()
                 const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                    const $$authorEl: Cheerio<Element> = $$(authorEl);
+                    const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                     return {
                         name: $$authorEl.text(),
                         url: $$authorEl.attr('href') ? new URL($$authorEl.attr('href') as string, baseUrl).href : undefined,
                         avatar: $$('div.authors div.photos a img').attr('src') ? new URL($$('div.authors div.photos a img').attr('src') as string, baseUrl).href : undefined,
-                    };
-                });
-                const image: string | undefined = $$('meta[property="og:image"]').attr('content');
-                const upDatedStr: string | undefined = pubDateStr;
+                    }
+                })
+                const image: string | undefined = $$('meta[property="og:image"]').attr('content')
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -78,15 +78,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -98,8 +98,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/czech-news/:category?',
@@ -201,9 +201,9 @@ To subscribe to [Daily News](https://www.expats.cz/czech-news/daily-news), where
         {
             source: ['www.expats.cz/czech-news/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/expats/czech-news${category ? `/${category}` : ''}`;
+                return `/expats/czech-news${category ? `/${category}` : ''}`
             },
         },
         {
@@ -268,4 +268,4 @@ To subscribe to [Daily News](https://www.expats.cz/czech-news/daily-news), where
         },
     ],
     view: ViewType.Articles,
-};
+}

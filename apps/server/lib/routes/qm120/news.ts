@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -39,29 +39,29 @@ export const route: Route = {
 | 新闻专题 | 行业新闻 |
 | -------- | -------- |
 | zhuanti  | xyxw     |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'jdxw';
+    const category = ctx.req.param('category') ?? 'jdxw'
 
-    const rootUrl = 'http://www.qm120.com';
-    const currentUrl = `${rootUrl}/news/${category}`;
+    const rootUrl = 'http://www.qm120.com'
+    const currentUrl = `${rootUrl}/news/${category}`
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.lb2boxls ul li a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -69,20 +69,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.description = content('.neirong_body').html();
-                item.pubDate = timezone(parseDate(content('.neirong_head p span').eq(1).text()), +8);
+                item.description = content('.neirong_body').html()
+                item.pubDate = timezone(parseDate(content('.neirong_head p span').eq(1).text()), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('.zt_liebiao_tit').text()} - 全民健康网`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

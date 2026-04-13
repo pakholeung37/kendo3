@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -27,40 +27,40 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'dorohedoro.net/news',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25
 
-    const rootUrl = 'https://dorohedoro.net';
-    const apiUrl = `${rootUrl}/news/news.xml`;
-    const currentUrl = `${rootUrl}/news/`;
+    const rootUrl = 'https://dorohedoro.net'
+    const apiUrl = `${rootUrl}/news/news.xml`
+    const currentUrl = `${rootUrl}/news/`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const $ = load(response.data, {
         xmlMode: true,
-    });
+    })
 
     let items = $('item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.find('permalink').text();
-            const isNews = /news_\d+_\d+\.html/.test(link);
+            const link = item.find('permalink').text()
+            const isNews = /news_\d+_\d+\.html/.test(link)
 
             return {
                 title: item.find('title').text(),
                 pubDate: parseDate(item.find('date').text()),
                 link: `${rootUrl}${isNews ? `/news/${link}` : ''}`,
                 isNews,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -70,29 +70,29 @@ async function handler(ctx) {
                         const detailResponse = await got({
                             method: 'get',
                             url: item.link,
-                        });
+                        })
 
-                        const content = load(detailResponse.data);
+                        const content = load(detailResponse.data)
 
-                        content('#bk_btn').remove();
+                        content('#bk_btn').remove()
 
-                        item.title = content('.newsTitle').text();
-                        item.description = content('article').html();
+                        item.title = content('.newsTitle').text()
+                        item.description = content('article').html()
                     } catch {
                         // no-empty
                     }
                 }
 
-                delete item.isNews;
+                delete item.isNews
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'アニメ『ドロヘドロ』',
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,16 +1,16 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const md = MarkdownIt({
     html: true,
     breaks: true,
-});
+})
 export const route: Route = {
     path: '/dailyquestion/solution/en',
     radar: [
@@ -22,19 +22,19 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'leetcode.com/',
-};
+}
 
 async function handler() {
-    const baseurl = `https://leetcode.com`;
-    const url = `${baseurl}/graphql/`;
+    const baseurl = `https://leetcode.com`
+    const url = `${baseurl}/graphql/`
     const headers = {
         'content-type': 'application/json',
-    };
+    }
     const emoji = {
         Medium: '🟡',
         Easy: '🟢',
         Hard: '🔴',
-    };
+    }
     // 获取每日一题
     const data = (
         await got({
@@ -58,9 +58,9 @@ async function handler() {
             },
             headers,
         })
-    ).data.data;
-    const questionTitle = data.activeDailyCodingChallengeQuestion.question.titleSlug;
-    const questionUrl = `${baseurl}/problems/${questionTitle}/`;
+    ).data.data
+    const questionTitle = data.activeDailyCodingChallengeQuestion.question.titleSlug
+    const questionUrl = `${baseurl}/problems/${questionTitle}/`
 
     // 获取题目内容
     const question = (
@@ -93,8 +93,8 @@ async function handler() {
             },
             headers,
         })
-    ).data.data.question;
-    const diffEmoji = emoji[question.difficulty] || '';
+    ).data.data.question
+    const diffEmoji = emoji[question.difficulty] || ''
     // 获取题解（en网站仅一个题解)
     const article = (
         await got({
@@ -133,45 +133,45 @@ async function handler() {
             },
             headers,
         })
-    ).data.data.question.solution;
+    ).data.data.question.solution
     if (article.content === null) {
-        article.content = 'Sorry, the solution of this question may be locked.';
+        article.content = 'Sorry, the solution of this question may be locked.'
     }
 
     // 图片处理
     const parsePngSlide = async (s) => {
-        const pattern = /!\?!(.+)!\?!/;
+        const pattern = /!\?!(.+)!\?!/
         if (!pattern.test(s)) {
-            return s;
+            return s
         }
-        const matched = s.match(new RegExp(pattern, 'g'));
+        const matched = s.match(new RegExp(pattern, 'g'))
         const fn = async (m) => {
-            const relaurl = m.match(pattern)[1].split(':')[0];
-            const fullurl = path.resolve('/' + questionUrl + 'solution/', relaurl).slice(1);
+            const relaurl = m.match(pattern)[1].split(':')[0]
+            const fullurl = path.resolve('/' + questionUrl + 'solution/', relaurl).slice(1)
             const pngList = (
                 await got({
                     url: fullurl,
                     method: 'get',
                     headers,
                 })
-            ).data.timeline;
-            return pngList.map((v) => `![pic](${path.resolve(`/problems/${questionTitle}/solution/`, v.image)})`).join('\n');
-        };
-        const strs = await Promise.all(matched.map((v) => fn(v)));
-        for (let i = 0; i < matched.length; i++) {
-            s = s.replace(matched[i], strs[i]);
+            ).data.timeline
+            return pngList.map((v) => `![pic](${path.resolve(`/problems/${questionTitle}/solution/`, v.image)})`).join('\n')
         }
-        return s;
-    };
+        const strs = await Promise.all(matched.map((v) => fn(v)))
+        for (let i = 0; i < matched.length; i++) {
+            s = s.replace(matched[i], strs[i])
+        }
+        return s
+    }
     // iframe代码框处理
     const parseIframe = async (s) => {
-        const pattern = /<iframe.*? src=".*?playground\/(.*?)\/shared".*<\/iframe>/;
+        const pattern = /<iframe.*? src=".*?playground\/(.*?)\/shared".*<\/iframe>/
         if (!pattern.test(s)) {
-            return s;
+            return s
         }
-        const matched = s.match(new RegExp(pattern, 'g'));
+        const matched = s.match(new RegExp(pattern, 'g'))
         const fn = async (m) => {
-            const uuid = m.match(pattern)[1];
+            const uuid = m.match(pattern)[1]
             const code = (
                 await got({
                     method: 'post',
@@ -200,23 +200,23 @@ async function handler() {
                     },
                     headers,
                 })
-            ).data.data.allPlaygroundCodes;
-            return code.map((c) => `###${c.langSlug}\n\r \`\`\`${c.langSlug}\n ${c.code}\n\`\`\``).join('\n\r');
-        };
-        const strs = await Promise.all(matched.map((v) => fn(v)));
-        for (let i = 0; i < matched.length; i++) {
-            s = s.replace(matched[i], strs[i]);
+            ).data.data.allPlaygroundCodes
+            return code.map((c) => `###${c.langSlug}\n\r \`\`\`${c.langSlug}\n ${c.code}\n\`\`\``).join('\n\r')
         }
-        return s;
-    };
+        const strs = await Promise.all(matched.map((v) => fn(v)))
+        for (let i = 0; i < matched.length; i++) {
+            s = s.replace(matched[i], strs[i])
+        }
+        return s
+    }
     const handleText = async (s) => {
         // 处理代码iframe嵌入问题
-        s = await parseIframe(s);
+        s = await parseIframe(s)
         // 处理图片展示问题
-        s = await parsePngSlide(s);
-        return s;
-    };
-    article.content = await handleText(article.content);
+        s = await parsePngSlide(s)
+        return s
+    }
+    article.content = await handleText(article.content)
     return {
         title: 'LeetCode DailyQuestion Solution',
         description: 'LeetCode DailyQuestion Solution',
@@ -236,5 +236,5 @@ async function handler() {
                 author: 'leetcode',
             },
         ],
-    };
+    }
 }

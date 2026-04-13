@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/offer/:year?/:major?/:school?',
@@ -35,13 +35,13 @@ export const route: Route = {
   5.  点击 results?ps=15&pg=1 POST 请求
   6.  找到 Request Payload 请求参数，例如 \`filters: {planyr: "13", planmajor: "1", outname_w: "ACADIAU"}\` ，则三个 id 分别为: 13,1,ACADIAU
 :::`,
-};
+}
 
 async function handler(ctx) {
     // year 2017-2022
     // 2017:6   2018:11   2019:12   2020:13   2021:14   2022:15
     // CS:1     MIS:2
-    const { year = 'null', major = 'null', school = 'null' } = ctx.req.param();
+    const { year = 'null', major = 'null', school = 'null' } = ctx.req.param()
     // const filter = 'filters: {planyr: "12", planmajor: "1", outname_w: "CMU"}';
     const responseBasic = await got.post('https://api.1point3acres.com/offer/results', {
         searchParams: {
@@ -55,9 +55,9 @@ async function handler(ctx) {
                 outname_w: school === 'null' ? undefined : school,
             },
         },
-    });
+    })
 
-    const data = responseBasic.data.results;
+    const data = responseBasic.data.results
     // data.id-> 访问offer具体信息->获取 data.tid
     // if (data.id !== 0) {
     //     out = await Promise.all(
@@ -97,7 +97,7 @@ async function handler(ctx) {
             link: 'https://offer.1point3acres.com',
             guid: `1point3acres:offer:${year}:${major}:${school}:${item.id}`,
         })),
-    };
+    }
 }
 
 const renderDescription = (item): string =>
@@ -135,5 +135,5 @@ const renderDescription = (item): string =>
             <br />
             <b>提交时间：</b>
             {item.submittime}
-        </>
-    );
+        </>,
+    )

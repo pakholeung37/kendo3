@@ -1,44 +1,44 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx): Promise<Data> => {
-    const { category, id } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { category, id } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.jiemian.com';
+    const rootUrl = 'https://www.jiemian.com'
     // Reason: lists.ts uses :id param, other routes use :category or hardcoded paths
-    const pathSegment = category || (id ? `lists/${id}` : '');
-    const currentUrl = new URL(pathSegment ? `${pathSegment}.html` : '', rootUrl).href;
+    const pathSegment = category || (id ? `lists/${id}` : '')
+    const currentUrl = new URL(pathSegment ? `${pathSegment}.html` : '', rootUrl).href
 
-    const response = await ofetch(currentUrl);
+    const response = await ofetch(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     // Reason: Remove sidebar sections to prevent picking up articles
     // that are not part of the main content list (e.g. "快讯" sidebar on category pages)
-    $('.sub-col-right').remove();
+    $('.sub-col-right').remove()
 
     // Scope to #lists for newsflash-type pages, otherwise search the full page
-    const container = $('#lists').length ? $('#lists') : $('body');
+    const container = $('#lists').length ? $('#lists') : $('body')
 
-    let items = {};
-    const links = container.find('a').toArray();
+    let items = {}
+    const links = container.find('a').toArray()
     for (const el of links) {
-        const item = $(el);
-        const href = item.prop('href');
-        const link = href ? (href.startsWith('/') ? new URL(href, rootUrl).href : href) : undefined;
+        const item = $(el)
+        const href = item.prop('href')
+        const link = href ? (href.startsWith('/') ? new URL(href, rootUrl).href : href) : undefined
 
         if (link && /\/(article|video)\/\w+\.html/.test(link)) {
             items[link] = {
                 title: item.text(),
                 link,
-            };
+            }
         }
     }
 
@@ -47,13 +47,13 @@ export const handler = async (ctx): Promise<Data> => {
             .slice(0, limit)
             .map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const detailResponse = await ofetch(item.link);
+                    const detailResponse = await ofetch(item.link)
 
-                    const content = load(detailResponse);
-                    const image = content('div.article-img img').first();
-                    const video = content('#video-player').first();
+                    const content = load(detailResponse)
+                    const image = content('div.article-img img').first()
+                    const video = content('#video-player').first()
 
-                    item.title = content('div.article-header h1').eq(0).text();
+                    item.title = content('div.article-header h1').eq(0).text()
                     item.description = renderDescription({
                         image: image
                             ? {
@@ -71,28 +71,28 @@ export const handler = async (ctx): Promise<Data> => {
                             : undefined,
                         intro: content('div.article-header p').text(),
                         description: content('div.article-content').html(),
-                    });
+                    })
                     item.author = content('span.author')
                         .first()
                         .find('a')
                         .toArray()
                         .map((a) => content(a).text())
-                        .join('/');
+                        .join('/')
                     item.category = content('meta.meta-container a')
                         .toArray()
-                        .map((c) => content(c).text());
-                    item.pubDate = parseDate(content('div.article-info span[data-article-publish-time]').prop('data-article-publish-time'), 'X');
-                    item.upvotes = content('span.opt-praise__count').text() ? Number.parseInt(content('span.opt-praise__count').text(), 10) : 0;
-                    item.comments = content('span.opt-comment__count').text() ? Number.parseInt(content('span.opt-comment__count').text(), 10) : 0;
+                        .map((c) => content(c).text())
+                    item.pubDate = parseDate(content('div.article-info span[data-article-publish-time]').prop('data-article-publish-time'), 'X')
+                    item.upvotes = content('span.opt-praise__count').text() ? Number.parseInt(content('span.opt-praise__count').text(), 10) : 0
+                    item.comments = content('span.opt-comment__count').text() ? Number.parseInt(content('span.opt-comment__count').text(), 10) : 0
 
-                    return item;
-                })
-            )
-    );
+                    return item
+                }),
+            ),
+    )
 
-    const title = $('title').text();
-    const titleSplits = title.split(/_/);
-    const image = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const title = $('title').text()
+    const titleSplits = title.split(/_/)
+    const image = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -105,8 +105,8 @@ export const handler = async (ctx): Promise<Data> => {
         logo: image,
         subtitle: titleSplits[0],
         author: titleSplits.pop(),
-    };
-};
+    }
+}
 
 const renderDescription = ({
     image,
@@ -114,13 +114,13 @@ const renderDescription = ({
     video,
     description,
 }: {
-    image?: { src?: string; alt?: string; width?: string; height?: string };
-    intro?: string;
-    video?: { src?: string; poster?: string; type?: string };
-    description?: string;
+    image?: { src?: string; alt?: string; width?: string; height?: string }
+    intro?: string
+    video?: { src?: string; poster?: string; type?: string }
+    description?: string
 }): string => {
-    const imageAlt = image?.height ?? image?.width ?? image?.alt;
-    const videoPoster = video?.poster ?? image?.src;
+    const imageAlt = image?.height ?? image?.width ?? image?.alt
+    const videoPoster = video?.poster ?? image?.src
 
     return renderToString(
         <>
@@ -139,6 +139,6 @@ const renderDescription = ({
                 </video>
             ) : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
-};
+        </>,
+    )
+}

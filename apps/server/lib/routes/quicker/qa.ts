@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/qa/:category?/:state?',
@@ -41,33 +41,33 @@ export const route: Route = {
 | 全部 | 精华   | 已归档  |
 | ---- | ------ | ------- |
 |      | digest | achived |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'all';
-    const state = ctx.req.param('state') ?? '';
+    const category = ctx.req.param('category') ?? 'all'
+    const state = ctx.req.param('state') ?? ''
 
-    const rootUrl = 'https://getquicker.net';
-    const currentUrl = `${rootUrl}/QA${category === 'all' ? '' : `?category=${category}`}${state ? `?state=${state}` : ''}`;
+    const rootUrl = 'https://getquicker.net'
+    const currentUrl = `${rootUrl}/QA${category === 'all' ? '' : `?category=${category}`}${state ? `?state=${state}` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('a.question-title')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -75,31 +75,31 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('div[data-note="最后更新人信息"]').remove();
+                content('div[data-note="最后更新人信息"]').remove()
 
                 const pubDate = content('.info-text')
                     .first()
                     .text()
                     .replace(/创建于 /, '')
-                    .trim();
+                    .trim()
 
-                item.description = content('.topic-body').html();
-                item.author = content('.user-link').first().text();
-                item.pubDate = timezone(/-/.test(pubDate) ? parseDate(pubDate) : parseRelativeDate(pubDate), +8);
+                item.description = content('.topic-body').html()
+                item.author = content('.user-link').first().text()
+                item.pubDate = timezone(/-/.test(pubDate) ? parseDate(pubDate) : parseRelativeDate(pubDate), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Japan Bullion Market Association',
@@ -14,4 +14,4 @@ export const namespace: Namespace = {
         name: '日本贵金属市场协会',
         description: '',
     },
-};
+}

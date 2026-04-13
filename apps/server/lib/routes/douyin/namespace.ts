@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '抖音直播',
@@ -18,4 +18,4 @@ export const namespace: Namespace = {
 | ------- | ---------------- | ---------------------- | ------- |
 | \`embed\` | 是否启用内嵌视频 | \`0\`/\`1\`/\`true\`/\`false\` | \`false\` |`,
     lang: 'zh-CN',
-};
+}

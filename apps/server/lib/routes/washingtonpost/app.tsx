@@ -1,15 +1,15 @@
-import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat.js';
-import timezone from 'dayjs/plugin/timezone.js';
-import utc from 'dayjs/plugin/utc.js';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import type { JSX } from 'hono/jsx/jsx-runtime';
-import { FetchError } from 'ofetch';
+import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat.js'
+import timezone from 'dayjs/plugin/timezone.js'
+import utc from 'dayjs/plugin/utc.js'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import type { JSX } from 'hono/jsx/jsx-runtime'
+import { FetchError } from 'ofetch'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/app/:category{.+}?',
@@ -37,32 +37,32 @@ export const route: Route = {
     description: `::: tip
 For example, the category for https://www.washingtonpost.com/national/investigations would be /national/investigations.
 :::`,
-};
+}
 
 function handleDuplicates(array) {
-    const objects = {};
+    const objects = {}
     for (const obj of array) {
-        objects[obj.id] = objects[obj.id] ? Object.assign(objects[obj.id], obj) : obj;
+        objects[obj.id] = objects[obj.id] ? Object.assign(objects[obj.id], obj) : obj
     }
-    return Object.values(objects);
+    return Object.values(objects)
 }
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
+    const category = ctx.req.param('category') ?? ''
     const headers = {
         Accept: '*/*',
         Connection: 'keep-alive',
         'User-Agent': 'Classic/6.70.0',
-    };
-    dayjs.extend(utc);
-    dayjs.extend(timezone);
-    dayjs.extend(advancedFormat);
+    }
+    dayjs.extend(utc)
+    dayjs.extend(timezone)
+    dayjs.extend(advancedFormat)
 
-    const url = `https://jsonapp1.washingtonpost.com/fusion_prod/v2/${category}`;
-    const response = await got.get(url, { headers });
-    const title = response.data.tracking.page_title.includes('Washington Post') ? response.data.tracking.page_title : `The Washington Post - ${response.data.tracking.page_title}`;
-    const link = 'https://washingtonpost.com' + response.data.tracking.page_path;
-    const mains = response.data.regions[0].items.filter((item) => item.items);
+    const url = `https://jsonapp1.washingtonpost.com/fusion_prod/v2/${category}`
+    const response = await got.get(url, { headers })
+    const title = response.data.tracking.page_title.includes('Washington Post') ? response.data.tracking.page_title : `The Washington Post - ${response.data.tracking.page_title}`
+    const link = 'https://washingtonpost.com' + response.data.tracking.page_path
+    const mains = response.data.regions[0].items.filter((item) => item.items)
     const list = mains.flatMap((main) =>
         main.items[0].items
             .filter((item) => item.is_from_feed === true)
@@ -73,45 +73,45 @@ async function handler(ctx) {
                     link: item.link.url,
                     pubDate: item.link.display_date,
                     updated: item.link.last_modified,
-                };
-                if (item.blurbs?.items[0]?.text) {
-                    object.description = item.blurbs?.items[0]?.text;
                 }
-                return object;
-            })
-    );
-    const feed = handleDuplicates(list);
+                if (item.blurbs?.items[0]?.text) {
+                    object.description = item.blurbs?.items[0]?.text
+                }
+                return object
+            }),
+    )
+    const feed = handleDuplicates(list)
     const items = await Promise.all(
         feed.map((item) =>
             cache.tryGet(item.link, async () => {
-                let response;
+                let response
                 try {
-                    response = await got(`https://rainbowapi-a.wpdigital.net/rainbow-data-service/rainbow/content-by-url.json?followLinks=false&url=${item.link}`, { headers });
+                    response = await got(`https://rainbowapi-a.wpdigital.net/rainbow-data-service/rainbow/content-by-url.json?followLinks=false&url=${item.link}`, { headers })
                 } catch (error) {
                     if (error instanceof FetchError && error.statusCode === 415) {
                         // Interactive or podcast contents will return 415 Unsupported Media Type. Keep calm and carry on.
-                        return item;
+                        return item
                     } else {
-                        throw error;
+                        throw error
                     }
                 }
-                item.title = response.data.title ?? item.title;
+                item.title = response.data.title ?? item.title
                 item.author =
                     response.data.items
                         .filter((entry) => entry.type === 'byline')
                         ?.flatMap((entry) => entry.authors.map((author) => author.name))
-                        ?.join(', ') ?? '';
-                item.description = renderDescription(response.data.items);
-                return item;
-            })
-        )
-    );
+                        ?.join(', ') ?? ''
+                item.description = renderDescription(response.data.items)
+                return item
+            }),
+        ),
+    )
 
     return {
         title,
         link,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (content): string =>
@@ -119,12 +119,12 @@ const renderDescription = (content): string =>
         <>
             {content?.map((entry, index) => {
                 if (!entry) {
-                    return null;
+                    return null
                 }
 
                 if (entry.type === 'title' && entry.subtype !== 'h1') {
-                    const TitleTag = (entry.subtype || 'h2') as keyof JSX.IntrinsicElements;
-                    return <TitleTag key={`title-${index}`}>{entry.mime === 'text/html' ? raw(entry.content) : entry.content}</TitleTag>;
+                    const TitleTag = (entry.subtype || 'h2') as keyof JSX.IntrinsicElements
+                    return <TitleTag key={`title-${index}`}>{entry.mime === 'text/html' ? raw(entry.content) : entry.content}</TitleTag>
                 }
 
                 if (entry.type === 'sanitized_html') {
@@ -134,17 +134,17 @@ const renderDescription = (content): string =>
                                 {entry.mime === 'text/html' ? raw(entry.content) : entry.content}
                                 {entry.oembed ? raw(entry.oembed) : null}
                             </p>
-                        );
+                        )
                     }
 
                     if (entry.subtype === 'subhead') {
-                        const SubheadTag = `h${entry.subhead_level || 4}` as keyof JSX.IntrinsicElements;
+                        const SubheadTag = `h${entry.subhead_level || 4}` as keyof JSX.IntrinsicElements
                         return (
                             <SubheadTag key={`subhead-${index}`}>
                                 {entry.mime === 'text/html' ? raw(entry.content) : entry.content}
                                 {entry.oembed ? raw(entry.oembed) : null}
                             </SubheadTag>
-                        );
+                        )
                     }
                 }
 
@@ -153,7 +153,7 @@ const renderDescription = (content): string =>
                         <blockquote key={`deck-${index}`}>
                             <p>{entry.mime === 'text/html' ? raw(entry.content) : entry.content}</p>
                         </blockquote>
-                    );
+                    )
                 }
 
                 if (entry.type === 'image') {
@@ -162,12 +162,12 @@ const renderDescription = (content): string =>
                             <img src={entry.imageURL} alt={entry.blurb} />
                             <figcaption>{entry.fullcaption}</figcaption>
                         </figure>
-                    );
+                    )
                 }
 
                 if (entry.type === 'video') {
                     if (entry.content?.html) {
-                        return <span key={`video-html-${index}`}>{raw(entry.content.html)}</span>;
+                        return <span key={`video-html-${index}`}>{raw(entry.content.html)}</span>
                     }
 
                     if (entry.mediaURL) {
@@ -178,19 +178,19 @@ const renderDescription = (content): string =>
                                 </video>
                                 {entry.fullcaption ? <figcaption>{entry.fullcaption}</figcaption> : null}
                             </figure>
-                        );
+                        )
                     }
                 }
 
                 if (entry.type === 'list') {
-                    const ListTag = entry.subtype === 'ordered' ? 'ol' : 'ul';
+                    const ListTag = entry.subtype === 'ordered' ? 'ol' : 'ul'
                     return (
                         <ListTag key={`list-${index}`}>
                             {(entry.content ?? []).map((listItem, itemIndex) => (
                                 <li key={`list-${index}-${itemIndex}`}>{entry.mime === 'text/html' ? raw(listItem) : listItem}</li>
                             ))}
                         </ListTag>
-                    );
+                    )
                 }
 
                 if (entry.type === 'divider') {
@@ -200,7 +200,7 @@ const renderDescription = (content): string =>
                             <hr />
                             <br />
                         </span>
-                    );
+                    )
                 }
 
                 if (entry.type === 'byline' && (entry.subtype === 'live-update' || entry.subtype === 'live-reporter-insight')) {
@@ -208,14 +208,14 @@ const renderDescription = (content): string =>
                         <p key={`byline-${index}`}>
                             <i>{entry.mime === 'text/html' ? raw(entry.content) : entry.content}</i>
                         </p>
-                    );
+                    )
                 }
 
                 if (entry.type === 'date' && entry.subtype === 'live-update') {
-                    return entry.content ? <span key={`date-${index}`}>{dayjs.tz(entry.content, 'America/New_York').locale('en').format('dddd, MMMM D, YYYY h:mm A z')}</span> : null;
+                    return entry.content ? <span key={`date-${index}`}>{dayjs.tz(entry.content, 'America/New_York').locale('en').format('dddd, MMMM D, YYYY h:mm A z')}</span> : null
                 }
 
-                return null;
+                return null
             })}
-        </>
-    );
+        </>,
+    )

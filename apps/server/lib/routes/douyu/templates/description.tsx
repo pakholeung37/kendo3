@@ -1,24 +1,24 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionImage = {
-    url?: string;
+    url?: string
     size?: {
-        w?: number | string;
-        h?: number | string;
-    };
-};
+        w?: number | string
+        h?: number | string
+    }
+}
 
 type DescriptionReply = {
-    nickname?: string;
-    time?: string;
-    content?: string;
-};
+    nickname?: string
+    time?: string
+    content?: string
+}
 
 type DescriptionRenderOptions = {
-    content?: string;
-    images?: DescriptionImage[];
-    replies?: DescriptionReply[];
-};
+    content?: string
+    images?: DescriptionImage[]
+    replies?: DescriptionReply[]
+}
 
 export const renderDescription = ({ content, images, replies }: DescriptionRenderOptions): string =>
     renderToString(
@@ -37,5 +37,5 @@ export const renderDescription = ({ content, images, replies }: DescriptionRende
                     ))}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

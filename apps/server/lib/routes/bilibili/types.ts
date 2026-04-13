@@ -1,5 +1,5 @@
 export interface ResultResponse<Result> {
-    result: Result;
+    result: Result
 }
 
 /**
@@ -15,21 +15,21 @@ export interface ResultResponse<Result> {
  * @property {string} title - 标题。
  */
 export interface MediaResult {
-    cover: string;
-    evaluate: string;
-    media_id: number;
-    season_id: number;
-    share_url: string; // injected
-    title: string;
+    cover: string
+    evaluate: string
+    media_id: number
+    season_id: number
+    share_url: string // injected
+    title: string
 }
 
 export interface SeasonResult {
-    main_section: SectionResult;
-    section: SectionResult[];
+    main_section: SectionResult
+    section: SectionResult[]
 }
 
 export interface SectionResult {
-    episodes: EpisodeResult[];
+    episodes: EpisodeResult[]
 }
 
 /**
@@ -44,9 +44,9 @@ export interface SectionResult {
  * @property {string} title - 短标题。
  */
 export interface EpisodeResult {
-    cover: string;
-    id: number;
-    long_title: string;
-    share_url: string;
-    title: string;
+    cover: string
+    id: number
+    long_title: string
+    share_url: string
+    title: string
 }

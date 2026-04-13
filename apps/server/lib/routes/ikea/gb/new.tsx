@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/gb/new',
@@ -25,10 +25,10 @@ export const route: Route = {
     maintainers: ['HenryQW'],
     handler,
     url: 'ikea.com/gb/en/new/new-products/',
-};
+}
 
 async function handler() {
-    const link = 'https://www.ikea.com/gb/en/new/new-products/';
+    const link = 'https://www.ikea.com/gb/en/new/new-products/'
 
     const {
         data: { specialPage },
@@ -41,7 +41,7 @@ async function handler() {
             // v: 20220826,
             // sort: 'RELEVANCE',
         },
-    });
+    })
 
     const {
         data: {
@@ -57,9 +57,9 @@ async function handler() {
             // v: 20220826,
             // sort: 'RELEVANCE',
         },
-    });
+    })
 
-    const products = [...specialPage.productWindow, ...productWindow];
+    const products = [...specialPage.productWindow, ...productWindow]
 
     const items = products.map((p) => ({
         title: `${p.name} ${p.typeName}, ${p.itemMeasureReferenceText}`,
@@ -72,16 +72,16 @@ async function handler() {
                 {p.typeName}, {p.itemMeasureReferenceText}
                 <br />
                 {p.salesPrice.current.prefix} <b>{p.salesPrice.current.wholeNumber}</b>
-            </>
+            </>,
         ),
         link: p.pipUrl,
         category: p.categoryPath.map((c) => c.name),
-    }));
+    }))
 
     return {
         title: 'New Products - Browse All New Furniture & Home Decor  - IKEA',
         link,
         description: 'New products released by IKEA UK.',
         item: items,
-    };
+    }
 }

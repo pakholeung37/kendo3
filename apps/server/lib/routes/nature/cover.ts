@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 // The content is generateed by undocumentated API of nature journals
 // This router has **just** been tested in:
 // nature:           Nature
@@ -18,10 +18,10 @@ import cache from '@/utils/cache';
 // nplants:          Nature Plants
 // natastron:        Nature Astronomy
 // nphys             Nature Physics
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, journalMap } from './utils';
+import { baseUrl, journalMap } from './utils'
 
 export const route: Route = {
     path: '/cover',
@@ -46,52 +46,52 @@ export const route: Route = {
     handler,
     url: 'nature.com/',
     description: `Subscribe to the cover images of the Nature journals, and get the latest publication updates in time.`,
-};
+}
 
 async function handler() {
-    const cookieJar = new CookieJar();
+    const cookieJar = new CookieJar()
 
-    await got('https://www.nature.com', { cookieJar });
+    await got('https://www.nature.com', { cookieJar })
 
     const journals = journalMap.items
         .filter((j) => j.id)
         .map((j) => ({
             ...j,
             link: `${baseUrl}/${j.title}/current-issue`,
-        }));
+        }))
 
     const out = await Promise.all(
         journals.map((journal) =>
             cache.tryGet(journal.link, async () => {
-                const { id, name, link } = journal;
+                const { id, name, link } = journal
 
-                const response = await got(link, { cookieJar });
-                const $ = load(response.data);
+                const response = await got(link, { cookieJar })
+                const $ = load(response.data)
 
-                const ogUrl = $('meta[property="og:url"]').attr('content');
-                const capturingRegex = /volumes\/(?<volume>\d+)\/issues\/(?<issue>\d+)/;
-                const { volume, issue } = ogUrl?.match(capturingRegex)?.groups ?? {};
+                const ogUrl = $('meta[property="og:url"]').attr('content')
+                const capturingRegex = /volumes\/(?<volume>\d+)\/issues\/(?<issue>\d+)/
+                const { volume, issue } = ogUrl?.match(capturingRegex)?.groups ?? {}
 
-                const imageUrl = `https://media.springernature.com/full/springer-static/cover-hires/journal/${id}/${volume}/${issue}?as=webp`;
-                const contents = `<div align="center"><img src="${imageUrl}" alt="Volume ${volume} Issue ${issue}"></div>`;
+                const imageUrl = `https://media.springernature.com/full/springer-static/cover-hires/journal/${id}/${volume}/${issue}?as=webp`
+                const contents = `<div align="center"><img src="${imageUrl}" alt="Volume ${volume} Issue ${issue}"></div>`
 
-                const date = $('title').text().split(',')[1].trim();
-                const issueDescription = $('div[data-test=issue-description]').html() ?? '';
+                const date = $('title').text().split(',')[1].trim()
+                const issueDescription = $('div[data-test=issue-description]').html() ?? ''
 
                 return {
                     title: `${name} | Volume ${volume} Issue ${issue}`,
                     description: contents + issueDescription,
                     link: response.url,
                     pubDate: parseDate(date, 'MMMM YYYY'),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: 'Nature Covers Story',
         description: 'Find out the cover story of some Nature journals.',
         link: baseUrl,
         item: out,
-    };
+    }
 }

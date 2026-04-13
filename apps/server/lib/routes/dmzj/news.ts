@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -31,12 +31,12 @@ export const route: Route = {
     description: `| 漫画情报      | 轻小说情报          | 动漫周边       | 声优情报        | 音乐资讯    | 游戏资讯   | 美图欣赏      | 漫展情报       | 大杂烩  |
 | ------------- | ------------------- | -------------- | --------------- | ----------- | ---------- | ------------- | -------------- | ------- |
 | manhuaqingbao | qingxiaoshuoqingbao | manhuazhoubian | shengyouqingbao | yinyuezixun | youxizixun | meituxinshang | manzhanqingbao | dazahui |`,
-};
+}
 
 async function handler(ctx) {
-    const url = `https://news.dmzj.com/${ctx.req.param('category') || ''}`;
-    const response = await got(url);
-    const $ = load(response.data);
+    const url = `https://news.dmzj.com/${ctx.req.param('category') || ''}`
+    const response = await got(url)
+    const $ = load(response.data)
     return {
         title: $('title').text(),
         link: url,
@@ -53,5 +53,5 @@ async function handler(ctx) {
                     .toArray()
                     .map((item) => $(item).text()),
             })),
-    };
+    }
 }

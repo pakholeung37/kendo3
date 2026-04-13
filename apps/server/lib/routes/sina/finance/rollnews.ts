@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getRollNewsList, parseArticle, parseRollNewsList } from '../utils';
+import { getRollNewsList, parseArticle, parseRollNewsList } from '../utils'
 
 export const route: Route = {
     path: '/finance/rollnews/:lid?',
@@ -29,7 +29,7 @@ export const route: Route = {
     description: `| 财经 | 股市 | 美股 | 中国概念股 | 港股 | 研究报告 | 全球市场 | 外汇 |
 | ---- | ---- | ---- | ---------- | ---- | -------- | -------- | ---- |
 | 2519 | 2671 | 2672 | 2673       | 2674 | 2675     | 2676     | 2487 |`,
-};
+}
 
 async function handler(ctx) {
     const map = {
@@ -41,19 +41,19 @@ async function handler(ctx) {
         2675: '研究报告',
         2676: '全球市场',
         2487: '外汇',
-    };
+    }
 
-    const pageid = '384';
-    const { lid = '2519' } = ctx.req.param();
-    const { limit = '50' } = ctx.req.query();
-    const response = await getRollNewsList(pageid, lid, limit);
-    const list = parseRollNewsList(response.data.result.data);
+    const pageid = '384'
+    const { lid = '2519' } = ctx.req.param()
+    const { limit = '50' } = ctx.req.query()
+    const response = await getRollNewsList(pageid, lid, limit)
+    const list = parseRollNewsList(response.data.result.data)
 
-    const out = await Promise.all(list.map((item) => parseArticle(item, cache.tryGet)));
+    const out = await Promise.all(list.map((item) => parseArticle(item, cache.tryGet)))
 
     return {
         title: `新浪财经－${map[lid] ?? lid}滚动新闻`,
         link: `https://finance.sina.com.cn/roll/#pageid=${pageid}&lid=${lid}&k=&num=${limit}&page=1`,
         item: out,
-    };
+    }
 }

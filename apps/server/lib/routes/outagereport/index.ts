@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const baseUrl = 'https://outage.report/';
+const baseUrl = 'https://outage.report/'
 
 export const route: Route = {
     path: '/:name/:count?',
@@ -20,31 +20,31 @@ export const route: Route = {
     maintainers: ['cxumol', 'nczitzk'],
     handler,
     description: `Please skip the local service area code for \`name\`, for example \`https://outage.report/us/verizon-wireless\` to \`verizon-wireless\`.`,
-};
+}
 
 async function handler(ctx) {
-    const serviceName = ctx.req.param('name'); // Which service do you want to monitor? Have to be the same as what it appears in URL.
-    const watchCount = ctx.req.param('count') || 10; // How many reports is received during last 20 minutes? 10 reports as default.
-    const url = `${baseUrl}${serviceName}`;
+    const serviceName = ctx.req.param('name') // Which service do you want to monitor? Have to be the same as what it appears in URL.
+    const watchCount = ctx.req.param('count') || 10 // How many reports is received during last 20 minutes? 10 reports as default.
+    const url = `${baseUrl}${serviceName}`
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
-    const html = response.data;
+    const html = response.data
 
     // use RegExp because of irregular class name
-    const gaugeRegexp = /class="Gauge__Count.*?>(\d+)<\/text>/; // Core Pattern
-    const gaugeTextRegexp = /class="Gauge__MessageWrapper.*?class="Gauge__Message.*?>(.*?)<\/span>/; // Core Pattern
-    const rssDescribeRegexp = /<p class="PageSubheader.*?>(.*?)<\/p>/;
+    const gaugeRegexp = /class="Gauge__Count.*?>(\d+)<\/text>/ // Core Pattern
+    const gaugeTextRegexp = /class="Gauge__MessageWrapper.*?class="Gauge__Message.*?>(.*?)<\/span>/ // Core Pattern
+    const rssDescribeRegexp = /<p class="PageSubheader.*?>(.*?)<\/p>/
 
     // data to be shown on RSS feed and RSS items
-    const gaugeCount = Number(html.match(gaugeRegexp)[1]);
-    const gaugeText = html.match(gaugeTextRegexp)[1];
-    const rssDescribe = html.match(rssDescribeRegexp)[1];
+    const gaugeCount = Number(html.match(gaugeRegexp)[1])
+    const gaugeText = html.match(gaugeTextRegexp)[1]
+    const rssDescribe = html.match(rssDescribeRegexp)[1]
 
     // list ("Array" in js, though) of items
-    const outageHistory = [];
+    const outageHistory = []
 
     // 2020-09-17 output as long as it exists, avoid reporting errors
     // compatible with optional variables
@@ -56,8 +56,8 @@ async function handler(ctx) {
             pubDate: new Date().toUTCString(),
             guid: Date.now(),
             link: url,
-        };
-        outageHistory.push(outageReportItem);
+        }
+        outageHistory.push(outageReportItem)
     }
 
     // how this RSS feed looks like
@@ -67,5 +67,5 @@ async function handler(ctx) {
         description: rssDescribe,
         item: outageHistory,
         allowEmpty: true,
-    };
+    }
 }

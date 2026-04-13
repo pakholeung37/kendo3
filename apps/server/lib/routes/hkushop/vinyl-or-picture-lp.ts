@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
 export const route: Route = {
     path: '/vinyl/:cat?',
@@ -33,37 +33,37 @@ export const route: Route = {
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | 37 | 38 | 40 | 41 | 39 | 170 | 224 |`,
     url: 'hkushop.com/vinyl-or-picture-lp.html',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://hkushop.com';
-    const cat = ctx.req.param('cat') ?? '';
-    const url = cat ? `${baseUrl}/vinyl-or-picture-lp.html?cat=${cat}` : `${baseUrl}/vinyl-or-picture-lp.html`;
+    const baseUrl = 'https://hkushop.com'
+    const cat = ctx.req.param('cat') ?? ''
+    const url = cat ? `${baseUrl}/vinyl-or-picture-lp.html?cat=${cat}` : `${baseUrl}/vinyl-or-picture-lp.html`
 
-    const browser = await puppeteer();
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
+    const browser = await puppeteer()
+    const page = await browser.newPage()
+    await page.setRequestInterception(true)
     page.on('request', (request) => {
-        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
-    });
+        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort()
+    })
     await page.goto(url, {
         waitUntil: 'domcontentloaded',
-    });
+    })
 
-    const response = await page.content();
-    await page.close();
-    await browser.close();
+    const response = await page.content()
+    await page.close()
+    await browser.close()
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $('.products.list.items.product-items .product-item')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const $link = $item.find('.product-item-link');
-            const $price = $item.find('.price');
-            const $image = $item.find('.product-image-photo');
-            const $artist = $item.find('.artist a').text().trim();
+            const $item = $(item)
+            const $link = $item.find('.product-item-link')
+            const $price = $item.find('.price')
+            const $image = $item.find('.product-image-photo')
+            const $artist = $item.find('.artist a').text().trim()
 
             return {
                 title: $link.text().trim(),
@@ -74,15 +74,15 @@ async function handler(ctx) {
                 <p>价格: ${$price.text().trim()}</p>
             `,
                 guid: $link.attr('href'),
-            };
-        });
+            }
+        })
 
-    const title = cat ? `黑胶彩胶系列 - ${$('.page-title').text().trim()}` : '黑胶彩胶系列 - HKU Shop 环球唱片网店';
+    const title = cat ? `黑胶彩胶系列 - ${$('.page-title').text().trim()}` : '黑胶彩胶系列 - HKU Shop 环球唱片网店'
 
     return {
         title,
         link: url,
         description: 'HKU Shop 黑胶唱片最新商品信息',
         item: list,
-    };
+    }
 }

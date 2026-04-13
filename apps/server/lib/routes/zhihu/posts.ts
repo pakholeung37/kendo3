@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Articles, Profile } from './types';
-import { getSignedHeader, header, processImage } from './utils';
+import type { Articles, Profile } from './types'
+import { getSignedHeader, header, processImage } from './utils'
 
 export const route: Route = {
     path: '/posts/:usertype/:id',
@@ -38,14 +38,14 @@ export const route: Route = {
     description: `| 普通用户 | 机构用户 |
 | -------- | -------- |
 | people   | org      |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const usertype = ctx.req.param('usertype');
+    const id = ctx.req.param('id')
+    const usertype = ctx.req.param('usertype')
 
     const userProfile = await cache.tryGet(`zhihu:posts:profile:${id}`, async () => {
-        const userAPIPath = `/${usertype === 'people' ? 'people' : 'org'}/${id}`;
+        const userAPIPath = `/${usertype === 'people' ? 'people' : 'org'}/${id}`
 
         const result = await ofetch(`https://www.zhihu.com${userAPIPath}`, {
             headers: {
@@ -53,11 +53,11 @@ async function handler(ctx) {
                 ...(await getSignedHeader(`https://www.zhihu.com/${usertype}/${id}/`, userAPIPath)),
                 Referer: `https://www.zhihu.com/${usertype}/${id}/`,
             },
-        });
-        const $ = load(result);
-        const data = JSON.parse($('#js-initialData').text());
-        return data?.initialState?.entities?.users[id] as Profile;
-    });
+        })
+        const $ = load(result)
+        const data = JSON.parse($('#js-initialData').text())
+        return data?.initialState?.entities?.users[id] as Profile
+    })
 
     const apiPath = `/api/v4/${usertype === 'people' ? 'members' : 'org'}/${id}/articles?${new URLSearchParams({
         include:
@@ -65,9 +65,9 @@ async function handler(ctx) {
         offset: '0',
         limit: '20',
         sort_by: 'created',
-    })}`;
+    })}`
 
-    const signedHeader = await getSignedHeader(`https://www.zhihu.com/${usertype}/${id}/posts`, apiPath);
+    const signedHeader = await getSignedHeader(`https://www.zhihu.com/${usertype}/${id}/posts`, apiPath)
 
     const articleResponse = await ofetch<Articles>(`https://www.zhihu.com${apiPath}`, {
         headers: {
@@ -75,7 +75,7 @@ async function handler(ctx) {
             ...signedHeader,
             Referer: `https://www.zhihu.com/${usertype}/${id}/posts`,
         },
-    });
+    })
 
     const items = articleResponse.data.map((item) => ({
         title: item.title,
@@ -84,7 +84,7 @@ async function handler(ctx) {
         pubDate: parseDate(item.created, 'X'),
         updated: parseDate(item.updated, 'X'),
         author: item.author.name,
-    }));
+    }))
 
     return {
         title: `${userProfile.name} 的知乎文章`,
@@ -93,5 +93,5 @@ async function handler(ctx) {
         image: userProfile.avatarUrl.split('?')[0],
         // banner: userData?.coverUrl?.split('?')[0],
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/datainsight/:id?',
@@ -31,32 +31,32 @@ export const route: Route = {
     description: `| 城数 | NEXT 情报局 | 专业精选 |
 | ---- | ----------- | -------- |
 | 3    | 1           | 4        |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
+    const id = ctx.req.param('id') ?? ''
 
-    const rootUrl = 'https://dtcj.com';
-    const currentUrl = `${rootUrl}/${id ? `insighttopic/${id}` : 'datainsight'}`;
+    const rootUrl = 'https://dtcj.com'
+    const currentUrl = `${rootUrl}/${id ? `insighttopic/${id}` : 'datainsight'}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.info-2_P1UM a')
         .slice(0, 10)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -64,20 +64,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.description = content('.content-3mNFyi').html();
-                item.pubDate = parseDate(detailResponse.data.match(/"date":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{2}:\d{2})","thumbnail_url":/)[1]);
+                item.description = content('.content-3mNFyi').html()
+                item.pubDate = parseDate(detailResponse.data.match(/"date":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}\+\d{2}:\d{2})","thumbnail_url":/)[1])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

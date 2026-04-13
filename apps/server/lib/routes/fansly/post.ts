@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getAccountByUsername, getTimelineByAccountId, parseDescription } from './utils';
+import { baseUrl, getAccountByUsername, getTimelineByAccountId, parseDescription } from './utils'
 
 export const route: Route = {
     path: '/user/:username',
@@ -25,13 +25,13 @@ export const route: Route = {
     name: 'User Timeline',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('username');
+    const username = ctx.req.param('username')
 
-    const account = await getAccountByUsername(username);
-    const timeline = await getTimelineByAccountId(account.id);
+    const account = await getAccountByUsername(username)
+    const timeline = await getTimelineByAccountId(account.id)
 
     const items = timeline.posts.map((post) => ({
         title: post.content.split('\n')[0],
@@ -39,7 +39,7 @@ async function handler(ctx) {
         pubDate: parseDate(post.createdAt, 'X'),
         link: `${baseUrl}/post/${post.id}`,
         author: `${account.displayName ?? account.username} (@${account.username})`,
-    }));
+    }))
 
     return {
         title: `${account.displayName ?? account.username} (@${account.username}) - Fansly`,
@@ -51,5 +51,5 @@ async function handler(ctx) {
         language: 'en',
         allowEmpty: true,
         item: items,
-    };
+    }
 }

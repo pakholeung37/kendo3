@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/user/followers/:uid/:loginUid',
@@ -39,18 +39,18 @@ export const route: Route = {
     description: `::: warning
   UP 主粉丝现在需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const loginUid = ctx.req.param('loginUid');
+    const uid = ctx.req.param('uid')
+    const loginUid = ctx.req.param('loginUid')
 
-    const cookie = config.bilibili.cookies[loginUid];
+    const cookie = config.bilibili.cookies[loginUid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 loginUid 的 Bilibili 用户登录后的 Cookie 值 <a href="https://docs.rsshub.app/zh/deploy/config#route-specific-configurations">bilibili 用户关注动态系列路由</a>');
+        throw new ConfigNotFoundError('缺少对应 loginUid 的 Bilibili 用户登录后的 Cookie 值 <a href="https://docs.rsshub.app/zh/deploy/config#route-specific-configurations">bilibili 用户关注动态系列路由</a>')
     }
 
-    const name = await cache.getUsernameFromUID(uid);
+    const name = await cache.getUsernameFromUID(uid)
 
     const countResponse = await got({
         method: 'get',
@@ -58,8 +58,8 @@ async function handler(ctx) {
         headers: {
             Referer: `https://space.bilibili.com/${uid}/`,
         },
-    });
-    const count = countResponse.data.data.follower;
+    })
+    const count = countResponse.data.data.follower
 
     const response = await got({
         method: 'get',
@@ -68,11 +68,11 @@ async function handler(ctx) {
             Referer: `https://space.bilibili.com/${uid}/`,
             Cookie: cookie,
         },
-    });
+    })
     if (response.data.code === -6 || response.data.code === -101) {
-        throw new ConfigNotFoundError('对应 loginUid 的 Bilibili 用户的 Cookie 已过期');
+        throw new ConfigNotFoundError('对应 loginUid 的 Bilibili 用户的 Cookie 已过期')
     }
-    const data = response.data.data.list;
+    const data = response.data.data.list
 
     return {
         title: `${name} 的 bilibili 粉丝`,
@@ -84,5 +84,5 @@ async function handler(ctx) {
             pubDate: new Date(item.mtime * 1000),
             link: `https://space.bilibili.com/${item.mid}`,
         })),
-    };
+    }
 }

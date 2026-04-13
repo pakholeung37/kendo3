@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { generateData } from './utils';
+import { generateData } from './utils'
 
 export const route: Route = {
     path: '/people/pins/:id',
@@ -24,21 +24,21 @@ export const route: Route = {
     name: '用户想法',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const {
         data: { data },
     } = await got({
         method: 'get',
         url: `https://api.zhihu.com/pins/${id}/moments?limit=10&offset=0`,
-    });
+    })
 
     return {
         title: `${data[0].target.author.name}的知乎想法`,
         link: `https://www.zhihu.com/people/${id}/pins`,
         item: generateData(data),
-    };
+    }
 }

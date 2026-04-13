@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog',
@@ -26,21 +26,21 @@ export const route: Route = {
     maintainers: ['RengarLee'],
     handler,
     url: 'delta.io/blog',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://delta.io';
-    const dataUrl = `${baseUrl}/page-data/blog/page-data.json`;
+    const baseUrl = 'https://delta.io'
+    const dataUrl = `${baseUrl}/page-data/blog/page-data.json`
 
     const data = await cache.tryGet(
         dataUrl,
         async () => {
-            const { data } = await got(dataUrl);
-            return data;
+            const { data } = await got(dataUrl)
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = data.result.data.allMdx.edges.map(({ node }) => ({
         title: node.frontmatter.title,
@@ -49,11 +49,11 @@ async function handler() {
         pubDate: parseDate(node.frontmatter.date),
         link: `${baseUrl}${node.fields.slug}`,
         itunes_item_image: `${baseUrl}${node.frontmatter.thumbnail.childImageSharp.gatsbyImageData.images.fallback.src}`,
-    }));
+    }))
 
     return {
         title: 'delta.io blog',
         link: `${baseUrl}/blog`,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
 // Warning: The author still knows nothing about javascript!
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getArticle, getNotifByPage } from './_utils';
+import { getArticle, getNotifByPage } from './_utils'
 
 export const route: Route = {
     path: '/sem/:type?',
@@ -25,11 +25,11 @@ export const route: Route = {
 | -------- | -------------- | ------------------ | ---- | ---------- | --------- | ------------------ |
 | notice   | enrollment     | academic-paper     | news | events     | focus     | collegerecruitment |
 `,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'notice';
-    const subType = new Set(['enrollment', 'academic-paper', 'news', 'events', 'focus', 'collegerecruitment']);
+    const type = ctx.req.param('type') || 'notice'
+    const subType = new Set(['enrollment', 'academic-paper', 'news', 'events', 'focus', 'collegerecruitment'])
     const subTypeName = {
         notice: '学院通知',
         enrollment: '招生通知',
@@ -38,13 +38,13 @@ async function handler(ctx) {
         events: '活动',
         focus: '视点',
         collegerecruitment: '教师与行政人员招聘',
-    };
+    }
 
-    const url = `https://sem.tongji.edu.cn/semch/category/frontpage/${subType.has(type) ? type : 'notice'}`;
+    const url = `https://sem.tongji.edu.cn/semch/category/frontpage/${subType.has(type) ? type : 'notice'}`
 
-    const results: Array<{ title: string; link: string; pubDate: Date }> = await getNotifByPage(url);
+    const results: Array<{ title: string; link: string; pubDate: Date }> = await getNotifByPage(url)
 
-    const resultsWithContent = await Promise.all(results.map((item) => cache.tryGet(item.link, () => getArticle(item))));
+    const resultsWithContent = await Promise.all(results.map((item) => cache.tryGet(item.link, () => getArticle(item))))
 
     // feed the data to rss
     return {
@@ -55,5 +55,5 @@ async function handler(ctx) {
         logo: 'https://upload.wikimedia.org/wikipedia/zh/f/f8/Tongji_University_Emblem.svg',
         link: 'https://sem.tongji.edu.cn/semch',
         item: resultsWithContent,
-    };
+    }
 }

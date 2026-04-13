@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type SecurityReleasesData = {
-    headers?: string[];
-    infos?: string[];
-    description?: string;
-};
+    headers?: string[]
+    infos?: string[]
+    description?: string
+}
 
 const SecurityReleasesDescription = ({ headers, infos, description }: SecurityReleasesData) => (
     <>
@@ -31,6 +31,6 @@ const SecurityReleasesDescription = ({ headers, infos, description }: SecurityRe
         ) : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
-export const renderDescription = (data: SecurityReleasesData) => renderToString(<SecurityReleasesDescription {...data} />);
+export const renderDescription = (data: SecurityReleasesData) => renderToString(<SecurityReleasesDescription {...data} />)

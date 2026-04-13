@@ -1,14 +1,14 @@
-import type { Dayjs, ManipulateType, OptionType } from 'dayjs';
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat.js';
-import duration from 'dayjs/plugin/duration.js';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js';
-import weekday from 'dayjs/plugin/weekday.js';
+import type { Dayjs, ManipulateType, OptionType } from 'dayjs'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat.js'
+import duration from 'dayjs/plugin/duration.js'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js'
+import weekday from 'dayjs/plugin/weekday.js'
 
-dayjs.extend(customParseFormat);
-dayjs.extend(duration);
-dayjs.extend(isSameOrBefore);
-dayjs.extend(weekday);
+dayjs.extend(customParseFormat)
+dayjs.extend(duration)
+dayjs.extend(isSameOrBefore)
+dayjs.extend(weekday)
 
 /**
  * Defines a pattern for semantic date keywords.
@@ -17,11 +17,11 @@ interface KeywordDefinition {
     /**
      * Regular expression to match the keyword (e.g., "Yesterday", "Monday", "周一").
      */
-    regExp: RegExp;
+    regExp: RegExp
     /**
      * Factory function to calculate the base date (start of day) relative to the current time.
      */
-    calc: () => Dayjs;
+    calc: () => Dayjs
 }
 
 /**
@@ -31,21 +31,21 @@ interface UnitPattern {
     /**
      * The unit of time manipulation (e.g., 'days', 'hours').
      */
-    unit: ManipulateType;
+    unit: ManipulateType
     /**
      * Regular expression to match value and unit in the input string.
      */
-    regExp: RegExp;
+    regExp: RegExp
 }
 
 // === Pre-compiled Regular Expressions ===
 
-const REGEX_JUST_NOW = /^(?:just\s?now|刚刚|剛剛)$/i;
-const REGEX_AGO = /(.*)(?:ago|[之以]?前)$/i;
-const REGEX_IN = /^(?:in\s*)(.*)|(.*)(?:\s*later|\s*after|[之以]?[后後])$/i;
-const REGEX_STICKY_AMPM = /(\d+)\s*(a|p)m$/i;
-const REGEX_IS_PM = /(?:下午|晚上|晚|pm|p\.m\.)/i;
-const REGEX_IS_AM = /(?:上午|凌晨|早|晨|am|a\.m\.)/i;
+const REGEX_JUST_NOW = /^(?:just\s?now|刚刚|剛剛)$/i
+const REGEX_AGO = /(.*)(?:ago|[之以]?前)$/i
+const REGEX_IN = /^(?:in\s*)(.*)|(.*)(?:\s*later|\s*after|[之以]?[后後])$/i
+const REGEX_STICKY_AMPM = /(\d+)\s*(a|p)m$/i
+const REGEX_IS_PM = /(?:下午|晚上|晚|pm|p\.m\.)/i
+const REGEX_IS_AM = /(?:上午|凌晨|早|晨|am|a\.m\.)/i
 
 const UNIT_PATTERNS: UnitPattern[] = [
     { unit: 'years', regExp: /(\d+)\s*(?:年|y(?:ea)?rs?)/i },
@@ -55,7 +55,7 @@ const UNIT_PATTERNS: UnitPattern[] = [
     { unit: 'hours', regExp: /(\d+)\s*(?:[个個]?(?:小?时|時|点|點)|h(?:(?:ou)?r)?s?)/i },
     { unit: 'minutes', regExp: /(\d+)\s*(?:分[鐘钟]?|m(?:in(?:ute)?)?s?)/i },
     { unit: 'seconds', regExp: /(\d+)\s*(?:秒[鐘钟]?|s(?:ec(?:ond)?)?s?)/i },
-];
+]
 
 const CN_NUM_MAP: Record<string, string> = {
     一: '1',
@@ -69,7 +69,7 @@ const CN_NUM_MAP: Record<string, string> = {
     八: '8',
     九: '9',
     十: '10',
-};
+}
 
 /**
  * Calculates the date of the most recent occurrence of a specific weekday.
@@ -81,23 +81,23 @@ const CN_NUM_MAP: Record<string, string> = {
  * @returns A Dayjs object representing the start of that day.
  */
 const getLastWeekday = (targetDay: number): Dayjs => {
-    const today = dayjs();
-    const currentDayIndex = today.day(); // 0 (Sun) - 6 (Sat)
+    const today = dayjs()
+    const currentDayIndex = today.day() // 0 (Sun) - 6 (Sat)
 
     // Normalize input (7=Sun) to Day.js standard (0=Sun)
-    const targetDayIndex = targetDay === 7 ? 0 : targetDay;
+    const targetDayIndex = targetDay === 7 ? 0 : targetDay
 
     // Calculate difference
-    let daysToAdd = targetDayIndex - currentDayIndex;
+    let daysToAdd = targetDayIndex - currentDayIndex
 
     // If the target day is today or in the future (within the standard week cycle),
     // backtrack 7 days to find the previous occurrence.
     if (daysToAdd >= 0) {
-        daysToAdd -= 7;
+        daysToAdd -= 7
     }
 
-    return today.add(daysToAdd, 'day').startOf('day');
-};
+    return today.add(daysToAdd, 'day').startOf('day')
+}
 
 // Semantic Keywords configuration
 const KEYWORDS: KeywordDefinition[] = [
@@ -129,7 +129,7 @@ const KEYWORDS: KeywordDefinition[] = [
     { regExp: /^(?:fri(?:day)?|(?:周|星期)[5五])/i, calc: () => getLastWeekday(5) },
     { regExp: /^(?:sat(?:urday)?|(?:周|星期)[6六])/i, calc: () => getLastWeekday(6) },
     { regExp: /^(?:sun(?:day)?|(?:周|星期)[7日天])/i, calc: () => getLastWeekday(7) },
-];
+]
 
 /**
  * Normalizes the input string to a format suitable for parsing.
@@ -144,29 +144,29 @@ const KEYWORDS: KeywordDefinition[] = [
  * @returns The normalized string.
  */
 const normalize = (date: string): string => {
-    let str = date.toLowerCase().trim();
+    let str = date.toLowerCase().trim()
 
     if (REGEX_JUST_NOW.test(str)) {
-        return 'just now';
+        return 'just now'
     }
 
     // 1. Quantifiers: 'a'/'an' -> '1'
-    str = str.replaceAll(/(^|\s)an?(\s)/g, '$11$2');
+    str = str.replaceAll(/(^|\s)an?(\s)/g, '$11$2')
 
     // 2. Vague 'x' (English needs boundary)
-    str = str.replaceAll(/(^|\s)x(\s|$)/g, '$13$2');
+    str = str.replaceAll(/(^|\s)x(\s|$)/g, '$13$2')
 
     // 3. Vague Chinese '几/数' (No boundary needed)
-    str = str.replaceAll(/几|幾|数/g, '3');
+    str = str.replaceAll(/几|幾|数/g, '3')
 
     // 4. Chinese numerals
-    str = str.replaceAll(/[一二两三四五六七八九十]/g, (match) => CN_NUM_MAP[match] || match);
+    str = str.replaceAll(/[一二两三四五六七八九十]/g, (match) => CN_NUM_MAP[match] || match)
 
     // 5. Remove commas
-    str = str.replaceAll(',', '');
+    str = str.replaceAll(',', '')
 
-    return str;
-};
+    return str
+}
 
 /**
  * Parses a string to extract the total duration based on predefined unit patterns.
@@ -175,21 +175,21 @@ const normalize = (date: string): string => {
  * @returns A Dayjs Duration object representing the total time.
  */
 const parseDuration = (str: string): plugin.Duration => {
-    let totalDuration = dayjs.duration(0);
+    let totalDuration = dayjs.duration(0)
     // Remove spaces for regex unit matching
-    const cleanStr = str.replaceAll(/\s+/g, '');
+    const cleanStr = str.replaceAll(/\s+/g, '')
 
     for (const { unit, regExp } of UNIT_PATTERNS) {
-        const match = regExp.exec(cleanStr);
+        const match = regExp.exec(cleanStr)
         if (match) {
-            const val = Number.parseInt(match[1], 10);
+            const val = Number.parseInt(match[1], 10)
             if (!Number.isNaN(val)) {
-                totalDuration = totalDuration.add(val, unit);
+                totalDuration = totalDuration.add(val, unit)
             }
         }
     }
-    return totalDuration;
-};
+    return totalDuration
+}
 
 /**
  * A wrapper around `dayjs()` to parse standard date formats.
@@ -198,7 +198,7 @@ const parseDuration = (str: string): plugin.Duration => {
  * @param options - Optional Day.js configuration (e.g., format string).
  * @returns A native JavaScript Date object.
  */
-export const parseDate = (date: string | number | Date, ...options: OptionType[]): Date => dayjs(date, ...options).toDate();
+export const parseDate = (date: string | number | Date, ...options: OptionType[]): Date => dayjs(date, ...options).toDate()
 
 /**
  * Processes a date string composed of a semantic keyword and an optional time component.
@@ -210,51 +210,51 @@ export const parseDate = (date: string | number | Date, ...options: OptionType[]
  */
 const processSemanticKeyword = (baseTime: Dayjs, timePart: string, originalContext: string): Date => {
     if (!timePart) {
-        return baseTime.toDate();
+        return baseTime.toDate()
     }
 
-    const isPM = REGEX_IS_PM.test(originalContext);
-    const isAM = REGEX_IS_AM.test(originalContext);
+    const isPM = REGEX_IS_PM.test(originalContext)
+    const isAM = REGEX_IS_AM.test(originalContext)
 
     // Normalize formats like "3pm" to "3 pm" to separate digits from text
-    const fixTimePart = timePart.replace(REGEX_STICKY_AMPM, '$1 $2m');
+    const fixTimePart = timePart.replace(REGEX_STICKY_AMPM, '$1 $2m')
 
     // Attempt 1: Parse as a duration (e.g., "8点" -> 8 hours from start of day)
-    const extraDuration = parseDuration(fixTimePart);
-    let addedMillis = extraDuration.asMilliseconds();
+    const extraDuration = parseDuration(fixTimePart)
+    let addedMillis = extraDuration.asMilliseconds()
 
     // Attempt 2: Handle cases where duration regex fails (e.g., "3 pm" doesn't match standard units)
-    const stickyMatch = REGEX_STICKY_AMPM.exec(timePart);
+    const stickyMatch = REGEX_STICKY_AMPM.exec(timePart)
     if (addedMillis === 0 && stickyMatch) {
-        addedMillis = Number.parseInt(stickyMatch[1], 10) * 60 * 60 * 1000;
+        addedMillis = Number.parseInt(stickyMatch[1], 10) * 60 * 60 * 1000
     }
 
     if (addedMillis > 0) {
-        const hours = dayjs.duration(addedMillis).asHours();
+        const hours = dayjs.duration(addedMillis).asHours()
         // Adjust for 12-hour clock context
         if (isPM && hours < 12) {
-            addedMillis += 12 * 60 * 60 * 1000;
+            addedMillis += 12 * 60 * 60 * 1000
         } else if (isAM && hours === 12) {
-            addedMillis -= 12 * 60 * 60 * 1000;
+            addedMillis -= 12 * 60 * 60 * 1000
         }
-        return baseTime.add(addedMillis, 'ms').toDate();
+        return baseTime.add(addedMillis, 'ms').toDate()
     }
 
     // Attempt 3: Parse as a standard time string using Day.js formats
-    const composedDateStr = `${baseTime.format('YYYY-MM-DD')} ${fixTimePart}`;
-    const tried = dayjs(composedDateStr, ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm', 'YYYY-MM-DD H:m', 'YYYY-MM-DD h:m a', 'YYYY-MM-DD h a']);
+    const composedDateStr = `${baseTime.format('YYYY-MM-DD')} ${fixTimePart}`
+    const tried = dayjs(composedDateStr, ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm', 'YYYY-MM-DD H:m', 'YYYY-MM-DD h:m a', 'YYYY-MM-DD h a'])
 
     if (tried.isValid()) {
-        let result = tried;
+        let result = tried
         // Manual adjustment if the parser missed 12-hour context (e.g., "下午" stripped earlier)
         if (isPM && result.hour() < 12) {
-            result = result.add(12, 'hours');
+            result = result.add(12, 'hours')
         }
-        return result.toDate();
+        return result.toDate()
     }
 
-    return baseTime.toDate();
-};
+    return baseTime.toDate()
+}
 
 /**
  * Parses a relative or semantic date string into a JavaScript Date object.
@@ -287,44 +287,44 @@ const processSemanticKeyword = (baseTime: Dayjs, timePart: string, originalConte
  */
 export const parseRelativeDate = (date: string, ...options: OptionType[]): Date => {
     if (!date) {
-        return new Date();
+        return new Date()
     }
 
-    const normalized = normalize(date);
+    const normalized = normalize(date)
 
     // Strategy 1: Immediate Time
     if (normalized === 'just now') {
-        return dayjs().subtract(3, 'seconds').toDate();
+        return dayjs().subtract(3, 'seconds').toDate()
     }
 
     // Strategy 2: Relative Duration
-    const agoMatch = REGEX_AGO.exec(normalized);
+    const agoMatch = REGEX_AGO.exec(normalized)
     if (agoMatch) {
-        const duration = parseDuration(agoMatch[1]);
+        const duration = parseDuration(agoMatch[1])
         if (duration.asMilliseconds() > 0) {
-            return dayjs().subtract(duration).toDate();
+            return dayjs().subtract(duration).toDate()
         }
     }
 
-    const inMatch = REGEX_IN.exec(normalized);
+    const inMatch = REGEX_IN.exec(normalized)
     if (inMatch) {
-        const duration = parseDuration(inMatch[1] || inMatch[2]);
+        const duration = parseDuration(inMatch[1] || inMatch[2])
         if (duration.asMilliseconds() > 0) {
-            return dayjs().add(duration).toDate();
+            return dayjs().add(duration).toDate()
         }
     }
 
     // Strategy 3: Semantic Keywords extraction and processing
-    const cleanStr = normalized.replaceAll(/\s+/g, '');
+    const cleanStr = normalized.replaceAll(/\s+/g, '')
     for (const word of KEYWORDS) {
-        const match = word.regExp.exec(cleanStr);
+        const match = word.regExp.exec(cleanStr)
         if (match) {
-            const baseTime = word.calc();
-            const timePart = cleanStr.replace(word.regExp, '');
-            return processSemanticKeyword(baseTime, timePart, normalized);
+            const baseTime = word.calc()
+            const timePart = cleanStr.replace(word.regExp, '')
+            return processSemanticKeyword(baseTime, timePart, normalized)
         }
     }
 
     // Strategy 4: Fallback to standard Day.js parsing
-    return parseDate(date, ...options);
-};
+    return parseDate(date, ...options)
+}

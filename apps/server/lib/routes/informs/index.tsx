@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://pubsonline.informs.org';
+const rootUrl = 'https://pubsonline.informs.org'
 
 export const route: Route = {
     path: '/:category?',
@@ -26,28 +26,28 @@ export const route: Route = {
     name: 'Category',
     maintainers: ['Fatpandac'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'orsc';
-    const cateUrl = `${rootUrl}/toc/${category}/0/0`;
+    const category = ctx.req.param('category') ?? 'orsc'
+    const cateUrl = `${rootUrl}/toc/${category}/0/0`
 
     const getCookie = () =>
         cache.tryGet(cateUrl, async () => {
-            const setCookiesUrl = `${cateUrl}?cookieSet=1`;
+            const setCookiesUrl = `${cateUrl}?cookieSet=1`
 
             const response = await got.extend({ followRedirect: false }).get(setCookiesUrl, {
                 headers: {
                     Referer: cateUrl,
                 },
-            });
+            })
             const cookie = response.headers['set-cookie']
                 .slice(1)
                 .map((item) => item.split(';')[0])
-                .join('; ');
+                .join('; ')
 
-            return cookie;
-        });
+            return cookie
+        })
 
     const response = await got.get(cateUrl, {
         headers: {
@@ -55,8 +55,8 @@ async function handler(ctx) {
             'User-Agent': config.ua,
             cookie: await getCookie(),
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
     const list = $('div.issue-item')
         .slice(0, 10)
         .toArray()
@@ -64,7 +64,7 @@ async function handler(ctx) {
             title: $(item).find('h5.issue-item__title').text(),
             link: `${rootUrl}${$(item).find('h5.issue-item__title > a').attr('href')}`,
             pubDate: parseDate($(item).find('div.rlist--inline.separator.toc-item__detail > p').remove('span').text()),
-        }));
+        }))
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
@@ -74,20 +74,20 @@ async function handler(ctx) {
                         'User-Agent': config.ua,
                         cookie: await getCookie(),
                     },
-                });
-                const detail = load(detailResponse.data);
-                item.description = renderDescription(detail('div.accordion-tabbed.loa-accordion').text(), detail('div.hlFld-Abstract').find('h2').replaceWith($('<h2>Abstract </h2>')).end().html());
+                })
+                const detail = load(detailResponse.data)
+                item.description = renderDescription(detail('div.accordion-tabbed.loa-accordion').text(), detail('div.hlFld-Abstract').find('h2').replaceWith($('<h2>Abstract </h2>')).end().html())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `INFORMS - ${category}`,
         link: cateUrl,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (author: string, content: string): string =>
@@ -96,5 +96,5 @@ const renderDescription = (author: string, content: string): string =>
             <strong> {author} </strong>
             <br />
             {raw(content)}
-        </>
-    );
+        </>,
+    )

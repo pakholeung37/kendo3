@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/topics/:type',
@@ -35,18 +35,18 @@ export const route: Route = {
     name: '最热 / 最新主题',
     maintainers: ['WhiteWorld'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
 
-    const { data } = await got(`https://www.v2ex.com/api/topics/${type}.json`);
+    const { data } = await got(`https://www.v2ex.com/api/topics/${type}.json`)
 
-    let title;
+    let title
     if (type === 'hot') {
-        title = '最热主题';
+        title = '最热主题'
     } else if (type === 'latest') {
-        title = '最新主题';
+        title = '最新主题'
     }
 
     return {
@@ -63,5 +63,5 @@ async function handler(ctx) {
             comments: item.replies,
             category: [item.node.title],
         })),
-    };
+    }
 }

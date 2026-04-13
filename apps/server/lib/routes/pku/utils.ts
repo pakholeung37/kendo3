@@ -8,6 +8,6 @@ const eecsMap = new Map([
     [5, 'cwtz.htm'],
     [3, 'ghtz.htm'],
     [4, 'yytz.htm'],
-]);
+])
 
-export { eecsMap };
+export { eecsMap }

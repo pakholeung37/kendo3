@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseRelativeDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseRelativeDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/posts/:cid/:sort?',
@@ -39,40 +39,40 @@ export const route: Route = {
 | featured | 精选 (默认) |
 | featured | 最赞        |
 | hottest  | 最热        |`,
-};
+}
 
 async function handler(ctx) {
-    const cid = ctx.req.param('cid') || 'all';
-    const sort = ctx.req.param('sort');
+    const cid = ctx.req.param('cid') || 'all'
+    const sort = ctx.req.param('sort')
 
-    let url = 'https://learnblockchain.cn/categories/';
-    url += cid + '/';
+    let url = 'https://learnblockchain.cn/categories/'
+    url += cid + '/'
 
     if (sort) {
-        url += sort + '/';
+        url += sort + '/'
     }
 
-    const response = await got(url);
+    const response = await got(url)
 
-    const data = response.data;
-    const $ = load(data);
-    const list = $('div.stream-list section.stream-list-item');
+    const data = response.data
+    const $ = load(data)
+    const list = $('div.stream-list section.stream-list-item')
 
     return {
         title: `登链社区--${cid}`,
         link: url,
         description: `登链社区`,
         item: list.toArray().map((ite) => {
-            const item = $(ite);
+            const item = $(ite)
             const json = {
                 title: item.find('h2.title').text().trim(),
                 description: item.find('div.excerpt').text().trim(),
                 pubDate: parseRelativeDate(item.find('.author li:nth-child(2)').text().replace('发布于', '').trim()),
                 link: item.find('h2.title a').attr('href').trim(),
                 author: item.find('.author li:nth-child(1)').text().trim(),
-            };
+            }
 
-            return json;
+            return json
         }),
-    };
+    }
 }

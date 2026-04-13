@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/rss/:cat?',
@@ -35,29 +35,29 @@ export const route: Route = {
     handler,
     url: 'nytimes.com/',
     description: `Enhance the official EN RSS feed`,
-};
+}
 
 async function handler(ctx) {
-    const url = `https://rss.nytimes.com/services/xml/rss/nyt/${ctx.req.param('cat')}.xml`;
+    const url = `https://rss.nytimes.com/services/xml/rss/nyt/${ctx.req.param('cat')}.xml`
 
-    const rss = await parser.parseURL(url);
+    const rss = await parser.parseURL(url)
 
     return {
         ...rss,
         item: await Promise.all(
             rss.items.map((e) =>
                 cache.tryGet(e.link, async () => {
-                    const res = await ofetch(e.link, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }, referer: 'https://www.google.com/' });
+                    const res = await ofetch(e.link, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }, referer: 'https://www.google.com/' })
 
-                    const $ = load(res);
+                    const $ = load(res)
 
                     return {
                         ...e,
                         description: $("[name='articleBody']").html(),
                         author: $('meta[name="byl"]').attr('content'),
-                    };
-                })
-            )
+                    }
+                }),
+            ),
         ),
-    };
+    }
 }

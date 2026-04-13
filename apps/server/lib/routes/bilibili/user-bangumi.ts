@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/user/bangumi/:uid/:type?',
@@ -25,13 +25,13 @@ export const route: Route = {
     name: '用户追番列表',
     maintainers: ['wdssmq'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const type = Number(ctx.req.param('type') || 1);
-    const type_name = ((t) => ['', 'bangumi', 'cinema'][t])(type);
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const type = Number(ctx.req.param('type') || 1)
+    const type_name = ((t) => ['', 'bangumi', 'cinema'][t])(type)
+    const name = await cache.getUsernameFromUID(uid)
 
     const response = await got({
         method: 'get',
@@ -39,10 +39,10 @@ async function handler(ctx) {
         headers: {
             Referer: `https://space.bilibili.com/${uid}/${type_name}`,
         },
-    });
-    const data = response.data;
+    })
+    const data = response.data
     if (data.code !== 0) {
-        throw new Error(`It looks like something went wrong when querying the Bilibili API: code = ${data.code}, message = ${data.message}`);
+        throw new Error(`It looks like something went wrong when querying the Bilibili API: code = ${data.code}, message = ${data.message}`)
     }
 
     return {
@@ -58,5 +58,5 @@ async function handler(ctx) {
                 pubDate: new Date(item.new_ep.pub_time ?? Date.now()).toUTCString(),
                 link: `https://www.bilibili.com/bangumi/play/` + (item.new_ep.id ? `ep${item.new_ep.id}` : `ss${item.season_id}`),
             })),
-    };
+    }
 }

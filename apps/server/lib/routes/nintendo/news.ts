@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import util from './utils';
+import util from './utils'
 
 export const route: Route = {
     path: '/news',
@@ -27,14 +27,14 @@ export const route: Route = {
     maintainers: ['HFO4'],
     handler,
     url: 'nintendo.com.hk/topics',
-};
+}
 
 async function handler(ctx) {
-    const response = await got('https://www.nintendo.com.hk/data/json/topics.json');
-    const data = response.data.filter((val) => val.only_for !== 'tw' && val.url.startsWith('/topics/article/')).slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30);
+    const response = await got('https://www.nintendo.com.hk/data/json/topics.json')
+    const data = response.data.filter((val) => val.only_for !== 'tw' && val.url.startsWith('/topics/article/')).slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 30)
 
     // 获取新闻正文
-    const result = await util.ProcessNews(data, cache);
+    const result = await util.ProcessNews(data, cache)
 
     return {
         title: 'Nintendo（香港）主页资讯',
@@ -46,5 +46,5 @@ async function handler(ctx) {
             link: `https://www.nintendo.com.hk${item.url}`,
             pubDate: parseDate(item.release_date, 'YYYY.M.D'),
         })),
-    };
+    }
 }

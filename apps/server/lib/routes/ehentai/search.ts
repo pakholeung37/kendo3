@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import EhAPI from './ehapi';
+import EhAPI from './ehapi'
 
 export const route: Route = {
     path: '/search/:params?/:page?/:routeParams?',
@@ -20,26 +20,26 @@ export const route: Route = {
     name: 'Search',
     maintainers: ['yindaheng98', 'syrinka'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const page = ctx.req.param('page');
-    let params = ctx.req.param('params');
-    const routeParams = new URLSearchParams(ctx.req.param('routeParams'));
-    const bittorrent = routeParams.get('bittorrent') || false;
-    const embed_thumb = routeParams.get('embed_thumb') || false;
-    let items;
+    const page = ctx.req.param('page')
+    let params = ctx.req.param('params')
+    const routeParams = new URLSearchParams(ctx.req.param('routeParams'))
+    const bittorrent = routeParams.get('bittorrent') || false
+    const embed_thumb = routeParams.get('embed_thumb') || false
+    let items
     if (page) {
         // 如果定义了page，就要覆盖params
-        params = params.replace(/&*next=[^&]$/, '').replace(/next=[^&]&/, '');
-        items = await EhAPI.getSearchItems(cache, params, page, bittorrent, embed_thumb);
+        params = params.replace(/&*next=[^&]$/, '').replace(/next=[^&]&/, '')
+        items = await EhAPI.getSearchItems(cache, params, page, bittorrent, embed_thumb)
     } else {
-        items = await EhAPI.getSearchItems(cache, params, undefined, bittorrent, embed_thumb);
+        items = await EhAPI.getSearchItems(cache, params, undefined, bittorrent, embed_thumb)
     }
-    let title = params;
-    const match = /f_search=([^&]+)/.exec(title);
+    let title = params
+    const match = /f_search=([^&]+)/.exec(title)
     if (match !== null) {
-        title = match[1];
+        title = match[1]
     }
 
     return EhAPI.from_ex
@@ -52,5 +52,5 @@ async function handler(ctx) {
               title: title + ' - E-Hentai Search ',
               link: `https://e-hentai.org/?${params}`,
               item: items,
-          };
+          }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 const categories = {
     jgdt: {
@@ -69,14 +69,14 @@ const categories = {
         link: `http://www.cbirc.gov.cn/cn/static/data/DocInfo/SelectDocByItemIdAndChild/data_itemId=954,pageIndex=1,pageSize=18.json`,
         title: '统计信息',
     },
-};
+}
 
 async function getContent(item) {
     const response = await got({
         method: 'get',
         url: 'http://www.cbirc.gov.cn/cn/static/data/DocInfo/SelectByDocId/data_docId=' + item.docId + '.json',
-    });
-    return response.data.data.docClob;
+    })
+    return response.data.data.docClob
 }
 
 export const route: Route = {
@@ -89,11 +89,11 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['JkCheung'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'ggtz';
-    const cat = categories[category];
+    const category = ctx.req.param('category') ?? 'ggtz'
+    const cat = categories[category]
 
     // 请求集合
     const response = await cache.tryGet(cat.link, async () => {
@@ -103,14 +103,14 @@ async function handler(ctx) {
             headers: {
                 Referer: `http://www.cbirc.gov.cn`,
             },
-        });
-        return resp.data;
-    });
+        })
+        return resp.data
+    })
 
     // 遍历数据集合
     const dataLs = await Promise.all(
         response.data.rows.map(async (item) => {
-            const content = await getContent(item);
+            const content = await getContent(item)
             return {
                 title: item.docTitle,
                 // 文章正文
@@ -119,9 +119,9 @@ async function handler(ctx) {
                 pubDate: item.publishDate,
                 // 文章链接
                 link: `http://www.cbirc.gov.cn/cn/view/pages/ItemDetail.html?docId=${item.docId}&itemId=925&generaltype=0`,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     return {
         title: `中国银保监会-${cat.title}`,
@@ -129,5 +129,5 @@ async function handler(ctx) {
         description: `中国银保监会-${cat.title}`,
         item: dataLs,
         language: 'zh-CN',
-    };
+    }
 }

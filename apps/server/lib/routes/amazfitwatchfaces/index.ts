@@ -1,35 +1,35 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { device, sort, searchParams } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { device, sort, searchParams } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://amazfitwatchfaces.com';
-    const targetUrl: string = new URL(`${device}/${sort}${searchParams ? `?${searchParams}` : ''}`, baseUrl).href;
+    const baseUrl = 'https://amazfitwatchfaces.com'
+    const targetUrl: string = new URL(`${device}/${sort}${searchParams ? `?${searchParams}` : ''}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('div.wf-panel')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.prop('title');
-            const image: string | undefined = $el.find('img.wf-img').attr('src');
+            const title: string = $el.prop('title')
+            const image: string | undefined = $el.find('img.wf-img').attr('src')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -39,20 +39,20 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           },
                       ]
                     : undefined,
-            });
-            const linkUrl: string | undefined = $el.find('a.wf-act').attr('href');
-            const categoryEls: Element[] = $el.find('div.wf-comp code').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const authorEls: Element[] = $el.find('div.wf-user a').toArray();
+            })
+            const linkUrl: string | undefined = $el.find('a.wf-act').attr('href')
+            const categoryEls: Element[] = $el.find('div.wf-comp code').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const authorEls: Element[] = $el.find('div.wf-user a').toArray()
             const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                const $authorEl: Cheerio<Element> = $(authorEl);
+                const $authorEl: Cheerio<Element> = $(authorEl)
 
                 return {
                     name: $authorEl.text(),
                     url: $authorEl.attr('href') ? new URL($authorEl.attr('href') as string, baseUrl).href : undefined,
                     avatar: undefined,
-                };
-            });
+                }
+            })
 
             const processedItem: DataItem = {
                 title,
@@ -67,24 +67,24 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.page-title h1').text();
-                    const image: string | undefined = $$('img#watchface-preview').attr('src');
+                    const title: string = $$('div.page-title h1').text()
+                    const image: string | undefined = $$('img#watchface-preview').attr('src')
                     const description: string | undefined = renderDescription({
                         images: image
                             ? [
@@ -95,22 +95,22 @@ export const handler = async (ctx: Context): Promise<Data> => {
                               ]
                             : undefined,
                         description: $$('div.unicodebidi').html() ?? undefined,
-                    });
-                    const pubDateStr: string | undefined = $$('i.fa-calendar').parent().find('span').text();
-                    const linkUrl: string | undefined = $$('.title').attr('href');
-                    const categoryEls: Element[] = $$('div.mdesc a.btn-sm').toArray();
-                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))];
-                    const authorEls: Element[] = $$('div.wf-userinfo-name').toArray();
+                    })
+                    const pubDateStr: string | undefined = $$('i.fa-calendar').parent().find('span').text()
+                    const linkUrl: string | undefined = $$('.title').attr('href')
+                    const categoryEls: Element[] = $$('div.mdesc a.btn-sm').toArray()
+                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))]
+                    const authorEls: Element[] = $$('div.wf-userinfo-name').toArray()
                     const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                        const $$authorEl: Cheerio<Element> = $$(authorEl).find('a.wf-author-h');
+                        const $$authorEl: Cheerio<Element> = $$(authorEl).find('a.wf-author-h')
 
                         return {
                             name: $$authorEl.text(),
                             url: $$authorEl.attr('href') ? new URL($$authorEl.attr('href') as string, baseUrl).href : undefined,
                             avatar: $$authorEl.find('img.wf-userpic').attr('src'),
-                        };
-                    });
-                    const upDatedStr: string | undefined = $$('i.fa-clock-o').parent().find('span').text();
+                        }
+                    })
+                    const upDatedStr: string | undefined = $$('i.fa-clock-o').parent().find('span').text()
 
                     const processedItem: DataItem = {
                         title,
@@ -127,16 +127,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: upDatedStr ? parseDate(upDatedStr, 'DD.MM.YYYY HH:mm') : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -148,8 +148,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:device/:sort/:searchParams?',
@@ -317,10 +317,10 @@ If you subscribe to [TOP for the last 6 months (Only new) - Xiaomi Smart Band 9]
         {
             source: ['amazfitwatchfaces.com/:device/:sort'],
             target: (params) => {
-                const device: string = params.device;
-                const sort: string = params.sort;
+                const device: string = params.device
+                const sort: string = params.sort
 
-                return `/amazfitwatchfaces${device ? `/${device}${sort ? `/${sort}` : ''}` : ''}`;
+                return `/amazfitwatchfaces${device ? `/${device}${sort ? `/${sort}` : ''}` : ''}`
             },
         },
         {
@@ -425,4 +425,4 @@ If you subscribe to [TOP for the last 6 months (Only new) - Xiaomi Smart Band 9]
         },
     ],
     view: ViewType.Articles,
-};
+}

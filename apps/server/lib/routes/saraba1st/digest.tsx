@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/digest/:tid',
@@ -26,62 +26,62 @@ export const route: Route = {
     maintainers: ['shinemoon'],
     handler,
     description: `版面网址如果为 \`https://stage1st.com/2b/forum-6-1.html\` 那么论坛 id 就是 \`forum-6-1\`。`,
-};
+}
 
 async function handler(ctx) {
-    const tid = ctx.req.param('tid');
-    const cookieString = config.saraba1st.cookie ?? '';
-    const host = config.saraba1st.host;
+    const tid = ctx.req.param('tid')
+    const cookieString = config.saraba1st.cookie ?? ''
+    const host = config.saraba1st.host
     const res = await got(`${host}/2b/${tid}.html`, {
         headers: {
             Cookie: cookieString,
         },
-    });
-    const $ = load(res.data);
-    const title = $('head title').text().replace(/-.*/, '');
-    const list = $('#threadlisttableid tbody[id^="normalthread_"] tr');
+    })
+    const $ = load(res.data)
+    const title = $('head title').text().replace(/-.*/, '')
+    const list = $('#threadlisttableid tbody[id^="normalthread_"] tr')
     const count = list
         .slice(0, ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 20)
         .toArray()
         .map((each) => {
-            each = $(each);
-            const floor = each.find('th.new a.s.xst').text();
-            const floorUrl = each.find('th.new a.s.xst').attr('href');
+            each = $(each)
+            const floor = each.find('th.new a.s.xst').text()
+            const floorUrl = each.find('th.new a.s.xst').attr('href')
             return {
                 title: `${title}:${floor}`,
                 link: new URL(floorUrl, `${host}/2b/`).href,
                 author: each.find('td.by cite').text(),
                 pubDate: timezone(parseDate(each.find('td.by em').first().text()), +8),
-            };
-        });
+            }
+        })
 
     const resultItems = await Promise.all(
         count.map((i) =>
             cache.tryGet(i.link, async () => {
-                i.description = await fetchContent(i.link);
-                return i;
-            })
-        )
-    );
+                i.description = await fetchContent(i.link)
+                return i
+            }),
+        ),
+    )
 
     return {
         title: `Stage1 论坛 - ${title}`,
         link: `${host}/2b/${tid}.html`,
         //        item: await resultItems,
         item: resultItems,
-    };
+    }
 }
 
 async function fetchContent(url) {
     // Fetch the subpageinof
-    const cookieString = config.saraba1st.cookie ?? '';
+    const cookieString = config.saraba1st.cookie ?? ''
     const subres = await got(url, {
         headers: {
             Cookie: cookieString,
         },
-    });
-    const subind = load(subres.data);
-    const stubS = subind('<div>');
+    })
+    const subind = load(subres.data)
+    const stubS = subind('<div>')
     subind('#postlist')
         .find('div[id*="post_"] ')
         .each(function () {
@@ -95,25 +95,25 @@ async function fetchContent(url) {
                         }}
                         msg={subind(this).find('td[id*="postmessage_"]').html()}
                         host={config.saraba1st.host}
-                    />
-                );
-                stubS.append(section);
+                    />,
+                )
+                stubS.append(section)
             }
-        });
+        })
 
     stubS.find('img').each(function () {
-        const img = subind(this);
-        const file = img.attr('file');
+        const img = subind(this)
+        const file = img.attr('file')
         if (file) {
-            img.attr('src', file);
-            img.removeAttr('zoomfile');
-            img.removeAttr('file');
-            img.removeAttr('onmouseover');
-            img.removeAttr('onclick');
+            img.attr('src', file)
+            img.removeAttr('zoomfile')
+            img.removeAttr('file')
+            img.removeAttr('onmouseover')
+            img.removeAttr('onclick')
         }
-    });
+    })
 
-    return stubS.html();
+    return stubS.html()
 }
 
 const DigestSection = ({ author, msg, host }: { author: { link?: string; name: string; postinfo: string }; msg?: string; host: string }) => (
@@ -128,4 +128,4 @@ const DigestSection = ({ author, msg, host }: { author: { link?: string; name: s
             {msg ? raw(msg) : null}
         </div>
     </>
-);
+)

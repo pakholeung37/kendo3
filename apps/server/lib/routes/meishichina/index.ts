@@ -1,45 +1,45 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const isChinese = (text: string): boolean => /^[\u4E00-\u9FA5]+$/.test(text);
+const isChinese = (text: string): boolean => /^[\u4E00-\u9FA5]+$/.test(text)
 
 export const handler = async (ctx) => {
-    const DEFAULT_CATEGORY = '最新推荐';
-    const DEFAULT_CLASSID = 0;
-    const DEFAULT_ORDERBY = 'hot';
+    const DEFAULT_CATEGORY = '最新推荐'
+    const DEFAULT_CLASSID = 0
+    const DEFAULT_ORDERBY = 'hot'
 
-    const { category = DEFAULT_CATEGORY } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { category = DEFAULT_CATEGORY } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
     // If `category` is in Chinese, it should come from the tab titles,
     // because each `recipe-type` has an English ID.
     // e.g. `recai` is for [热菜](https://home.meishichina.com/recipe/recai/). `mifan` is for [米饭](https://home.meishichina.com/recipe/mifan/).
 
-    const isTab = isChinese(category);
+    const isTab = isChinese(category)
 
     // Some categories, for example, [做法简单的菜谱](https://home.meishichina.com/recipe-type-do-level-view-1.html).
     // The URLs of theirs start with `recipe` and end with `.html`.
 
-    const isHtml = category.startsWith('recipe');
+    const isHtml = category.startsWith('recipe')
 
-    const rootUrl = 'https://home.meishichina.com';
-    const rootImageUrl = 'https://i3.meishichina.com';
-    const currentUrl = new URL(`${isHtml ? '' : 'recipe'}${isTab ? '.html' : `/${category.endsWith('/') ? category : `${category}${isHtml ? '.html' : '/'}`}`}`, rootUrl).href;
-    const apiUrl = new URL('ajax/ajax.php', rootUrl).href;
+    const rootUrl = 'https://home.meishichina.com'
+    const rootImageUrl = 'https://i3.meishichina.com'
+    const currentUrl = new URL(`${isHtml ? '' : 'recipe'}${isTab ? '.html' : `/${category.endsWith('/') ? category : `${category}${isHtml ? '.html' : '/'}`}`}`, rootUrl).href
+    const apiUrl = new URL('ajax/ajax.php', rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
     const categoryEl = isTab
         ? $('div#recipeindex_info_wrap a')
               .toArray()
               .find((a) => $(a).text() === category)
-        : undefined;
+        : undefined
 
     const { data: response } = isTab
         ? await got(apiUrl, {
@@ -51,13 +51,13 @@ export const handler = async (ctx) => {
                   page: 1,
               },
           })
-        : { data: undefined };
+        : { data: undefined }
 
     let items = isTab
         ? response.data.slice(0, limit).map((item) => {
-              const title = item.title;
-              const guid = `meishichina-${item.id}`;
-              const image = item.fcover.split(/\?/)[0];
+              const title = item.title
+              const guid = `meishichina-${item.id}`
+              const image = item.fcover.split(/\?/)[0]
 
               return {
                   title,
@@ -69,18 +69,18 @@ export const handler = async (ctx) => {
                   id: guid,
                   image,
                   banner: image,
-              };
+              }
           })
         : $('div#J_list ul li')
               .slice(0, limit)
               .toArray()
               .map((item) => {
-                  item = $(item);
+                  item = $(item)
 
-                  const title = item.find('div.detail h2').text();
-                  const description = item.find('div.detail').html();
-                  const guid = `meishichina-${item.prop('data-id')}`;
-                  const image = item.find('div.pic img').prop('src').split(/\?/)[0];
+                  const title = item.find('div.detail h2').text()
+                  const description = item.find('div.detail').html()
+                  const guid = `meishichina-${item.prop('data-id')}`
+                  const image = item.find('div.pic img').prop('src').split(/\?/)[0]
 
                   return {
                       title,
@@ -96,30 +96,30 @@ export const handler = async (ctx) => {
                       },
                       image,
                       banner: image,
-                  };
-              });
+                  }
+              })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('input[type="hidden"]').remove();
-                $$('p.J_photo, p.copyright').remove();
-                $$('div.sharebox').nextAll().addBack().remove();
+                $$('input[type="hidden"]').remove()
+                $$('p.J_photo, p.copyright').remove()
+                $$('div.sharebox').nextAll().addBack().remove()
 
-                const title = $$('a#recipe_title').text();
-                const description = $$('div.recipDetail').html();
-                const image = $$('div#recipe_De_imgBox img').prop('src')?.split(/\?/)[0] ?? undefined;
+                const title = $$('a#recipe_title').text()
+                const description = $$('div.recipDetail').html()
+                const image = $$('div#recipe_De_imgBox img').prop('src')?.split(/\?/)[0] ?? undefined
 
-                const pubDate = detailResponse.match(/"pubDate":\s"(.*?)",/)?.[1] ?? undefined;
-                const updated = detailResponse.match(/"upDate":\s"(.*?)",/)?.[1] ?? undefined;
+                const pubDate = detailResponse.match(/"pubDate":\s"(.*?)",/)?.[1] ?? undefined
+                const updated = detailResponse.match(/"upDate":\s"(.*?)",/)?.[1] ?? undefined
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate;
+                item.title = title
+                item.description = description
+                item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate
                 item.category = [
                     ...new Set([
                         ...$$('div.recipeTip a')
@@ -129,22 +129,22 @@ export const handler = async (ctx) => {
                             .toArray()
                             .map((c) => $$(c).text().trim()),
                     ]),
-                ].filter(Boolean);
-                item.author = $$('span#recipe_username').text();
+                ].filter(Boolean)
+                item.author = $$('span#recipe_username').text()
                 item.content = {
                     html: description,
                     text: $$('div.recipDetail').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.updated = updated ? parseDate(updated) : item.updated;
+                }
+                item.image = image
+                item.banner = image
+                item.updated = updated ? parseDate(updated) : item.updated
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL('static/lib/logo.png', rootImageUrl).href;
+    const image = new URL('static/lib/logo.png', rootImageUrl).href
 
     return {
         title: `${isTab ? (categoryEl ? category : DEFAULT_CATEGORY) : `${$('h1.on').text()}${$('a.right.on').text()}`}${(
@@ -160,8 +160,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('div.logo_inner a').prop('title'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/recipe/:category{.+}?',
@@ -1994,4 +1994,4 @@ export const route: Route = {
             target: '/recipe/recipe-type-do-technics-view-50',
         },
     ],
-};
+}

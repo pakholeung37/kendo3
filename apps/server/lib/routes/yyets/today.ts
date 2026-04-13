@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/today',
@@ -27,19 +27,19 @@ export const route: Route = {
     maintainers: ['bao1991213'],
     handler,
     url: 'yysub.net/tv/schedule',
-};
+}
 
 async function handler() {
     // 发起 HTTP GET 请求
     const response = await got({
         method: 'get',
         url: 'https://yysub.net',
-    });
+    })
 
-    const data = response.data; // response.data 为 HTTP GET 请求返回的 HTML，也就是简书首页的所有 HTML
+    const data = response.data // response.data 为 HTTP GET 请求返回的 HTML，也就是简书首页的所有 HTML
 
-    const $ = load(data); // 使用 cheerio 加载返回的 HTML
-    const list = $('.today-list-wrap').find('ul').find('li');
+    const $ = load(data) // 使用 cheerio 加载返回的 HTML
+    const list = $('.today-list-wrap').find('ul').find('li')
     // 使用 cheerio 选择器，选择带有 data-item_id 属性的所有 div 元素，返回 cheerio node 对象数组
 
     // 注：每一个 cheerio node 对应一个 HTML DOM
@@ -50,12 +50,12 @@ async function handler() {
         title: '人人影视-今日播出',
         link: 'https://yysub.net',
         item: list.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').first().text(),
                 link: item.find('a').attr('href'),
                 guid: item.find('a').first().text(),
-            };
+            }
         }),
-    };
+    }
 }

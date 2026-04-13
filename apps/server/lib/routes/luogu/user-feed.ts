@@ -1,12 +1,12 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getUserInfoFromUID } from './utils';
+import { getUserInfoFromUID } from './utils'
 
-const md = MarkdownIt();
+const md = MarkdownIt()
 
 export const route: Route = {
     path: '/user/feed/:uid',
@@ -32,14 +32,14 @@ export const route: Route = {
     name: '用户动态',
     maintainers: ['solstice23'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const userInfo = await getUserInfoFromUID(uid);
-    const { data: response } = await got(`https://www.luogu.com.cn/api/feed/list?user=${uid}`);
+    const uid = ctx.req.param('uid')
+    const userInfo = await getUserInfoFromUID(uid)
+    const { data: response } = await got(`https://www.luogu.com.cn/api/feed/list?user=${uid}`)
 
-    const data = response.feeds.result;
+    const data = response.feeds.result
 
     return {
         title: `${userInfo.name} 的洛谷动态`,
@@ -55,5 +55,5 @@ async function handler(ctx) {
             link: `https://www.luogu.com.cn/user/${uid}#activity`,
             guid: item.id,
         })),
-    };
+    }
 }

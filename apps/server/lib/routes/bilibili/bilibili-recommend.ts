@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/precious/:embed?',
@@ -19,18 +19,18 @@ export const route: Route = {
     name: '入站必刷',
     maintainers: ['liuyuhe666'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const embed = !ctx.req.param('embed');
+    const embed = !ctx.req.param('embed')
     const response = await got({
         method: 'get',
         url: 'https://api.bilibili.com/x/web-interface/popular/precious',
         headers: {
             Referer: 'https://www.bilibili.com/v/popular/history',
         },
-    });
-    const data = response.data.data.list;
+    })
+    const data = response.data.data.list
     return {
         title: '哔哩哔哩入站必刷',
         link: 'https://www.bilibili.com/v/popular/history',
@@ -39,5 +39,5 @@ async function handler(ctx) {
             description: utils.renderUGCDescription(embed, item.pic, item.desc || item.title, item.aid, undefined, item.bvid),
             link: item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
         })),
-    };
+    }
 }

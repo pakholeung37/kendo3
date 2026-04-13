@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getData } from './utils';
+import { getData } from './utils'
 
 export const route: Route = {
     path: '/topic/:topic',
@@ -19,30 +19,30 @@ export const route: Route = {
     maintainers: ['emdoe'],
     handler,
     description: 'Supported categories: Therapeia, Eudaimonia, and Poiesis.',
-};
+}
 
 async function handler(ctx) {
-    const url = `https://psyche.co/${ctx.req.param('topic')}`;
-    const response = await ofetch(url);
-    const $ = load(response);
+    const url = `https://psyche.co/${ctx.req.param('topic')}`
+    const response = await ofetch(url)
+    const $ = load(response)
 
-    const data = JSON.parse($('script#__NEXT_DATA__').text());
-    const articles = data.props.pageProps.articles;
-    const prefix = `https://psyche.co/_next/data/${data.buildId}`;
+    const data = JSON.parse($('script#__NEXT_DATA__').text())
+    const articles = data.props.pageProps.articles
+    const prefix = `https://psyche.co/_next/data/${data.buildId}`
     const list = Object.keys(articles).flatMap((type) =>
         articles[type].edges.map((item) => ({
             title: item.node.title,
             link: `https://psyche.co/${type}/${item.node.slug}`,
             json: `${prefix}/${type}/${item.node.slug}.json`,
-        }))
-    );
+        })),
+    )
 
-    const items = await getData(list);
+    const items = await getData(list)
 
     return {
         title: `Psyche | ${data.props.pageProps.section.title}`,
         link: url,
         description: data.props.pageProps.section.metaDescription,
         item: items,
-    };
+    }
 }

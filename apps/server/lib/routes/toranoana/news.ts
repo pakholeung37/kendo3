@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -48,20 +48,20 @@ export const route: Route = {
 [イラスト展](https://news.toranoana.jp/exhibitions)→\`/toranoana/news/exhibition\`  
 [\`https://news.toranoana.jp/category/media\`](https://news.toranoana.jp/category/media)→\`/toranoana/news/media\`
 :::`,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { category = '' } = ctx.req.param();
-    let apiUrl = 'https://news.toranoana.jp/wp-json/wp/v2/posts';
+    const { category = '' } = ctx.req.param()
+    let apiUrl = 'https://news.toranoana.jp/wp-json/wp/v2/posts'
 
     if (category) {
-        const categoryResponse = await ofetch(`https://news.toranoana.jp/wp-json/wp/v2/categories?slug=${category}`);
+        const categoryResponse = await ofetch(`https://news.toranoana.jp/wp-json/wp/v2/categories?slug=${category}`)
         if (categoryResponse && categoryResponse.length > 0) {
-            apiUrl += `?categories=${categoryResponse[0].id}`;
+            apiUrl += `?categories=${categoryResponse[0].id}`
         }
     } else {
         // exclude category-joshi to get result of general
-        apiUrl += `?categories_exclude=1598`;
+        apiUrl += `?categories_exclude=1598`
     }
 
     const posts = await ofetch(apiUrl, {
@@ -69,26 +69,26 @@ async function handler(ctx): Promise<Data> {
             per_page: 20,
             _embed: 'wp:featuredmedia',
         },
-    });
+    })
 
     if (!posts || !posts.length) {
-        throw new Error('No posts found');
+        throw new Error('No posts found')
     }
 
     const items = posts.map((post) => {
-        const $ = load(post.content.rendered);
+        const $ = load(post.content.rendered)
 
         // remove unnecessary title
-        $('h1').first().remove();
-        $('h2').first().remove();
+        $('h1').first().remove()
+        $('h2').first().remove()
 
-        let thumbnail = '';
+        let thumbnail = ''
         if (post._embedded && post._embedded['wp:featuredmedia'][0].source_url) {
-            thumbnail = post._embedded['wp:featuredmedia'][0].source_url;
+            thumbnail = post._embedded['wp:featuredmedia'][0].source_url
         }
 
         if (thumbnail) {
-            $('body').prepend(`<img src="${thumbnail}" alt="${post.title.rendered}" />`);
+            $('body').prepend(`<img src="${thumbnail}" alt="${post.title.rendered}" />`)
         }
 
         return {
@@ -98,8 +98,8 @@ async function handler(ctx): Promise<Data> {
             pubDate: parseDate(post.date_gmt),
             guid: post.link,
             author: 'とらのあな',
-        };
-    });
+        }
+    })
 
     return {
         title: category ? `とらのあな総合インフォメーション - ${category}` : 'とらのあな総合インフォメーション',
@@ -107,5 +107,5 @@ async function handler(ctx): Promise<Data> {
         description: 'とらのあなの最新情報をお届け！同人誌、書籍、コミック、店舗フェア、イラスト展、とらのあな限定版、キャンペーンなど…スペシャルでお得な情報をいち早くチェック！',
         item: items.filter(Boolean) as DataItem[],
         language: 'ja',
-    };
+    }
 }

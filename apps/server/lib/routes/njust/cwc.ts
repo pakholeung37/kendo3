@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getContent } from './utils';
+import { getContent } from './utils'
 
 const map = new Map([
     ['tzgg', { title: '南京理工大学财务处 -- 通知公告', id: '/12432' }],
     ['bslc', { title: '南京理工大学财务处 -- 办事流程', id: '/1382' }],
-]);
+])
 
-const host = 'https://cwc.njust.edu.cn';
+const host = 'https://cwc.njust.edu.cn'
 
 export const route: Route = {
     path: '/cwc/:type?',
@@ -33,20 +33,20 @@ export const route: Route = {
     description: `| 通知公告 | 办事流程 |
 | -------- | -------- |
 | tzgg     | bslc     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'tzgg';
-    const info = map.get(type);
+    const type = ctx.req.param('type') ?? 'tzgg'
+    const info = map.get(type)
     if (!info) {
-        throw new InvalidParameterError('invalid type');
+        throw new InvalidParameterError('invalid type')
     }
-    const id = info.id;
-    const siteUrl = host + id + '/list.htm';
+    const id = info.id
+    const siteUrl = host + id + '/list.htm'
 
-    const html = await getContent(siteUrl, true);
-    const $ = load(html);
-    const list = $('ul.news_list').find('li');
+    const html = await getContent(siteUrl, true)
+    const $ = load(html)
+    const list = $('ul.news_list').find('li')
 
     return {
         title: info.title,
@@ -56,5 +56,5 @@ async function handler(ctx) {
             pubDate: timezone(parseDate($(item).find('span.news_meta').text(), 'YYYY-MM-DD'), +8),
             link: $(item).find('a').attr('href'),
         })),
-    };
+    }
 }

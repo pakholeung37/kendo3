@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/',
@@ -30,11 +30,11 @@ export const route: Route = {
         },
     ],
     description: 'Get latest news from Cointelegraph with full text.',
-};
+}
 
 async function handler(): Promise<Data> {
-    const rssUrl = 'https://cointelegraph.com/rss';
-    const feed = await parser.parseURL(rssUrl);
+    const rssUrl = 'https://cointelegraph.com/rss'
+    const feed = await parser.parseURL(rssUrl)
 
     const items = await Promise.all(
         feed.items
@@ -45,13 +45,13 @@ async function handler(): Promise<Data> {
             }))
             .map((item) =>
                 cache.tryGet(item.link!, async () => {
-                    const link = item.link!;
+                    const link = item.link!
 
                     // Extract full text
-                    const fullText = await extractFullText(link);
+                    const fullText = await extractFullText(link)
 
                     if (!fullText) {
-                        logger.warn(`Failed to extract content from ${link}`);
+                        logger.warn(`Failed to extract content from ${link}`)
                     }
 
                     // Create article item
@@ -63,13 +63,13 @@ async function handler(): Promise<Data> {
                         author: item.creator || 'CoinTelegraph',
                         category: item.categories?.map((c) => c.trim()) || [],
                         image: item.enclosure?.url,
-                    } as DataItem;
-                })
-            )
-    );
+                    } as DataItem
+                }),
+            ),
+    )
 
     // Filter out null items
-    const validItems = items.filter((item): item is DataItem => item !== null);
+    const validItems = items.filter((item): item is DataItem => item !== null)
 
     return {
         title: feed.title || 'CoinTelegraph News',
@@ -77,31 +77,31 @@ async function handler(): Promise<Data> {
         description: feed.description || 'Latest news from CoinTelegraph',
         language: feed.language || 'en',
         item: validItems,
-    };
+    }
 }
 
 async function extractFullText(url: string): Promise<string | null> {
     try {
-        const response = await ofetch(url);
-        const $ = load(response);
-        const nuxtData = $('script:contains("window.__NUXT__")').text();
-        const fullText = JSON.parse(nuxtData.match(/\.fullText=(".*?");/)?.[1] || '{}');
-        const cover = $('.post-cover__image');
+        const response = await ofetch(url)
+        const $ = load(response)
+        const nuxtData = $('script:contains("window.__NUXT__")').text()
+        const fullText = JSON.parse(nuxtData.match(/\.fullText=(".*?");/)?.[1] || '{}')
+        const cover = $('.post-cover__image')
 
         // Remove unwanted elements
-        cover.find('source').remove();
-        cover.find('img').removeAttr('srcset');
+        cover.find('source').remove()
+        cover.find('img').removeAttr('srcset')
         cover.find('img').attr(
             'src',
             cover
                 .find('img')
                 .attr('src')
-                ?.match(/(https:\/\/s3\.cointelegraph\.com\/.+)/)?.[1] || ''
-        );
+                ?.match(/(https:\/\/s3\.cointelegraph\.com\/.+)/)?.[1] || '',
+        )
 
-        return cover.html() + fullText || null;
+        return cover.html() + fullText || null
     } catch (error) {
-        logger.error(`Error fetching article content: ${error}`);
-        return null;
+        logger.error(`Error fetching article content: ${error}`)
+        return null
     }
 }

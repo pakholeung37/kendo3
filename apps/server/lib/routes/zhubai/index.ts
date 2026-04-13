@@ -1,8 +1,8 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import { isValidHost } from '@/utils/valid-host'
 
 export const route: Route = {
     path: '/posts/:id',
@@ -23,13 +23,13 @@ export const route: Route = {
     description: `::: tip
   在路由末尾处加上 \`?limit=限制获取数目\` 来限制获取条目数量，默认值为\`20\`
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
     if (!isValidHost(id)) {
-        throw new InvalidParameterError('Invalid id');
+        throw new InvalidParameterError('Invalid id')
     }
 
     const response = await got({
@@ -38,9 +38,9 @@ async function handler(ctx) {
         headers: {
             Referer: `https://${id}.zhubai.love/`,
         },
-    });
-    const data = response.data.data;
-    const { name, description } = data[0].publication;
+    })
+    const data = response.data.data
+    const { name, description } = data[0].publication
 
     return {
         title: name,
@@ -52,5 +52,5 @@ async function handler(ctx) {
             link: `https://${id}.zhubai.love/posts/${item.id}`,
             author: name,
         })),
-    };
+    }
 }

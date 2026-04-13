@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
 export const route: Route = {
     path: '/exhibitions',
@@ -17,19 +17,19 @@ export const route: Route = {
     name: 'Exhibitions',
     maintainers: ['chazeon'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let link;
-    const state = ctx.req.query('state');
+    let link
+    const state = ctx.req.query('state')
 
     switch (state) {
         case undefined:
         case 'current':
-            link = 'https://www.newmuseum.org/exhibitions/';
-            break;
+            link = 'https://www.newmuseum.org/exhibitions/'
+            break
         default:
-            link = `https://www.newmuseum.org/exhibitions/${state}`;
+            link = `https://www.newmuseum.org/exhibitions/${state}`
     }
 
     return await buildData({
@@ -42,5 +42,5 @@ async function handler(ctx) {
             link: `$('.exh > a').attr('href')`,
             description: `$('.exh .body-reveal').text()`,
         },
-    });
+    })
 }

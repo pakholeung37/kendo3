@@ -1,26 +1,26 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-const apiSlug = 'wp-json/wp/v2';
+const apiSlug = 'wp-json/wp/v2'
 
 interface Filter {
-    id: string;
-    name: string;
-    slug: string;
+    id: string
+    name: string
+    slug: string
 }
 
 const filterKeys: Record<string, string> = {
     search: 's',
-};
+}
 
 const filterApiKeys: Record<string, string | undefined> = {
     category: 'categories',
     tag: 'tags',
     search: undefined,
-};
+}
 
-const filterApiKeysWithNoId = new Set(['search']);
+const filterApiKeysWithNoId = new Set(['search'])
 
 /**
  * Bake filter search parameters.
@@ -44,30 +44,30 @@ const bakeFilterSearchParams = (filterPairs: Record<string, Filter[] | string[]>
      *          e.g. `category=a,b&tag=c`.
      */
     const bakeFilters = (filterPairs: Record<string, Filter[] | string[]>, filterSearchParams: URLSearchParams): URLSearchParams => {
-        const keys = Object.keys(filterPairs).filter((key) => filterPairs[key]?.length > 0 && (isApi ? Object.hasOwn(filterApiKeys, key) : Object.hasOwn(filterKeys, key)));
+        const keys = Object.keys(filterPairs).filter((key) => filterPairs[key]?.length > 0 && (isApi ? Object.hasOwn(filterApiKeys, key) : Object.hasOwn(filterKeys, key)))
 
         if (keys.length === 0) {
-            return filterSearchParams;
+            return filterSearchParams
         }
 
-        const key = keys[0];
-        const pairs = filterPairs[key];
+        const key = keys[0]
+        const pairs = filterPairs[key]
 
-        const originalFilters = { ...filterPairs };
-        delete originalFilters[key];
+        const originalFilters = { ...filterPairs }
+        delete originalFilters[key]
 
-        const filterKey = getFilterKeyForSearchParams(key, isApi);
-        const pairValues = pairs.map((pair) => (Object.hasOwn(pair, pairKey) ? pair[pairKey] : pair));
+        const filterKey = getFilterKeyForSearchParams(key, isApi)
+        const pairValues = pairs.map((pair) => (Object.hasOwn(pair, pairKey) ? pair[pairKey] : pair))
 
         if (filterKey) {
-            filterSearchParams.append(filterKey, pairValues.join(','));
+            filterSearchParams.append(filterKey, pairValues.join(','))
         }
 
-        return bakeFilters(originalFilters, filterSearchParams);
-    };
+        return bakeFilters(originalFilters, filterSearchParams)
+    }
 
-    return bakeFilters(filterPairs, new URLSearchParams());
-};
+    return bakeFilters(filterPairs, new URLSearchParams())
+}
 
 /**
  * Bake filters with pair.
@@ -90,12 +90,12 @@ const bakeFiltersWithPair = async (filters: Record<string, string[]>, rootUrl: s
      */
     const bakeKeywords = async (key: string, keywords: string[]) => {
         if (keywords.length === 0) {
-            return [];
+            return []
         }
 
-        const [keyword, ...rest] = keywords;
+        const [keyword, ...rest] = keywords
 
-        const filter = await getFilterByKeyAndKeyword(key, keyword, rootUrl);
+        const filter = await getFilterByKeyAndKeyword(key, keyword, rootUrl)
 
         return [
             ...(filter?.id && filter?.slug
@@ -108,8 +108,8 @@ const bakeFiltersWithPair = async (filters: Record<string, string[]>, rootUrl: s
                   ]
                 : []),
             ...(await bakeKeywords(key, rest)),
-        ];
-    };
+        ]
+    }
 
     /**
      * Bake filters recursively.
@@ -122,26 +122,26 @@ const bakeFiltersWithPair = async (filters: Record<string, string[]>, rootUrl: s
      *          e.g. `{ category: [ { id: ..., name: ..., slug: ... }, { id: ..., name: ..., slug: ... } ], tag: [ { id: ..., name: ..., slug: ... } ] }`.
      */
     const bakeFilters = async (filters: Record<string, string[]>, filtersWithPair: Record<string, Filter[]>) => {
-        const keys = Object.keys(filters);
+        const keys = Object.keys(filters)
 
         if (keys.length === 0) {
-            return filtersWithPair;
+            return filtersWithPair
         }
 
-        const key = keys[0];
-        const keywords = filters[key];
+        const key = keys[0]
+        const keywords = filters[key]
 
-        const originalFilters = { ...filters };
-        delete originalFilters[key];
+        const originalFilters = { ...filters }
+        delete originalFilters[key]
 
         return bakeFilters(originalFilters, {
             ...filtersWithPair,
             [key]: filterApiKeysWithNoId.has(key) ? keywords : await bakeKeywords(key, keywords),
-        });
-    };
+        })
+    }
 
-    return await bakeFilters(filters, {});
-};
+    return await bakeFilters(filters, {})
+}
 
 /**
  * Bake URL with search parameters.
@@ -152,11 +152,11 @@ const bakeFiltersWithPair = async (filters: Record<string, string[]>, rootUrl: s
  * @returns The baked URL.
  */
 const bakeUrl = (url: string, rootUrl: string, searchParams: URLSearchParams = new URLSearchParams()): string => {
-    const searchParamsStr = searchParams.toString();
-    const searchParamsSuffix = searchParamsStr ? `?${searchParamsStr}` : '';
+    const searchParamsStr = searchParams.toString()
+    const searchParamsSuffix = searchParamsStr ? `?${searchParamsStr}` : ''
 
-    return `${rootUrl}/${url}${searchParamsSuffix}`;
-};
+    return `${rootUrl}/${url}${searchParamsSuffix}`
+}
 
 /**
  * Fetch data from the specified URL.
@@ -174,28 +174,28 @@ const fetchData = async (url: string, rootUrl: string): Promise<object> => {
      */
     const requestUrls = async (urls: string[]): Promise<string | undefined> => {
         if (urls.length === 0) {
-            return;
+            return
         }
 
-        const [currentUrl, ...remainingUrls] = urls;
+        const [currentUrl, ...remainingUrls] = urls
         try {
-            const { data: response } = await got.get(currentUrl);
-            return response;
+            const { data: response } = await got.get(currentUrl)
+            return response
         } catch {
-            return requestUrls(remainingUrls);
+            return requestUrls(remainingUrls)
         }
-    };
-
-    const response = await requestUrls([url, rootUrl]);
-
-    if (!response) {
-        return {};
     }
 
-    const $ = load(response);
+    const response = await requestUrls([url, rootUrl])
 
-    const title = $('title').first().text();
-    const image = new URL($('link[rel="icon"]').last().attr('href') ?? 'wp-content/uploads/site_logo.png', rootUrl).href;
+    if (!response) {
+        return {}
+    }
+
+    const $ = load(response)
+
+    const title = $('title').first().text()
+    const image = new URL($('link[rel="icon"]').last().attr('href') ?? 'wp-content/uploads/site_logo.png', rootUrl).href
 
     return {
         title,
@@ -205,8 +205,8 @@ const fetchData = async (url: string, rootUrl: string): Promise<object> => {
         image,
         author: $('meta[property="og:site_name"]').attr('content'),
         language: $('html').attr('lang'),
-    };
-};
+    }
+}
 
 /**
  * Get filter by key and keyword.
@@ -218,16 +218,16 @@ const fetchData = async (url: string, rootUrl: string): Promise<object> => {
  * @returns A promise that resolves to the filter object if found, or undefined if not found.
  */
 const getFilterByKeyAndKeyword = async (key: string, keyword: string, rootUrl: string): Promise<Filter | undefined> => {
-    const apiFilterUrl = `${rootUrl}/${apiSlug}/${getFilterKeyForSearchParams(key, true)}`;
+    const apiFilterUrl = `${rootUrl}/${apiSlug}/${getFilterKeyForSearchParams(key, true)}`
 
     const { data: response } = await got(apiFilterUrl, {
         searchParams: {
             search: keyword,
         },
-    });
+    })
 
-    return response.length > 0 ? response[0] : undefined;
-};
+    return response.length > 0 ? response[0] : undefined
+}
 
 /**
  * Get filter key for search parameters.
@@ -238,10 +238,10 @@ const getFilterByKeyAndKeyword = async (key: string, keyword: string, rootUrl: s
  *          e.g. `categories` or `tags`.
  */
 const getFilterKeyForSearchParams = (key: string, isApi: boolean = false): string | undefined => {
-    const keys = isApi ? filterApiKeys : filterKeys;
+    const keys = isApi ? filterApiKeys : filterKeys
 
-    return Object.hasOwn(keys, key) ? (keys[key] ?? key) : undefined;
-};
+    return Object.hasOwn(keys, key) ? (keys[key] ?? key) : undefined
+}
 
 /**
  * Get filter parameters for URL.
@@ -251,16 +251,16 @@ const getFilterKeyForSearchParams = (key: string, isApi: boolean = false): strin
  * @returns The filter parameters for the URL, or undefined if no filters are available.
  */
 const getFilterParamsForUrl = (filterPairs: Record<string, Filter[]>): string | undefined => {
-    const keys = Object.keys(filterPairs).filter((key) => filterPairs[key].length > 0 && !Object.hasOwn(filterKeys, key));
+    const keys = Object.keys(filterPairs).filter((key) => filterPairs[key].length > 0 && !Object.hasOwn(filterKeys, key))
 
     if (keys.length === 0) {
-        return;
+        return
     }
 
-    const key = keys[0];
+    const key = keys[0]
 
-    return `${key}/${filterPairs[key].map((pair) => pair.slug).join('/')}`;
-};
+    return `${key}/${filterPairs[key].map((pair) => pair.slug).join('/')}`
+}
 
 /**
  * Parses a filter string into a filters object.
@@ -284,25 +284,25 @@ const parseFilterStr = (filterStr: string | undefined): Record<string, string[]>
      */
     const parseStr = (remainingStr: string | undefined, filters: Record<string, string[]> = {}, currentKey?: string): Record<string, string[]> => {
         if (!remainingStr) {
-            return filters;
+            return filters
         }
 
-        const [word, ...rest] = remainingStr.split(/\/|,/);
+        const [word, ...rest] = remainingStr.split(/\/|,/)
 
-        const isKey = Object.hasOwn(filterApiKeys, word);
-        const key = isKey ? word : currentKey;
+        const isKey = Object.hasOwn(filterApiKeys, word)
+        const key = isKey ? word : currentKey
 
         const newFilters = key
             ? {
                   ...filters,
                   [key]: [...(filters[key] || []), ...(isKey ? [] : [word])],
               }
-            : filters;
+            : filters
 
-        return parseStr(rest.join('/'), newFilters, key);
-    };
+        return parseStr(rest.join('/'), newFilters, key)
+    }
 
-    return parseStr(filterStr, {});
-};
+    return parseStr(filterStr, {})
+}
 
-export { apiSlug, bakeFilterSearchParams, bakeFiltersWithPair, bakeUrl, fetchData, getFilterParamsForUrl, parseFilterStr };
+export { apiSlug, bakeFilterSearchParams, bakeFiltersWithPair, bakeUrl, fetchData, getFilterParamsForUrl, parseFilterStr }

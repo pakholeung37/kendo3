@@ -1,13 +1,13 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import { queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import { queryToBoolean } from '@/utils/readable-social'
 
-import type { HasType, SearchGuildMessagesParams } from './discord-api';
-import { baseUrl, getGuild, searchGuildMessages, VALID_HAS_TYPES } from './discord-api';
-import { renderDescription } from './templates/message';
+import type { HasType, SearchGuildMessagesParams } from './discord-api'
+import { baseUrl, getGuild, searchGuildMessages, VALID_HAS_TYPES } from './discord-api'
+import { renderDescription } from './templates/message'
 
 export const route: Route = {
     path: '/search/:guildId/:routeParams',
@@ -33,12 +33,12 @@ export const route: Route = {
     name: 'Guild Search',
     maintainers: ['NekoAria'],
     handler,
-};
+}
 
 const parseSearchParams = (routeParams?: string): SearchGuildMessagesParams => {
-    const parsed = new URLSearchParams(routeParams);
-    const hasTypes = parsed.get('has')?.split(',').filter(Boolean);
-    const validHasTypes = hasTypes?.filter((type) => VALID_HAS_TYPES.has(type as HasType)) as HasType[];
+    const parsed = new URLSearchParams(routeParams)
+    const hasTypes = parsed.get('has')?.split(',').filter(Boolean)
+    const validHasTypes = hasTypes?.filter((type) => VALID_HAS_TYPES.has(type as HasType)) as HasType[]
 
     const params = {
         content: parsed.get('content') ?? undefined,
@@ -49,25 +49,25 @@ const parseSearchParams = (routeParams?: string): SearchGuildMessagesParams => {
         max_id: parsed.get('max_id') ?? undefined,
         channel_id: parsed.get('channel_id') ?? undefined,
         pinned: parsed.has('pinned') ? queryToBoolean(parsed.get('pinned')) : undefined,
-    };
+    }
 
-    return Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined));
-};
+    return Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined))
+}
 
 async function handler(ctx) {
-    const { authorization } = config.discord || {};
+    const { authorization } = config.discord || {}
     if (!authorization) {
-        throw new ConfigNotFoundError('Discord RSS is disabled due to the lack of authorization config');
+        throw new ConfigNotFoundError('Discord RSS is disabled due to the lack of authorization config')
     }
 
-    const { guildId } = ctx.req.param();
-    const searchParams = parseSearchParams(ctx.req.param('routeParams'));
+    const { guildId } = ctx.req.param()
+    const searchParams = parseSearchParams(ctx.req.param('routeParams'))
 
     if (!Object.keys(searchParams).length) {
-        throw new InvalidParameterError('At least one valid search parameter is required');
+        throw new InvalidParameterError('At least one valid search parameter is required')
     }
 
-    const [guildInfo, searchResult] = await Promise.all([getGuild(guildId, authorization), searchGuildMessages(guildId, authorization, searchParams)]);
+    const [guildInfo, searchResult] = await Promise.all([getGuild(guildId, authorization), searchGuildMessages(guildId, authorization, searchParams)])
 
     if (!searchResult?.messages?.length) {
         return {
@@ -75,7 +75,7 @@ async function handler(ctx) {
             link: `${baseUrl}/channels/${guildId}`,
             item: [],
             allowEmpty: true,
-        };
+        }
     }
 
     const messages = searchResult.messages.flat().map((message) => ({
@@ -86,17 +86,17 @@ async function handler(ctx) {
         updated: message.edited_timestamp ? parseDate(message.edited_timestamp) : undefined,
         category: [`#${message.channel_id}`],
         link: `${baseUrl}/channels/${guildId}/${message.channel_id}/${message.id}`,
-    }));
+    }))
 
     const searchDesc = Object.entries(searchParams)
         .filter(([, value]) => value !== undefined)
         .map(([key, value]) => `${key}:${Array.isArray(value) ? value.join(',') : value}`)
-        .join(' ');
+        .join(' ')
 
     return {
         title: `Search "${searchDesc}" in ${guildInfo.name} - Discord`,
         link: `${baseUrl}/channels/${guildId}`,
         item: messages,
         allowEmpty: true,
-    };
+    }
 }

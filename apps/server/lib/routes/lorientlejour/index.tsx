@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import { FetchError } from 'ofetch';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import { FetchError } from 'ofetch'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const key = '3d5_f6A(S$G_FD=2S(Dr6%7BW_h37@rE';
+const key = '3d5_f6A(S$G_FD=2S(Dr6%7BW_h37@rE'
 
 export const route: Route = {
     path: '/:category?',
@@ -68,10 +68,10 @@ Multiple categories seperated by '|' is also supported, e.g. /lorientlejour/977-
             target: '/977-Lebanon',
         },
     ],
-};
+}
 
 async function viewCategory(category: string) {
-    const url = `https://www.lorientlejour.com/cmsapi/categories.php?key=${key}&action=view&categoryId=${category}`;
+    const url = `https://www.lorientlejour.com/cmsapi/categories.php?key=${key}&action=view&categoryId=${category}`
     const response = await cache.tryGet(
         url,
         async () =>
@@ -80,92 +80,92 @@ async function viewCategory(category: string) {
                 url,
             }),
         config.cache.routeExpire,
-        false
-    );
-    return response.data.data[0];
+        false,
+    )
+    return response.data.data[0]
 }
 
 async function handler(ctx) {
-    const categoryId = (ctx.req.param('category') ?? '977-Lebanon').split('|').map((item) => item.match(/^(\d+)/i)[0] ?? item);
-    const limit = ctx.req.query('limit') ?? 25;
+    const categoryId = (ctx.req.param('category') ?? '977-Lebanon').split('|').map((item) => item.match(/^(\d+)/i)[0] ?? item)
+    const limit = ctx.req.query('limit') ?? 25
 
-    let token;
-    const cacheIn = await cache.get('lorientlejour:token');
+    let token
+    const cacheIn = await cache.get('lorientlejour:token')
     if (cacheIn) {
-        token = cacheIn;
+        token = cacheIn
     } else if (config.lorientlejour.token) {
-        token = config.lorientlejour.token;
-        cache.set('lorientlejour:token', token);
+        token = config.lorientlejour.token
+        cache.set('lorientlejour:token', token)
     } else if (config.lorientlejour.username && config.lorientlejour.password) {
-        const loginUrl = `https://www.lorientlejour.com/cmsapi/visitors.php?key=${key}&action=login&loginName=${config.lorientlejour.username}&password=${config.lorientlejour.password}`;
-        const loginResponse = await got(loginUrl);
-        token = loginResponse.data.data.token;
-        cache.set('lorientlejour:token', token);
+        const loginUrl = `https://www.lorientlejour.com/cmsapi/visitors.php?key=${key}&action=login&loginName=${config.lorientlejour.username}&password=${config.lorientlejour.password}`
+        const loginResponse = await got(loginUrl)
+        token = loginResponse.data.data.token
+        cache.set('lorientlejour:token', token)
     }
 
     if (token) {
         try {
-            await got(`https://www.lorientlejour.com/cmsapi/visitors.php?key=${key}&action=login_token&token=${token}`);
+            await got(`https://www.lorientlejour.com/cmsapi/visitors.php?key=${key}&action=login_token&token=${token}`)
         } catch (error) {
             if (error instanceof FetchError && error.statusCode === 403) {
-                await cache.set('lorientlejour:token', '');
+                await cache.set('lorientlejour:token', '')
             }
-            throw error;
+            throw error
         }
     }
 
-    let title = `L'Orient Le Jour/L'Orient Today`;
-    let description = '';
-    let link = 'https://www.lorientlejour.com';
-    let language = '';
+    let title = `L'Orient Le Jour/L'Orient Today`
+    let description = ''
+    let link = 'https://www.lorientlejour.com'
+    let language = ''
 
     if (categoryId.length === 1) {
-        const categoryInfo = await viewCategory(categoryId[0]);
+        const categoryInfo = await viewCategory(categoryId[0])
         if (categoryInfo.typeId.locale) {
-            language = categoryInfo.typeId.locale;
+            language = categoryInfo.typeId.locale
         } else {
-            language = categoryInfo.typeId.name === 'English' ? 'en-US' : 'fr-FR';
+            language = categoryInfo.typeId.name === 'English' ? 'en-US' : 'fr-FR'
         }
-        title = language === 'en-US' ? `L'Orient Today - ${categoryInfo.name}` : `L'Orient Le Jour - ${categoryInfo.name}`;
-        description = categoryInfo.description;
-        link = categoryInfo.url;
+        title = language === 'en-US' ? `L'Orient Today - ${categoryInfo.name}` : `L'Orient Le Jour - ${categoryInfo.name}`
+        description = categoryInfo.description
+        link = categoryInfo.url
     }
 
     const subcategories = await Promise.all(
         categoryId.map(async (id) => {
             // get all subcategories of the selected category
-            const contents = await viewCategory(id);
-            return contents.children.map((child) => child.id);
-        })
-    );
-    const categoriesParam = [...new Set([...categoryId, ...subcategories.flat()])];
+            const contents = await viewCategory(id)
+            return contents.children.map((child) => child.id)
+        }),
+    )
+    const categoriesParam = [...new Set([...categoryId, ...subcategories.flat()])]
     // merge all subcategories with the selected categories to get all contents of the selected category and its subcategories
 
-    let url = `https://www.lorientlejour.com/cmsapi/content.php?text=clean&key=${key}&action=search&category=${encodeURIComponent(JSON.stringify(categoriesParam))}&limit=${limit}&text=false&page=1`;
+    let url = `https://www.lorientlejour.com/cmsapi/content.php?text=clean&key=${key}&action=search&category=${encodeURIComponent(JSON.stringify(categoriesParam))}&limit=${limit}&text=false&page=1`
     if (token) {
-        url = url + `&token=${token}`;
+        url = url + `&token=${token}`
     }
-    const response = await got(url);
+    const response = await got(url)
     const items = response.data.data.map((item) => {
-        item.link = item.url;
-        item.author = item.authors.map((author) => author.name).join(', ');
-        item.pubDate = timezone(parseDate(item.firstPublished), +3);
-        item.updated = timezone(parseDate(item.lastUpdate), +3);
-        item.category = item.categories.map((itemCategory) => itemCategory.name);
-        const contents = item.contents;
-        const $ = load(contents);
-        const article = $('html');
-        article.find('.inline-embeded-article').remove();
-        article.find('.relatedArticles').remove();
+        item.link = item.url
+        item.author = item.authors.map((author) => author.name).join(', ')
+        item.pubDate = timezone(parseDate(item.firstPublished), +3)
+        item.updated = timezone(parseDate(item.lastUpdate), +3)
+        item.category = item.categories.map((itemCategory) => itemCategory.name)
+        const contents = item.contents
+        const $ = load(contents)
+        const article = $('html')
+        article.find('.inline-embeded-article').remove()
+        article.find('.relatedArticles').remove()
         if (item.inline_attachments) {
             article.find('.inlineImage').each(function () {
-                const inlineImageSrc = $(this).attr('src');
-                const inlineAttachment = item.inline_attachments.find((inlineAttachment) => inlineAttachment.url === inlineImageSrc);
+                const inlineImageSrc = $(this).attr('src')
+                const inlineAttachment = item.inline_attachments.find((inlineAttachment) => inlineAttachment.url === inlineImageSrc)
                 if (inlineAttachment && inlineAttachment.description) {
-                    $(this).wrap('<figure></figure>');
-                    $(this).after(`<figcaption>${inlineAttachment.description}</figcaption>`);
+                    $(this).wrap('<figure></figure>')
+                    $(this).after(`<figcaption>${inlineAttachment.description}</figcaption>`)
                 }
-            });
+            })
         }
         item.description = renderToString(
             <>
@@ -177,14 +177,14 @@ async function handler(ctx) {
                                   <img src={attachment.url} />
                                   {attachment.description ? <figcaption>{attachment.description}</figcaption> : null}
                               </figure>
-                          ) : null
+                          ) : null,
                       )
                     : null}
                 {article.html() ? raw(article.html()) : null}
-            </>
-        );
-        return item;
-    });
+            </>,
+        )
+        return item
+    })
 
     return {
         title,
@@ -192,5 +192,5 @@ async function handler(ctx) {
         language,
         link,
         item: items,
-    };
+    }
 }

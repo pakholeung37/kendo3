@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/search/:keyword?/:company?/:sort?/:period?',
@@ -31,21 +31,21 @@ export const route: Route = {
 | 1 month | 3 months | 6 months | 12 months | 24 months |
 | ------- | -------- | -------- | --------- | --------- |
 | 1       | 3        | 6        | 12        | 24        |`,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword') || '';
-    const company = ctx.req.param('company') || '';
-    const sort = ctx.req.param('sort') || '2';
-    const period = ctx.req.param('period') || '12';
+    const keyword = ctx.req.param('keyword') || ''
+    const company = ctx.req.param('company') || ''
+    const sort = ctx.req.param('sort') || '2'
+    const period = ctx.req.param('period') || '12'
 
-    const rootUrl = `https://www.telecompaper.com/search/index.aspx?search=${keyword}`;
+    const rootUrl = `https://www.telecompaper.com/search/index.aspx?search=${keyword}`
 
     let response = await got({
             method: 'get',
             url: rootUrl,
         }),
-        $ = load(response.data);
+        $ = load(response.data)
 
     response = await got({
         method: 'post',
@@ -68,21 +68,21 @@ async function handler(ctx) {
             ctl00$MainPlaceHolder$chkEnglish: 'on',
             ctl00$MainPlaceHolder$Submit: 'Search',
         }),
-    });
-    $ = load(response.data);
+    })
+    $ = load(response.data)
 
     const list = $('table.details_rows tbody tr')
         .slice(0, 15)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            item = $(item)
+            const a = item.find('a')
             return {
                 title: a.text(),
                 link: a.attr('href'),
                 pubDate: new Date(item.find('span.source').text().split(' | ')[0] + ' GMT+1').toUTCString(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -90,19 +90,19 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.description = content('#pageContainer').html();
+                item.description = content('#pageContainer').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `Telecompaper Search - ${keyword}`,
         link: rootUrl,
         item: items,
-    };
+    }
 }

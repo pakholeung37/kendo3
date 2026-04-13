@@ -1,7 +1,7 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { maskHeader } from '../constants';
-import got from '../pixiv-got';
+import { maskHeader } from '../constants'
+import got from '../pixiv-got'
 
 /**
  * 按时间排序搜索内容
@@ -21,5 +21,5 @@ export default function searchIllust(keyword, token) {
             sort: 'date_desc',
             filter: 'for_ios',
         }),
-    });
+    })
 }

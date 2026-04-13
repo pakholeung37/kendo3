@@ -1,10 +1,10 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl as rootUrl, getItem } from './utils';
+import { baseUrl as rootUrl, getItem } from './utils'
 
 const config = {
     toutiao: {
@@ -71,7 +71,7 @@ const config = {
         title: '理论文选',
         url: `${rootUrl}/qszq/llwx/index.htm`,
     },
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -90,33 +90,33 @@ export const route: Route = {
 | 头条    | 网评 | 视频 | 原创   | 经济    | 政治     | 文化    | 社会    | 党建 | 科教    | 生态    | 国防    | 国际          | 图书  | 学习笔记 | 理论文选 |
 | ------- | ---- | ---- | ------ | ------- | -------- | ------- | ------- | ---- | ------- | ------- | ------- | ------------- | ----- | -------- | -------- |
 | toutiao | qswp | qssp | qslgxd | economy | politics | culture | society | cpc  | science | zoology | defense | international | books | xxbj     | llwx     |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'toutiao' } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit')) || 50;
+    const { category = 'toutiao' } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit')) || 50
 
-    const currentUrl = config[category].url;
-    const response = await ofetch(currentUrl);
+    const currentUrl = config[category].url
+    const response = await ofetch(currentUrl)
 
-    const $ = cheerio.load(response);
+    const $ = cheerio.load(response)
 
     const list = $('.list-style1 ul li a, .text h2 a, .no-pic ul li a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            const $item = $(item);
+            const $item = $(item)
             return {
                 title: $item.text(),
                 link: $item.attr('href')!,
-            };
-        });
+            }
+        })
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))))
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

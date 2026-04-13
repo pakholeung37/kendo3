@@ -1,13 +1,13 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getClientVal, sign } from './utils';
+import { getClientVal, sign } from './utils'
 
 const renderAudio = (url) =>
     renderToString(
@@ -17,8 +17,8 @@ const renderAudio = (url) =>
                     <source src={url} />
                 </audio>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/program/:programId',
@@ -42,18 +42,18 @@ export const route: Route = {
     name: '节目',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const programId = ctx.req.param('programId');
-    const apiBaseUrl = 'https://api-v3.tingtingfm.com';
-    const mobileBaseUrl = 'https://mobile.tingtingfm.com';
+    const programId = ctx.req.param('programId')
+    const apiBaseUrl = 'https://api-v3.tingtingfm.com'
+    const mobileBaseUrl = 'https://mobile.tingtingfm.com'
 
     const params = {
         version: 'h5_5.16',
         client: getClientVal(30),
         h_program_id: programId,
-    };
+    }
 
     const radioInfo = await cache.tryGet(`tingtingfm:program:${programId}`, async () => {
         // the double slash here and below is not a typo
@@ -62,13 +62,13 @@ async function handler(ctx) {
                 ...params,
                 api_sign: sign(params),
             },
-        });
+        })
         if (response.errno !== 0) {
-            throw new Error(response.error);
+            throw new Error(response.error)
         }
 
-        return response.data.info;
-    });
+        return response.data.info
+    })
 
     const latestAudio = await cache.tryGet(
         `tingtingfm:audio_list:${programId}`,
@@ -78,16 +78,16 @@ async function handler(ctx) {
                     ...params,
                     api_sign: sign(params),
                 },
-            });
+            })
             if (response.errno !== 0) {
-                throw new Error(response.error);
+                throw new Error(response.error)
             }
 
-            return response.data[0];
+            return response.data[0]
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const audioList = await cache.tryGet(
         `tingtingfm:play_audio:${programId}`,
@@ -98,24 +98,24 @@ async function handler(ctx) {
                 type: '',
                 sort: '-1',
                 audio_id: latestAudio.h_audio_id,
-            };
+            }
             const { data: response } = await got.post(`${apiBaseUrl}//albumaudio/play_audio`, {
                 searchParams: {
                     ...playAudioParams,
                     api_sign: sign(playAudioParams),
                 },
-            });
+            })
             if (response.errno !== 0) {
-                throw new Error(response.error);
+                throw new Error(response.error)
             }
 
-            return { radioCover: response.data.info.radio_cover, list: response.data.list };
+            return { radioCover: response.data.info.radio_cover, list: response.data.list }
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const { radioCover, list } = audioList;
+    const { radioCover, list } = audioList
 
     const items = list.map((audio) => ({
         title: audio.title,
@@ -126,7 +126,7 @@ async function handler(ctx) {
         itunes_duration: audio.duration,
         enclosure_url: audio.play_url,
         enclosure_type: 'audio/x-m4a',
-    }));
+    }))
 
     return {
         title: `${radioInfo.title} - ${radioInfo.belong_radio}${radioInfo.belong_fm}`,
@@ -137,5 +137,5 @@ async function handler(ctx) {
         itunes_category: radioInfo.category,
         itunes_explicit: false,
         item: items,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { RecommendListData, SpecialBoardDetail } from './types';
-import { generateNonce, getPost, phoneBaseUrl, sign, webBaseUrl } from './utils';
+import type { RecommendListData, SpecialBoardDetail } from './types'
+import { generateNonce, getPost, phoneBaseUrl, sign, webBaseUrl } from './utils'
 
 export const route: Route = {
     path: '/bbs/special/:specialId',
@@ -23,11 +23,11 @@ export const route: Route = {
     name: '专题',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const specialId = ctx.req.param('specialId');
-    const { limit = '10' } = ctx.req.query();
+    const specialId = ctx.req.param('specialId')
+    const { limit = '10' } = ctx.req.query()
 
     const specialDetail = (await cache.tryGet(`dxy:special:detail:${specialId}`, async () => {
         const detailParams = {
@@ -35,19 +35,19 @@ async function handler(ctx) {
             requestType: 'h5',
             timestamp: Date.now(),
             noncestr: generateNonce(8, 'number'),
-        };
+        }
 
         const detail = await ofetch(`${phoneBaseUrl}/newh5/bbs/special/detail`, {
             query: {
                 ...detailParams,
                 sign: sign(detailParams),
             },
-        });
+        })
         if (detail.code !== 'success') {
-            throw new Error(detail.message);
+            throw new Error(detail.message)
         }
-        return detail.data;
-    })) as SpecialBoardDetail;
+        return detail.data
+    })) as SpecialBoardDetail
 
     const recommendList = (await cache.tryGet(
         `dxy:special:recommend-list-v3:${specialId}`,
@@ -59,25 +59,25 @@ async function handler(ctx) {
                 pageSize: limit,
                 timestamp: Date.now(),
                 noncestr: generateNonce(8, 'number'),
-            };
+            }
 
             const recommendList = await ofetch(`${phoneBaseUrl}/newh5/bbs/special/post/recommend-list-v3`, {
                 query: {
                     ...listParams,
                     sign: sign(listParams),
                 },
-            });
+            })
             if (recommendList.code !== 'success') {
-                throw new Error(recommendList.message);
+                throw new Error(recommendList.message)
             }
-            return recommendList.data;
+            return recommendList.data
         },
         config.cache.routeExpire,
-        false
-    )) as RecommendListData;
+        false,
+    )) as RecommendListData
 
     const list = recommendList.result.map((item) => {
-        const { postInfo, dataTime, entityId } = item;
+        const { postInfo, dataTime, entityId } = item
         return {
             title: postInfo.subject,
             description: postInfo.simpleBody,
@@ -86,10 +86,10 @@ async function handler(ctx) {
             category: [postInfo.postSpecial.specialName],
             link: `${webBaseUrl}/bbs/newweb/pc/post/${entityId}`,
             postId: entityId,
-        };
-    });
+        }
+    })
 
-    const items = await Promise.all(list.map((item) => getPost(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => getPost(item, cache.tryGet)))
 
     return {
         title: specialDetail.name,
@@ -97,5 +97,5 @@ async function handler(ctx) {
         link: `${phoneBaseUrl}/bbs/special?specialId=${specialId}`,
         image: specialDetail.specialAvatar,
         item: items,
-    };
+    }
 }

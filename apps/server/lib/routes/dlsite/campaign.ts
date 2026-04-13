@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const host = 'https://www.dlsite.com';
+const host = 'https://www.dlsite.com'
 const infos = {
     // 全年齢向け
     home: {
@@ -105,21 +105,21 @@ const infos = {
             show_type: 1,
         },
     },
-};
+}
 const setUrl = (info) => {
-    let paramsPath = `${info.url}/=/`;
-    const params = info.params;
+    let paramsPath = `${info.url}/=/`
+    const params = info.params
     for (const name in params) {
         if (Array.isArray(params[name])) {
             for (const index in params[name]) {
-                paramsPath += `${name}[${index}]/${params[name][index]}/`;
+                paramsPath += `${name}[${index}]/${params[name][index]}/`
             }
         } else {
-            paramsPath += `${name}/${params[name]}/`;
+            paramsPath += `${name}/${params[name]}/`
         }
     }
-    return paramsPath.slice(1);
-};
+    return paramsPath.slice(1)
+}
 
 export const route: Route = {
     path: '/campaign/:type/:free?',
@@ -147,41 +147,41 @@ export const route: Route = {
     name: 'Discounted Works',
     maintainers: ['cssxsh'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const info = infos[ctx.req.param('type')];
+    const info = infos[ctx.req.param('type')]
     // 判断参数是否合理
     if (info === undefined) {
-        throw new InvalidParameterError('不支持指定类型！');
+        throw new InvalidParameterError('不支持指定类型！')
     }
     if (ctx.req.param('free') !== undefined) {
-        info.params.is_free = 1;
+        info.params.is_free = 1
     }
-    const link = setUrl(info);
+    const link = setUrl(info)
 
     const response = await got(new URL(link, host), {
         method: 'GET',
-    });
-    const data = response.data;
-    const $ = load(data);
+    })
+    const data = response.data
+    const $ = load(data)
 
-    const title = `${info.name} | 割引中の作品`;
-    const description = $('meta[name="description"]').attr('content');
-    const list = $('tr[class]', '.n_worklist');
+    const title = `${info.name} | 割引中の作品`
+    const description = $('meta[name="description"]').attr('content')
+    const list = $('tr[class]', '.n_worklist')
     const item = list.toArray().map((element) => {
-        const title = $('.work_name', element).text();
-        const link = $('.work_name > a', element).attr('href');
+        const title = $('.work_name', element).text()
+        const link = $('.work_name > a', element).attr('href')
         // 使链接
         $('a', element).each((_index, element) => {
-            $(element).attr('target', '_blank');
-        });
-        const description = $(element).html();
-        const arr = $('.search_tag', element);
+            $(element).attr('target', '_blank')
+        })
+        const description = $(element).html()
+        const arr = $('.search_tag', element)
         const category = $('a', arr)
             .toArray()
-            .map((a) => $(a).text());
-        const author = $('.maker_name', element).text();
+            .map((a) => $(a).text())
+        const author = $('.maker_name', element).text()
 
         const signle = {
             title,
@@ -189,9 +189,9 @@ async function handler(ctx) {
             description,
             category,
             author,
-        };
-        return signle;
-    });
+        }
+        return signle
+    })
 
     return {
         title,
@@ -200,5 +200,5 @@ async function handler(ctx) {
         language: 'ja-jp',
         allowEmpty: true,
         item,
-    };
+    }
 }

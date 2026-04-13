@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { card2Html } from './utils';
+import { card2Html } from './utils'
 
-const APP_DATA_REGEX = /window\.appData = JSON\.parse\(decodeURIComponent\("(.+?)"\)\);/;
-const baseUrl = 'https://www.yuque.com';
+const APP_DATA_REGEX = /window\.appData = JSON\.parse\(decodeURIComponent\("(.+?)"\)\);/
+const baseUrl = 'https://www.yuque.com'
 
 export const route: Route = {
     path: '/:name/:book',
@@ -35,20 +35,20 @@ export const route: Route = {
     description: `| Node.js 专栏                                             | 阮一峰每周分享                                                 | 语雀使用手册                                             |
 | -------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------- |
 | [/yuque/egg/nodejs](https://rsshub.app/yuque/egg/nodejs) | [/yuque/ruanyf/weekly](https://rsshub.app/yuque/ruanyf/weekly) | [/yuque/yuque/help](https://rsshub.app/yuque/yuque/help) |`,
-};
+}
 
 async function handler(ctx) {
-    const cookieJar = new CookieJar();
-    const { name, book } = ctx.req.param();
-    const bookUrl = `${baseUrl}/${name}/${book}`;
+    const cookieJar = new CookieJar()
+    const { name, book } = ctx.req.param()
+    const bookUrl = `${baseUrl}/${name}/${book}`
 
     const { data: bookHtml } = await got(bookUrl, {
         cookieJar,
-    });
-    const $ = load(bookHtml);
-    const appData = JSON.parse(decodeURIComponent($('script').text().match(APP_DATA_REGEX)[1]));
+    })
+    const $ = load(bookHtml)
+    const appData = JSON.parse(decodeURIComponent($('script').text().match(APP_DATA_REGEX)[1]))
 
-    const bookId = appData.book.id;
+    const bookId = appData.book.id
 
     const {
         data: { data: docs },
@@ -57,7 +57,7 @@ async function handler(ctx) {
             book_id: bookId,
         },
         cookieJar,
-    });
+    })
 
     const list = docs.map((item) => ({
         title: item.title,
@@ -65,7 +65,7 @@ async function handler(ctx) {
         link: `${baseUrl}/${name}/${book}/${item.slug}`,
         pubDate: parseDate(item.published_at),
         slug: item.slug,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -77,46 +77,46 @@ async function handler(ctx) {
                         book_id: bookId,
                         include_contributors: true,
                     },
-                });
+                })
 
-                const $ = load(data.content, null, false);
+                const $ = load(data.content, null, false)
 
                 $('card').each((_, elem) => {
-                    card2Html($(elem), item.link);
-                });
-                $('[data-lake-id]').removeAttr('data-lake-id');
-                $('[id]').removeAttr('id');
+                    card2Html($(elem), item.link)
+                })
+                $('[data-lake-id]').removeAttr('data-lake-id')
+                $('[id]').removeAttr('id')
                 $('p').each((_, elem) => {
-                    elem = $(elem);
+                    elem = $(elem)
                     if (elem.children().length === 1 && elem.children().is('br')) {
-                        elem.remove();
+                        elem.remove()
                     }
                     if (elem.children().length === 2 && elem.children().eq(0).is('span') && elem.children().eq(0).text().length === 1 && elem.children().eq(1).is('br')) {
-                        elem.remove();
+                        elem.remove()
                     }
-                });
+                })
                 // obtain real video src
                 for await (const v of $('video').toArray()) {
-                    const $v = $(v);
-                    const src = $v.attr('src');
+                    const $v = $(v)
+                    const src = $v.attr('src')
                     if (src.startsWith('inputs')) {
                         const { data } = await got(`${baseUrl}/api/video`, {
                             searchParams: {
                                 video_id: src,
                             },
-                        });
-                        const { info } = data.data;
-                        $v.replaceWith(`<video controls preload='none' poster='${info.cover}'><source src='${info.url}' type='video/mp4'></video>`);
+                        })
+                        const { info } = data.data
+                        $v.replaceWith(`<video controls preload='none' poster='${info.cover}'><source src='${info.url}' type='video/mp4'></video>`)
                     }
                 }
 
-                item.description = $.html();
-                item.author = data.contributors.map((c) => c.name).join(', ');
+                item.description = $.html()
+                item.author = data.contributors.map((c) => c.name).join(', ')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: appData.book.name,
@@ -124,5 +124,5 @@ async function handler(ctx) {
         image: appData.group.avatar,
         link: bookUrl,
         item: items,
-    };
+    }
 }

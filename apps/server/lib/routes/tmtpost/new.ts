@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { apiBaseUrl, baseUrl, processItems } from './util';
+import { apiBaseUrl, baseUrl, processItems } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL('new', baseUrl).href;
-    const listApiUrl: string = new URL('v1/lists/new', apiBaseUrl).href;
+    const targetUrl: string = new URL('new', baseUrl).href
+    const listApiUrl: string = new URL('v1/lists/new', apiBaseUrl).href
 
-    return await processItems(limit, {}, listApiUrl, targetUrl);
-};
+    return await processItems(limit, {}, listApiUrl, targetUrl)
+}
 
 export const route: Route = {
     path: '/new',
@@ -40,4 +40,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

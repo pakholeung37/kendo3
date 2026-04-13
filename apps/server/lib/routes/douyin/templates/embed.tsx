@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type EmbedData = {
-    img?: string;
-    duration?: string;
-    videoList?: string[];
-};
+    img?: string
+    duration?: string
+    videoList?: string[]
+}
 
 export const renderEmbed = ({ img, duration, videoList = [] }: EmbedData): string =>
     renderToString(
@@ -12,5 +12,5 @@ export const renderEmbed = ({ img, duration, videoList = [] }: EmbedData): strin
             {videoList.map((source) => (
                 <source referrerpolicy="no-referrer" src={source} />
             ))}
-        </video>
-    );
+        </video>,
+    )

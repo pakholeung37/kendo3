@@ -1,8 +1,8 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/feed/:user',
@@ -27,16 +27,16 @@ export const route: Route = {
     name: 'Medium Feed',
     maintainers: ['pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
+    const user = ctx.req.param('user')
 
     if (!user) {
-        throw new InvalidParameterError('Invalid user');
+        throw new InvalidParameterError('Invalid user')
     }
 
-    const feed = await parser.parseURL(`https://medium.com/feed/@${user}`);
+    const feed = await parser.parseURL(`https://medium.com/feed/@${user}`)
 
     return {
         title: feed.title ?? 'Medium',
@@ -51,5 +51,5 @@ async function handler(ctx) {
             guid: item.guid ?? '',
             author: item.creator ?? user,
         })),
-    };
+    }
 }

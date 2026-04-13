@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog',
@@ -26,16 +26,16 @@ export const route: Route = {
     name: '快猫星云博客',
     maintainers: ['chesha1'],
     handler: handlerRoute,
-};
+}
 
 async function handlerRoute(): Promise<Data> {
-    const response = await ofetch('https://flashcat.cloud/blog/');
-    const $ = load(response);
+    const response = await ofetch('https://flashcat.cloud/blog/')
+    const $ = load(response)
 
     const items = $('.post-preview')
         .toArray()
         .map((elem) => {
-            const $elem = $(elem);
+            const $elem = $(elem)
             return {
                 title: $elem.find('.post-title').text(),
                 description: $elem.find('.post-content-preview').text(),
@@ -44,19 +44,19 @@ async function handlerRoute(): Promise<Data> {
                     $elem
                         .find('.post-meta')
                         .text()
-                        .match(/on\s+(\w+,\s+\w+\s+\d{1,2},\s+\d{4})/)?.[1] || ''
+                        .match(/on\s+(\w+,\s+\w+\s+\d{1,2},\s+\d{4})/)?.[1] || '',
                 ),
                 author:
                     $elem
                         .find('.post-meta')
                         .text()
                         .match(/by\s+(.+?)\s+on/)?.[1] || '',
-            };
-        });
+            }
+        })
 
     return {
         title: 'Flashcat 快猫星云博客',
         link: 'https://flashcat.cloud/blog/',
         item: items,
-    };
+    }
 }

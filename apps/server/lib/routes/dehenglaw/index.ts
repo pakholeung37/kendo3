@@ -1,71 +1,71 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { language = 'CN', category = 'paper' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 6;
+    const { language = 'CN', category = 'paper' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 6
 
-    const rootUrl = 'https://www.dehenglaw.com';
-    const currentUrl = new URL(`${language}/${category}/0008/000901.aspx`, rootUrl).href;
+    const rootUrl = 'https://www.dehenglaw.com'
+    const currentUrl = new URL(`${language}/${category}/0008/000901.aspx`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div.news_box ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h2').text();
+            const title = item.find('h2').text()
             const description = renderDescription({
                 intro: item.find('div.deheng_newscontent p').text(),
-            });
+            })
 
             return {
                 title,
                 description,
                 pubDate: parseDate(item.find('span').text(), 'YYYY/M/D'),
                 link: item.find('a').first().prop('href'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
                 const description =
                     item.description +
                     renderDescription({
                         description: $$('div.news_content').html(),
-                    });
-                const image = $$('div.news_content img').prop('src');
+                    })
+                const image = $$('div.news_content img').prop('src')
 
-                item.description = description;
-                item.author = $$('div.name h4 a').text();
+                item.description = description
+                item.author = $$('div.name h4 a').text()
                 item.content = {
                     html: description,
                     text: $$('div.news_content').text(),
-                };
-                item.image = image;
-                item.banner = image;
+                }
+                item.image = image
+                item.banner = image
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = $('div.logo_content a img').prop('src');
+    const image = $('div.logo_content a img').prop('src')
 
     return {
         title: $('title')
@@ -77,8 +77,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('meta[name="Description"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:language?/:category?',
@@ -123,4 +123,4 @@ export const route: Route = {
             target: '/:language/luntan',
         },
     ],
-};
+}

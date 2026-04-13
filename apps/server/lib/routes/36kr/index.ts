@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { ProcessItem, rootUrl } from './utils';
+import { ProcessItem, rootUrl } from './utils'
 
 const shortcuts = {
     '/information': '/information/web_news',
@@ -15,7 +15,7 @@ const shortcuts = {
     '/information/life': '/information/happy_life',
     '/information/estate': '/information/real_estate',
     '/information/workplace': '/information/web_zhichang',
-};
+}
 
 export const route: Route = {
     path: '/:category/:subCategory?/:keyword?',
@@ -32,45 +32,45 @@ export const route: Route = {
 | ------- | -------- | -------- | -------- | -------- | --------| -------- | -------- |
 | news | newsflashes | recommend | life | estate | workplace | search/articles/关键词 | search/articles/关键词 |`,
     handler,
-};
+}
 
 async function handler(ctx) {
     const path = getSubPath(ctx)
         .replace(/^\/news(?!flashes)/, '/information')
-        .replace(/\/search\/article/, '/search/articles');
+        .replace(/\/search\/article/, '/search/articles')
 
-    const currentUrl = `${rootUrl}${Object.hasOwn(shortcuts, path) ? shortcuts[path] : path}`;
+    const currentUrl = `${rootUrl}${Object.hasOwn(shortcuts, path) ? shortcuts[path] : path}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const data = JSON.parse(response.data.match(/"itemList":(\[.*?])/)[1]);
+    const data = JSON.parse(response.data.match(/"itemList":(\[.*?])/)[1])
 
     let items = data
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30)
         .filter((item) => item.itemType !== 0)
         .map((item) => {
-            item = item.templateMaterial ?? item;
+            item = item.templateMaterial ?? item
             return {
                 title: item.widgetTitle.replaceAll(/<\/?em>/g, ''),
                 author: item.author,
                 pubDate: parseDate(item.publishTime),
                 link: `${rootUrl}/${path === '/newsflashes' ? 'newsflashes' : 'p'}/${item.itemId}`,
                 description: item.widgetContent ?? item.content,
-            };
-        });
+            }
+        })
 
     if (!/^\/(search|newsflashes)/.test(path)) {
-        items = await Promise.all(items.map((item) => ProcessItem(item, cache.tryGet)));
+        items = await Promise.all(items.map((item) => ProcessItem(item, cache.tryGet)))
     }
 
     return {
         title: `36氪 - ${$('title').text().split('_')[0]}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

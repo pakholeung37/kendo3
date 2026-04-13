@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/user/coin/:uid/:embed?',
@@ -27,23 +27,23 @@ export const route: Route = {
     name: 'UP 主投币视频',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const embed = !ctx.req.param('embed');
+    const uid = ctx.req.param('uid')
+    const embed = !ctx.req.param('embed')
 
-    const name = await cache.getUsernameFromUID(uid);
+    const name = await cache.getUsernameFromUID(uid)
 
     const response = await got({
         url: `https://api.bilibili.com/x/space/coin/video?vmid=${uid}`,
         headers: {
             Referer: `https://space.bilibili.com/${uid}/`,
         },
-    });
-    const { data, code, message } = response.data;
+    })
+    const { data, code, message } = response.data
     if (code) {
-        throw new Error(message ?? code);
+        throw new Error(message ?? code)
     }
 
     return {
@@ -57,5 +57,5 @@ async function handler(ctx) {
             link: item.time > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
             author: item.owner.name,
         })),
-    };
+    }
 }

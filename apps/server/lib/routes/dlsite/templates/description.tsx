@@ -1,38 +1,38 @@
-import dayjs from 'dayjs';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import dayjs from 'dayjs'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type Author = {
-    name?: string;
-    link?: string;
-};
+    name?: string
+    link?: string
+}
 
 type LinkItem = {
-    text?: string;
-    link?: string;
-};
+    text?: string
+    link?: string
+}
 
 type DescriptionData = {
-    detail: any;
-    images?: string[];
-    authors?: Author[];
-    discountRate?: string;
-    discountEndDate?: Date;
-    updatedDate?: Date;
-    pubDate?: Date;
-    workCategories?: LinkItem[];
-    searchTags?: LinkItem[];
-    description?: string;
-};
+    detail: any
+    images?: string[]
+    authors?: Author[]
+    discountRate?: string
+    discountEndDate?: Date
+    updatedDate?: Date
+    pubDate?: Date
+    workCategories?: LinkItem[]
+    searchTags?: LinkItem[]
+    description?: string
+}
 
-const formatDate = (date?: Date) => (date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '');
+const formatDate = (date?: Date) => (date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '')
 
 export const renderDescription = ({ detail, images, authors, discountRate, discountEndDate, updatedDate, pubDate, workCategories, searchTags, description }: DescriptionData) => {
-    const localePrices = detail.locale_price_str ?? {};
-    const localeOfficialPrices = detail.locale_official_price_str ?? {};
-    const hasOfficialPrice = Boolean(detail.official_price_str);
-    const hasLocaleOfficialPrices = Boolean(detail.locale_official_price_str);
-    const price = detail.price_str;
+    const localePrices = detail.locale_price_str ?? {}
+    const localeOfficialPrices = detail.locale_official_price_str ?? {}
+    const hasOfficialPrice = Boolean(detail.official_price_str)
+    const hasLocaleOfficialPrices = Boolean(detail.locale_official_price_str)
+    const price = detail.price_str
 
     return renderToString(
         <>
@@ -180,6 +180,6 @@ export const renderDescription = ({ detail, images, authors, discountRate, disco
                 </tbody>
             </table>
             {images?.length ? images.map((image) => <img src={image} />) : null}
-        </>
-    );
-};
+        </>,
+    )
+}

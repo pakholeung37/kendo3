@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/jwb/:type?',
@@ -30,45 +30,45 @@ export const route: Route = {
 | ------- | -------  | ---------| --------| --------| ----------|---------|------- |--------|
 | jxdt    | jwtz     | jytz     |   sjtz  |   cyxy  |   tsjy    | yznb    |  zsxx  | cggg   |`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'jwtz' } = ctx.req.param();
-    const url = `https://jwb.dgut.edu.cn/tzgg/${type}.htm`;
-    const baseurl = 'https://jwb.dgut.edu.cn/';
+    const { type = 'jwtz' } = ctx.req.param()
+    const url = `https://jwb.dgut.edu.cn/tzgg/${type}.htm`
+    const baseurl = 'https://jwb.dgut.edu.cn/'
 
-    const response = await ofetch(url);
-    const $ = load(response);
+    const response = await ofetch(url)
+    const $ = load(response)
     const list = $('ul.ul-new4 > li')
         .toArray()
         .map((item) => {
-            const $li = $(item);
-            const $a = $li.find('a.con');
+            const $li = $(item)
+            const $a = $li.find('a.con')
             return {
                 title: $a.find('.tit').text().trim(),
                 pubDate: parseDate(`${$a.find('.year').text().trim()}-${$a.find('.day').text().trim()}`),
                 link: `${baseurl}${$a.attr('href')}`,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await ofetch(item.link);
-                const $ = load(response);
+                const response = await ofetch(item.link)
+                const $ = load(response)
 
                 return {
                     ...item,
                     description: $('div.v_news_content').first().html() || undefined,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: url,
         allowEmpty: true,
         item: items,
-    };
+    }
 }

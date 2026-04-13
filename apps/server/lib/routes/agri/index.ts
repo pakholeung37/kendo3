@@ -1,36 +1,36 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = 'zx/zxfb/' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category = 'zx/zxfb/' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'http://www.agri.cn';
-    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href;
+    const rootUrl = 'http://www.agri.cn'
+    const currentUrl = new URL(category.endsWith('/') ? category : `${category}/`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.list_li_con, div.nxw_video_com')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a').first();
+            const a = item.find('a').first()
 
-            const title = a.text();
-            const image = item.find('img').first().prop('src') ? new URL(item.find('img').first().prop('src'), rootUrl).href : undefined;
+            const title = a.text()
+            const image = item.find('img').first().prop('src') ? new URL(item.find('img').first().prop('src'), rootUrl).href : undefined
             const description = renderDescription({
                 intro: item.find('p.con_text').text() || undefined,
                 images: image
@@ -41,7 +41,7 @@ export const handler = async (ctx) => {
                           },
                       ]
                     : undefined,
-            });
+            })
 
             return {
                 title,
@@ -55,41 +55,41 @@ export const handler = async (ctx) => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.detailCon_info_tit').text().trim();
+                const title = $$('div.detailCon_info_tit').text().trim()
                 const description = renderDescription({
                     description: $$('div.content_body_box').html() || undefined,
-                });
+                })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('meta[name="publishdate"]').prop('content')), +8);
-                item.author = $$('meta[name="author"]').prop('content') || $$('meta[name="source"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('meta[name="publishdate"]').prop('content')), +8)
+                item.author = $$('meta[name="author"]').prop('content') || $$('meta[name="source"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div.content_body_box').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                item.enclosure_url = $$('div.content_body_box video').prop('src') ?? undefined;
-                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined;
-                item.enclosure_title = item.enclosure_url ? title : undefined;
+                item.enclosure_url = $$('div.content_body_box video').prop('src') ?? undefined
+                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined
+                item.enclosure_title = item.enclosure_url ? title : undefined
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -98,8 +98,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -181,9 +181,9 @@ export const route: Route = {
         {
             source: ['www.agri.cn/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return category ? `/${category}` : '';
+                return category ? `/${category}` : ''
             },
         },
         {
@@ -302,4 +302,4 @@ export const route: Route = {
             target: '/video/whsh',
         },
     ],
-};
+}

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/latest',
@@ -27,7 +27,7 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'caixinglobal.com/news',
-};
+}
 
 async function handler(ctx) {
     const { data } = await got('https://gateway.caixin.com/api/extapi/homeInterface.jsp', {
@@ -38,7 +38,7 @@ async function handler(ctx) {
             type: '2',
             _: Date.now(),
         },
-    });
+    })
 
     const list = data.datas.map((e) => ({
         title: e.desc,
@@ -51,16 +51,16 @@ async function handler(ctx) {
         enclosure_url: e.audioUrl,
         enclosure_type: e.audioUrl ? 'audio/mpeg' : undefined,
         itunes_item_image: e.audioUrl ? e.pict.imgs[0].url : undefined,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(item.link);
-                const $ = load(data);
-                $('.loadingBox, .cons-pay-tip').remove();
+                const { data } = await got(item.link)
+                const $ = load(data)
+                $('.loadingBox, .cons-pay-tip').remove()
 
-                let content = $('#appContent').prop('outerHTML');
+                let content = $('#appContent').prop('outerHTML')
 
                 if (item.attr === 0) {
                     const { data } = await got('https://u.caixinglobal.com/get/reading.do', {
@@ -70,16 +70,16 @@ async function handler(ctx) {
                             url: item.link,
                             _: Date.now(),
                         },
-                    });
-                    content = data.data.content;
+                    })
+                    content = data.data.content
                 }
 
-                item.description = $('.cons-photo').prop('outerHTML') + content;
+                item.description = $('.cons-photo').prop('outerHTML') + content
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'The Latest Top Headlines on China - Caixin Global',
@@ -87,5 +87,5 @@ async function handler(ctx) {
         language: 'en',
         link: 'https://www.caixinglobal.com/news/',
         item: items,
-    };
+    }
 }

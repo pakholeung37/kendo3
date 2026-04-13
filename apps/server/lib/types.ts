@@ -1,4 +1,4 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
 // Make sure it's synchronise with scripts/workflow/data.ts
 // and lib/routes/rsshub/routes.ts
@@ -27,77 +27,77 @@ export type Category =
     | 'journal'
     | 'finance'
     | 'sport'
-    | 'other';
+    | 'other'
 
 // rss
 export type DataItem = {
-    title: string;
-    description?: string;
-    pubDate?: number | string | Date;
-    link?: string;
-    category?: string[];
+    title: string
+    description?: string
+    pubDate?: number | string | Date
+    link?: string
+    category?: string[]
     author?:
         | string
         | Array<{
-              name: string;
-              url?: string;
-              avatar?: string;
-          }>;
-    doi?: string;
-    guid?: string;
-    id?: string;
+              name: string
+              url?: string
+              avatar?: string
+          }>
+    doi?: string
+    guid?: string
+    id?: string
     content?: {
-        html: string;
-        text: string;
-    };
-    image?: string;
-    banner?: string;
-    updated?: number | string | Date;
-    language?: Language;
-    enclosure_url?: string;
-    enclosure_type?: string;
-    enclosure_title?: string;
-    enclosure_length?: number;
-    itunes_duration?: number | string;
-    itunes_item_image?: string;
-    media?: Record<string, Record<string, string>>;
+        html: string
+        text: string
+    }
+    image?: string
+    banner?: string
+    updated?: number | string | Date
+    language?: Language
+    enclosure_url?: string
+    enclosure_type?: string
+    enclosure_title?: string
+    enclosure_length?: number
+    itunes_duration?: number | string
+    itunes_item_image?: string
+    media?: Record<string, Record<string, string>>
     attachments?: Array<{
-        url: string;
-        mime_type: string;
-        title?: string;
-        size_in_bytes?: number;
-        duration_in_seconds?: number;
-    }>;
+        url: string
+        mime_type: string
+        title?: string
+        size_in_bytes?: number
+        duration_in_seconds?: number
+    }>
 
     _extra?: Record<string, any> & {
         links?: Array<{
-            url: string;
-            type: string;
-            content_html?: string;
-        }>;
-    };
-};
+            url: string
+            type: string
+            content_html?: string
+        }>
+    }
+}
 
 export type Data = {
-    title: string;
-    description?: string;
-    link?: string;
-    item?: DataItem[];
-    allowEmpty?: boolean;
-    image?: string;
-    author?: string;
-    language?: Language;
-    feedLink?: string;
-    lastBuildDate?: string;
-    itunes_author?: string;
-    itunes_category?: string;
-    itunes_explicit?: string | boolean;
-    id?: string;
-    icon?: string;
-    logo?: string;
-    atomlink?: string;
-    ttl?: number;
-};
+    title: string
+    description?: string
+    link?: string
+    item?: DataItem[]
+    allowEmpty?: boolean
+    image?: string
+    author?: string
+    language?: Language
+    feedLink?: string
+    lastBuildDate?: string
+    itunes_author?: string
+    itunes_category?: string
+    itunes_explicit?: string | boolean
+    id?: string
+    icon?: string
+    logo?: string
+    atomlink?: string
+    ttl?: number
+}
 
 export type Language =
     | 'af'
@@ -205,7 +205,7 @@ export type Language =
     | 'zh-CN'
     | 'zh-HK'
     | 'zh-TW'
-    | 'other';
+    | 'other'
 
 // namespace
 interface NamespaceItem {
@@ -213,39 +213,39 @@ interface NamespaceItem {
      * The human-readable name of the namespace, should be the same as the secondary domain of the main website,
      * which will be used as the level 2 heading in the documentation
      */
-    name: string;
+    name: string
 
     /**
      * The website URL without protocol that corresponds
      */
-    url?: string;
+    url?: string
 
     /**
      * The classification of the namespace, which will be written into the corresponding classification document
      */
-    categories?: Category[];
+    categories?: Category[]
 
     /**
      * Hints and additional explanations for users using this namespace, it will be inserted into the documentation
      */
-    description?: string;
+    description?: string
 
     /**
      * Main Language of the namespace
      */
-    lang?: Language;
+    lang?: Language
 }
 
 interface Namespace extends NamespaceItem {
     /** Documentation in languages other than English, it will be used to generate multilingual documents */
-    ja?: NamespaceItem;
+    ja?: NamespaceItem
     /** Documentation in languages other than English, it will be used to generate multilingual documents */
-    zh?: NamespaceItem;
+    zh?: NamespaceItem
     /** Documentation in languages other than English, it will be used to generate multilingual documents */
-    'zh-TW'?: NamespaceItem;
+    'zh-TW'?: NamespaceItem
 }
 
-export type { Namespace };
+export type { Namespace }
 
 export enum ViewType {
     Articles = 0,
@@ -261,33 +261,33 @@ interface RouteItem {
     /**
      * The route path, using [Hono routing](https://hono.dev/api/routing) syntax
      */
-    path: string | string[];
+    path: string | string[]
 
     /**
      * The human-readable name of the route, which will be used as the level 3 heading in the documentation
      * and radar rule title (can be overridden by `RadarRule[].title`)
      */
-    name: string;
+    name: string
 
     /**
      * The website URL without protocol that corresponds
      */
-    url?: string;
+    url?: string
 
     /**
      * The GitHub handle of the people responsible for maintaining this route
      */
-    maintainers: string[];
+    maintainers: string[]
 
     /**
      * The handler function of the route
      */
-    handler: (ctx: Context) => Promise<Data | null | Response> | Data | null | Response;
+    handler: (ctx: Context) => Promise<Data | null | Response> | Data | null | Response
 
     /**
      * An example URL of the route
      */
-    example: string;
+    example: string
 
     /**
      * The description of the route parameters
@@ -296,24 +296,24 @@ interface RouteItem {
         string,
         | string
         | {
-              description: string;
-              default?: string;
+              description: string
+              default?: string
               options?: Array<{
-                  value: string;
-                  label: string;
-              }>;
+                  value: string
+                  label: string
+              }>
           }
-    >;
+    >
 
     /**
      * Hints and additional explanations for users using this route, it will be appended after the route component, supports markdown
      */
-    description?: string;
+    description?: string
 
     /**
      * The classification of the route, which will be written into the corresponding classification documentation
      */
-    categories?: Category[];
+    categories?: Category[]
 
     /**
      * Special features of the route, such as what configuration items it depends on, whether it is strict anti-crawl, whether it supports a certain function and so on
@@ -323,51 +323,51 @@ interface RouteItem {
         requireConfig?:
             | Array<{
                   /**  The environment variable name */
-                  name: string;
+                  name: string
                   /**  Whether the environment variable is optional */
-                  optional?: boolean;
+                  optional?: boolean
                   /**  The description of the environment variable */
-                  description: string;
+                  description: string
               }>
-            | false;
+            | false
 
         /** set to `true` if the feed uses puppeteer */
-        requirePuppeteer?: boolean;
+        requirePuppeteer?: boolean
 
         /** set to `true` if the target website has an anti-crawler mechanism */
-        antiCrawler?: boolean;
+        antiCrawler?: boolean
 
         /** set to `true` if the feed has a radar rule */
-        supportRadar?: boolean;
+        supportRadar?: boolean
 
         /** Set to `true` if the feed supports BitTorrent */
-        supportBT?: boolean;
+        supportBT?: boolean
 
         /** Set to `true` if the feed supports podcasts */
-        supportPodcast?: boolean;
+        supportPodcast?: boolean
 
         /** Set to `true` if the feed supports Sci-Hub */
-        supportScihub?: boolean;
+        supportScihub?: boolean
 
         /** Set to `true` if this feed is not safe for work */
-        nsfw?: boolean;
-    };
+        nsfw?: boolean
+    }
 
     /**
      * The [RSSHub-Radar](https://github.com/DIYgod/RSSHub-Radar) rule of the route
      */
-    radar?: RadarItem[];
+    radar?: RadarItem[]
 
     /**
      * The [Follow](https://github.com/RSSNext/follow) default view of the route, default to `ViewType.Articles`
      */
-    view?: ViewType;
+    view?: ViewType
 }
 
 export interface Route extends RouteItem {
-    ja?: RouteItem;
-    zh?: RouteItem;
-    'zh-TW'?: RouteItem;
+    ja?: RouteItem
+    zh?: RouteItem
+    'zh-TW'?: RouteItem
 }
 
 // radar
@@ -375,18 +375,18 @@ export type RadarItem = {
     /**
      * The overwriting title of the radar rule
      */
-    title?: string;
+    title?: string
 
     /**
      * The URL path to the corresponding documentation
      */
-    docs?: string;
+    docs?: string
 
     /**
      * The source URL path of the radar rule
      * @see https://docs.rsshub.app/joinus/new-radar#source
      */
-    source: string[];
+    source: string[]
 
     /**
      * The target RSSHub subscription URL path of the radar rule
@@ -406,41 +406,41 @@ export type RadarItem = {
               /** The current webpage URL string */
               url: string,
               /** @deprecated Temporary removed  @see https://github.com/DIYgod/RSSHub-Radar/commit/e6079ea1a8c96e89b1b2c2aa6d13c7967788ca3b */
-              document: Document
-          ) => string);
-};
+              document: Document,
+          ) => string)
+}
 
 export type RadarDomain = {
-    _name: string;
+    _name: string
 } & {
-    [subdomain: string]: RadarItem[];
-};
+    [subdomain: string]: RadarItem[]
+}
 
 export interface APIRoute {
     /**
      * The route path, using [Hono routing](https://hono.dev/api/routing) syntax
      */
-    path: string;
+    path: string
 
     /**
      * The GitHub handle of the people responsible for maintaining this route
      */
-    maintainers: string[];
+    maintainers: string[]
 
     /**
      * The handler function of the route
      */
     handler: (ctx: Context) =>
         | Promise<{
-              code: number;
-              message?: string;
-              data?: any;
+              code: number
+              message?: string
+              data?: any
           }>
         | {
-              code: number;
-              message?: string;
-              data?: any;
-          };
+              code: number
+              message?: string
+              data?: any
+          }
 
     /**
      * The description of the route parameters
@@ -448,17 +448,17 @@ export interface APIRoute {
     parameters?: Record<
         string,
         {
-            description: string;
-            default?: string;
+            description: string
+            default?: string
             options?: Array<{
-                value: string;
-                label: string;
-            }>;
+                value: string
+                label: string
+            }>
         }
-    >;
+    >
 
     /**
      * Hints and additional explanations for users using this route, it will be appended after the route component, supports markdown
      */
-    description?: string;
+    description?: string
 }

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
-const baseUrl = 'https://www.xunhupay.com';
+const baseUrl = 'https://www.xunhupay.com'
 
 export const route: Route = {
     path: '/blog',
@@ -25,10 +25,10 @@ export const route: Route = {
     maintainers: ['Joey'],
     handler,
     url: 'www.xunhupay.com/blog',
-};
+}
 
 async function handler() {
-    const link = `${baseUrl}/blog.html`;
+    const link = `${baseUrl}/blog.html`
     return await buildData({
         link,
         url: link,
@@ -46,5 +46,5 @@ async function handler() {
             pubDate: `parseDate($('.date').text(), 'YYYY-MM-DD')`,
             guid: Buffer.from(`$('a').attr('href')`).toString('base64'),
         },
-    });
+    })
 }

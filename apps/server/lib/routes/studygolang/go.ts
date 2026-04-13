@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { FetchGoItems } from './utils';
+import { FetchGoItems } from './utils'
 
 export const route: Route = {
     path: '/go/:id?',
@@ -23,8 +23,8 @@ export const route: Route = {
     name: '板块',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    return await FetchGoItems(ctx);
+    return await FetchGoItems(ctx)
 }

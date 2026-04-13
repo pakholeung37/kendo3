@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderComment } from '../templates/comment';
-import { appsUrl, userUrl } from '../utils';
+import { renderComment } from '../templates/comment'
+import { appsUrl, userUrl } from '../utils'
 
 export const route: Route = {
     path: '/user/:lang?/appComment/:uid',
@@ -24,21 +24,21 @@ export const route: Route = {
     name: 'User Game Comments',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { uid, lang = '' } = ctx.req.param();
-    const link = `${userUrl}${lang ? `/${lang}` : ''}/${uid}`;
+    const { uid, lang = '' } = ctx.req.param()
+    const link = `${userUrl}${lang ? `/${lang}` : ''}/${uid}`
 
-    const { data: response } = await got(link);
+    const { data: response } = await got(link)
     const { data } = await got(`${userUrl}/getUserAppCommentList`, {
         searchParams: {
             fid: uid,
         },
-    });
+    })
 
-    const $ = load(response);
-    const username = $('.person .name').text();
+    const $ = load(response)
+    const username = $('.person .name').text()
 
     const items = data.list.map((item) => ({
         title: `${username} ▶ ${item.app.name}`,
@@ -49,7 +49,7 @@ async function handler(ctx) {
         }),
         pubDate: timezone(parseDate(item.comment.created_at, 'YYYY-MM-DD'), 8),
         author: username,
-    }));
+    }))
 
     return {
         title: $('head title').text(),
@@ -57,5 +57,5 @@ async function handler(ctx) {
         image: decodeURIComponent($('.person div.slot').attr('data-args')).replace('avatar=', '').split('?')[0],
         language: $('html').attr('lang'),
         item: items,
-    };
+    }
 }

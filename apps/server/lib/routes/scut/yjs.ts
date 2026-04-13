@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjs',
@@ -26,14 +26,14 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'www2.scut.edu.cn/graduate/14562/list.htm',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www2.scut.edu.cn';
-    const link = `${baseUrl}/graduate/14562/list.htm`;
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('#wp_news_w4 a');
+    const baseUrl = 'https://www2.scut.edu.cn'
+    const link = `${baseUrl}/graduate/14562/list.htm`
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('#wp_news_w4 a')
 
     return {
         title: '华南理工大学研究生院',
@@ -42,7 +42,7 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item
                         .contents()
@@ -50,7 +50,7 @@ async function handler() {
                         .text(),
                     link: `${baseUrl}${item.attr('href')}`,
                     pubDate: parseDate(item.find('span').text()),
-                };
+                }
             }),
-    };
+    }
 }

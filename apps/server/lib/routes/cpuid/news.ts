@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const newsUrl = 'https://www.cpuid.com/news.html';
+const newsUrl = 'https://www.cpuid.com/news.html'
 
 export const route: Route = {
     path: '/news',
@@ -28,23 +28,23 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'cpuid.com/news.html',
-};
+}
 
 async function handler() {
-    const response = await got(newsUrl);
-    const $ = load(response.data);
+    const response = await got(newsUrl)
+    const $ = load(response.data)
 
     const items = $('.block_100 .js-block-news')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.information a').text(),
                 description: item.find('.description').html(),
                 link: item.find('.information a').attr('href'),
                 pubDate: parseDate(item.find('time[itemprop=dateCreated]').attr('datetime')),
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text(),
@@ -53,5 +53,5 @@ async function handler() {
         image: $('link[rel=apple-touch-icon-precomposed]').attr('href'),
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }

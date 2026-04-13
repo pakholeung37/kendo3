@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'http://www.nifd.cn';
+const rootUrl = 'http://www.nifd.cn'
 
 const titleMap = {
     '7a6a826d-b525-42aa-b550-4236e524227f': '周报',
@@ -18,7 +18,7 @@ const titleMap = {
     '3d23ba0e-4f46-44c2-9d21-6b38df4cdd70': '工作论文',
     '3333d2af-91d6-429b-be83-28b92f31b6d7': '研究评价',
     '6363bdc7-3e1b-4771-a904-6162cd3a3143': '其他报告',
-};
+}
 
 export const route: Route = {
     path: '/research/:categoryGuid?',
@@ -39,14 +39,14 @@ export const route: Route = {
     description: `资讯类型可以从网址中获取，如：
 
   \`http://www.nifd.cn/Research?categoryGuid=7a6a826d-b525-42aa-b550-4236e524227f\` 对应 \`/nifd/research/7a6a826d-b525-42aa-b550-4236e524227f\``,
-};
+}
 
 async function handler(ctx) {
-    const categoryGuid = ctx.req.param('categoryGuid') ?? '7a6a826d-b525-42aa-b550-4236e524227f';
-    const url = `${rootUrl}/Research?categoryGuid=${categoryGuid}`;
+    const categoryGuid = ctx.req.param('categoryGuid') ?? '7a6a826d-b525-42aa-b550-4236e524227f'
+    const url = `${rootUrl}/Research?categoryGuid=${categoryGuid}`
 
-    const response = await got.get(url);
-    const $ = load(response.data);
+    const response = await got.get(url)
+    const $ = load(response.data)
     const list = $('div.qr-main-item')
         .toArray()
         .map((item) => ({
@@ -54,39 +54,39 @@ async function handler(ctx) {
             link: rootUrl + $(item).find('a').attr('href'),
             author: $(item).find('p > span:nth-child(2)').text(),
             pubDate: parseDate($(item).find('p > span:nth-child(1)').text(), 'YYYY-MM-DD'),
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await got.get(item.link);
-                const content = load(detailResponse.data);
-                item.description = content('div.qrd-content').html();
+                const detailResponse = await got.get(item.link)
+                const content = load(detailResponse.data)
+                item.description = content('div.qrd-content').html()
 
-                const $enclosureEl = content('div.report-bottom a').first();
-                const enclosureUrl = $enclosureEl.attr('href');
+                const $enclosureEl = content('div.report-bottom a').first()
+                const enclosureUrl = $enclosureEl.attr('href')
 
                 if (enclosureUrl) {
                     const enclosureItem = {
                         enclosure_url: new URL(enclosureUrl, rootUrl).href,
                         enclosure_type: `application/${enclosureUrl.split(/\./).pop() ?? 'pdf'}`,
                         enclosure_title: $enclosureEl.prev().text(),
-                    };
+                    }
 
                     item = {
                         ...item,
                         ...enclosureItem,
-                    };
+                    }
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `国家金融与发展实验室 - ${titleMap[categoryGuid]}`,
         link: url,
         item: items,
-    };
+    }
 }

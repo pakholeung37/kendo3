@@ -1,231 +1,231 @@
 export interface UserInfoResponse {
     body: {
         user: {
-            userId: string;
-            name: string;
-            iconUrl: string;
-        };
-        creatorId: string;
-        description: string;
-        hasAdultContent: boolean;
-        coverImageUrl: string;
-        profileLinks: string[];
+            userId: string
+            name: string
+            iconUrl: string
+        }
+        creatorId: string
+        description: string
+        hasAdultContent: boolean
+        coverImageUrl: string
+        profileLinks: string[]
         profileItems: Array<{
-            id: string;
-            type: string;
-            serviceProvider: string;
-            videoId: string;
-        }>;
-        isFollowed: boolean;
-        isSupported: boolean;
-        isStopped: boolean;
-        isAcceptingRequest: boolean;
-        hasBoothShop: boolean;
-    };
+            id: string
+            type: string
+            serviceProvider: string
+            videoId: string
+        }>
+        isFollowed: boolean
+        isSupported: boolean
+        isStopped: boolean
+        isAcceptingRequest: boolean
+        hasBoothShop: boolean
+    }
 }
 
 export interface PostListResponse {
-    body: PostItem[];
+    body: PostItem[]
 }
 
 export interface PostDetailResponse {
-    body: PostDetail;
+    body: PostDetail
 }
 
 export interface PostItem {
-    commentCount: number;
+    commentCount: number
     cover: {
-        type: string;
-        url: string;
-    };
-    creatorId: string;
-    excerpt: string;
-    feeRequired: number;
-    hasAdultContent: boolean;
-    id: string;
-    isLiked: boolean;
-    isRestricted: boolean;
-    likeCount: number;
-    publishedDatetime: string;
-    tags: string[];
-    title: string;
-    updatedDatetime: string;
+        type: string
+        url: string
+    }
+    creatorId: string
+    excerpt: string
+    feeRequired: number
+    hasAdultContent: boolean
+    id: string
+    isLiked: boolean
+    isRestricted: boolean
+    likeCount: number
+    publishedDatetime: string
+    tags: string[]
+    title: string
+    updatedDatetime: string
     user: {
-        iconUrl: string;
-        name: string;
-        userId: string;
-    };
+        iconUrl: string
+        name: string
+        userId: string
+    }
 }
 
 interface BasicPost {
-    commentCount: number;
+    commentCount: number
     commentList: {
         items: Array<{
-            body: string;
-            createdDatetime: string;
-            id: string;
-            isLiked: boolean;
-            isOwn: boolean;
-            likeCount: number;
-            parentCommentId: string;
+            body: string
+            createdDatetime: string
+            id: string
+            isLiked: boolean
+            isOwn: boolean
+            likeCount: number
+            parentCommentId: string
             replies: Array<{
-                body: string;
-                createdDatetime: string;
-                id: string;
-                isLiked: boolean;
-                isOwn: boolean;
-                likeCount: number;
-                parentCommentId: string;
-                rootCommentId: string;
-            }>;
-            rootCommentId: string;
+                body: string
+                createdDatetime: string
+                id: string
+                isLiked: boolean
+                isOwn: boolean
+                likeCount: number
+                parentCommentId: string
+                rootCommentId: string
+            }>
+            rootCommentId: string
             user: {
-                iconUrl: string;
-                name: string;
-                userId: string;
-            };
-        }>;
-    };
-    coverImageUrl: string | null;
-    creatorId: string;
-    excerpt: string;
-    feeRequired: number;
-    hasAdultContent: boolean;
-    id: string;
-    imageForShare: string;
-    isLiked: boolean;
-    isRestricted: boolean;
-    likeCount: number;
+                iconUrl: string
+                name: string
+                userId: string
+            }
+        }>
+    }
+    coverImageUrl: string | null
+    creatorId: string
+    excerpt: string
+    feeRequired: number
+    hasAdultContent: boolean
+    id: string
+    imageForShare: string
+    isLiked: boolean
+    isRestricted: boolean
+    likeCount: number
     nextPost: {
-        id: string;
-        title: string;
-        publishedDatetime: string;
-    };
-    publishedDatetime: string;
-    tags: string[];
-    title: string;
-    updatedDatetime: string;
+        id: string
+        title: string
+        publishedDatetime: string
+    }
+    publishedDatetime: string
+    tags: string[]
+    title: string
+    updatedDatetime: string
 }
 
 export interface ArticlePost extends BasicPost {
-    type: 'article';
+    type: 'article'
     body: {
-        blocks: Block[];
+        blocks: Block[]
         embedMap: {
-            [key: string]: unknown;
-        };
+            [key: string]: unknown
+        }
         fileMap: {
             [key: string]: {
-                id: string;
-                extension: string;
-                name: string;
-                size: number;
-                url: string;
-            };
-        };
+                id: string
+                extension: string
+                name: string
+                size: number
+                url: string
+            }
+        }
         imageMap: {
             [key: string]: {
-                id: string;
-                originalUrl: string;
-                thumbnailUrl: string;
-                width: number;
-                height: number;
-                extension: string;
-            };
-        };
+                id: string
+                originalUrl: string
+                thumbnailUrl: string
+                width: number
+                height: number
+                extension: string
+            }
+        }
         urlEmbedMap: {
             [key: string]:
                 | {
-                      type: 'html';
-                      html: string;
-                      id: string;
+                      type: 'html'
+                      html: string
+                      id: string
                   }
                 | {
-                      type: 'fanbox.post';
-                      id: string;
-                      postInfo: PostItem;
-                  };
-        };
-    };
+                      type: 'fanbox.post'
+                      id: string
+                      postInfo: PostItem
+                  }
+        }
+    }
 }
 
 export interface FilePost extends BasicPost {
-    type: 'file';
+    type: 'file'
     body: {
         files: Array<{
-            extension: string;
-            id: string;
-            name: string;
-            size: number;
-            url: string;
-        }>;
-        text: string;
-    };
+            extension: string
+            id: string
+            name: string
+            size: number
+            url: string
+        }>
+        text: string
+    }
 }
 
 export interface VideoPost extends BasicPost {
-    type: 'video';
+    type: 'video'
     body: {
-        text: string;
+        text: string
         video: {
-            serviceProvider: 'youtube' | 'vimeo' | 'soundcloud';
-            videoId: 'string';
-        };
-    };
+            serviceProvider: 'youtube' | 'vimeo' | 'soundcloud'
+            videoId: 'string'
+        }
+    }
 }
 
 export interface ImagePost extends BasicPost {
-    type: 'image';
+    type: 'image'
     body: {
         images: Array<{
-            id: string;
-            originalUrl: string;
-            thumbnailUrl: string;
-            width: number;
-            height: number;
-            extension: string;
-        }>;
-        text: string;
-    };
+            id: string
+            originalUrl: string
+            thumbnailUrl: string
+            width: number
+            height: number
+            extension: string
+        }>
+        text: string
+    }
 }
 
 export interface TextPost extends BasicPost {
-    type: 'text';
+    type: 'text'
     body: {
-        text: string;
-    };
+        text: string
+    }
 }
 
 interface TextBlock {
-    type: 'p';
-    text: string;
+    type: 'p'
+    text: string
     styles?: Array<{
-        length: number;
-        offset: number;
-        type: 'bold';
-    }>;
+        length: number
+        offset: number
+        type: 'bold'
+    }>
 }
 
 interface HeaderBlock {
-    type: 'header';
-    text: string;
+    type: 'header'
+    text: string
 }
 
 interface ImageBlock {
-    type: 'image';
-    imageId: string;
+    type: 'image'
+    imageId: string
 }
 
 interface FileBlock {
-    type: 'file';
-    fileId: string;
+    type: 'file'
+    fileId: string
 }
 
 interface EmbedBlock {
-    type: 'url_embed';
-    urlEmbedId: string;
+    type: 'url_embed'
+    urlEmbedId: string
 }
 
-type PostDetail = ArticlePost | FilePost | ImagePost | VideoPost | TextPost;
+type PostDetail = ArticlePost | FilePost | ImagePost | VideoPost | TextPost
 
-type Block = TextBlock | HeaderBlock | ImageBlock | FileBlock | EmbedBlock;
+type Block = TextBlock | HeaderBlock | ImageBlock | FileBlock | EmbedBlock

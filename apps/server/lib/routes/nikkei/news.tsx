@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:category/:article_type?',
@@ -24,24 +24,24 @@ export const route: Route = {
     description: `| 総合 | オピニオン | 経済    | 政治     | 金融      | マーケット | ビジネス | マネーのまなび | テック     | 国際          | スポーツ | 社会・調査 | 地域  | 文化    | ライフスタイル |
 | ---- | ---------- | ------- | -------- | --------- | ---------- | -------- | -------------- | ---------- | ------------- | -------- | ---------- | ----- | ------- | -------------- |
 | news | opinion    | economy | politics | financial | business   | 不支持   | 不支持         | technology | international | sports   | society    | local | culture | lifestyle      |`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.nikkei.com';
-    const { category, article_type = 'paid' } = ctx.req.param();
-    const url = category === 'news' ? `${baseUrl}/news/category/` : `${baseUrl}/${category}/archive/`;
+    const baseUrl = 'https://www.nikkei.com'
+    const { category, article_type = 'paid' } = ctx.req.param()
+    const url = category === 'news' ? `${baseUrl}/news/category/` : `${baseUrl}/${category}/archive/`
 
-    const response = await got(url);
-    const data = response.data;
-    const $ = load(data);
+    const response = await got(url)
+    const data = response.data
+    const $ = load(data)
 
-    let categoryName: string;
-    const listSelector = $('[class^="container_"]  [class^="default_"]:has(article)');
-    const paidSelector = 'img[class^="icon_"]';
+    let categoryName: string
+    const listSelector = $('[class^="container_"]  [class^="default_"]:has(article)')
+    const paidSelector = 'img[class^="icon_"]'
 
     let list = listSelector.toArray().map((item) => {
-        item = $(item);
-        item.find('p a').remove();
+        item = $(item)
+        item.find('p a').remove()
         return {
             title: item.find('[class^="titleLink_"]').text(),
             link: `${baseUrl}${item.find('[class^="title_"] a').attr('href')}`,
@@ -51,18 +51,18 @@ async function handler(ctx) {
                 .toArray()
                 .map((item) => $(item).text()),
             paywall: !!item.find(paidSelector).length,
-        };
-    });
+        }
+    })
 
     if (category === 'news') {
-        categoryName = '総合';
+        categoryName = '総合'
         list = [
             ...list,
             ...$('div#CONTENTS_MAIN .m-miM32_itemTitle')
                 .toArray()
                 .map((item) => {
-                    item = $(item);
-                    const a = item.find('a').first();
+                    item = $(item)
+                    const a = item.find('a').first()
                     return {
                         title: a.text(),
                         link: `${baseUrl}${a.attr('href')}`,
@@ -71,23 +71,23 @@ async function handler(ctx) {
                             .toArray()
                             .map((item) => $(item).text()),
                         paywall: !!item.find(paidSelector).length,
-                    };
+                    }
                 }),
-        ];
+        ]
     } else {
-        categoryName = $('h1.l-miH11_title').text().trim();
+        categoryName = $('h1.l-miH11_title').text().trim()
     }
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
+                const { data: response } = await got(item.link)
+                const $ = load(response)
 
-                $('.notFloated_n1oadkwi').remove();
+                $('.notFloated_n1oadkwi').remove()
 
-                item.pubDate = parseDate($('meta[property="article:published_time"]').attr('content'));
-                const description = $('section[class^=container_]').html();
+                item.pubDate = parseDate($('meta[property="article:published_time"]').attr('content'))
+                const description = $('section[class^=container_]').html()
                 item.description = renderToString(
                     <>
                         {item.paywall && item.image ? (
@@ -97,13 +97,13 @@ async function handler(ctx) {
                             </>
                         ) : null}
                         {description ? raw(description) : null}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '日本経済新聞 - ' + categoryName,
@@ -112,5 +112,5 @@ async function handler(ctx) {
         image: $('meta[property="og:image"]').attr('content'),
         language: 'ja',
         item: article_type === 'free' ? items.filter((item) => !item.paywall) : items,
-    };
+    }
 }

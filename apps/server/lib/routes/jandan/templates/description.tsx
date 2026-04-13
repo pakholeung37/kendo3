@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    summary?: string;
-    image?: string;
-};
+    summary?: string
+    image?: string
+}
 
 const JandanDescription = ({ summary, image }: DescriptionData) => (
     <>
@@ -12,6 +12,6 @@ const JandanDescription = ({ summary, image }: DescriptionData) => (
         </blockquote>
         <img src={image} />
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<JandanDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<JandanDescription {...data} />)

@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/topic/:interest',
@@ -18,12 +18,12 @@ export const route: Route = {
     categories: ['journal'],
     handler,
     url: 'academia.edu',
-};
+}
 
 async function handler(ctx) {
-    const interest = ctx.req.param('interest');
-    const response = await ofetch(`https://www.academia.edu/Documents/in/${interest}`);
-    const $ = load(response);
+    const interest = ctx.req.param('interest')
+    const response = await ofetch(`https://www.academia.edu/Documents/in/${interest}`)
+    const $ = load(response)
     const list = $('.works > .div')
         .toArray()
         .map((item) => ({
@@ -31,10 +31,10 @@ async function handler(ctx) {
             link: $(item).find('.title > a').attr('href'),
             author: $(item).find('.authors').text().replace('by', '').trim(),
             description: $(item).find('.summarized').text(),
-        }));
+        }))
     return {
         title: `academia.edu | ${interest} documents`,
         link: `https://academia.edu/Documents/in/${interest}`,
         item: list,
-    };
+    }
 }

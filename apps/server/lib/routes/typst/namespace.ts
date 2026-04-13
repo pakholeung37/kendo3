@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Typst',
@@ -11,4 +11,4 @@ Compose papers faster: Focus on your text and let Typst take care of layout and 
         name: 'Typst',
     },
     lang: 'en',
-};
+}

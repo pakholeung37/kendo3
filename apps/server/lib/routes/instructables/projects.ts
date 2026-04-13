@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/projects/:category?',
@@ -30,29 +30,29 @@ export const route: Route = {
     description: `| All | Circuits | Workshop | Craft | Cooking | Living | Outside | Teachers |
 | --- | -------- | -------- | ----- | ------- | ------ | ------- | -------- |
 |     | circuits | workshop | craft | cooking | living | outside | teachers |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'all' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { category = 'all' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const siteDomain = 'instructables.com';
+    const siteDomain = 'instructables.com'
 
-    let pathPrefix, projectFilter;
+    let pathPrefix, projectFilter
     if (category === 'all') {
-        pathPrefix = '';
-        projectFilter = '';
+        pathPrefix = ''
+        projectFilter = ''
     } else {
-        pathPrefix = `${category}/`;
-        const filterValue = `${category.charAt(0).toUpperCase()}${category.slice(1)}`;
-        projectFilter = category === 'teachers' ? `&& teachers:=${filterValue}` : ` && category:=${filterValue}`;
+        pathPrefix = `${category}/`
+        const filterValue = `${category.charAt(0).toUpperCase()}${category.slice(1)}`
+        projectFilter = category === 'teachers' ? `&& teachers:=${filterValue}` : ` && category:=${filterValue}`
     }
 
-    const pageLink = `https://${siteDomain}/${pathPrefix}projects`;
+    const pageLink = `https://${siteDomain}/${pathPrefix}projects`
 
-    const pageResponse = await ofetch(pageLink);
-    const $ = load(pageResponse);
-    const { typesenseProxy, typesenseApiKey } = JSON.parse($('script#js-page-context').text());
+    const pageResponse = await ofetch(pageLink)
+    const $ = load(pageResponse)
+    const { typesenseProxy, typesenseApiKey } = JSON.parse($('script#js-page-context').text())
 
     const data = await ofetch(`${typesenseProxy}/collections/projects/documents/search`, {
         method: 'get',
@@ -72,7 +72,7 @@ async function handler(ctx) {
             filter_by: `featureFlag:=true${projectFilter}`,
         },
         parseResponse: JSON.parse,
-    });
+    })
 
     return {
         title: 'Instructables Projects', // 项目的标题
@@ -87,5 +87,5 @@ async function handler(ctx) {
             pubDate: parseDate(item.document.publishDate),
             category: item.document.primaryClassification,
         })),
-    };
+    }
 }

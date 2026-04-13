@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/activity/:city/:category/:subcategory/:keyword?',
@@ -22,15 +22,15 @@ export const route: Route = {
     maintainers: ['hoilc', 'Konano'],
     handler,
     description: `城市、分类名、子分类名，请参见[大麦网搜索页面](https://search.damai.cn/search.htm)`,
-};
+}
 
 async function handler(ctx) {
-    const city = ctx.req.param('city') === '全部' ? '' : ctx.req.param('city');
-    const category = ctx.req.param('category') === '全部' ? '' : ctx.req.param('category');
-    const subcategory = ctx.req.param('subcategory') === '全部' ? '' : ctx.req.param('subcategory');
-    const keyword = ctx.req.param('keyword') ?? '';
+    const city = ctx.req.param('city') === '全部' ? '' : ctx.req.param('city')
+    const category = ctx.req.param('category') === '全部' ? '' : ctx.req.param('category')
+    const subcategory = ctx.req.param('subcategory') === '全部' ? '' : ctx.req.param('subcategory')
+    const keyword = ctx.req.param('keyword') ?? ''
 
-    const url = 'https://search.damai.cn/searchajax.html';
+    const url = 'https://search.damai.cn/searchajax.html'
 
     const response = await got(url, {
         searchParams: {
@@ -46,9 +46,9 @@ async function handler(ctx) {
             currPage: 1,
             tn: '',
         },
-    });
-    const data = response.data;
-    const list = data.pageData.resultData || [];
+    })
+    const data = response.data
+    const list = data.pageData.resultData || []
 
     return {
         title: `大麦网票务 - ${city || '全国'} - ${category || '全部分类'}${subcategory ? ' - ' + subcategory : ''}${keyword ? ' - ' + keyword : ''}`,
@@ -66,9 +66,9 @@ async function handler(ctx) {
                     </p>
                     <p>时间：{item.showtime}</p>
                     <p>票价：{item.price_str}</p>
-                </>
+                </>,
             ),
             link: `https://detail.damai.cn/item.htm?id=${item.projectid}`,
         })),
-    };
+    }
 }

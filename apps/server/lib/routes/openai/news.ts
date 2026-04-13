@@ -1,8 +1,8 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { BASE_URL, fetchArticles } from './common';
+import { BASE_URL, fetchArticles } from './common'
 
 export const route: Route = {
     path: '/news',
@@ -19,16 +19,16 @@ export const route: Route = {
     name: 'News',
     maintainers: ['goestav', 'StevenRCE0', 'nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const limit = Number.parseInt(ctx.req.query('limit') || '10');
+    const limit = Number.parseInt(ctx.req.query('limit') || '10')
 
-    const link = new URL('/news/', BASE_URL).href;
+    const link = new URL('/news/', BASE_URL).href
 
     return {
         title: 'OpenAI News',
         link,
         item: await fetchArticles(limit),
-    };
+    }
 }

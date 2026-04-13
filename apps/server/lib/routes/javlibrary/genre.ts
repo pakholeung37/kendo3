@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { defaultGenre, defaultLanguage, defaultMode, ProcessItems, rootUrl } from './utils';
+import { defaultGenre, defaultLanguage, defaultMode, ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: ['/videos/genre/:genre?/:language?/:mode?', '/genre/:genre?/:language?/:mode?'],
@@ -18,13 +18,13 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const mode = ctx.req.param('mode') ?? defaultMode;
-    const genre = ctx.req.param('genre') ?? defaultGenre;
-    const language = ctx.req.param('language') ?? defaultLanguage;
-    const currentUrl = `${rootUrl}/${language}/vl_genre.php?list&g=${genre}&mode=${mode}`;
+    const mode = ctx.req.param('mode') ?? defaultMode
+    const genre = ctx.req.param('genre') ?? defaultGenre
+    const language = ctx.req.param('language') ?? defaultLanguage
+    const currentUrl = `${rootUrl}/${language}/vl_genre.php?list&g=${genre}&mode=${mode}`
 
-    return await ProcessItems(language, currentUrl, cache.tryGet);
+    return await ProcessItems(language, currentUrl, cache.tryGet)
 }

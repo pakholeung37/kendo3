@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest'
 
-const errorSpy = vi.fn();
+const errorSpy = vi.fn()
 
 vi.mock('@/utils/logger', () => ({
     default: {
         error: errorSpy,
     },
-}));
+}))
 
 vi.mock('@honeybadger-io/js', () => ({
     default: {
@@ -14,21 +14,21 @@ vi.mock('@honeybadger-io/js', () => ({
         notify: vi.fn(),
         setContext: vi.fn(),
     },
-}));
+}))
 
 describe('app-bootstrap', () => {
     it('logs uncaught exceptions', async () => {
-        const before = new Set(process.listeners('uncaughtException'));
-        await import('@/app-bootstrap');
-        const after = process.listeners('uncaughtException');
-        const listener = after.find((fn) => !before.has(fn));
+        const before = new Set(process.listeners('uncaughtException'))
+        await import('@/app-bootstrap')
+        const after = process.listeners('uncaughtException')
+        const listener = after.find((fn) => !before.has(fn))
 
-        expect(listener).toBeDefined();
-        listener?.(new Error('boom'));
-        expect(errorSpy).toHaveBeenCalled();
+        expect(listener).toBeDefined()
+        listener?.(new Error('boom'))
+        expect(errorSpy).toHaveBeenCalled()
 
         if (listener) {
-            process.removeListener('uncaughtException', listener);
+            process.removeListener('uncaughtException', listener)
         }
-    });
-});
+    })
+})

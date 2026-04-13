@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const BASE_URL = 'http://www.sme.buaa.edu.cn';
+const BASE_URL = 'http://www.sme.buaa.edu.cn'
 
 export const route: Route = {
     path: '/sme/:path{.+}?',
@@ -44,12 +44,12 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-};
+}
 
 async function handler(ctx) {
-    const { path = 'tzgg' } = ctx.req.param();
-    const url = `${BASE_URL}/${path}.htm`;
-    const { title, list } = await getList(url);
+    const { path = 'tzgg' } = ctx.req.param()
+    const url = `${BASE_URL}/${path}.htm`
+    const { title, list } = await getList(url)
     return {
         // 源标题
         title,
@@ -59,44 +59,44 @@ async function handler(ctx) {
         item: await getItems(list),
         // 语言
         language: 'zh-CN',
-    };
+    }
 }
 
 async function getList(url) {
-    const { data } = await got(url);
-    const $ = load(data);
+    const { data } = await got(url)
+    const $ = load(data)
     const title = $('.nytit .fr a')
         .toArray()
         .slice(1)
         .map((item) => $(item).text().trim())
-        .join(' - ');
+        .join(' - ')
     const list = $("div[class='Newslist'] > ul > li")
         .toArray()
         .map((item_) => {
-            const item = $(item_);
-            const $a = item.find('a');
-            const link = $a.attr('href');
+            const item = $(item_)
+            const $a = item.find('a')
+            const link = $a.attr('href')
             return {
                 title: item.find('a').text(),
                 link: link?.startsWith('http') ? link : `${BASE_URL}/${link}`, // 有些链接是相对路径
                 pubDate: timezone(parseDate(item.find('span').text()), +8),
-            };
-        });
+            }
+        })
     return {
         title,
         list,
-    };
+    }
 }
 
 function getItems(list) {
     return Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: descrptionResponse } = await got(item.link);
-                const $descrption = load(descrptionResponse);
-                item.description = $descrption('div[class="v_news_content"]').html();
-                return item;
-            })
-        )
-    );
+                const { data: descrptionResponse } = await got(item.link)
+                const $descrption = load(descrptionResponse)
+                item.description = $descrption('div[class="v_news_content"]').html()
+                return item
+            }),
+        ),
+    )
 }

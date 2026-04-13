@@ -1,16 +1,16 @@
-import md5 from '@/utils/md5';
-import ofetch from '@/utils/ofetch';
+import md5 from '@/utils/md5'
+import ofetch from '@/utils/ofetch'
 
 const uuid = (length = 20) => {
-    const e = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + Date.now();
-    const r: string[] = [];
+    const e = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + Date.now()
+    const r: string[] = []
     for (let i = 0; i < length; i++) {
-        r.push(e.charAt(Math.floor(Math.random() * e.length)));
+        r.push(e.charAt(Math.floor(Math.random() * e.length)))
     }
-    return r.join('');
-};
+    return r.join('')
+}
 
-const cookieMap = new Map([['token', uuid(32).toLowerCase()]]);
+const cookieMap = new Map([['token', uuid(32).toLowerCase()]])
 
 const devioceInfo = {
     vendorName: '',
@@ -26,17 +26,17 @@ const devioceInfo = {
     network: '',
     resolution: '1920*1080',
     pixelResolution: '',
-};
+}
 
 const getAccessToken = async () => {
-    const { result } = await post('/waf/gettoken');
-    cookieMap.set('accessToken', result.accessToken.access_token);
-    cookieMap.set('idToken', result.idToken.id_token);
-    return cookieMap.get('accessToken');
-};
+    const { result } = await post('/waf/gettoken')
+    cookieMap.set('accessToken', result.accessToken.access_token)
+    cookieMap.set('idToken', result.idToken.id_token)
+    return cookieMap.get('accessToken')
+}
 
 const post = async (requestPath: string, accessToken = md5(Date.now().toString()), payload?: any) => {
-    const traceId = uuid(32) + Date.now();
+    const traceId = uuid(32) + Date.now()
 
     const response = await ofetch(`https://www.showstart.com/api${requestPath}`, {
         method: 'POST',
@@ -56,32 +56,32 @@ const post = async (requestPath: string, accessToken = md5(Date.now().toString()
             cversion: '999',
         } as HeadersInit,
         body: payload,
-    });
+    })
 
-    return response;
-};
+    return response
+}
 
 function sortBy(items: any[], key: string) {
     return items.toSorted((a, b) => {
         if (a[key] < b[key]) {
-            return -1;
+            return -1
         }
         if (a[key] > b[key]) {
-            return 1;
+            return 1
         }
-        return 0;
-    });
+        return 0
+    })
 }
 
 function uniqBy(items: any[], key: string) {
-    const set = new Set();
+    const set = new Set()
     return items.filter((item) => {
         if (set.has(item[key])) {
-            return false;
+            return false
         }
-        set.add(item[key]);
-        return true;
-    });
+        set.add(item[key])
+        return true
+    })
 }
 
-export { getAccessToken, post, sortBy, uniqBy, uuid };
+export { getAccessToken, post, sortBy, uniqBy, uuid }

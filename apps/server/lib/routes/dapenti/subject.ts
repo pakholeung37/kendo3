@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/subject/:id',
@@ -18,8 +18,8 @@ export const route: Route = {
     name: '主题',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    return await utils.parseFeed({ subjectid: ctx.req.param('id') });
+    return await utils.parseFeed({ subjectid: ctx.req.param('id') })
 }

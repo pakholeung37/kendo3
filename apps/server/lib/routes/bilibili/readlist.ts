@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/readlist/:listid',
@@ -19,11 +19,11 @@ export const route: Route = {
     name: '专栏文集',
     maintainers: ['hoilc'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const listid = ctx.req.param('listid');
-    const listurl = `https://www.bilibili.com/read/readlist/rl${listid}`;
+    const listid = ctx.req.param('listid')
+    const listurl = `https://www.bilibili.com/read/readlist/rl${listid}`
 
     const response = await got({
         method: 'get',
@@ -31,8 +31,8 @@ async function handler(ctx) {
         headers: {
             Referer: listurl,
         },
-    });
-    const data = response.data.data;
+    })
+    const data = response.data.data
 
     return {
         title: `bilibili 专栏文集 - ${data.list.name}`,
@@ -48,5 +48,5 @@ async function handler(ctx) {
                 pubDate: new Date(item.publish_time * 1000).toUTCString(),
                 link: `https://www.bilibili.com/read/cv${item.id}/?from=readlist`,
             })),
-    };
+    }
 }

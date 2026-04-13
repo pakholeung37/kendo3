@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'The Movie Database',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 Refer to [https://developers.themoviedb.org/3/getting-started/languages](https://developers.themoviedb.org/3/getting-started/languages) for the language parameter in the route.
 :::`,
     lang: 'en',
-};
+}

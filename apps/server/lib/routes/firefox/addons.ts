@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/addons/:id',
@@ -24,18 +24,18 @@ export const route: Route = {
     name: 'Add-ons Update',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await got({
         method: 'get',
         url: `https://addons.mozilla.org/zh-CN/firefox/addon/${id}/versions/`,
-    });
-    const data = JSON.parse(load(response.data)('#redux-store-state').text());
-    const info = data.addons.byID[data.addons.bySlug[id]];
-    const versionIds = data.versions.bySlug[id].versionIds;
+    })
+    const data = JSON.parse(load(response.data)('#redux-store-state').text())
+    const info = data.addons.byID[data.addons.bySlug[id]]
+    const versionIds = data.versions.bySlug[id].versionIds
 
     return {
         title: `${info.name} - Firefox Add-on`,
@@ -44,8 +44,8 @@ async function handler(ctx) {
         item:
             versionIds &&
             versionIds.map((versionId) => {
-                const versionInfo = data.versions.byId[versionId];
-                const version = 'v' + versionInfo.version;
+                const versionInfo = data.versions.byId[versionId]
+                const version = 'v' + versionInfo.version
                 return {
                     title: version,
                     description: versionInfo.releaseNotes || '',
@@ -54,7 +54,7 @@ async function handler(ctx) {
                     guid: version,
                     author: info.authors.map((author) => author.name).join(', '),
                     category: info.categories,
-                };
+                }
             }),
-    };
+    }
 }

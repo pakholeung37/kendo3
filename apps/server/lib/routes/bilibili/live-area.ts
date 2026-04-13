@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/live/area/:areaID/:order',
@@ -20,22 +20,22 @@ export const route: Route = {
     description: `::: warning
   由于接口未提供开播时间，如果直播间未更换标题与分区，将视为一次。如果直播间更换分区与标题，将视为另一项
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const areaID = ctx.req.param('areaID');
-    const order = ctx.req.param('order');
+    const areaID = ctx.req.param('areaID')
+    const order = ctx.req.param('order')
 
-    let orderTitle: string;
+    let orderTitle: string
     switch (order) {
         case 'live_time':
-            orderTitle = '最新开播';
-            break;
+            orderTitle = '最新开播'
+            break
         case 'online':
-            orderTitle = '人气直播';
-            break;
+            orderTitle = '人气直播'
+            break
         default:
-            throw new Error(`Unknown order: ${order}`);
+            throw new Error(`Unknown order: ${order}`)
     }
 
     const nameResponse = await got({
@@ -44,22 +44,22 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://link.bilibili.com/p/center/index',
         },
-    });
+    })
 
-    let parentTitle = '';
-    let parentID: string;
-    let areaTitle = '';
-    let areaLink = '';
+    let parentTitle = ''
+    let parentID: string
+    let areaTitle = ''
+    let areaLink = ''
 
     for (const parentArea of nameResponse.data.data) {
         for (const area of parentArea.list) {
             if (area.id === areaID) {
-                parentTitle = parentArea.name;
-                parentID = parentArea.id;
-                areaTitle = area.name;
+                parentTitle = parentArea.name
+                parentID = parentArea.id
+                areaTitle = area.name
                 // cateID = area.cate_id;
-                areaLink = `https://live.bilibili.com/p/eden/area-tags?parentAreaId=${parentID}&areaId=${areaID}`;
-                break;
+                areaLink = `https://live.bilibili.com/p/eden/area-tags?parentAreaId=${parentID}&areaId=${areaID}`
+                break
             }
         }
     }
@@ -70,8 +70,8 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://live.bilibili.com/p/eden/area-tags',
         },
-    });
-    const data = response.data.data;
+    })
+    const data = response.data.data
 
     return {
         title: `哔哩哔哩直播-${parentTitle}·${areaTitle}分区-${orderTitle}`,
@@ -84,5 +84,5 @@ async function handler(ctx) {
             guid: `https://live.bilibili.com/${item.roomid} ${item.title}`,
             link: `https://live.bilibili.com/${item.roomid}`,
         })),
-    };
+    }
 }

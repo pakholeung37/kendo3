@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 interface TableData {
-    key: string;
-    count: string;
-    percent: string;
+    key: string
+    count: string
+    percent: string
 }
 
 export const route: Route = {
@@ -22,59 +22,59 @@ export const route: Route = {
     maintainers: ['p3psi-boo'],
     parameters: { country: 'the country of the stats. ISO 3166-1 alpha-2 code.' },
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { country } = ctx.req.param();
-    const baseUrl = `https://iknowwhatyoudownload.com/en/stat/${country}/daily/q?statDate=`;
+    const { country } = ctx.req.param()
+    const baseUrl = `https://iknowwhatyoudownload.com/en/stat/${country}/daily/q?statDate=`
 
-    const dates = Array.from({ length: 7 }, (_, i) => dayjs().subtract(i, 'day'));
+    const dates = Array.from({ length: 7 }, (_, i) => dayjs().subtract(i, 'day'))
 
     const items = (
         await Promise.all(
             dates.map((dateObj) => {
-                const dateFormatted = dateObj.format('YYYY-MM-DD');
-                const url = `${baseUrl}${dateFormatted}`;
+                const dateFormatted = dateObj.format('YYYY-MM-DD')
+                const url = `${baseUrl}${dateFormatted}`
                 return cache.tryGet(url, async () => {
                     const response = await got({
                         method: 'get',
                         url,
-                    });
+                    })
 
                     if (!response) {
-                        return {};
+                        return {}
                     }
 
-                    const $ = load(response.data);
+                    const $ = load(response.data)
 
-                    const numStats: Array<{ percent: string; desc: string }> = [];
+                    const numStats: Array<{ percent: string; desc: string }> = []
                     $('.usePercent').each((_, elem) => {
                         numStats.push({
                             percent: $(elem).text(),
                             desc: $(elem).parent().find('span').last().text(),
-                        });
-                    });
+                        })
+                    })
 
-                    const tableData: TableData[] = [];
-                    const dataMatch = response.data.match(/data:\s*\[([\d",\s]+)\]/);
-                    const labelsMatch = response.data.match(/labels:\s*\[(.*?)\]/);
+                    const tableData: TableData[] = []
+                    const dataMatch = response.data.match(/data:\s*\[([\d",\s]+)\]/)
+                    const labelsMatch = response.data.match(/labels:\s*\[(.*?)\]/)
 
                     if (dataMatch?.[1] && labelsMatch?.[1]) {
-                        const dataList = dataMatch[1].split(',').map((s) => s.trim().replaceAll('"', ''));
+                        const dataList = dataMatch[1].split(',').map((s) => s.trim().replaceAll('"', ''))
                         const labelsList = labelsMatch[1]
                             .split(',')
                             .map((s) => s.replaceAll('"', '').trim())
-                            .filter((i) => i !== '');
+                            .filter((i) => i !== '')
 
                         for (const index in labelsList) {
-                            const label = labelsList[index];
-                            const count = dataList[index];
-                            const [key, percent] = label.split(' ');
+                            const label = labelsList[index]
+                            const count = dataList[index]
+                            const [key, percent] = label.split(' ')
                             tableData.push({
                                 key,
                                 count,
                                 percent,
-                            });
+                            })
                         }
                     }
 
@@ -83,7 +83,7 @@ async function handler(ctx) {
                         .map((item) => ({
                             title: $(item).attr('id')?.toUpperCase(),
                             content: $(item).find('ul').toString(),
-                        }));
+                        }))
 
                     const content = renderToString(
                         <article>
@@ -125,23 +125,23 @@ async function handler(ctx) {
                                     </>
                                 ))}
                             </div>
-                        </article>
-                    );
+                        </article>,
+                    )
 
                     return {
                         title: `Daily Torrents Statistics in ${country} for ${dateFormatted}`,
                         link: url,
                         description: content,
                         pubDate: dateObj.toDate(),
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((item) => Object.keys(item).length > 0);
+    ).filter((item) => Object.keys(item).length > 0)
 
     return {
         title: `Daily Torrents Statistics in ${country} - iknownwhatyoudownload`,
         link: 'https://iknowwhatyoudownload.com',
         item: items,
-    };
+    }
 }

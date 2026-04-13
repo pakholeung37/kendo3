@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/fav/:uid/:fid/:embed?',
@@ -21,12 +21,12 @@ export const route: Route = {
     name: 'UP 主非默认收藏夹',
     maintainers: ['Qixingchen'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const fid = ctx.req.param('fid');
-    const uid = ctx.req.param('uid');
-    const embed = !ctx.req.param('embed');
+    const fid = ctx.req.param('fid')
+    const uid = ctx.req.param('uid')
+    const embed = !ctx.req.param('embed')
 
     const response = await got({
         url: `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${fid}&ps=20`,
@@ -34,14 +34,14 @@ async function handler(ctx) {
             Referer: `https://space.bilibili.com/${uid}/`,
             Cookie: config.bilibili.cookies[uid],
         },
-    });
-    const { data, code, message } = response.data;
+    })
+    const { data, code, message } = response.data
     if (code) {
-        throw new Error(message ?? code);
+        throw new Error(message ?? code)
     }
 
-    const userName = data.info.upper.name;
-    const favName = data.info.title;
+    const userName = data.info.upper.name
+    const favName = data.info.title
 
     return {
         title: `${userName} 的 bilibili 收藏夹 ${favName}`,
@@ -57,5 +57,5 @@ async function handler(ctx) {
                 link: item.fav_time > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.id}`,
                 author: item.upper.name,
             })),
-    };
+    }
 }

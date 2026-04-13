@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchCollection, rootUrl } from './utils';
+import { fetchCollection, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/podcast/:category?',
@@ -39,10 +39,10 @@ export const route: Route = {
 | What's Your Ism? | [/podcast/whats-your-ism](https://rsshub.app/newslaundry/podcast/whats-your-ism) |`,
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
     // Map category to collection slug and URL
     const categoryMap = {
@@ -54,10 +54,10 @@ async function handler(ctx): Promise<Data> {
             slug: 'whats-your-ism-podcast-newslaundry-hindi',
             url: `${rootUrl}/podcast/whats-your-ism`,
         },
-    };
+    }
 
     // For main podcast route, skip the first item
-    const skipFirstItem = !category;
+    const skipFirstItem = !category
 
-    return category && categoryMap[category] ? await fetchCollection(categoryMap[category].slug, categoryMap[category].url) : await fetchCollection('podcast', undefined, skipFirstItem);
+    return category && categoryMap[category] ? await fetchCollection(categoryMap[category].slug, categoryMap[category].url) : await fetchCollection('podcast', undefined, skipFirstItem)
 }

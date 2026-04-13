@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'DeadbyDaylight',
@@ -10,4 +10,4 @@ export const namespace: Namespace = {
         name: '黎明杀机',
     },
     lang: 'en',
-};
+}

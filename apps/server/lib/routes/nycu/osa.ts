@@ -1,16 +1,16 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import timezone from '@/utils/timezone';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import timezone from '@/utils/timezone'
 
 function ROCDate(dateStr: string | Date): Date {
-    const date = new Date(dateStr);
-    date.setFullYear(date.getFullYear() + 1911);
+    const date = new Date(dateStr)
+    date.setFullYear(date.getFullYear() + 1911)
 
-    return timezone(date, 8);
+    return timezone(date, 8)
 }
 
 const data: Record<string, { module: string; name: string }> = {
@@ -54,18 +54,18 @@ const data: Record<string, { module: string; name: string }> = {
         module: 'nycu0090',
         name: '深耕助學 - 深耕助學',
     },
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const id = ctx.req.param('id') ?? '2844';
+    const id = ctx.req.param('id') ?? '2844'
 
-    const { module, name } = data[id];
+    const { module, name } = data[id]
 
-    const url = `https://osa.nycu.edu.tw/osa/ch/app/data/list?module=${module}&id=${id}`;
+    const url = `https://osa.nycu.edu.tw/osa/ch/app/data/list?module=${module}&id=${id}`
 
     const $ = await ofetch<CheerioAPI>(url, {
         parseResponse: load,
-    });
+    })
 
     const item = $('.newslist li')
         .toArray()
@@ -75,7 +75,7 @@ async function handler(ctx: Context): Promise<Data> {
             pubDate: ROCDate($('div p:nth-child(1)', e).text().replace('更新日期：', '').trim() || ''),
             category: [$('div p:nth-child(2)', e).text().replace('分類：', '')],
             author: $('div p:nth-child(3)', e).text().replace('發布單位：', ''),
-        }));
+        }))
 
     return {
         title: `陽明交大學務處公告 - ${name}`,
@@ -83,7 +83,7 @@ async function handler(ctx: Context): Promise<Data> {
         language: 'zh-TW',
         link: url,
         item,
-    };
+    }
 }
 
 export const route: Route = {
@@ -106,4 +106,4 @@ export const route: Route = {
     parameters: { id: 'id, see below' },
     example: '/nycu/osa/2844',
     handler,
-};
+}

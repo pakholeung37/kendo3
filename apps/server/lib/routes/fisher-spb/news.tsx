@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -27,7 +27,7 @@ export const route: Route = {
     maintainers: ['denis-ya'],
     handler,
     url: 'fisher.spb.ru/news',
-};
+}
 
 async function handler() {
     const renderVideo = (link) =>
@@ -35,36 +35,36 @@ async function handler() {
             <>
                 <iframe type="text/html" width="640" height="360" src={`https://youtube.com/embed/${link}`} frameborder="0" allowfullscreen></iframe>
                 <br />
-            </>
-        );
+            </>,
+        )
     const renderImage = (href) =>
         renderToString(
             <>
                 <img style="max-width: 650px; height: auto; object-fit: contain; flex: 0 0 auto;" src={href} />
                 <br />
-            </>
-        );
+            </>,
+        )
 
-    const rootUrl = 'https://fisher.spb.ru/news/';
+    const rootUrl = 'https://fisher.spb.ru/news/'
     const response = await got({
         method: 'get',
         url: rootUrl,
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const descBuilder = (element) => {
-        const content = load(`<p>${$('.news-message-text', element).html()}</p>`).root();
+        const content = load(`<p>${$('.news-message-text', element).html()}</p>`).root()
         $('.news-message-media a', element).each((_, elem) => {
             if ($(elem).hasClass('news-message-youtube')) {
-                content.append(renderVideo($(elem).attr('data-youtube')));
+                content.append(renderVideo($(elem).attr('data-youtube')))
             } else {
-                content.append(renderImage($(elem).attr('href')));
+                content.append(renderImage($(elem).attr('href')))
             }
-        });
-        return content;
-    };
+        })
+        return content
+    }
 
     const items = $('.news-message')
         .toArray()
@@ -75,11 +75,11 @@ async function handler() {
             author: $('.news-message-user', elem).text().trim(),
             guid: $(elem).attr('id'),
             link: rootUrl + $('.news-message-comments-number > a', elem).attr('href'),
-        }));
+        }))
 
     return {
         title: $('head > title').text().trim(),
         link: rootUrl,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/app/:appId/:appSlug?',
@@ -25,22 +25,22 @@ export const route: Route = {
     name: 'Update',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { appId, appSlug } = ctx.req.param();
-    const baseUrl = 'https://www.macupdate.com';
-    const link = `${baseUrl}/app/mac/${appId}${appSlug ? `/${appSlug}` : ''}`;
+    const { appId, appSlug } = ctx.req.param()
+    const baseUrl = 'https://www.macupdate.com'
+    const link = `${baseUrl}/app/mac/${appId}${appSlug ? `/${appSlug}` : ''}`
 
-    const response = await ofetch(link);
-    const $ = load(response);
+    const response = await ofetch(link)
+    const $ = load(response)
 
-    const nextData = JSON.parse($('#__NEXT_DATA__').text());
+    const nextData = JSON.parse($('#__NEXT_DATA__').text())
 
     const {
         asPath,
         appData: { data: appData },
-    } = nextData.props.pageProps;
+    } = nextData.props.pageProps
 
     const item = {
         title: `${appData.title} ${appData.version}`,
@@ -50,7 +50,7 @@ async function handler(ctx) {
         guid: `macupdate/app/${appId}/${appData.version}`,
         category: [appData.category.name, appData.subcategory?.name],
         author: appData.developer.name,
-    };
+    }
 
     return {
         title: appData.title,
@@ -60,5 +60,5 @@ async function handler(ctx) {
         icon: appData.logo.source,
         item: [item],
         language: 'en',
-    };
+    }
 }

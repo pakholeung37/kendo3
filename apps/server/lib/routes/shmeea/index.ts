@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:id?',
@@ -29,53 +29,53 @@ export const route: Route = {
 ::: warning
   暂不支持大类分类和[院内动态](https://www.shmeea.edu.cn/page/19000/index.html)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '08000';
-    const baseURL = 'https://www.shmeea.edu.cn';
-    const link = `${baseURL}/page/${id}/index.html`;
+    const id = ctx.req.param('id') ?? '08000'
+    const baseURL = 'https://www.shmeea.edu.cn'
+    const link = `${baseURL}/page/${id}/index.html`
 
-    const response = await got(link);
-    const $ = load(response.data);
+    const response = await got(link)
+    const $ = load(response.data)
 
-    const title = `上海市教育考试院-${$('#main .pageh4-tit').text().trim()}`;
+    const title = `上海市教育考试院-${$('#main .pageh4-tit').text().trim()}`
 
     const list = $('#main .pageList li')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').attr('title') || item.find('a').text(),
                 link: new URL(item.find('a').attr('href'), baseURL).href,
                 pubDate: parseDate(item.find('.listTime').text().trim(), 'YYYY-MM-DD'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.endsWith('.html') || new URL(item.link).hostname !== new URL(baseURL).hostname) {
-                    return item;
+                    return item
                 }
 
-                const result = await got(item.link);
-                const $ = load(result.data);
+                const result = await got(item.link)
+                const $ = load(result.data)
 
-                const description = $('#ivs_content').html();
-                const pbTimeText = $('#ivs_title .PBtime').text().trim();
+                const description = $('#ivs_content').html()
+                const pbTimeText = $('#ivs_title .PBtime').text().trim()
 
-                item.description = description;
-                item.pubDate = pbTimeText ? timezone(parseDate(pbTimeText, 'YYYY-MM-DD HH:mm:ss'), +8) : item.pubDate;
+                item.description = description
+                item.pubDate = pbTimeText ? timezone(parseDate(pbTimeText, 'YYYY-MM-DD HH:mm:ss'), +8) : item.pubDate
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title,
         link,
         item: items,
-    };
+    }
 }

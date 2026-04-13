@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.nogizaka46.com';
+const rootUrl = 'https://www.nogizaka46.com'
 
 export const route: Route = {
     path: '/news',
@@ -26,10 +26,10 @@ export const route: Route = {
     maintainers: ['crispgm', 'Fatpandac'],
     handler,
     url: 'news.nogizaka46.com/s/n46/news/list',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25
 
     const response = await got({
         method: 'get',
@@ -37,9 +37,9 @@ async function handler(ctx) {
         headers: {
             Referer: 'http://www.nogizaka46.com/',
         },
-    });
+    })
 
-    const data = JSON.parse(response.data.match(/res\((.*)\);/)[1]).data;
+    const data = JSON.parse(response.data.match(/res\((.*)\);/)[1]).data
     const items = data.slice(0, limit).map((item) => ({
         title: item.title,
         link: item.link_url,
@@ -47,12 +47,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.date),
         category: item.cate,
         guid: rootUrl + new URL(item.link_url).pathname,
-    }));
+    }))
 
     return {
         allowEmpty: true,
         title: '乃木坂46官网 NEWS',
         link: 'http://www.nogizaka46.com/news/',
         item: items,
-    };
+    }
 }

@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import MarkdownIt from 'markdown-it';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import MarkdownIt from 'markdown-it'
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const md = MarkdownIt();
+const md = MarkdownIt()
 
-const baseUrl = 'https://www.luogu.com.cn';
+const baseUrl = 'https://www.luogu.com.cn'
 
 const typeMap = {
     ruleType: {
@@ -27,7 +27,7 @@ const typeMap = {
     //     1: '',
     //     2: '',
     // },
-};
+}
 
 export const route: Route = {
     path: '/contest',
@@ -51,34 +51,34 @@ export const route: Route = {
     maintainers: ['prnake'],
     handler,
     url: 'luogu.com.cn/contest/list',
-};
+}
 
 async function handler() {
-    const link = `${baseUrl}/contest/list`;
-    const { data: response } = await got(link);
-    const $ = load(response);
+    const link = `${baseUrl}/contest/list`
+    const { data: response } = await got(link)
+    const $ = load(response)
 
     const data = JSON.parse(
         decodeURIComponent(
             $('script')
                 .text()
-                .match(/decodeURIComponent\("(.*)"\)/)[1]
-        )
-    );
+                .match(/decodeURIComponent\("(.*)"\)/)[1],
+        ),
+    )
 
     const result = await pMap(
         data.currentData.contests.result,
         (item) =>
             cache.tryGet(`${baseUrl}/contest/${item.id}`, async () => {
-                const { data: response } = await got(`${baseUrl}/contest/${item.id}`);
-                const $ = load(response);
+                const { data: response } = await got(`${baseUrl}/contest/${item.id}`)
+                const $ = load(response)
                 const data = JSON.parse(
                     decodeURIComponent(
                         $('script')
                             .text()
-                            .match(/decodeURIComponent\("(.*)"\)/)[1]
-                    )
-                );
+                            .match(/decodeURIComponent\("(.*)"\)/)[1],
+                    ),
+                )
 
                 return {
                     title: item.name,
@@ -87,15 +87,15 @@ async function handler() {
                     author: item.host.name,
                     pubDate: parseDate(item.startTime, 'X'),
                     category: [item.rated ? 'Rated' : null, typeMap.ruleType[item.ruleType], typeMap.visibilityType[item.visibilityType]].filter(Boolean),
-                };
+                }
             }),
-        { concurrency: 4 }
-    );
+        { concurrency: 4 },
+    )
 
     return {
         title: $('head title').text(),
         link,
         image: 'https://www.luogu.com.cn/favicon.ico',
         item: result,
-    };
+    }
 }

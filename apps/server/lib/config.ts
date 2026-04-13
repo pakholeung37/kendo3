@@ -1,6 +1,6 @@
-import 'dotenv/config';
+import 'dotenv/config'
 
-import { ofetch } from 'ofetch';
+import { ofetch } from 'ofetch'
 
 type ConfigEnvKeys =
     // App config
@@ -243,498 +243,498 @@ type ConfigEnvKeys =
     | 'ZSXQ_ACCESS_TOKEN'
     | 'SMZDM_COOKIE'
     | 'REMOTE_CONFIG'
-    | 'REMOTE_CONFIG_AUTH';
+    | 'REMOTE_CONFIG_AUTH'
 
-export type ConfigEnv = Partial<Record<ConfigEnvKeys, string | undefined>>;
+export type ConfigEnv = Partial<Record<ConfigEnvKeys, string | undefined>>
 
-let envs: ConfigEnv = process.env;
+let envs: ConfigEnv = process.env
 
 export type Config = {
     // app config
-    disallowRobot: boolean;
-    enableCluster?: string;
-    isPackage: boolean;
-    nodeName?: string;
-    puppeteerRealBrowserService?: string;
-    puppeteerWSEndpoint?: string;
-    chromiumExecutablePath?: string;
+    disallowRobot: boolean
+    enableCluster?: string
+    isPackage: boolean
+    nodeName?: string
+    puppeteerRealBrowserService?: string
+    puppeteerWSEndpoint?: string
+    chromiumExecutablePath?: string
     // network
     connect: {
-        port: number;
-    };
-    listenInaddrAny: boolean;
-    requestRetry: number;
-    requestTimeout: number;
-    ua: string;
-    isDefaultUA: boolean;
-    trueUA: string;
-    allowOrigin?: string;
+        port: number
+    }
+    listenInaddrAny: boolean
+    requestRetry: number
+    requestTimeout: number
+    ua: string
+    isDefaultUA: boolean
+    trueUA: string
+    allowOrigin?: string
     // cache
     cache: {
-        type: string;
-        requestTimeout: number;
-        routeExpire: number;
-        contentExpire: number;
-    };
+        type: string
+        requestTimeout: number
+        routeExpire: number
+        contentExpire: number
+    }
     memory: {
-        max: number;
-    };
+        max: number
+    }
     redis: {
-        url: string;
-    };
+        url: string
+    }
     // proxy
-    proxyUri?: string;
-    proxyUris?: string[];
+    proxyUri?: string
+    proxyUris?: string[]
     proxy: {
-        protocol?: string;
-        host?: string;
-        port?: string;
-        auth?: string;
-        url_regex: string;
-        strategy: 'on_retry' | 'all';
-        failoverTimeout?: number;
-        healthCheckInterval?: number;
-    };
-    pacUri?: string;
-    pacScript?: string;
+        protocol?: string
+        host?: string
+        port?: string
+        auth?: string
+        url_regex: string
+        strategy: 'on_retry' | 'all'
+        failoverTimeout?: number
+        healthCheckInterval?: number
+    }
+    pacUri?: string
+    pacScript?: string
     // access control
-    accessKey?: string;
+    accessKey?: string
     // logging
-    debugInfo: string;
-    loggerLevel: string;
-    noLogfiles?: boolean;
+    debugInfo: string
+    loggerLevel: string
+    noLogfiles?: boolean
     otel: {
-        seconds_bucket?: string;
-        milliseconds_bucket?: string;
-    };
-    showLoggerTimestamp?: boolean;
+        seconds_bucket?: string
+        milliseconds_bucket?: string
+    }
+    showLoggerTimestamp?: boolean
     honeybadger: {
-        apiKey?: string;
-    };
+        apiKey?: string
+    }
     sentry: {
-        dsn?: string;
-    };
-    errorTrackingRouteTimeout: number;
-    enableRemoteDebugging?: boolean;
+        dsn?: string
+    }
+    errorTrackingRouteTimeout: number
+    enableRemoteDebugging?: boolean
     // feed config
     hotlink: {
-        template?: string;
-        includePaths?: string[];
-        excludePaths?: string[];
-    };
+        template?: string
+        includePaths?: string[]
+        excludePaths?: string[]
+    }
     feature: {
-        allow_user_hotlink_template: boolean;
-        filter_regex_engine: string;
-        allow_user_supply_unsafe_domain: boolean;
-        disable_nsfw: boolean;
-    };
-    suffix?: string;
-    titleLengthLimit: number;
+        allow_user_hotlink_template: boolean
+        filter_regex_engine: string
+        allow_user_supply_unsafe_domain: boolean
+        disable_nsfw: boolean
+    }
+    suffix?: string
+    titleLengthLimit: number
     openai: {
-        apiKey?: string;
-        model?: string;
-        temperature?: number;
-        maxTokens?: number;
-        endpoint: string;
-        inputOption: string;
-        promptTitle: string;
-        promptDescription: string;
-    };
+        apiKey?: string
+        model?: string
+        temperature?: number
+        maxTokens?: number
+        endpoint: string
+        inputOption: string
+        promptTitle: string
+        promptDescription: string
+    }
     follow: {
-        ownerUserId?: string;
-        description?: string;
-        price?: number;
-        userLimit?: number;
-    };
+        ownerUserId?: string
+        description?: string
+        price?: number
+        userLimit?: number
+    }
 
     // Route-specific Configurations
     bilibili: {
-        cookies: Record<string, string | undefined>;
-        dmImgList?: string;
-        dmImgInter?: string;
-        excludeSubtitles?: boolean;
-    };
+        cookies: Record<string, string | undefined>
+        dmImgList?: string
+        dmImgInter?: string
+        excludeSubtitles?: boolean
+    }
     bitbucket: {
-        username?: string;
-        password?: string;
-    };
+        username?: string
+        password?: string
+    }
     btbyr: {
-        host?: string;
-        cookies?: string;
-    };
+        host?: string
+        cookies?: string
+    }
     bupt: {
-        portal_cookie?: string;
-    };
+        portal_cookie?: string
+    }
     caixin: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     civitai: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     dianping: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     dida365: {
-        username?: string;
-        password?: string;
-    };
+        username?: string
+        password?: string
+    }
     discord: {
-        authorization?: string;
-    };
+        authorization?: string
+    }
     discourse: {
-        config: Record<string, string | undefined>;
-    };
+        config: Record<string, string | undefined>
+    }
     discuz: {
-        cookies: Record<string, string | undefined>;
-    };
+        cookies: Record<string, string | undefined>
+    }
     disqus: {
-        api_key?: string;
-    };
+        api_key?: string
+    }
     douban: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     ehentai: {
-        ipb_member_id?: string;
-        ipb_pass_hash?: string;
-        sk?: string;
-        igneous?: string;
-        star?: string;
-        img_proxy?: string;
-    };
+        ipb_member_id?: string
+        ipb_pass_hash?: string
+        sk?: string
+        igneous?: string
+        star?: string
+        img_proxy?: string
+    }
     email: {
-        config: Record<string, string | undefined>;
-    };
+        config: Record<string, string | undefined>
+    }
     f95zone: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     fanbox: {
-        session?: string;
-    };
+        session?: string
+    }
     fanfou: {
-        consumer_key?: string;
-        consumer_secret?: string;
-        username?: string;
-        password?: string;
-    };
+        consumer_key?: string
+        consumer_secret?: string
+        username?: string
+        password?: string
+    }
     fantia: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     game4399: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     gelbooru: {
-        apiKey?: string;
-        userId?: string;
-    };
+        apiKey?: string
+        userId?: string
+    }
     github: {
-        access_token?: string;
-    };
+        access_token?: string
+    }
     gitee: {
-        access_token?: string;
-    };
+        access_token?: string
+    }
     google: {
-        fontsApiKey?: string;
-    };
+        fontsApiKey?: string
+    }
     guozaoke: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     hefeng: {
-        key?: string;
-        apiHost?: string;
-    };
+        key?: string
+        apiHost?: string
+    }
     huitun: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     infzm: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     initium: {
-        memberCookie?: string;
-    };
+        memberCookie?: string
+    }
     instagram: {
-        username?: string;
-        password?: string;
-        proxy?: string;
-        cookie?: string;
-    };
+        username?: string
+        password?: string
+        proxy?: string
+        cookie?: string
+    }
     iwara: {
-        username?: string;
-        password?: string;
-    };
+        username?: string
+        password?: string
+    }
     javdb: {
-        session?: string;
-    };
+        session?: string
+    }
     jumeili: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     keylol: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     lastfm: {
-        api_key?: string;
-    };
+        api_key?: string
+    }
     lightnovel: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     locals: {
-        session?: string;
-    };
+        session?: string
+    }
     lofter: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     lorientlejour: {
-        token?: string;
-        username?: string;
-        password?: string;
-    };
+        token?: string
+        username?: string
+        password?: string
+    }
     malaysiakini: {
-        email?: string;
-        password?: string;
-        refreshToken?: string;
-    };
+        email?: string
+        password?: string
+        refreshToken?: string
+    }
     mangadex: {
-        username?: string;
-        password?: string;
-        clientId?: string;
-        clientSecret?: string;
-        refreshToken?: string;
-    };
+        username?: string
+        password?: string
+        clientId?: string
+        clientSecret?: string
+        refreshToken?: string
+    }
     manhuagui: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     mastodon: {
-        apiHost?: string;
-        accessToken?: string;
-        acctDomain?: string;
-    };
+        apiHost?: string
+        accessToken?: string
+        acctDomain?: string
+    }
     medium: {
-        cookies: Record<string, string | undefined>;
-        articleCookie?: string;
-    };
+        cookies: Record<string, string | undefined>
+        articleCookie?: string
+    }
     mihoyo: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     miniflux: {
-        instance?: string;
-        token?: string;
-    };
+        instance?: string
+        token?: string
+    }
     misskey: {
-        accessToken?: string;
-    };
+        accessToken?: string
+    }
     mixi2: {
-        authToken?: string;
-        authKey?: string;
-    };
+        authToken?: string
+        authKey?: string
+    }
     mox: {
-        cookie: string;
-    };
+        cookie: string
+    }
     ncm: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     newrank: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     nga: {
-        uid?: string;
-        cid?: string;
-    };
+        uid?: string
+        cid?: string
+    }
     nhentai: {
-        username?: string;
-        password?: string;
-    };
+        username?: string
+        password?: string
+    }
     notion: {
-        key?: string;
-    };
+        key?: string
+    }
     patreon: {
-        sessionId?: string;
-    };
+        sessionId?: string
+    }
     pianyuan: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     pixabay: {
-        key?: string;
-    };
+        key?: string
+    }
     pixiv: {
-        refreshToken?: string;
-        bypassCdn?: boolean;
-        bypassCdnHostname?: string;
-        bypassCdnDoh?: string;
-        imgProxy?: string;
-    };
+        refreshToken?: string
+        bypassCdn?: boolean
+        bypassCdnHostname?: string
+        bypassCdnDoh?: string
+        imgProxy?: string
+    }
     pkubbs: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     qingting: {
-        id?: string;
-    };
+        id?: string
+    }
     readwise: {
-        accessToken?: string;
-    };
+        accessToken?: string
+    }
     saraba1st: {
-        cookie?: string;
-        host?: string;
-    };
+        cookie?: string
+        host?: string
+    }
     sehuatang: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     scboy: {
-        token?: string;
-    };
+        token?: string
+    }
     scihub: {
-        host?: string;
-    };
+        host?: string
+    }
     sdo: {
-        ff14risingstones?: string;
-        ua?: string;
-    };
+        ff14risingstones?: string
+        ua?: string
+    }
     sis001: {
-        baseUrl?: string;
-    };
+        baseUrl?: string
+    }
     skeb: {
-        bearerToken?: string;
-    };
+        bearerToken?: string
+    }
     sorrycc: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     spotify: {
-        clientId?: string;
-        clientSecret?: string;
-        refreshToken?: string;
-    };
+        clientId?: string
+        clientSecret?: string
+        refreshToken?: string
+    }
     sspai: {
-        bearertoken?: string;
-    };
+        bearertoken?: string
+    }
     telegram: {
-        token?: string;
-        session?: string;
-        apiId?: number;
-        apiHash?: string;
-        maxConcurrentDownloads?: number;
+        token?: string
+        session?: string
+        apiId?: number
+        apiHash?: string
+        maxConcurrentDownloads?: number
         proxy?: {
-            host?: string;
-            port?: number;
-            secret?: string;
-        };
-    };
+            host?: string
+            port?: number
+            secret?: string
+        }
+    }
     tophub: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     tsdm39: {
-        cookie: string;
-    };
+        cookie: string
+    }
     tumblr: {
-        clientId?: string;
-        clientSecret?: string;
-        refreshToken?: string;
-    };
+        clientId?: string
+        clientSecret?: string
+        refreshToken?: string
+    }
     twitter: {
-        consumerKey?: string;
-        consumerSecret?: string;
-        accessToken?: string;
-        accessSecret?: string;
+        consumerKey?: string
+        consumerSecret?: string
+        accessToken?: string
+        accessSecret?: string
         // username?: string[];
         // password?: string[];
         // authenticationSecret?: string[];
         // phoneOrEmail?: string[];
-        authToken?: string[];
-        thirdPartyApi?: string;
-    };
+        authToken?: string[]
+        thirdPartyApi?: string
+    }
     uestc: {
-        bbsCookie?: string;
-        bbsAuthStr?: string;
-    };
+        bbsCookie?: string
+        bbsAuthStr?: string
+    }
     weibo: {
-        app_key?: string;
-        app_secret?: string;
-        cookies?: string;
-        redirect_url?: string;
-    };
+        app_key?: string
+        app_secret?: string
+        cookies?: string
+        redirect_url?: string
+    }
     wenku8: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     wordpress: {
-        cdnUrl?: string;
-    };
+        cdnUrl?: string
+    }
     xiaoyuzhou: {
-        device_id?: string;
-        refresh_token?: string;
-    };
+        device_id?: string
+        refresh_token?: string
+    }
     xiaohongshu: {
-        cookie?: string;
-        proxy?: string;
-    };
+        cookie?: string
+        proxy?: string
+    }
     ximalaya: {
-        token?: string;
-    };
+        token?: string
+    }
     xsijishe: {
-        cookie?: string;
-        userAgent?: string;
-    };
+        cookie?: string
+        userAgent?: string
+    }
     xueqiu: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     yamibo: {
-        salt?: string;
-        auth?: string;
-    };
+        salt?: string
+        auth?: string
+    }
     youtube: {
-        key?: string;
-        clientId?: string;
-        clientSecret?: string;
-        refreshToken?: string;
-        videoEmbedUrl?: string;
-    };
+        key?: string
+        clientId?: string
+        clientSecret?: string
+        refreshToken?: string
+        videoEmbedUrl?: string
+    }
     zhihu: {
-        cookies?: string;
-    };
+        cookies?: string
+    }
     zodgame: {
-        cookie?: string;
-    };
+        cookie?: string
+    }
     zsxq: {
-        accessToken?: string;
-    };
+        accessToken?: string
+    }
     smzdm: {
-        cookie?: string;
-    };
-};
+        cookie?: string
+    }
+}
 
-const value: Config | Record<string, any> = {};
+const value: Config | Record<string, any> = {}
 
-const TRUE_UA = 'RSSHub/1.0 (+http://github.com/DIYgod/RSSHub; like FeedFetcher-Google)';
+const TRUE_UA = 'RSSHub/1.0 (+http://github.com/DIYgod/RSSHub; like FeedFetcher-Google)'
 
 const toBoolean = (value: string | undefined, defaultValue: boolean) => {
     if (value === undefined) {
-        return defaultValue;
+        return defaultValue
     } else {
-        return value === '' || value === '0' || value === 'false' ? false : !!value;
+        return value === '' || value === '0' || value === 'false' ? false : !!value
     }
-};
+}
 
-const toInt = (value: string | undefined, defaultValue?: number) => (value === undefined ? defaultValue : Number.parseInt(value));
+const toInt = (value: string | undefined, defaultValue?: number) => (value === undefined ? defaultValue : Number.parseInt(value))
 
 const calculateValue = () => {
-    const bilibili_cookies: Record<string, string | undefined> = {};
-    const email_config: Record<string, string | undefined> = {};
-    const discuz_cookies: Record<string, string | undefined> = {};
-    const medium_cookies: Record<string, string | undefined> = {};
-    const discourse_config: Record<string, string | undefined> = {};
+    const bilibili_cookies: Record<string, string | undefined> = {}
+    const email_config: Record<string, string | undefined> = {}
+    const discuz_cookies: Record<string, string | undefined> = {}
+    const medium_cookies: Record<string, string | undefined> = {}
+    const discourse_config: Record<string, string | undefined> = {}
 
     for (const name in envs) {
         if (name.startsWith('BILIBILI_COOKIE_')) {
-            const uid = name.slice(16);
-            bilibili_cookies[uid] = envs[name];
+            const uid = name.slice(16)
+            bilibili_cookies[uid] = envs[name]
         } else if (name.startsWith('EMAIL_CONFIG_')) {
-            const id = name.slice(13);
-            email_config[id] = envs[name];
+            const id = name.slice(13)
+            email_config[id] = envs[name]
         } else if (name.startsWith('DISCUZ_COOKIE_')) {
-            const cid = name.slice(14);
-            discuz_cookies[cid] = envs[name];
+            const cid = name.slice(14)
+            discuz_cookies[cid] = envs[name]
         } else if (name.startsWith('MEDIUM_COOKIE_')) {
-            const username = name.slice(14).toLowerCase();
-            medium_cookies[username] = envs[name];
+            const username = name.slice(14).toLowerCase()
+            medium_cookies[username] = envs[name]
         } else if (name.startsWith('DISCOURSE_CONFIG_')) {
-            const id = name.slice('DISCOURSE_CONFIG_'.length);
-            discourse_config[id] = JSON.parse(envs[name] || '{}');
+            const id = name.slice('DISCOURSE_CONFIG_'.length)
+            discourse_config[id] = JSON.parse(envs[name] || '{}')
         }
     }
 
@@ -1191,40 +1191,40 @@ const calculateValue = () => {
         smzdm: {
             cookie: envs.SMZDM_COOKIE,
         },
-    };
+    }
 
     for (const name in _value) {
-        value[name] = _value[name];
+        value[name] = _value[name]
     }
-};
-calculateValue();
+}
+calculateValue()
 
-(async () => {
+;(async () => {
     if (envs.REMOTE_CONFIG) {
-        const { default: logger } = await import('@/utils/logger');
+        const { default: logger } = await import('@/utils/logger')
         try {
             const data = await ofetch(envs.REMOTE_CONFIG, {
                 headers: {
                     Authorization: `Basic ${envs.REMOTE_CONFIG_AUTH}`,
                 },
-            });
+            })
             if (data) {
-                envs = Object.assign(envs, data);
-                calculateValue();
-                logger.info('Remote config loaded.');
+                envs = Object.assign(envs, data)
+                calculateValue()
+                logger.info('Remote config loaded.')
             } else {
-                logger.error('Remote config load failed.');
+                logger.error('Remote config load failed.')
             }
         } catch (error) {
-            logger.error('Remote config load failed.', error);
+            logger.error('Remote config load failed.', error)
         }
     }
-})();
+})()
 
 // @ts-expect-error value is set
-export const config: Config = value;
+export const config: Config = value
 
 export const setConfig = (env: ConfigEnv) => {
-    envs = Object.assign(process.env, env);
-    calculateValue();
-};
+    envs = Object.assign(process.env, env)
+    calculateValue()
+}

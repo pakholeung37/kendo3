@@ -1,33 +1,33 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = 'zx' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { category = 'zx' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://005.tv';
-    const currentUrl = new URL(category ? `${category}/` : '', rootUrl).href;
+    const rootUrl = 'https://005.tv'
+    const currentUrl = new URL(category ? `${category}/` : '', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.article-list ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h3').text();
-            const image = item.find('img').prop('src');
+            const title = item.find('h3').text()
+            const image = item.find('img').prop('src')
 
             const description = renderToString(
                 <>
@@ -37,8 +37,8 @@ export const handler = async (ctx) => {
                         </figure>
                     ) : null}
                     {item.find('div.p-row').text() ? <blockquote>{item.find('div.p-row').text()}</blockquote> : null}
-                </>
-            );
+                </>,
+            )
 
             return {
                 title,
@@ -52,36 +52,36 @@ export const handler = async (ctx) => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.articleTitle-name').text();
-                const description = $$('div.articleContent').html();
+                const title = $$('h1.articleTitle-name').text()
+                const description = $$('div.articleContent').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('.time').text()), +8);
-                item.category = $$('meta[name="keywords"]').prop('content').split(/,/);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('.time').text()), +8)
+                item.category = $$('meta[name="keywords"]').prop('content').split(/,/)
                 item.content = {
                     html: description,
                     text: $$('div.articleContent').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL('templets/muban/style/images/logo.png', rootUrl).href;
+    const title = $('title').text()
+    const image = new URL('templets/muban/style/images/logo.png', rootUrl).href
 
     return {
         title,
@@ -92,8 +92,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/,/).pop(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -123,9 +123,9 @@ export const route: Route = {
         {
             source: ['005.tv/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/005${category ? `/${category}` : ''}`;
+                return `/005${category ? `/${category}` : ''}`
             },
         },
         {
@@ -149,4 +149,4 @@ export const route: Route = {
             target: '/005/zh',
         },
     ],
-};
+}

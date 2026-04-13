@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/book/rank/:type?',
@@ -20,37 +20,37 @@ export const route: Route = {
     description: `| 全部 | 虚构    | 非虚构     |
 | ---- | ------- | ---------- |
 |      | fiction | nonfiction |`,
-};
+}
 
 async function handler(ctx) {
-    const { type = '' } = ctx.req.param();
-    const referer = `https://m.douban.com/book/${type}`;
+    const { type = '' } = ctx.req.param()
+    const referer = `https://m.douban.com/book/${type}`
 
     const requestItem = async (type) => {
         const response = await got({
             url: `https://m.douban.com/rexxar/api/v2/subject_collection/book_${type}/items?start=0&count=10`,
             headers: { Referer: referer },
-        });
-        return response.data.subject_collection_items;
-    };
+        })
+        return response.data.subject_collection_items
+    }
 
-    const items = type ? await requestItem(type) : [...(await requestItem('fiction')), ...(await requestItem('nonfiction'))];
+    const items = type ? await requestItem(type) : [...(await requestItem('fiction')), ...(await requestItem('nonfiction'))]
 
     return {
         title: `豆瓣热门图书-${type ? (type === 'fiction' ? '虚构类' : '非虚构类') : '全部'}`,
         link: referer,
         description: '每周一更新',
         item: items.map(({ title, url, cover, info, rating, null_rating_reason }) => {
-            const rate = rating ? `${rating.value.toFixed(1)}分` : null_rating_reason;
+            const rate = rating ? `${rating.value.toFixed(1)}分` : null_rating_reason
             const description = `<img src="${cover.url}"><br>
               ${title}/${info}/${rate}
-            `;
+            `
 
             return {
                 title: `${title}-${info}`,
                 description,
                 link: url,
-            };
+            }
         }),
-    };
+    }
 }

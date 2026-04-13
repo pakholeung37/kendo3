@@ -1,15 +1,15 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/discussion/:user/:repo/:state?/:category?',
@@ -71,22 +71,22 @@ export const route: Route = {
     name: 'Repo Discussions',
     maintainers: ['waynzh'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.github || !config.github.access_token) {
-        throw new ConfigNotFoundError('GitHub Discussions RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('GitHub Discussions RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
-    const { user, repo, limit, state = 'open', category = null } = ctx.req.param();
-    const { answered, closed, locked } = mapStateToBooleans(state);
-    const perPage = Math.min(Number.parseInt(limit) || 100, 100);
+    const { user, repo, limit, state = 'open', category = null } = ctx.req.param()
+    const { answered, closed, locked } = mapStateToBooleans(state)
+    const perPage = Math.min(Number.parseInt(limit) || 100, 100)
 
-    const host = `https://github.com/${user}/${repo}/discussions`;
-    const url = 'https://api.github.com/graphql';
+    const host = `https://github.com/${user}/${repo}/discussions`
+    const url = 'https://api.github.com/graphql'
 
-    let filters = `first: ${perPage}`;
+    let filters = `first: ${perPage}`
     if (answered !== null) {
-        filters += `, answered: ${answered}`;
+        filters += `, answered: ${answered}`
     }
     if (category !== null) {
         const response = await got({
@@ -109,9 +109,9 @@ async function handler(ctx) {
                   }
                 `,
             },
-        });
-        const categoryItem = response.data.data.repository.discussionCategories.nodes.find((item) => item.name === category);
-        filters += categoryItem?.id ? `, categoryId: "${categoryItem.id}"` : '';
+        })
+        const categoryItem = response.data.data.repository.discussionCategories.nodes.find((item) => item.name === category)
+        filters += categoryItem?.id ? `, categoryId: "${categoryItem.id}"` : ''
     }
 
     const response = await got({
@@ -142,9 +142,9 @@ async function handler(ctx) {
               }
             `,
         },
-    });
+    })
 
-    const data = response.data.data.repository.discussions.nodes.filter((item) => (closed === null ? item : item.closed === closed)).filter((item) => (locked === null ? item : item.locked === locked));
+    const data = response.data.data.repository.discussions.nodes.filter((item) => (closed === null ? item : item.closed === closed)).filter((item) => (locked === null ? item : item.locked === locked))
 
     return {
         allowEmpty: true,
@@ -157,40 +157,40 @@ async function handler(ctx) {
             pubDate: parseDate(item.createdAt),
             link: item.url,
         })),
-    };
+    }
 }
 
 function mapStateToBooleans(state: string) {
     // 初始化布尔值
-    let answered: boolean | null = null;
-    let closed: boolean | null = null;
-    let locked: boolean | null = null;
+    let answered: boolean | null = null
+    let closed: boolean | null = null
+    let locked: boolean | null = null
 
     // 设置布尔值，根据 state 的值
     switch (state) {
         case 'answered':
-            answered = true;
-            break;
+            answered = true
+            break
         case 'unanswered':
-            answered = false;
-            break;
+            answered = false
+            break
         case 'closed':
-            closed = true;
-            break;
+            closed = true
+            break
         case 'open':
-            closed = false;
-            break;
+            closed = false
+            break
         case 'locked':
-            locked = true;
-            break;
+            locked = true
+            break
         case 'unlocked':
-            locked = false;
-            break;
+            locked = false
+            break
         case 'all':
         default:
             // 保持 answered, closed, locked 为 null
-            break;
+            break
     }
 
-    return { answered, closed, locked };
+    return { answered, closed, locked }
 }

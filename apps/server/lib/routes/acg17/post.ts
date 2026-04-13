@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'http://acg17.com';
+const host = 'http://acg17.com'
 
 export const route: Route = {
     path: '/post/all',
@@ -26,11 +26,11 @@ export const route: Route = {
     maintainers: ['SunBK201'],
     handler,
     url: 'acg17.com/post',
-};
+}
 
 async function handler() {
-    const response = await got(`${host}/wp-json/wp/v2/posts?per_page=30`);
-    const list = response.data;
+    const response = await got(`${host}/wp-json/wp/v2/posts?per_page=30`)
+    const list = response.data
     return {
         title: `ACG17 - 全部文章`,
         link: `${host}/blog`,
@@ -41,5 +41,5 @@ async function handler() {
             pubDate: parseDate(item.date_gmt),
             description: item.content.rendered,
         })),
-    };
+    }
 }

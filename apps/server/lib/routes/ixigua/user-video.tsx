@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'https://www.ixigua.com';
+const host = 'https://www.ixigua.com'
 
 export const route: Route = {
     path: '/user/video/:uid/:disableEmbed?',
@@ -29,30 +29,30 @@ export const route: Route = {
     name: '用户视频投稿',
     maintainers: ['FlashWingShadow', 'Fatpandac', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const disableEmbed = ctx.req.param('disableEmbed');
-    const url = `${host}/home/${uid}/?wid_try=1`;
+    const uid = ctx.req.param('uid')
+    const disableEmbed = ctx.req.param('disableEmbed')
+    const url = `${host}/home/${uid}/?wid_try=1`
 
-    const { data } = await got(url);
-    const $ = load(data);
-    const jsData = $('#SSR_HYDRATED_DATA').html();
+    const { data } = await got(url)
+    const $ = load(data)
+    const jsData = $('#SSR_HYDRATED_DATA').html()
 
     if (!jsData) {
-        throw new Error('Failed to find SSR_HYDRATED_DATA');
+        throw new Error('Failed to find SSR_HYDRATED_DATA')
     }
 
-    const jsonData = JSON.parse(jsData.match(/var\s+data\s*=\s*({.*?});/s)?.[1].replaceAll('undefined', 'null') || '{}');
+    const jsonData = JSON.parse(jsData.match(/var\s+data\s*=\s*({.*?});/s)?.[1].replaceAll('undefined', 'null') || '{}')
 
     const {
         AuthorVideoList: { videoList: videoInfos },
         AuthorDetailInfo: userInfo,
-    } = jsonData;
+    } = jsonData
 
     if (!videoInfos || !userInfo) {
-        throw new Error('Failed to extract required data from JSON');
+        throw new Error('Failed to extract required data from JSON')
     }
 
     return {
@@ -66,7 +66,7 @@ async function handler(ctx) {
             pubDate: parseDate(i.publishTime * 1000),
             author: userInfo.name,
         })),
-    };
+    }
 }
 
 const IxiguaVideoDescription = ({ i, disableEmbed }: { i: any; disableEmbed?: string }) => (
@@ -80,4 +80,4 @@ const IxiguaVideoDescription = ({ i, disableEmbed }: { i: any; disableEmbed?: st
         <img src={i.coverUrl} />
         <p>{i.abstract}</p>
     </>
-);
+)

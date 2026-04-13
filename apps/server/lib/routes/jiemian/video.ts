@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     path: '/video/lists/258_1',
@@ -16,4 +16,4 @@ export const route: Route = {
 | [商业微史记](https://www.jiemian.com/video/lists/882_1.html) |
 | ------------------------------------------------------------ |
 | 882_1                                                       |`,
-};
+}

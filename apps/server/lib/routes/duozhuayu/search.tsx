@@ -1,10 +1,10 @@
 /* eslint-disable unicorn/prefer-code-point */
-import aesjs from 'aes-js';
-import { renderToString } from 'hono/jsx/dom/server';
+import aesjs from 'aes-js'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/search/:wd',
@@ -27,31 +27,31 @@ export const route: Route = {
     name: '搜索结果',
     maintainers: ['fengkx'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const wd = ctx.req.param('wd');
-    const baseUrl = 'https://www.duozhuayu.com';
-    const type = 'book';
-    const link = `${baseUrl}/search/${type}/${wd}`;
+    const wd = ctx.req.param('wd')
+    const baseUrl = 'https://www.duozhuayu.com'
+    const type = 'book'
+    const link = `${baseUrl}/search/${type}/${wd}`
 
     // token获取见 https://github.com/wong2/userscripts/blob/master/duozhuayu.user.js
-    const key = [...'DkOliWvFNR7C4WvR'].map((c) => c.charCodeAt());
-    const iv = [...'GQWKUE2CVGOOBKXU'].map((c) => c.charCodeAt());
-    const aesCfb = new aesjs.ModeOfOperation.cfb(key, iv);
+    const key = [...'DkOliWvFNR7C4WvR'].map((c) => c.charCodeAt())
+    const iv = [...'GQWKUE2CVGOOBKXU'].map((c) => c.charCodeAt())
+    const aesCfb = new aesjs.ModeOfOperation.cfb(key, iv)
 
     const encrypt = (text) => {
-        const textBytes = aesjs.utils.utf8.toBytes(text);
-        const encryptedBytes = aesCfb.encrypt(textBytes);
-        return aesjs.utils.hex.fromBytes(encryptedBytes);
-    };
+        const textBytes = aesjs.utils.utf8.toBytes(text)
+        const encryptedBytes = aesCfb.encrypt(textBytes)
+        return aesjs.utils.hex.fromBytes(encryptedBytes)
+    }
 
     const getCustomRequestHeaders = () => {
-        const timestamp = Date.now();
-        const userId = 0;
-        const securityKey = Math.floor(1e8 * Math.random());
-        const token = encrypt([timestamp, userId, securityKey].join(':'));
-        const requestId = [userId, timestamp, Math.round(1e5 * Math.random())].join('-');
+        const timestamp = Date.now()
+        const userId = 0
+        const securityKey = Math.floor(1e8 * Math.random())
+        const token = encrypt([timestamp, userId, securityKey].join(':'))
+        const requestId = [userId, timestamp, Math.round(1e5 * Math.random())].join('-')
         return {
             'x-api-version': '0.0.48',
             'x-refer-request-id': requestId,
@@ -61,8 +61,8 @@ async function handler(ctx) {
             'x-security-key': securityKey,
             'x-timestamp': timestamp,
             'x-user-id': userId,
-        };
-    };
+        }
+    }
 
     const response = await got({
         method: 'get',
@@ -72,7 +72,7 @@ async function handler(ctx) {
             q: wd,
         },
         headers: getCustomRequestHeaders(),
-    });
+    })
 
     const item = response.data.data
         .filter((item) => item.type === type)
@@ -109,14 +109,14 @@ async function handler(ctx) {
                     豆瓣评分：{item.doubanRating}
                     <br />
                     价格：{(item.price / 100).toFixed(2)}元起 <del>{(item.originalPrice / 100).toFixed(2)}元</del>
-                </div>
+                </div>,
             ),
-        }));
+        }))
 
     return {
         title: `多抓鱼搜索-${wd}`,
         link,
         description: `多抓鱼搜索-${wd}`,
         item,
-    };
+    }
 }

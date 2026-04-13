@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/home/:column?',
@@ -38,15 +38,15 @@ export const route: Route = {
     description: `::: Warning
 未登录用户无法获取完整文章内容，只能看到预览内容。想要获取完整文章内容，需要设置\`JUMEILI_COOKIE\`环境变量。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.jumeili.cn';
-    const column = ctx.req.param('column') ?? 0;
+    const baseUrl = 'https://www.jumeili.cn'
+    const column = ctx.req.param('column') ?? 0
 
-    const link = `${baseUrl}/ws/AjaxService.ashx?act=index_article&page=1&pageSize=20&column=${column}`;
+    const link = `${baseUrl}/ws/AjaxService.ashx?act=index_article&page=1&pageSize=20&column=${column}`
 
-    const cookie = config.jumeili.cookie;
+    const cookie = config.jumeili.cookie
     const response = await ofetch(link, {
         headers: {
             referer: baseUrl,
@@ -54,12 +54,12 @@ async function handler(ctx) {
             accept: 'application/json, text/javascript, */*; q=0.01',
             cookie,
         },
-    });
+    })
 
     // parse 两次
-    let data = JSON.parse(response);
+    let data = JSON.parse(response)
     if (data && typeof data === 'string') {
-        data = JSON.parse(data);
+        data = JSON.parse(data)
     }
 
     let items = data.items.map((item) => ({
@@ -69,7 +69,7 @@ async function handler(ctx) {
         image: item.imgurl,
         author: item.author,
         // pubDate: parseDate(item.pubTime),
-    }));
+    }))
 
     if (cookie) {
         items = await Promise.all(
@@ -82,22 +82,22 @@ async function handler(ctx) {
                             accept: 'application/json, text/javascript, */*; q=0.01',
                             cookie,
                         },
-                    });
-                    const $ = load(article);
+                    })
+                    const $ = load(article)
 
-                    const content = $('#Cnt-Main-Article-JML').html();
+                    const content = $('#Cnt-Main-Article-JML').html()
                     if (content) {
-                        item.description = content; // 替换为完整正文
+                        item.description = content // 替换为完整正文
                     }
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
     }
 
     return {
         title: '聚美丽 - 首页资讯',
         item: items,
-    };
+    }
 }

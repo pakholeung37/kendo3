@@ -1,7 +1,7 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Uptime Robot',
     url: 'rss.uptimerobot.com',
     lang: 'en',
-};
+}

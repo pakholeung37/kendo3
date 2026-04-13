@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import buildData from '@/utils/common-config';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import buildData from '@/utils/common-config'
+import got from '@/utils/got'
 
-const baseUrl = 'https://www.airchina.com.cn';
+const baseUrl = 'https://www.airchina.com.cn'
 
 export const route: Route = {
     path: '/announcement',
@@ -29,10 +29,10 @@ export const route: Route = {
     maintainers: ['LandonLi'],
     handler,
     url: 'www.airchina.com.cn/',
-};
+}
 
 async function handler() {
-    const link = `${baseUrl}/cn/info/new-service/service_announcement.shtml`;
+    const link = `${baseUrl}/cn/info/new-service/service_announcement.shtml`
     const data = await buildData({
         link,
         url: link,
@@ -49,18 +49,18 @@ async function handler() {
             pubDate: `parseDate($('span').text(), 'YYYY-MM-DD')`,
             guid: Buffer.from(`$('a').attr('href')`).toString('base64'),
         },
-    });
+    })
 
     await Promise.all(
         data.item.map(async (item) => {
-            const detailLink = baseUrl + item.link;
+            const detailLink = baseUrl + item.link
             item.description = await cache.tryGet(detailLink, async () => {
-                const result = await got(detailLink);
-                const $ = load(result.data);
-                return $('.serviceMsg').html();
-            });
-        })
-    );
+                const result = await got(detailLink)
+                const $ = load(result.data)
+                return $('.serviceMsg').html()
+            })
+        }),
+    )
 
-    return data;
+    return data
 }

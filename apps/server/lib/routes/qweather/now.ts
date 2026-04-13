@@ -1,12 +1,12 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import type { NowItem } from './util';
-import { renderNowDescription } from './util';
+import type { NowItem } from './util'
+import { renderNowDescription } from './util'
 
 export const route: Route = {
     path: '/now/:location',
@@ -33,36 +33,36 @@ export const route: Route = {
     name: '实时天气',
     maintainers: ['Rein-Ou'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.hefeng.key || !config.hefeng.apiHost) {
-        throw new ConfigNotFoundError('QWeather RSS is disabled due to the lack of <a href="https://docs.rsshub.app/zh/install/config#%E5%92%8C%E9%A3%8E%E5%A4%A9%E6%B0%94">relevant config</a>');
+        throw new ConfigNotFoundError('QWeather RSS is disabled due to the lack of <a href="https://docs.rsshub.app/zh/install/config#%E5%92%8C%E9%A3%8E%E5%A4%A9%E6%B0%94">relevant config</a>')
     }
-    const NOW_WEATHER_API = `https://${config.hefeng.apiHost}/v7/weather/now`;
-    const CIRY_LOOKUP_API = `https://${config.hefeng.apiHost}/geo/v2/city/lookup`;
+    const NOW_WEATHER_API = `https://${config.hefeng.apiHost}/v7/weather/now`
+    const CIRY_LOOKUP_API = `https://${config.hefeng.apiHost}/geo/v2/city/lookup`
 
     const id = await cache.tryGet('qweather:' + ctx.req.param('location') + ':id', async () => {
-        const response = await got(`${CIRY_LOOKUP_API}?location=${ctx.req.param('location')}&key=${config.hefeng.key}`);
-        const data = response.data.location.map((loc) => loc);
-        return data[0].id;
-    });
-    const requestUrl = `${NOW_WEATHER_API}?key=${config.hefeng.key}&location=${id}`;
+        const response = await got(`${CIRY_LOOKUP_API}?location=${ctx.req.param('location')}&key=${config.hefeng.key}`)
+        const data = response.data.location.map((loc) => loc)
+        return data[0].id
+    })
+    const requestUrl = `${NOW_WEATHER_API}?key=${config.hefeng.key}&location=${id}`
     const responseData = await cache.tryGet(
         'qweather:' + ctx.req.param('location') + ':now',
         async () => {
-            const response = await got(requestUrl);
-            return response.data;
+            const response = await got(requestUrl)
+            return response.data
         },
         3600, // second
-        false
-    );
+        false,
+    )
 
-    const data = [responseData.now];
+    const data = [responseData.now]
 
-    const timeObj = parseDate(responseData.updateTime);
+    const timeObj = parseDate(responseData.updateTime)
 
-    const time_show = timeObj.toLocaleString();
+    const time_show = timeObj.toLocaleString()
 
     return {
         title: ctx.req.param('location') + '实时天气',
@@ -75,5 +75,5 @@ async function handler(ctx) {
             link: responseData.fxLink,
         })),
         link: responseData.fxLink,
-    };
+    }
 }

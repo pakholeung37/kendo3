@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type PlaylistData = {
-    singer?: string;
-    album?: string;
-    date?: string;
-    picUrl?: string;
-};
+    singer?: string
+    album?: string
+    date?: string
+    picUrl?: string
+}
 
 export const renderPlaylistDescription = ({ singer, album, date, picUrl }: PlaylistData) =>
     renderToString(
@@ -21,5 +21,5 @@ export const renderPlaylistDescription = ({ singer, album, date, picUrl }: Playl
                 </>
             ) : null}
             <img src={picUrl} />
-        </>
-    );
+        </>,
+    )

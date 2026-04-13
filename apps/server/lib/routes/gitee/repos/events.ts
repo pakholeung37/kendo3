@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/events/:owner/:repo',
@@ -31,12 +31,12 @@ export const route: Route = {
     name: '仓库动态',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { owner, repo } = ctx.req.param();
+    const { owner, repo } = ctx.req.param()
 
-    const apiUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/events`;
+    const apiUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/events`
     const response = await cache.tryGet(
         apiUrl,
         async () =>
@@ -47,8 +47,8 @@ async function handler(ctx) {
                         limit: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 100,
                     },
                 })
-            ).data
-    );
+            ).data,
+    )
 
     let items = response.map((item) => ({
         title: item.type,
@@ -57,38 +57,38 @@ async function handler(ctx) {
         guid: item.id,
         type: item.type,
         payload: item.payload,
-    }));
+    }))
 
     items = items.map((item) => {
         switch (item.type) {
             case 'IssueEvent':
-                item.title = item.payload.title;
-                item.description = md.render(item.payload.body);
-                item.link = item.payload.html_url;
-                break;
+                item.title = item.payload.title
+                item.description = md.render(item.payload.body)
+                item.link = item.payload.html_url
+                break
             case 'ForkEvent':
-                item.title = `${item.author || item.actor.login} forked ${owner}/${repo}`;
-                item.link = item.payload.html_url;
-                break;
+                item.title = `${item.author || item.actor.login} forked ${owner}/${repo}`
+                item.link = item.payload.html_url
+                break
             case 'StarEvent':
-                item.title = `${item.author || item.actor.login} ${item.payload.action} ${owner}/${repo}`;
-                break;
+                item.title = `${item.author || item.actor.login} ${item.payload.action} ${owner}/${repo}`
+                break
             case 'IssueCommentEvent':
-                item.title = item.payload.issue.title;
-                item.description = md.render(item.payload.comment.body);
-                item.link = item.payload.comment.html_url;
-                break;
+                item.title = item.payload.issue.title
+                item.description = md.render(item.payload.comment.body)
+                item.link = item.payload.comment.html_url
+                break
             default:
-                break;
+                break
         }
-        delete item.type;
-        delete item.payload;
-        return item;
-    });
+        delete item.type
+        delete item.payload
+        return item
+    })
 
     return {
         title: `${owner}/${repo} - 仓库动态`,
         link: `https://gitee.com/${owner}/${repo}`,
         item: items,
-    };
+    }
 }

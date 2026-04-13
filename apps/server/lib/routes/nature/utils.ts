@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { CookieJar } from 'tough-cookie'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.nature.com';
+const baseUrl = 'https://www.nature.com'
 
 const fixFigure = (html) => {
     html('picture source').each((_, i) => {
-        i = html(i);
+        i = html(i)
         if (
             i.attr('srcset') &&
             (i.attr('srcset').startsWith('//media.springernature.com/lw685/') ||
@@ -17,14 +17,14 @@ const fixFigure = (html) => {
                 i.attr('srcset').startsWith('//media.springernature.com/relative-r300-703_m1050/') ||
                 i.attr('srcset').startsWith('//media.springernature.com/w300/'))
         ) {
-            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/lw685/', '//media.springernature.com/full/'));
-            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/m312/', '//media.springernature.com/full/'));
-            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/relative-r300-703_m1050/', '//media.springernature.com/full/'));
-            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/w300/', '//media.springernature.com/full/'));
+            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/lw685/', '//media.springernature.com/full/'))
+            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/m312/', '//media.springernature.com/full/'))
+            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/relative-r300-703_m1050/', '//media.springernature.com/full/'))
+            i.attr('srcset', i.attr('srcset').replace('//media.springernature.com/w300/', '//media.springernature.com/full/'))
         }
-    });
+    })
     html('img').each((_, i) => {
-        i = html(i);
+        i = html(i)
         if (
             i.attr('src') &&
             (i.attr('src').startsWith('//media.springernature.com/lw685/') ||
@@ -32,83 +32,83 @@ const fixFigure = (html) => {
                 i.attr('src').startsWith('//media.springernature.com/relative-r300-703_m1050/') ||
                 i.attr('src').startsWith('//media.springernature.com/w300/'))
         ) {
-            i.attr('src', i.attr('src').replace('//media.springernature.com/lw685/', '//media.springernature.com/full/'));
-            i.attr('src', i.attr('src').replace('//media.springernature.com/m312/', '//media.springernature.com/full/'));
-            i.attr('src', i.attr('src').replace('//media.springernature.com/relative-r300-703_m1050/', '//media.springernature.com/full/'));
-            i.attr('src', i.attr('src').replace('//media.springernature.com/w300/', '//media.springernature.com/full/'));
+            i.attr('src', i.attr('src').replace('//media.springernature.com/lw685/', '//media.springernature.com/full/'))
+            i.attr('src', i.attr('src').replace('//media.springernature.com/m312/', '//media.springernature.com/full/'))
+            i.attr('src', i.attr('src').replace('//media.springernature.com/relative-r300-703_m1050/', '//media.springernature.com/full/'))
+            i.attr('src', i.attr('src').replace('//media.springernature.com/w300/', '//media.springernature.com/full/'))
         }
-    });
-};
+    })
+}
 
 const getArticleList = (html) =>
     html('.app-article-list-row__item')
         .toArray()
         .map((item) => {
-            item = html(item);
+            item = html(item)
             return {
                 title: item.find('a').text(),
                 link: baseUrl + item.find('a').attr('href'),
                 pubDate: parseDate(item.find('.c-meta time').attr('datetime'), 'YYYY-MM-DD'),
-            };
-        });
+            }
+        })
 
 const getArticle = (item) =>
     cache.tryGet(item.link, async () => {
-        const response = await ofetch(item.link);
+        const response = await ofetch(item.link)
 
-        const $ = load(response);
+        const $ = load(response)
 
         if (new URL(item.link).pathname.startsWith('/immersive/')) {
-            const meta = getDataLayer($);
-            item.doi = meta.content.article?.doi;
-            item.author = meta.content.contentInfo.authors.join(', ');
-            item.pubDate = parseDate(meta.content.contentInfo.publishedAt, 'X') || item.pubDate;
+            const meta = getDataLayer($)
+            item.doi = meta.content.article?.doi
+            item.author = meta.content.contentInfo.authors.join(', ')
+            item.pubDate = parseDate(meta.content.contentInfo.publishedAt, 'X') || item.pubDate
         } else {
-            const meta = JSON.parse($('script[type="application/ld+json"]').html());
-            const freeAccess = meta.mainEntity.isAccessibleForFree;
-            let description;
+            const meta = JSON.parse($('script[type="application/ld+json"]').html())
+            const freeAccess = meta.mainEntity.isAccessibleForFree
+            let description
 
             if (meta.mainEntity.sameAs.startsWith('https://doi.org/')) {
-                item.doi = meta.mainEntity.sameAs.replace('https://doi.org/', '');
+                item.doi = meta.mainEntity.sameAs.replace('https://doi.org/', '')
             }
-            item.author = meta.mainEntity.author.map((author) => author.name.replace(', ', ' ')).join(', ');
-            item.category = meta.mainEntity.keywords;
-            item.pubDate = parseDate(meta.mainEntity.datePublished) || item.pubDate;
+            item.author = meta.mainEntity.author.map((author) => author.name.replace(', ', ' ')).join(', ')
+            item.category = meta.mainEntity.keywords
+            item.pubDate = parseDate(meta.mainEntity.datePublished) || item.pubDate
 
-            fixFigure($);
+            fixFigure($)
 
-            $('section[data-recommended=jobs], span[data-recommended=jobs]').remove();
-            $('#further-reading-section').remove();
-            $('figure div.u-text-right.u-hide-print').remove();
+            $('section[data-recommended=jobs], span[data-recommended=jobs]').remove()
+            $('#further-reading-section').remove()
+            $('figure div.u-text-right.u-hide-print').remove()
 
             if (freeAccess) {
-                description = $('.c-article-body').html();
+                description = $('.c-article-body').html()
             } else {
-                $('div.c-article-access-provider, h2#access-options, div[data-component=entitlement-box],div[class^=LiveAreaSection-], nav.c-access-options').remove();
+                $('div.c-article-access-provider, h2#access-options, div[data-component=entitlement-box],div[class^=LiveAreaSection-], nav.c-access-options').remove()
                 description =
                     $('.c-article-body').html() ||
-                    ($('.c-article-teaser-text').html() ?? '') + ($('div.u-clear-both.c-article-wide-figure').html() ?? '') + $('.article__teaser').html() + ($('.c-article-references__container').html() ?? '');
+                    ($('.c-article-teaser-text').html() ?? '') + ($('div.u-clear-both.c-article-wide-figure').html() ?? '') + $('.article__teaser').html() + ($('.c-article-references__container').html() ?? '')
             }
 
             if ($('div.c-pdf-download').length) {
                 // Please don't use meta[name=citation_pdf_url] because some of them point to an URL that needs to be logged in.
                 // e.g., https://www.nature.com/articles/s41593-022-01079-5
-                description += `<a href="${$('div.c-pdf-download a').attr('href')}">Download PDF</a>`;
+                description += `<a href="${$('div.c-pdf-download a').attr('href')}">Download PDF</a>`
             }
 
-            item.description = description;
+            item.description = description
         }
-        return item;
-    });
+        return item
+    })
 
 const getDataLayer = (html) =>
     JSON.parse(
         html('script[data-test=dataLayer]')
             .text()
-            .match(/window\.dataLayer = \[(.*)];/s)[1]
-    );
+            .match(/window\.dataLayer = \[(.*)];/s)[1],
+    )
 
-const cookieJar = new CookieJar();
+const cookieJar = new CookieJar()
 
 /**
  * This is generated by /nature/siteindex.debug.json
@@ -1088,6 +1088,6 @@ const journalMap = {
             name: 'Translational Psychiatry',
         },
     ],
-};
+}
 
-export { baseUrl, cookieJar, getArticle, getArticleList, getDataLayer, journalMap };
+export { baseUrl, cookieJar, getArticle, getArticleList, getDataLayer, journalMap }

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/',
@@ -21,11 +21,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'gameapps.hk/',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.gameapps.hk';
-    const feed = await parser.parseURL(`${baseUrl}/rss`);
+    const baseUrl = 'https://www.gameapps.hk'
+    const feed = await parser.parseURL(`${baseUrl}/rss`)
 
     const items = await Promise.all(
         feed.items.map((item) =>
@@ -34,38 +34,38 @@ async function handler() {
                     headers: {
                         Referer: baseUrl,
                     },
-                });
-                const $ = load(response);
+                })
+                const $ = load(response)
 
-                item.title = ($('meta[property="og:title"]').attr('content') ?? $('.news-title h1').text()).replace(' - 香港手機遊戲網 GameApps.hk', '');
+                item.title = ($('meta[property="og:title"]').attr('content') ?? $('.news-title h1').text()).replace(' - 香港手機遊戲網 GameApps.hk', '')
                 item.category = $('.tags-wrap .tag-item')
                     .toArray()
-                    .map((el) => $(el).text().trim().replace(/^#/, ''));
+                    .map((el) => $(el).text().trim().replace(/^#/, ''))
 
-                $('.pages, .article-ad, .social-actions, .news-footer').remove();
+                $('.pages, .article-ad, .social-actions, .news-footer').remove()
 
                 // remove unwanted key value
-                delete item.content;
-                delete item.contentSnippet;
-                delete item.isoDate;
+                delete item.content
+                delete item.contentSnippet
+                delete item.isoDate
 
-                const intro = $('div.introduction.media.news-intro div.media-body').html()?.trim();
-                const desc = $('.article-content, .news-content').html()?.trim();
+                const intro = $('div.introduction.media.news-intro div.media-body').html()?.trim()
+                const desc = $('.article-content, .news-content').html()?.trim()
                 item.description = renderToString(
                     <>
                         {intro ? raw(intro) : null}
                         {desc ? raw(desc) : null}
-                    </>
-                );
-                item.guid = item.guid.slice(0, item.link.lastIndexOf('/'));
-                item.pubDate = parseDate(item.pubDate);
-                item.enclosure_url = $('div.introduction.media.news-intro div.media-left').find('img').attr('src');
-                item.enclosure_type = 'image/jpeg';
+                    </>,
+                )
+                item.guid = item.guid.slice(0, item.link.lastIndexOf('/'))
+                item.pubDate = parseDate(item.pubDate)
+                item.enclosure_url = $('div.introduction.media.news-intro div.media-left').find('img').attr('src')
+                item.enclosure_type = 'image/jpeg'
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -74,5 +74,5 @@ async function handler() {
         image: `${baseUrl}/static/favicon/apple-touch-icon.png`,
         item: items,
         language: feed.language,
-    };
+    }
 }

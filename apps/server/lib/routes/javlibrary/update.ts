@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { defaultLanguage, ProcessItems, rootUrl } from './utils';
+import { defaultLanguage, ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: ['/videos/update/:language?', '/update/:language?'],
@@ -11,11 +11,11 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? defaultLanguage;
-    const currentUrl = `${rootUrl}/${language}/vl_update.php?list`;
+    const language = ctx.req.param('language') ?? defaultLanguage
+    const currentUrl = `${rootUrl}/${language}/vl_update.php?list`
 
-    return await ProcessItems(language, currentUrl, cache.tryGet);
+    return await ProcessItems(language, currentUrl, cache.tryGet)
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio'; // An HTML parser with an API similar to jQuery
+import { load } from 'cheerio' // An HTML parser with an API similar to jQuery
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 // import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch'; // Unified request library used
+import ofetch from '@/utils/ofetch' // Unified request library used
 // import puppeteer from '@/utils/puppeteer';
 // import { parseDate } from '@/utils/parse-date';
 
@@ -20,25 +20,25 @@ export const route: Route = {
     maintainers: ['jack2game'],
     handler,
     url: 'dealstreetasia.com/',
-};
+}
 
 async function handler() {
     // const section = ctx.req.param('section');
-    const items = await fetchPage();
+    const items = await fetchPage()
 
-    return items;
+    return items
 }
 
 async function fetchPage() {
-    const baseUrl = 'https://dealstreetasia.com'; // Define base URL
+    const baseUrl = 'https://dealstreetasia.com' // Define base URL
 
-    const response = await ofetch(`${baseUrl}/`);
-    const $ = load(response);
+    const response = await ofetch(`${baseUrl}/`)
+    const $ = load(response)
 
-    const jsonData = JSON.parse($('#__NEXT_DATA__').text());
+    const jsonData = JSON.parse($('#__NEXT_DATA__').text())
     // const headingText = jsonData.props.pageProps.sectionData.name;
 
-    const pageProps = jsonData.props.pageProps;
+    const pageProps = jsonData.props.pageProps
     const list = [
         ...pageProps.topStories,
         ...pageProps.privateEquity,
@@ -62,12 +62,12 @@ async function fetchPage() {
         pubDate: item.post_date ? new Date(item.post_date).toUTCString() : item.date ? new Date(item.date).toUTCString() : '',
         category: item.category_link ? item.category_link.replaceAll(/(<([^>]+)>)/gi, '') : '', // Clean HTML if category_link exists
         image: item.image_url ? item.image_url.replace(/\?.*$/, '') : '', // Remove query parameters if image_url exists
-    }));
+    }))
 
     return {
         title: 'Deal Street Asia',
         language: 'en',
         item: list,
         link: 'https://dealstreetasia.com/',
-    };
+    }
 }

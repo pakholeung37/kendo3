@@ -1,34 +1,34 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filter } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { filter } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://kpopping.com';
-    const targetUrl: string = new URL(`kpics${filter ? `/${filter}` : ''}`, baseUrl).href;
+    const baseUrl = 'https://kpopping.com'
+    const targetUrl: string = new URL(`kpics${filter ? `/${filter}` : ''}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('div.pics div.matrix div.cell')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('figcaption section').text();
+            const title: string = $el.find('figcaption section').text()
             const description: string = renderDescription({
                 images: $el.find('a.picture img').attr('src')
                     ? [
@@ -38,10 +38,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           },
                       ]
                     : undefined,
-            });
-            const linkUrl: string | undefined = $el.find('a').first().attr('href');
-            const authors: DataItem['author'] = $el.find('figcaption section a').contents().last().text();
-            const image: string | undefined = $el.find('a.picture img').attr('src');
+            })
+            const linkUrl: string | undefined = $el.find('a').first().attr('href')
+            const authors: DataItem['author'] = $el.find('figcaption section a').contents().last().text()
+            const image: string | undefined = $el.find('a.picture img').attr('src')
 
             const processedItem: DataItem = {
                 title,
@@ -55,42 +55,42 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('h1').contents().first().text();
+                    const title: string = $$('h1').contents().first().text()
                     const description: string = renderDescription({
                         description: $$('div.pics').first().html(),
-                    });
-                    const pubDateStr: string | undefined = $$('meta[property="article:published_time"]').attr('content');
-                    const categoryEls: Element[] = $$('div.buttons a').toArray();
-                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))];
-                    const authorEls: Element[] = $$('div.content-snippet aside:not(.like)').toArray();
+                    })
+                    const pubDateStr: string | undefined = $$('meta[property="article:published_time"]').attr('content')
+                    const categoryEls: Element[] = $$('div.buttons a').toArray()
+                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))]
+                    const authorEls: Element[] = $$('div.content-snippet aside:not(.like)').toArray()
                     const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                        const $$authorEl: Cheerio<Element> = $$(authorEl);
-                        const $$authorAEl: Cheerio<Element> = $$authorEl.find('a').last();
+                        const $$authorEl: Cheerio<Element> = $$(authorEl)
+                        const $$authorAEl: Cheerio<Element> = $$authorEl.find('a').last()
 
                         return {
                             name: $$authorAEl.text(),
                             url: new URL($$authorAEl.attr('href') as string, baseUrl).href,
                             avatar: $$authorEl.find('img').attr('src'),
-                        };
-                    });
-                    const image: string | undefined = $$('meta[name="twitter:image"]').attr('content');
-                    const upDatedStr: string | undefined = $$('meta[property="article:modified_time"]').attr('content');
+                        }
+                    })
+                    const image: string | undefined = $$('meta[name="twitter:image"]').attr('content')
+                    const upDatedStr: string | undefined = $$('meta[property="article:modified_time"]').attr('content')
 
                     let processedItem: DataItem = {
                         title,
@@ -106,21 +106,21 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
-                    const mediaEls: Element[] = $$('div.pics').first().find('img').toArray();
-                    const medias: Record<string, Record<string, string>> = {};
-                    let imageCount = 1;
+                    const mediaEls: Element[] = $$('div.pics').first().find('img').toArray()
+                    const medias: Record<string, Record<string, string>> = {}
+                    let imageCount = 1
                     for (const mediaEl of mediaEls) {
-                        const $$mediaEl: Cheerio<Element> = $$(mediaEl);
-                        const url: string | undefined = $$mediaEl.attr('src') ? new URL($$mediaEl.attr('src') as string, baseUrl).href : undefined;
+                        const $$mediaEl: Cheerio<Element> = $$(mediaEl)
+                        const url: string | undefined = $$mediaEl.attr('src') ? new URL($$mediaEl.attr('src') as string, baseUrl).href : undefined
 
                         if (!url) {
-                            continue;
+                            continue
                         }
 
-                        const medium = 'image';
-                        const key = `${medium}${imageCount++}`;
+                        const medium = 'image'
+                        const key = `${medium}${imageCount++}`
 
                         medias[key] = {
                             url,
@@ -128,24 +128,24 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             title: $$mediaEl.attr('alt') || title,
                             description: $$mediaEl.attr('alt') || title,
                             thumbnail: url,
-                        };
+                        }
                     }
 
                     if (Object.keys(medias).length > 0) {
                         processedItem = {
                             ...processedItem,
                             media: medias,
-                        };
+                        }
                     }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -157,8 +157,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/kpics/:filter{.+}?',
@@ -187,9 +187,9 @@ If you subscribe to [All male photo albums](https://kpopping.com/kpics/gender-ma
         {
             source: ['kpopping.com/kpics/:filter'],
             target: (params) => {
-                const filter: string = params.filter;
+                const filter: string = params.filter
 
-                return `/kpopping/kpics${filter ? `/${filter}` : ''}`;
+                return `/kpopping/kpics${filter ? `/${filter}` : ''}`
             },
         },
     ],
@@ -210,4 +210,4 @@ If you subscribe to [All male photo albums](https://kpopping.com/kpics/gender-ma
 :::
 `,
     },
-};
+}

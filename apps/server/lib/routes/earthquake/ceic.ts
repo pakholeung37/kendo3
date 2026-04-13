@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/ceic/:type?',
@@ -37,13 +37,13 @@ export const route: Route = {
 | 0    | 最近一年 6.0 级以上地震信息 |
 
   可通过全局过滤参数订阅您感兴趣的地区.`,
-};
+}
 
 async function handler(ctx) {
-    let type = Number(ctx.req.param('type'));
-    type = type ?? 1;
-    const baseUrl = 'http://www.ceic.ac.cn';
-    const api = `${baseUrl}/ajax/speedsearch?num=${type}`;
+    let type = Number(ctx.req.param('type'))
+    type = type ?? 1
+    const baseUrl = 'http://www.ceic.ac.cn'
+    const api = `${baseUrl}/ajax/speedsearch?num=${type}`
     const mappings = {
         O_TIME: '发震时刻(UTC+8)',
         LOCATION_C: '参考位置',
@@ -52,7 +52,7 @@ async function handler(ctx) {
         EPI_LON: '经度(°)',
         EPI_DEPTH: '深度(千米)',
         SAVE_TIME: '录入时间',
-    };
+    }
 
     const typeMappings = {
         1: '最近24小时地震信息',
@@ -65,21 +65,21 @@ async function handler(ctx) {
         8: '最近一年4.0级以上地震信息',
         9: '最近一年5.0级以上地震信息',
         0: '最近一年6.0级以上地震信息',
-    };
+    }
 
     // 因为item数量限制20，所以对于RSS来说为无用类型，防止浪费资源
-    const disabledType = [3, 4, 6];
+    const disabledType = [3, 4, 6]
 
     if (disabledType.includes(type)) {
-        type = 1;
+        type = 1
     }
-    const typeName = typeMappings[type];
+    const typeName = typeMappings[type]
 
-    const response = await got(api);
-    const data = response.data.replace(/,"page":"(.*?)","num":/, ',"num":');
-    let json = JSON.parse(data.slice(1, -1)).shuju;
+    const response = await got(api)
+    const data = response.data.replace(/,"page":"(.*?)","num":/, ',"num":')
+    let json = JSON.parse(data.slice(1, -1)).shuju
     if (json.length > 20) {
-        json = json.slice(0, 20);
+        json = json.slice(0, 20)
     }
 
     return {
@@ -87,10 +87,10 @@ async function handler(ctx) {
         link: `${baseUrl}/speedsearch`,
         allowEmpty: true,
         item: json.map((entity) => {
-            const contentBuilder = [];
-            const { NEW_DID, LOCATION_C, M, O_TIME } = entity;
+            const contentBuilder = []
+            const { NEW_DID, LOCATION_C, M, O_TIME } = entity
             for (const mappingsKey in mappings) {
-                contentBuilder.push(`${mappings[mappingsKey]} ${entity[mappingsKey]}`);
+                contentBuilder.push(`${mappings[mappingsKey]} ${entity[mappingsKey]}`)
             }
 
             return {
@@ -99,7 +99,7 @@ async function handler(ctx) {
                 pubDate: timezone(parseDate(O_TIME, 'YYYY-MM-DD HH:mm:ss'), +8),
                 description: contentBuilder.join('<br>'),
                 guid: NEW_DID,
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const appKey = '61a2f329348b3bf77';
+const appKey = '61a2f329348b3bf77'
 
-const domain = 'xinpianchang.com';
-const rootUrl = `https://www.${domain}`;
-const rootApiUrl = `https://mod-api.${domain}`;
+const domain = 'xinpianchang.com'
+const rootUrl = `https://www.${domain}`
+const rootApiUrl = `https://mod-api.${domain}`
 
 const renderDescription = (content, cover, enclousure) =>
     renderToString(
@@ -19,8 +19,8 @@ const renderDescription = (content, cover, enclousure) =>
                     <source src={enclousure.url ?? enclousure.backupUrl} type={enclousure.mime} />
                 </video>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 /**
  * Retrieves information from a given URL using a provided tryGet function.
@@ -31,12 +31,12 @@ const renderDescription = (content, cover, enclousure) =>
  */
 const getData = (url, tryGet) =>
     tryGet(url, async () => {
-        const { data: response } = await got(url);
+        const { data: response } = await got(url)
 
-        const $ = load(response);
+        const $ = load(response)
 
-        const icon = new URL('favicon.ico', rootUrl).href;
-        const author = $('meta[property="og:site_name"]').prop('content');
+        const icon = new URL('favicon.ico', rootUrl).href
+        const author = $('meta[property="og:site_name"]').prop('content')
 
         return {
             data: {
@@ -54,8 +54,8 @@ const getData = (url, tryGet) =>
                 allowEmpty: true,
             },
             response,
-        };
-    });
+        }
+    })
 
 /**
  * Process items asynchronously.
@@ -78,36 +78,36 @@ const processItems = async (items, tryGet) => {
         enclosure_url: item.video_library_id,
         upvotes: item.count.count_liked ?? item.count.count_like,
         comments: item.count.count_comment ?? 0,
-    }));
+    }))
 
     return await Promise.all(
         items.map((item) =>
             tryGet(item.guid, async () => {
-                const apiUrl = new URL(`mod/api/v2/media/${item.enclosure_url}?appKey=${appKey}`, rootApiUrl).href;
+                const apiUrl = new URL(`mod/api/v2/media/${item.enclosure_url}?appKey=${appKey}`, rootApiUrl).href
 
-                const { data: detailResponse } = await got(apiUrl);
-                const data = detailResponse.data;
+                const { data: detailResponse } = await got(apiUrl)
+                const data = detailResponse.data
 
-                const enclousure = data.resource?.progressive ? data.resource.progressive[0] : undefined;
+                const enclousure = data.resource?.progressive ? data.resource.progressive[0] : undefined
 
-                item.title = data.title ?? item.title;
-                item.description = renderDescription(item.description, data.cover ?? item.itunes_item_image, enclousure);
-                item.author = data.owner.username ?? item.author;
+                item.title = data.title ?? item.title
+                item.description = renderDescription(item.description, data.cover ?? item.itunes_item_image, enclousure)
+                item.author = data.owner.username ?? item.author
 
-                item.category = [...new Set([...item.category, ...(data.categories ?? []), ...(data.keywords ?? [])])];
-                item.itunes_item_image = data.cover ?? item.itunes_item_image;
-                item.itunes_duration = data.duration ?? item.itunes_duration;
+                item.category = [...new Set([...item.category, ...(data.categories ?? []), ...(data.keywords ?? [])])]
+                item.itunes_item_image = data.cover ?? item.itunes_item_image
+                item.itunes_duration = data.duration ?? item.itunes_duration
 
                 if (enclousure) {
-                    item.enclosure_url = enclousure.url ?? enclousure.backupUrl;
-                    item.enclosure_length = enclousure.filesize;
-                    item.enclosure_type = enclousure.mime;
+                    item.enclosure_url = enclousure.url ?? enclousure.backupUrl
+                    item.enclosure_length = enclousure.filesize
+                    item.enclosure_type = enclousure.mime
                 }
 
-                return item;
-            })
-        )
-    );
-};
+                return item
+            }),
+        ),
+    )
+}
 
-export { getData, processItems, rootUrl };
+export { getData, processItems, rootUrl }

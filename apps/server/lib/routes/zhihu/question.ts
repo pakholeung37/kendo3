@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getSignedHeader, header, processImage } from './utils';
+import { getSignedHeader, header, processImage } from './utils'
 
 export const route: Route = {
     path: '/question/:questionId/:sortBy?',
@@ -32,25 +32,25 @@ export const route: Route = {
     name: '问题',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
     const {
         questionId,
         sortBy = 'default', // default,created,updated
-    } = ctx.req.param();
+    } = ctx.req.param()
 
     // second: get real data from zhihu
-    const rootUrl = 'https://www.zhihu.com';
+    const rootUrl = 'https://www.zhihu.com'
     const apiPath = `/api/v4/questions/${questionId}/answers?${new URLSearchParams({
         include:
             'data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,attachment,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,is_labeled,paid_info,paid_info_content,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_recognized;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics;data[*].settings.table_of_content.enabled&offset=0',
         limit: '20',
         sort_by: sortBy,
         platform: 'desktop',
-    })}`;
+    })}`
 
-    const signedHeader = await getSignedHeader(`https://www.zhihu.com/question/${questionId}`, apiPath);
+    const signedHeader = await getSignedHeader(`https://www.zhihu.com/question/${questionId}`, apiPath)
 
     const response = await got({
         method: 'get',
@@ -61,16 +61,16 @@ async function handler(ctx) {
             Referer: `https://www.zhihu.com/question/${questionId}`,
             // Authorization: 'oauth c3cef7c66a1843f8b3a9e6a1e3160e20', // previously hard-coded in js, outdated
         },
-    });
+    })
 
-    const listRes = response.data.data;
+    const listRes = response.data.data
 
     return {
         title: `知乎-${listRes[0].question.title}`,
         link: `https://www.zhihu.com/question/${questionId}`,
         item: listRes.map((item) => {
-            const title = `${item.author.name}的回答：${item.excerpt}`;
-            const description = `${item.author.name}的回答<br/><br/>${processImage(item.content)}`;
+            const title = `${item.author.name}的回答：${item.excerpt}`
+            const description = `${item.author.name}的回答<br/><br/>${processImage(item.content)}`
 
             return {
                 title,
@@ -79,7 +79,7 @@ async function handler(ctx) {
                 pubDate: parseDate(item.updated_time * 1000),
                 guid: item.id.toString(),
                 link: `https://www.zhihu.com/question/${questionId}/answer/${item.id}`,
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yzb',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'yzb.scau.edu.cn/2136/list1.htm',
-};
+}
 
 async function handler() {
-    const link = 'https://yzb.scau.edu.cn/2136/list1.htm';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('#wp_news_w25 tr');
+    const link = 'https://yzb.scau.edu.cn/2136/list1.htm'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('#wp_news_w25 tr')
 
     return {
         title: '华南农业大学研招办',
@@ -41,13 +41,13 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a.text(),
                     link: a.attr('href'),
                     pubDate: parseDate(item.find('td').eq(3).text(), 'YYYY/MM/DD'),
-                };
+                }
             }),
-    };
+    }
 }

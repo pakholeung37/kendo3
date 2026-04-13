@@ -1,12 +1,12 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const typeMap = ['hakka', 'political', 'medical', 'local', 'international'];
-const baseUrl = 'https://www.hakkatv.org.tw';
-const apiUrl = 'https://api.hakkatv.org.tw';
+const typeMap = ['hakka', 'political', 'medical', 'local', 'international']
+const baseUrl = 'https://www.hakkatv.org.tw'
+const apiUrl = 'https://api.hakkatv.org.tw'
 
 export const route: Route = {
     path: '/news/:type?',
@@ -34,10 +34,10 @@ export const route: Route = {
     description: `| 客家焦點 | 政經要聞  | 民生醫療 | 地方風采 | 國際萬象      |
 | -------- | --------- | -------- | -------- | ------------- |
 | hakka    | political | medical  | local    | international |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
 
     const allData = type
         ? (
@@ -59,10 +59,10 @@ async function handler(ctx) {
                           type: t,
                           keywords: '',
                       },
-                  });
-                  return data.data;
-              })
-          );
+                  })
+                  return data.data
+              }),
+          )
 
     const list = allData.flat().map((item) => ({
         title: item.title,
@@ -70,19 +70,19 @@ async function handler(ctx) {
         author: item.author,
         link: `${baseUrl}/news-detail/${item.id}`,
         id: item.id,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${apiUrl}/api/news/read/${item.id}`);
-                item.category = data.tag.map((t) => t.tag);
-                item.description = data.content.replaceAll('\n', '<br>');
-                delete item.id;
-                return item;
-            })
-        )
-    );
+                const { data } = await got(`${apiUrl}/api/news/read/${item.id}`)
+                item.category = data.tag.map((t) => t.tag)
+                item.description = data.content.replaceAll('\n', '<br>')
+                delete item.id
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '新聞首頁 - 客家電視台',
@@ -90,5 +90,5 @@ async function handler(ctx) {
         link: `${baseUrl}/news`,
         language: 'zh-TW',
         item: items,
-    };
+    }
 }

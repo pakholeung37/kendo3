@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/user/:username',
@@ -23,14 +23,14 @@ export const route: Route = {
     name: 'Farcaster User',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('username');
+    const username = ctx.req.param('username')
 
-    const user = (await got(`https://client.warpcast.com/v2/user-by-username?username=${username}`)).data.result.user;
+    const user = (await got(`https://client.warpcast.com/v2/user-by-username?username=${username}`)).data.result.user
 
-    const casts = (await got(`https://client.warpcast.com/v2/casts?fid=${user.fid}&limit=100`)).data.result.casts;
+    const casts = (await got(`https://client.warpcast.com/v2/casts?fid=${user.fid}&limit=100`)).data.result.casts
 
     return {
         title: `${user.displayName} on Farcaster`,
@@ -42,5 +42,5 @@ async function handler(ctx) {
             pubDate: new Date(item.timestamp).toUTCString(),
             guid: item.hash,
         })),
-    };
+    }
 }

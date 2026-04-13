@@ -1,4 +1,4 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 export const renderComic = (contents: string[]) =>
     renderToString(
@@ -6,5 +6,5 @@ export const renderComic = (contents: string[]) =>
             {contents.map((img) => (
                 <img src={img} />
             ))}
-        </>
-    );
+        </>,
+    )

@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:column',
@@ -36,18 +36,18 @@ export const route: Route = {
 | 新闻联播             | 新闻周刊             | 天下足球             |
 | -------------------- | -------------------- | -------------------- |
 | TOPC1451528971114112 | TOPC1451559180488841 | TOPC1451551777876756 |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('column');
-    const limit = Number.isNaN(Number.parseInt(ctx.req.query('limit'))) ? 25 : Number.parseInt(ctx.req.query('limit'));
+    const id = ctx.req.param('column')
+    const limit = Number.isNaN(Number.parseInt(ctx.req.query('limit'))) ? 25 : Number.parseInt(ctx.req.query('limit'))
 
     const response = await got({
         method: 'get',
         url: `https://api.cntv.cn/NewVideo/getVideoListByColumn?id=${id}&n=${limit}&sort=desc&p=1&mode=0&serviceId=tvcctv`,
-    });
-    const data = response.data.data.list;
-    const name = data[0].title.match(/《(.*?)》/)[1];
+    })
+    const data = response.data.data.list
+    const name = data[0].title.match(/《(.*?)》/)[1]
 
     return {
         title: `CNTV 栏目 - ${name}`,
@@ -64,10 +64,10 @@ async function handler(ctx) {
                     <p>
                         <a href={item.url}>在线观看</a>
                     </p>
-                </>
+                </>,
             ),
             pubDate: parseDate(item.time),
             link: item.url,
         })),
-    };
+    }
 }

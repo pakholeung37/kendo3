@@ -1,1 +1,1 @@
-export { namespace } from '@/routes/tiktok/namespace';
+export { namespace } from '@/routes/tiktok/namespace'

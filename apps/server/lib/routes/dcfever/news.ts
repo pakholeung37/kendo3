@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, parseItem } from './utils';
+import { baseUrl, parseItem } from './utils'
 
 export const route: Route = {
     path: '/news/:type?',
@@ -22,27 +22,27 @@ export const route: Route = {
     description: `| 所有新聞 | 攝影器材 | 手機通訊 | 汽車熱話 | 攝影文化    | 影片攝錄    | 測試報告 | 生活科技 | 攝影技巧  |
 | -------- | -------- | -------- | -------- | ----------- | ----------- | -------- | -------- | --------- |
 |          | camera   | mobile   | auto     | photography | videography | reviews  | gadget   | technique |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
 
-    const link = new URL(`${baseUrl}/news/index.php`, baseUrl);
-    link.searchParams.append('type', type);
-    const response = await ofetch(link.href);
-    const $ = load(response);
+    const link = new URL(`${baseUrl}/news/index.php`, baseUrl)
+    link.searchParams.append('type', type)
+    const response = await ofetch(link.href)
+    const $ = load(response)
 
     const list = $('.col-md-left .title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text(),
                 link: new URL(item.attr('href'), link.href).href,
-            };
-        });
+            }
+        })
 
-    const items = await Promise.all(list.map((item) => parseItem(item)));
+    const items = await Promise.all(list.map((item) => parseItem(item)))
 
     return {
         title: `${$('.channel_nav')
@@ -52,5 +52,5 @@ async function handler(ctx) {
         link: link.href,
         image: 'https://cdn10.dcfever.com/images/android_192.png',
         item: items,
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/live',
@@ -28,23 +28,23 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'live.kepu.net.cn/replay/index',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://live.kepu.net.cn';
-    const apiRootUrl = 'https://live.kepu.net.cn:8089';
+    const rootUrl = 'https://live.kepu.net.cn'
+    const apiRootUrl = 'https://live.kepu.net.cn:8089'
 
-    const currentUrl = new URL('replay/index', rootUrl).href;
-    const apiUrl = new URL('index.php/front/index/replay_list', apiRootUrl).href;
+    const currentUrl = new URL('replay/index', rootUrl).href
+    const apiUrl = new URL('index.php/front/index/replay_list', apiRootUrl).href
 
     const { data: response } = await got.post(apiUrl, {
         form: {
             page: 1,
             size: limit,
         },
-    });
+    })
 
     let items = response.data.data.slice(0, limit).map((item) => ({
         title: item.title,
@@ -56,27 +56,27 @@ async function handler(ctx) {
         updated: timezone(parseDate(item.live_end_time ?? item.end_time), +8),
         itunes_item_image: new URL(item.cover, apiRootUrl).href,
         comments: item.display_comment ?? 0,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const apiReplayUrl = new URL('index.php/front/live/replay_url', apiRootUrl).href;
+                const apiReplayUrl = new URL('index.php/front/live/replay_url', apiRootUrl).href
 
                 const { data: detailResponse } = await got.post(apiReplayUrl, {
                     form: {
                         id: item.guid,
                     },
-                });
+                })
 
-                item.guid = `kepu-live#${item.guid}`;
-                item.enclosure_url = detailResponse.data.RecordIndexInfoList.RecordIndexInfo.pop()?.RecordUrl;
+                item.guid = `kepu-live#${item.guid}`
+                item.enclosure_url = detailResponse.data.RecordIndexInfoList.RecordIndexInfo.pop()?.RecordUrl
 
                 if (item.enclosure_url) {
-                    item.enclosure_type = `video/${item.enclosure_url.split(/\./).pop()}`;
+                    item.enclosure_type = `video/${item.enclosure_url.split(/\./).pop()}`
                 }
 
-                const poster = item.itunes_item_image;
+                const poster = item.itunes_item_image
                 item.description = renderToString(
                     <>
                         {item.itunes_item_image ? (
@@ -93,17 +93,17 @@ async function handler(ctx) {
                             </video>
                         ) : null}
                         {item.description ? <p>{item.description}</p> : null}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL('favicon.ico', rootUrl).href;
-    const author = '中国科普博览';
-    const subtitle = '直播回看';
+    const icon = new URL('favicon.ico', rootUrl).href
+    const author = '中国科普博览'
+    const subtitle = '直播回看'
 
     return {
         item: items,
@@ -118,5 +118,5 @@ async function handler(ctx) {
         itunes_author: author,
         itunes_category: 'Science',
         allowEmpty: true,
-    };
+    }
 }

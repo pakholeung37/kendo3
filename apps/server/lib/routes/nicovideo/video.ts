@@ -1,17 +1,17 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { DataItem, Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import type { UserInfo, VideoItem } from './types';
-import { getUserInfoById, getUserVideosById, renderVideo } from './utils';
+import type { UserInfo, VideoItem } from './types'
+import { getUserInfoById, getUserVideosById, renderVideo } from './utils'
 
 const handler = async (ctx: Context) => {
-    const { id } = ctx.req.param();
-    const embed = !ctx.req.param('embed');
+    const { id } = ctx.req.param()
+    const embed = !ctx.req.param('embed')
 
-    const userInfo: UserInfo = await getUserInfoById(id);
-    const videos: VideoItem[] = await getUserVideosById(id);
+    const userInfo: UserInfo = await getUserInfoById(id)
+    const videos: VideoItem[] = await getUserVideosById(id)
 
     const items = videos.map(({ essential: video }) => ({
         title: video.title,
@@ -22,15 +22,15 @@ const handler = async (ctx: Context) => {
         image: video.thumbnail.nHdUrl || video.thumbnail.largeUrl || video.thumbnail.middleUrl,
         upvotes: video.count.like,
         comments: video.count.comment,
-    })) as DataItem[];
+    })) as DataItem[]
 
     return {
         title: `${userInfo.nickname} - ニコニコ`,
         link: `https://www.nicovideo.jp/user/${id}/video`,
         image: userInfo.icon,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     name: 'User Videos',
@@ -45,4 +45,4 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}

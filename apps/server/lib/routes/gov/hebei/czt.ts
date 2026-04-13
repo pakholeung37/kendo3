@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/hebei/czt/xwdt/:category?',
@@ -24,31 +24,31 @@ export const route: Route = {
     description: `| 财政动态 | 综合新闻 | 通知公告 |
 | -------- | -------- | -------- |
 | gzdt     | zhxw     | tzgg     |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'gzdt';
+    const category = ctx.req.param('category') ?? 'gzdt'
 
-    const rootUrl = 'http://czt.hebei.gov.cn';
-    const currentUrl = `${rootUrl}/xwdt/${category}`;
+    const rootUrl = 'http://czt.hebei.gov.cn'
+    const currentUrl = `${rootUrl}/xwdt/${category}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('td li a[title]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${item.attr('href').startsWith('../..') ? item.attr('href').replace(/^\.\.\/\.\./, '') : `/xwdt/${category}${item.attr('href').replace(/^\./, '')}`}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -56,22 +56,22 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.author = content('meta[name="ContentSource"]').attr('content');
-                item.pubDate = parseDate(content('meta[name="PubDate"]').attr('content'));
-                item.description = content('.TRS_Editor, .content').html();
+                item.author = content('meta[name="ContentSource"]').attr('content')
+                item.pubDate = parseDate(content('meta[name="PubDate"]').attr('content'))
+                item.description = content('.TRS_Editor, .content').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

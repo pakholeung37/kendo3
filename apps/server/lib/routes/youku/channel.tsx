@@ -1,11 +1,11 @@
-import path from 'node:path';
+import path from 'node:path'
 
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/channel/:channelId/:embed?',
@@ -29,11 +29,11 @@ export const route: Route = {
     name: '频道',
     maintainers: ['xyqfer', 'Fatpandac'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const channelId = ctx.req.param('channelId');
-    const embed = !ctx.req.param('embed');
+    const channelId = ctx.req.param('channelId')
+    const embed = !ctx.req.param('embed')
 
     const response = await got({
         method: 'get',
@@ -42,11 +42,11 @@ async function handler(ctx) {
             Host: 'i.youku.com',
             Referer: `https://i.youku.com/i/${channelId}`,
         },
-    });
+    })
 
-    const data = response.data;
-    const $ = load(data);
-    const list = $('div.videoitem_pack');
+    const data = response.data
+    const $ = load(data)
+    const list = $('div.videoitem_pack')
 
     return {
         title: $('.username').text(),
@@ -55,31 +55,31 @@ async function handler(ctx) {
         item: list
             .toArray()
             .map((item) => {
-                item = $(item);
-                const title = item.find('a.videoitem_videolink').attr('title');
-                const cover = item.find('a.videoitem_videolink > img').attr('src');
-                const $link = item.find('a.videoitem_videolink');
-                const link = $link.length > 0 ? `https:${$link.attr('href')}` : null;
-                const dateText = item.find('p.videoitem_subtitle').text().split('-').length === 2 ? `${new Date().getFullYear()}-${item.find('p.videoitem_subtitle').text()}` : item.find('p.videoitem_subtitle').text();
-                const pubDate = parseDate(dateText);
+                item = $(item)
+                const title = item.find('a.videoitem_videolink').attr('title')
+                const cover = item.find('a.videoitem_videolink > img').attr('src')
+                const $link = item.find('a.videoitem_videolink')
+                const link = $link.length > 0 ? `https:${$link.attr('href')}` : null
+                const dateText = item.find('p.videoitem_subtitle').text().split('-').length === 2 ? `${new Date().getFullYear()}-${item.find('p.videoitem_subtitle').text()}` : item.find('p.videoitem_subtitle').text()
+                const pubDate = parseDate(dateText)
 
                 if (!link) {
-                    return null;
+                    return null
                 }
 
                 const description = embed
                     ? renderToString(<iframe height={498} width={510} src={`https://player.youku.com/embed/${path.parse(link).name.replaceAll(/^id_/g, '')}`} frameBorder="0" allowFullScreen />)
                     : cover
                       ? renderToString(<img src={cover} />)
-                      : undefined;
+                      : undefined
 
                 return {
                     title,
                     description,
                     link,
                     pubDate,
-                };
+                }
             })
             .filter(Boolean),
-    };
+    }
 }

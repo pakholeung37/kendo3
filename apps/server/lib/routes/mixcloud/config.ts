@@ -8,7 +8,7 @@ export const MIXCLOUD_CONFIG = {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
     },
-};
+}
 
 export const TYPE_CONFIG = {
     uploads: 'uploads',
@@ -17,7 +17,7 @@ export const TYPE_CONFIG = {
     listens: 'listeningHistory',
     stream: 'stream',
     playlist: 'items',
-};
+}
 
 export const TYPE_NAMES = {
     uploads: 'Shows',
@@ -26,7 +26,7 @@ export const TYPE_NAMES = {
     listens: 'History',
     stream: 'Stream',
     playlist: 'Playlist',
-};
+}
 
 export const CLOUDCAST_FIELDS = `
   id
@@ -76,7 +76,7 @@ export const CLOUDCAST_FIELDS = `
     }
     totalCount
   }
-`;
+`
 
 export function getObjectFields(type: string): { objectType: string; objectFields: string } {
     if (type === 'playlist') {
@@ -102,9 +102,9 @@ export function getObjectFields(type: string): { objectType: string; objectField
           }
         }
       `,
-        };
+        }
     } else {
-        const nodeTemplate = type === 'listens' ? `node { cloudcast { ${CLOUDCAST_FIELDS} } }` : `node { ${CLOUDCAST_FIELDS} }`;
+        const nodeTemplate = type === 'listens' ? `node { cloudcast { ${CLOUDCAST_FIELDS} } }` : `node { ${CLOUDCAST_FIELDS} }`
 
         return {
             objectType: 'user',
@@ -124,6 +124,6 @@ export function getObjectFields(type: string): { objectType: string; objectField
           }
         }
       `,
-        };
+        }
     }
 }

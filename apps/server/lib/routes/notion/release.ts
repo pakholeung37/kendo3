@@ -1,25 +1,25 @@
-import { load } from 'cheerio';
-import day from 'dayjs';
+import { load } from 'cheerio'
+import day from 'dayjs'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const handler: Route['handler'] = async () => {
     const data = await ofetch('https://notion.so/releases', {
         headers: {
             'Accept-Language': 'en-US', // TODO accept param
         },
-    });
+    })
 
-    const $ = load(data);
+    const $ = load(data)
 
     // the first post, do not cache
-    const title = $('h2').first().text() ?? '';
-    const pubDate = parseDate($('time').first().text());
-    const description = $('article.release article').first().html() ?? '';
-    const link = `https://notion.so/releases/${day(pubDate).format('YYYY-MM-DD')}`;
+    const title = $('h2').first().text() ?? ''
+    const pubDate = parseDate($('time').first().text())
+    const description = $('article.release article').first().html() ?? ''
+    const link = `https://notion.so/releases/${day(pubDate).format('YYYY-MM-DD')}`
 
     // archive
     const item = (await Promise.all(
@@ -27,26 +27,26 @@ const handler: Route['handler'] = async () => {
             .toArray()
             .slice(0, 5)
             .map((item) => {
-                const link = `https://notion.so${item.attribs.href}`;
+                const link = `https://notion.so${item.attribs.href}`
 
                 return cache.tryGet(`notion:release:${link}`, async () => {
                     const data = await ofetch(link, {
                         headers: {
                             'Accept-Language': 'en-US', // Notion will adjust returned content based on this header
                         },
-                    });
+                    })
 
-                    const $ = load(data);
+                    const $ = load(data)
 
                     return {
                         title: $('h2').first().text() ?? '',
                         pubDate: parseDate($('time').first().text()),
                         description: $('article.release article').first().html() ?? '',
                         link,
-                    };
-                });
-            })
-    )) as DataItem[];
+                    }
+                })
+            }),
+    )) as DataItem[]
 
     return {
         title: 'Notion Releases',
@@ -60,8 +60,8 @@ const handler: Route['handler'] = async () => {
             },
             ...item,
         ],
-    };
-};
+    }
+}
 
 export const route: Route = {
     name: 'Release',
@@ -79,4 +79,4 @@ export const route: Route = {
         supportScihub: false,
     },
     handler,
-};
+}

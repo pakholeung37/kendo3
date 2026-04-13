@@ -1,7 +1,7 @@
 // https://games.mobileapi.hupu.com/3/8.2.30/basketballapi/teamStandingList?offline=json&competitionLeagueType=nba&competitionType=nba&season=2025-2026&competitionStageType=REGULAR&client=EB5576BA-C415-43F7-850F-11B13E7991EB
-import { result } from './response/teamStandingList.json';
+import { result } from './response/teamStandingList.json'
 
-const NBA_TEAMS = [...result.rankTypeListMap.E, ...result.rankTypeListMap.W];
+const NBA_TEAMS = [...result.rankTypeListMap.E, ...result.rankTypeListMap.W]
 
 const NBA_TEAM_NAMES: Record<string, string> = {
     活塞: 'Pistons',
@@ -34,13 +34,13 @@ const NBA_TEAM_NAMES: Record<string, string> = {
     快船: 'Clippers',
     国王: 'Kings',
     鹈鹕: 'Pelicans',
-};
+}
 
 export const NBA_TEAMS_ID_MAP = NBA_TEAMS.reduce(
     (map, team) => {
-        const englishName = NBA_TEAM_NAMES[team.teamName];
-        map[englishName.toLowerCase()] = team;
-        return map;
+        const englishName = NBA_TEAM_NAMES[team.teamName]
+        map[englishName.toLowerCase()] = team
+        return map
     },
-    {} as Record<string, (typeof NBA_TEAMS)[number] | undefined>
-);
+    {} as Record<string, (typeof NBA_TEAMS)[number] | undefined>,
+)

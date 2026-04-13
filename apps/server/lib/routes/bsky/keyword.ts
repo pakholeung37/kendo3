@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/keyword/:keyword',
@@ -17,12 +17,12 @@ export const route: Route = {
     name: 'Keywords',
     maintainers: ['untitaker', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
+    const keyword = ctx.req.param('keyword')
 
-    const data = await ofetch(`https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(keyword)}&limit=25&sort=latest`);
+    const data = await ofetch(`https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(keyword)}&limit=25&sort=latest`)
 
     const items = data.posts.map((post) => ({
         title: post.record.text,
@@ -36,11 +36,11 @@ async function handler(ctx) {
                 avatar: post.author.avatar,
             },
         ],
-    }));
+    }))
 
     return {
         title: `Bluesky Keyword - ${keyword}`,
         link: `https://bsky.app/search?q=${encodeURIComponent(keyword)}`,
         item: items,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, cookieJar, getArticle } from './utils';
+import { baseUrl, cookieJar, getArticle } from './utils'
 
 export const route: Route = {
     path: '/news',
@@ -29,30 +29,30 @@ export const route: Route = {
     maintainers: ['y9c', 'TonyRL'],
     handler,
     url: 'nature.com/latest-news',
-};
+}
 
 async function handler() {
-    const url = `${baseUrl}/latest-news`;
-    const res = await got(url, { cookieJar });
-    const $ = load(res.data);
+    const url = `${baseUrl}/latest-news`
+    const res = await got(url, { cookieJar })
+    const $ = load(res.data)
 
     let items = $('.c-article-item__content')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h3').text(),
                 link: baseUrl + item.find('a').attr('href'),
                 pubDate: parseDate(item.find('.c-article-item__date').text()),
-            };
-        });
+            }
+        })
 
-    items = await Promise.all(items.map((item) => cache.tryGet(item.link, () => getArticle(item))));
+    items = await Promise.all(items.map((item) => cache.tryGet(item.link, () => getArticle(item))))
 
     return {
         title: 'Nature | Latest News',
         description: $('meta[name=description]').attr('content'),
         link: url,
         item: items,
-    };
+    }
 }

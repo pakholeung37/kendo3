@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.abmedia.io';
-const postsAPIUrl = `${rootUrl}/wp-json/wp/v2/posts`;
+const rootUrl = 'https://www.abmedia.io'
+const postsAPIUrl = `${rootUrl}/wp-json/wp/v2/posts`
 
 export const route: Route = {
     path: '/index',
@@ -27,25 +27,25 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'www.abmedia.io/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.param('limit') ?? 10;
-    const url = `${postsAPIUrl}?per_page=${limit}`;
+    const limit = ctx.req.param('limit') ?? 10
+    const url = `${postsAPIUrl}?per_page=${limit}`
 
-    const response = await got.get(url);
-    const data = response.data;
+    const response = await got.get(url)
+    const data = response.data
 
     const items = data.map((item) => ({
         title: item.title.rendered,
         link: item.link,
         description: item.content.rendered,
         pubDate: parseDate(item.date),
-    }));
+    }))
 
     return {
         title: 'ABMedia - 最新消息',
         link: rootUrl,
         item: items,
-    };
+    }
 }

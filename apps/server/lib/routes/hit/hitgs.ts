@@ -1,40 +1,40 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'tzgg' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10);
+    const { id = 'tzgg' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '10', 10)
 
-    const baseUrl = 'https://hitgs.hit.edu.cn';
-    const targetUrl: string = new URL(`${id}/list.htm`, baseUrl).href;
+    const baseUrl = 'https://hitgs.hit.edu.cn'
+    const targetUrl: string = new URL(`${id}/list.htm`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('li.news, div.tbt17')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('div.news_title, span.div.news_title, div.bttb2').text();
+            const title: string = $el.find('div.news_title, span.div.news_title, div.bttb2').text()
             const description: string | undefined = renderDescription({
                 intro: $el.find('div.news_text, div.jj5').text(),
-            });
-            const pubDateStr: string | undefined = $('span.news_meta').text() || ($('span.news_days').text() ? `${$('span.news_days').text()}-${$('span.news_year').text()}` : `${$('div.tm-3').text()}-${$('div.tm-1').text()}`);
-            const linkUrl: string | undefined = $el.find('div.news_title a').attr('href') ?? $el.find('div.bttb2 a').attr('href') ?? $el.find('a').attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = $('span.news_meta').text() || ($('span.news_days').text() ? `${$('span.news_days').text()}-${$('span.news_year').text()}` : `${$('div.tm-3').text()}-${$('div.tm-1').text()}`)
+            const linkUrl: string | undefined = $el.find('div.news_title a').attr('href') ?? $el.find('div.bttb2 a').attr('href') ?? $el.find('a').attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -47,27 +47,27 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: parseDate(upDatedStr),
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1.arti_title').text() + $$('h2.arti_title').text();
+                const title: string = $$('h1.arti_title').text() + $$('h2.arti_title').text()
                 const description: string | undefined = renderDescription({
                     description: $$('div.wp_articlecontent').html(),
-                });
-                const pubDateStr: string | undefined = $$('span.arti_update').text().split(/：/).pop()?.trim();
-                const upDatedStr: string | undefined = pubDateStr;
+                })
+                const pubDateStr: string | undefined = $$('span.arti_update').text().split(/：/).pop()?.trim()
+                const upDatedStr: string | undefined = pubDateStr
 
                 let processedItem: DataItem = {
                     title,
@@ -79,40 +79,40 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 const $enclosureEl: Cheerio<Element> = $$('a[sudyfile-attr]')
                     .filter((_, el) => {
-                        const $el: Cheerio<Element> = $$(el);
+                        const $el: Cheerio<Element> = $$(el)
 
-                        return !$el.attr('href')?.endsWith('htm');
+                        return !$el.attr('href')?.endsWith('htm')
                     })
-                    .first();
+                    .first()
 
-                const enclosureUrl: string | undefined = $enclosureEl.attr('href');
+                const enclosureUrl: string | undefined = $enclosureEl.attr('href')
 
                 if (enclosureUrl) {
-                    const enclosureType = `application/${enclosureUrl.split(/\./).pop() || 'octet-stream'}`;
-                    const enclosureTitle: string | undefined = $enclosureEl.attr('sudyfile-attr')?.match(/'title':'(.*?)'/)?.[1];
+                    const enclosureType = `application/${enclosureUrl.split(/\./).pop() || 'octet-stream'}`
+                    const enclosureTitle: string | undefined = $enclosureEl.attr('sudyfile-attr')?.match(/'title':'(.*?)'/)?.[1]
 
                     processedItem = {
                         ...processedItem,
                         enclosure_url: new URL(enclosureUrl, baseUrl).href,
                         enclosure_type: enclosureType,
                         enclosure_title: enclosureTitle || title,
-                    };
+                    }
                 }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const title: string = $('title').text();
-    const author: string = $('p.copyright span').first().text().split(/©/).pop() ?? '';
+    const title: string = $('title').text()
+    const author: string = $('p.copyright span').first().text().split(/©/).pop() ?? ''
 
     return {
         title: `${author ? `${author} - ` : ''}${title}`,
@@ -124,8 +124,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/hitgs/:id?',
@@ -207,9 +207,9 @@ export const route: Route = {
         {
             source: ['hitgs.hit.edu.cn', 'hitgs.hit.edu.cn/:id/list.htm'],
             target: (params) => {
-                const id: string = params.id;
+                const id: string = params.id
 
-                return `/hit/hitgs${id ? `/${id}` : ''}`;
+                return `/hit/hitgs${id ? `/${id}` : ''}`
             },
         },
         {
@@ -254,4 +254,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

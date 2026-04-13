@@ -1,13 +1,13 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import weiboUtils from './utils';
+import weiboUtils from './utils'
 
 export const route: Route = {
     path: '/group/:gid/:gname?/:routeParams?',
@@ -38,26 +38,26 @@ export const route: Route = {
 
   微博用户 Cookie 的配置可参照部署文档
 :::`,
-};
+}
 
 async function handler(ctx) {
     if (!config.weibo.cookies) {
-        throw new ConfigNotFoundError('Weibo Group Timeline is not available due to the absense of [Weibo Cookies]. Check <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config tutorial</a>');
+        throw new ConfigNotFoundError('Weibo Group Timeline is not available due to the absense of [Weibo Cookies]. Check <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config tutorial</a>')
     }
 
-    const gid = ctx.req.param('gid');
-    const groupName = ctx.req.param('gname') || '微博分组';
-    let displayVideo = '1';
-    let displayArticle = '0';
-    let displayComments = '0';
+    const gid = ctx.req.param('gid')
+    const groupName = ctx.req.param('gname') || '微博分组'
+    let displayVideo = '1'
+    let displayArticle = '0'
+    let displayComments = '0'
     if (ctx.req.param('routeParams')) {
         if (ctx.req.param('routeParams') === '1' || ctx.req.param('routeParams') === '0') {
-            displayVideo = ctx.req.param('routeParams');
+            displayVideo = ctx.req.param('routeParams')
         } else {
-            const routeParams = querystring.parse(ctx.req.param('routeParams'));
-            displayVideo = fallback(undefined, queryToBoolean(routeParams.displayVideo), true) ? '1' : '0';
-            displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false) ? '1' : '0';
-            displayComments = fallback(undefined, queryToBoolean(routeParams.displayComments), false) ? '1' : '0';
+            const routeParams = querystring.parse(ctx.req.param('routeParams'))
+            displayVideo = fallback(undefined, queryToBoolean(routeParams.displayVideo), true) ? '1' : '0'
+            displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false) ? '1' : '0'
+            displayComments = fallback(undefined, queryToBoolean(routeParams.displayComments), false) ? '1' : '0'
         }
     }
 
@@ -72,49 +72,49 @@ async function handler(ctx) {
                     Cookie: config.weibo.cookies,
                     ...weiboUtils.apiHeaders,
                 },
-            });
-            return _r.data.data;
+            })
+            return _r.data.data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const resultItems = await Promise.all(
         responseData.statuses.map(async (item) => {
-            const retweet = item.retweeted_status;
+            const retweet = item.retweeted_status
             if (retweet && retweet.isLongText) {
-                const retweetData = await cache.tryGet(`weibo:retweeted:${retweet.user.id}:${retweet.bid}`, () => weiboUtils.getShowData(retweet.user.id, retweet.bid));
+                const retweetData = await cache.tryGet(`weibo:retweeted:${retweet.user.id}:${retweet.bid}`, () => weiboUtils.getShowData(retweet.user.id, retweet.bid))
                 if (retweetData !== undefined && retweetData.text) {
-                    item.retweeted_status.text = retweetData.text;
+                    item.retweeted_status.text = retweetData.text
                 }
             }
 
-            const formatExtended = weiboUtils.formatExtended(ctx, item);
-            let description = formatExtended.description;
+            const formatExtended = weiboUtils.formatExtended(ctx, item)
+            let description = formatExtended.description
 
             if (displayVideo === '1') {
-                description = item.retweeted_status ? weiboUtils.formatVideo(description, item.retweeted_status) : weiboUtils.formatVideo(description, item);
+                description = item.retweeted_status ? weiboUtils.formatVideo(description, item.retweeted_status) : weiboUtils.formatVideo(description, item)
             }
 
             if (displayComments === '1') {
-                description = await weiboUtils.formatComments(ctx, description, item, '0');
+                description = await weiboUtils.formatComments(ctx, description, item, '0')
             }
 
             if (displayArticle === '1') {
-                description = await (item.retweeted_status ? weiboUtils.formatArticle(ctx, description, item.retweeted_status) : weiboUtils.formatArticle(ctx, description, item));
+                description = await (item.retweeted_status ? weiboUtils.formatArticle(ctx, description, item.retweeted_status) : weiboUtils.formatArticle(ctx, description, item))
             }
 
             return {
                 ...formatExtended,
                 description,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     return weiboUtils.sinaimgTvax({
         title: groupName,
         link: `https://weibo.com/mygroups?gid=${gid}`,
         description: '微博自定义分组',
         item: resultItems,
-    });
+    })
 }

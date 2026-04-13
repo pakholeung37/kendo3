@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: ['/lc_report/:id?', '/report/:id?'],
@@ -27,21 +27,21 @@ export const route: Route = {
     description: `| 罗戈研究出品 | 物流报告       | 绿色双碳报告          |
 | ------------ | -------------- | --------------------- |
 | Report       | IndustryReport | GreenDualCarbonReport |`,
-};
+}
 
 async function handler(ctx) {
-    const { id = 'Report' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11;
+    const { id = 'Report' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 11
 
-    const rootUrl = 'https://www.logclub.com';
-    const currentUrl = new URL('lc_report', rootUrl).href;
-    const apiUrl = new URL(`front/lc_report/load${id}List`, rootUrl).href;
+    const rootUrl = 'https://www.logclub.com'
+    const currentUrl = new URL('lc_report', rootUrl).href
+    const apiUrl = new URL(`front/lc_report/load${id}List`, rootUrl).href
 
     const { data: response } = await got.post(apiUrl, {
         json: {
             page: 1,
         },
-    });
+    })
 
     let items = response.list.slice(0, limit).map((item) => ({
         title: item.title,
@@ -56,35 +56,35 @@ async function handler(ctx) {
         category: [item.channel_name],
         guid: `logclub-report-${item.id}`,
         pubDate: timezone(parseDate(item.release_time), +8),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
                 content('img').each((_, el) => {
-                    el = content(el);
+                    el = content(el)
                     el.replaceWith(
                         renderDescription({
                             image: {
                                 src: el.prop('src')?.split(/\?/)[0] ?? undefined,
                                 alt: el.prop('title'),
                             },
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                item.title = content('h1').first().text();
+                item.title = content('h1').first().text()
                 item.description += renderDescription({
                     description: content('div.article-cont').html(),
-                });
+                })
                 item.author = content('div.lc-infos a')
                     .toArray()
                     .map((a) => content(a).text())
-                    .join('/');
+                    .join('/')
                 item.category = [
                     ...new Set([
                         ...(item.category ?? []),
@@ -92,20 +92,20 @@ async function handler(ctx) {
                             .toArray()
                             .map((c) => content(c).text()),
                     ]),
-                ].filter(Boolean);
+                ].filter(Boolean)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const title = $('div.this_nav').text().trim();
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
-    const subtitle = $('meta[name="keywords"]').prop('content');
+    const title = $('div.this_nav').text().trim()
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
+    const subtitle = $('meta[name="keywords"]').prop('content')
 
     return {
         item: items,
@@ -118,5 +118,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: subtitle.replaceAll(',', ''),
         author: subtitle.split(/,/)[0],
-    };
+    }
 }

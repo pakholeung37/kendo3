@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest'
 
 const html = `<div class="content">
     <ul>
@@ -8,7 +8,7 @@ const html = `<div class="content">
             <div class="date">2025-01-01</div>
         </li>
     </ul>
-</div>`;
+</div>`
 
 const rawSpy = vi.fn(() =>
     Promise.resolve({
@@ -16,17 +16,17 @@ const rawSpy = vi.fn(() =>
             'content-type': 'text/html; charset=gbk',
         }),
         _data: html,
-    })
-);
-const ofetchSpy = vi.fn(() => Promise.resolve(Buffer.from(html)));
+    }),
+)
+const ofetchSpy = vi.fn(() => Promise.resolve(Buffer.from(html)))
 
 vi.mock('@/utils/ofetch', () => ({
     default: Object.assign(ofetchSpy, { raw: rawSpy }),
-}));
+}))
 
 describe('common-config charset', () => {
     it('parses charset from content-type', async () => {
-        const buildData = (await import('@/utils/common-config')).default;
+        const buildData = (await import('@/utils/common-config')).default
         const data = await buildData({
             link: 'http://rsshub.test/buildData',
             url: 'http://rsshub.test/buildData',
@@ -41,9 +41,9 @@ describe('common-config charset', () => {
                 description: `$('.description').html()`,
                 pubDate: `timezone(parseDate($('.date').text(), 'YYYY-MM-DD'), 0)`,
             },
-        });
+        })
 
-        expect(data.title).toBe('buildData');
-        expect(data.item[0].title).toBe('1 - buildData');
-    });
-});
+        expect(data.title).toBe('buildData')
+        expect(data.item[0].title).toBe('1 - buildData')
+    })
+})

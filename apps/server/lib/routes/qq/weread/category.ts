@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/weread/:category',
@@ -52,40 +52,40 @@ export const route: Route = {
 
 还可以分得更细 见 https://weread.qq.com/web/category/100000 的小标题栏
 `,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
     // 检查 category 是否是榜单，若否则全部为阿拉伯数字
-    const isRank = /^\d+$/.test(category) ? 0 : 1;
+    const isRank = /^\d+$/.test(category) ? 0 : 1
 
-    const LIMIT = category === 'all' ? 180 : 40;
-    const SIZE = 20;
+    const LIMIT = category === 'all' ? 180 : 40
+    const SIZE = 20
 
-    const urls = Array.from({ length: Math.ceil((LIMIT + 1) / SIZE) }, (_, index) => `https://weread.qq.com/web/bookListInCategory/${category}?maxIndex=${index * SIZE}&rank=${isRank}`);
+    const urls = Array.from({ length: Math.ceil((LIMIT + 1) / SIZE) }, (_, index) => `https://weread.qq.com/web/bookListInCategory/${category}?maxIndex=${index * SIZE}&rank=${isRank}`)
 
-    const responses = await Promise.all(urls.map((url) => ofetch(url)));
+    const responses = await Promise.all(urls.map((url) => ofetch(url)))
 
     const results = responses.flatMap((response) =>
         response.books.map((book) => {
-            const bookInfo = book.bookInfo;
+            const bookInfo = book.bookInfo
             return {
                 title: bookInfo.title,
                 description: `推荐值 ${bookInfo.newRating / 10}% ${bookInfo.newRatingDetail.title}|| ` + bookInfo.intro,
                 author: bookInfo.author,
                 guid: bookInfo.bookId,
                 itunes_item_image: bookInfo.cover,
-            };
-        })
-    );
+            }
+        }),
+    )
 
-    const title = categoryTitles[category] || '书籍列表';
+    const title = categoryTitles[category] || '书籍列表'
     return {
         title: '微信读书 - ' + title,
         link: `https://weread.qq.com/web/category/${category}`,
         item: results,
-    };
+    }
 }
 
 const categoryTitles = {
@@ -117,4 +117,4 @@ const categoryTitles = {
     '1900000': '男生小说',
     '2000000': '女生小说',
     '2100000': '医学健康',
-};
+}

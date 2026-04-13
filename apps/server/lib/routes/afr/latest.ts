@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { assetsConnectionByCriteriaQuery } from './query';
-import { getItem } from './utils';
+import { assetsConnectionByCriteriaQuery } from './query'
+import { getItem } from './utils'
 
 export const route: Route = {
     path: '/latest',
@@ -29,10 +29,10 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.afr.com/latest',
-};
+}
 
 async function handler(ctx: Context) {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '10');
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '10')
     const response = await ofetch('https://api.afr.com/graphql', {
         query: {
             query: assetsConnectionByCriteriaQuery,
@@ -45,7 +45,7 @@ async function handler(ctx: Context) {
                 after: '',
             },
         },
-    });
+    })
 
     const list = response.data.assetsConnectionByCriteria.edges.map(({ node }) => ({
         title: node.asset.headlines.headline,
@@ -56,9 +56,9 @@ async function handler(ctx: Context) {
         author: node.asset.byline,
         category: [node.tags.primary.displayName, ...node.tags.secondary.map((tag) => tag.displayName)],
         image: node.featuredImages && `https://static.ffx.io/images/${node.featuredImages.landscape16x9.data.id}`,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))))
 
     return {
         title: 'Latest | The Australian Financial Review | AFR',
@@ -66,5 +66,5 @@ async function handler(ctx: Context) {
         image: 'https://www.afr.com/apple-touch-icon-1024x1024.png',
         link: 'https://www.afr.com/latest',
         item: items,
-    };
+    }
 }

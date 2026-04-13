@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const rootUrl = 'https://kyfw.12306.cn';
+const rootUrl = 'https://kyfw.12306.cn'
 
 const renderTrainDescription = (trainInfo) =>
     renderToString(
@@ -46,8 +46,8 @@ const renderTrainDescription = (trainInfo) =>
             <text>无座: {trainInfo.WZ || '无'}</text>
             <br />
             <text>其他: {trainInfo.QT || '无'}</text>
-        </>
-    );
+        </>,
+    )
 
 async function getJSESSIONID(linkUrl) {
     const res = await got({
@@ -57,9 +57,9 @@ async function getJSESSIONID(linkUrl) {
             UserAgent: config.ua,
             Referer: 'https://www.12306.cn/index/index.html',
         },
-    });
+    })
 
-    return res.headers['set-cookie'].join(',').match(/JSESSIONID=([^;]+);/)[0];
+    return res.headers['set-cookie'].join(',').match(/JSESSIONID=([^;]+);/)[0]
 }
 
 function getStationInfo(stationName) {
@@ -71,22 +71,22 @@ function getStationInfo(stationName) {
                 UserAgent: config.ua,
                 Referer: 'https://kyfw.12306.cn/otn/leftTicket/init',
             },
-        });
+        })
 
         return res.data
             .split('@')
             .map((item) => {
-                const itemData = item.split('|');
+                const itemData = item.split('|')
 
                 return itemData.includes(stationName)
                     ? {
                           code: itemData[2],
                           name: itemData[1],
                       }
-                    : null;
+                    : null
             })
-            .find(Boolean);
-    });
+            .find(Boolean)
+    })
 }
 
 export const route: Route = {
@@ -105,16 +105,16 @@ export const route: Route = {
     name: '售票信息',
     maintainers: ['Fatpandac'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const date = ctx.req.param('date');
-    const fromStationInfo = await getStationInfo(ctx.req.param('from'));
-    const toStationInfo = await getStationInfo(ctx.req.param('to'));
-    const type = ctx.req.param('type') ?? 'ADULT';
+    const date = ctx.req.param('date')
+    const fromStationInfo = await getStationInfo(ctx.req.param('from'))
+    const toStationInfo = await getStationInfo(ctx.req.param('to'))
+    const type = ctx.req.param('type') ?? 'ADULT'
 
-    const apiUrl = `${rootUrl}/otn/leftTicket/queryA?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${fromStationInfo.code}&leftTicketDTO.to_station=${toStationInfo.code}&purpose_codes=${type}`;
-    const linkUrl = `${rootUrl}/otn/leftTicket/init?linktypeid=dc&fs=${fromStationInfo.code}&ts=${toStationInfo.code}&date=${date}&flag=N,N,Y`;
+    const apiUrl = `${rootUrl}/otn/leftTicket/queryA?leftTicketDTO.train_date=${date}&leftTicketDTO.from_station=${fromStationInfo.code}&leftTicketDTO.to_station=${toStationInfo.code}&purpose_codes=${type}`
+    const linkUrl = `${rootUrl}/otn/leftTicket/init?linktypeid=dc&fs=${fromStationInfo.code}&ts=${toStationInfo.code}&date=${date}&flag=N,N,Y`
 
     const response = await got.get(apiUrl, {
         headers: {
@@ -122,15 +122,15 @@ async function handler(ctx) {
             Referer: 'https://kyfw.12306.cn/otn/leftTicket/init',
             Cookie: await getJSESSIONID(linkUrl),
         },
-    });
+    })
     if (response.data.data === undefined || response.data.data.length === 0) {
-        throw new InvalidParameterError('没有找到相关车次，请检查参数是否正确');
+        throw new InvalidParameterError('没有找到相关车次，请检查参数是否正确')
     }
-    const data = response.data.data.result;
-    const map = response.data.data.map;
+    const data = response.data.data.result
+    const map = response.data.data.map
 
     const items = data.map((item) => {
-        const itemData = item.split('|');
+        const itemData = item.split('|')
         const trainInfo = {
             trainNo: itemData[3],
             fromStation: map[itemData[6]],
@@ -150,19 +150,19 @@ async function handler(ctx) {
             A1: itemData[24],
             WZ: itemData[23],
             QT: itemData[22],
-        };
+        }
 
         return {
             title: `${trainInfo.fromStation} → ${trainInfo.toStation} ${trainInfo.startTime} ${trainInfo.arriveTime}`,
             description: renderTrainDescription(trainInfo),
             link: linkUrl,
             guid: Object.values(trainInfo).join('|'),
-        };
-    });
+        }
+    })
 
     return {
         title: `${fromStationInfo.name} → ${toStationInfo.name} ${date}`,
         link: linkUrl,
         item: items,
-    };
+    }
 }

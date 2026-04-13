@@ -1,12 +1,12 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/commits/:owner/:repo/:branch?',
@@ -30,24 +30,24 @@ export const route: Route = {
     name: '仓库提交',
     maintainers: ['JiZhi-Error'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { owner, repo, branch } = ctx.req.param();
+    const { owner, repo, branch } = ctx.req.param()
     // API路径
-    const apiUrl = `https://web-api.gitcode.com/api/v2/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`;
+    const apiUrl = `https://web-api.gitcode.com/api/v2/projects/${encodeURIComponent(`${owner}/${repo}`)}/repository/commits`
 
     const searchParams: Record<string, any> = {
         per_page: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 100,
         ref_name: branch,
-    };
+    }
 
     const { data: response } = await got(apiUrl, {
         searchParams,
-    });
+    })
 
     if (!response || !response.content) {
-        throw new Error('无法获取提交数据');
+        throw new Error('无法获取提交数据')
     }
 
     const items = response.content.map((item) => ({
@@ -57,12 +57,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.committed_date),
         guid: item.id,
         link: `https://gitcode.com/${owner}/${repo}/commit/${item.id}`,
-    }));
+    }))
 
-    const branchText = branch ? ` (${branch})` : '';
+    const branchText = branch ? ` (${branch})` : ''
     return {
         title: `${owner}/${repo}/${branchText} - 提交记录`,
         link: `https://gitcode.com/${owner}/${repo}/commits/${branch || ''}`,
         item: items,
-    };
+    }
 }

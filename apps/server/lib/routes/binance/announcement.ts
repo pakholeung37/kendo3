@@ -1,26 +1,26 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 interface ArticleItem {
-    code: string;
-    title: string;
-    releaseDate: number;
+    code: string
+    title: string
+    releaseDate: number
 }
 
 interface CatalogItem {
-    catalogId: number;
-    catalogName: string;
-    articles: ArticleItem[];
+    catalogId: number
+    catalogName: string
+    articles: ArticleItem[]
 }
 
 interface ArticleListResponse {
-    code: string;
+    code: string
     data: {
-        catalogs: CatalogItem[];
-    } | null;
+        catalogs: CatalogItem[]
+    } | null
 }
 
 const TYPE_CATALOG_ID_MAP: Record<string, number> = {
@@ -32,55 +32,55 @@ const TYPE_CATALOG_ID_MAP: Record<string, number> = {
     'crypto-airdrop': 128,
     'wallet-maintenance-updates': 157,
     delisting: 161,
-};
+}
 
 const LANGUAGE_ALIASES: Record<string, string> = {
     'en-US': 'en',
     zh: 'zh-CN',
-};
+}
 
-const normalizeLanguage = (lang?: string) => (lang ? (LANGUAGE_ALIASES[lang] ?? lang) : 'zh-CN');
+const normalizeLanguage = (lang?: string) => (lang ? (LANGUAGE_ALIASES[lang] ?? lang) : 'zh-CN')
 
 const isLanguageCode = (lang: string) => {
-    const normalized = normalizeLanguage(lang);
-    return normalized === 'en' || normalized === 'zh-CN';
-};
+    const normalized = normalizeLanguage(lang)
+    return normalized === 'en' || normalized === 'zh-CN'
+}
 
 const handler: Route['handler'] = async (ctx) => {
-    const baseUrl = 'https://www.binance.com';
-    const rawType = ctx.req.param('type');
-    const rawLang = ctx.req.param('lang');
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
-    const pageSize = Number.isNaN(limit) || limit <= 0 ? 20 : limit;
+    const baseUrl = 'https://www.binance.com'
+    const rawType = ctx.req.param('type')
+    const rawLang = ctx.req.param('lang')
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
+    const pageSize = Number.isNaN(limit) || limit <= 0 ? 20 : limit
 
-    let type = rawType;
-    let language = normalizeLanguage(rawLang);
+    let type = rawType
+    let language = normalizeLanguage(rawLang)
 
     if (!rawLang && rawType && isLanguageCode(rawType)) {
-        language = normalizeLanguage(rawType);
-        type = undefined;
+        language = normalizeLanguage(rawType)
+        type = undefined
     }
 
     if (type === 'all') {
-        type = undefined;
+        type = undefined
     }
 
-    let catalogId: number | undefined;
+    let catalogId: number | undefined
     if (type) {
-        const mappedCatalogId = TYPE_CATALOG_ID_MAP[type];
+        const mappedCatalogId = TYPE_CATALOG_ID_MAP[type]
         if (!mappedCatalogId) {
-            throw new Error(`${type} is not supported`);
+            throw new Error(`${type} is not supported`)
         }
-        catalogId = mappedCatalogId;
+        catalogId = mappedCatalogId
     }
 
-    const pageUrl = `${baseUrl}/${language}/messages/v2/group/announcement`;
-    const listUrl = new URL(`${baseUrl}/bapi/apex/v1/public/apex/cms/article/list/query`);
-    listUrl.searchParams.set('type', '1');
-    listUrl.searchParams.set('pageNo', '1');
-    listUrl.searchParams.set('pageSize', String(pageSize));
+    const pageUrl = `${baseUrl}/${language}/messages/v2/group/announcement`
+    const listUrl = new URL(`${baseUrl}/bapi/apex/v1/public/apex/cms/article/list/query`)
+    listUrl.searchParams.set('type', '1')
+    listUrl.searchParams.set('pageNo', '1')
+    listUrl.searchParams.set('pageSize', String(pageSize))
     if (catalogId) {
-        listUrl.searchParams.set('catalogId', String(catalogId));
+        listUrl.searchParams.set('catalogId', String(catalogId))
     }
 
     const headers = {
@@ -88,10 +88,10 @@ const handler: Route['handler'] = async (ctx) => {
         'Accept-Language': language,
         'User-Agent': config.trueUA,
         lang: language,
-    };
+    }
 
-    const response = (await ofetch<ArticleListResponse>(listUrl.toString(), { headers })) as ArticleListResponse;
-    const catalogs = response.data?.catalogs ?? [];
+    const response = (await ofetch<ArticleListResponse>(listUrl.toString(), { headers })) as ArticleListResponse
+    const catalogs = response.data?.catalogs ?? []
 
     const itemsWithDate = catalogs.flatMap((catalog) =>
         catalog.articles.map((article) => ({
@@ -100,24 +100,24 @@ const handler: Route['handler'] = async (ctx) => {
             pubDate: parseDate(article.releaseDate),
             category: catalog.catalogName ? [catalog.catalogName] : undefined,
             releaseDate: article.releaseDate,
-        }))
-    );
+        })),
+    )
 
     const item = itemsWithDate
         .toSorted((a, b) => b.releaseDate - a.releaseDate)
         .slice(0, pageSize)
-        .map(({ releaseDate: _releaseDate, ...rest }) => rest);
+        .map(({ releaseDate: _releaseDate, ...rest }) => rest)
 
-    const catalogName = catalogId ? catalogs.find((catalog) => catalog.catalogId === catalogId)?.catalogName : undefined;
-    const title = catalogName ? `Binance Announcement - ${catalogName}` : 'Binance Announcement';
+    const catalogName = catalogId ? catalogs.find((catalog) => catalog.catalogId === catalogId)?.catalogName : undefined
+    const title = catalogName ? `Binance Announcement - ${catalogName}` : 'Binance Announcement'
 
     return {
         title,
         link: pageUrl,
         description: 'Announcement list from Binance message center.',
         item,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/announcement/:type?/:lang?',
@@ -159,4 +159,4 @@ export const route: Route = {
     description: 'Announcement list from Binance message center with language and type selection.',
     maintainers: ['enpitsulin', 'DIYgod'],
     handler,
-};
+}

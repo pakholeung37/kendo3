@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type VideoData = {
-    videoId?: string;
-    preview?: string;
-    width?: string | number;
-    mp4?: string;
-    webm?: string;
-};
+    videoId?: string
+    preview?: string
+    width?: string | number
+    mp4?: string
+    webm?: string
+}
 
 export const renderVideo = ({ videoId, preview, width, mp4, webm }: VideoData): string =>
     renderToString(
@@ -17,5 +17,5 @@ export const renderVideo = ({ videoId, preview, width, mp4, webm }: VideoData): 
                 {webm ? <source src={webm} type="video/webm" /> : null}
                 {mp4 ? <source src={mp4} type="video/mp4" /> : null}
             </video>
-        ) : null
-    );
+        ) : null,
+    )

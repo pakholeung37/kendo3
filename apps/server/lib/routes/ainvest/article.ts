@@ -1,5 +1,5 @@
-import { fetchContentItems } from '@/routes/ainvest/utils';
-import type { Route } from '@/types';
+import { fetchContentItems } from '@/routes/ainvest/utils'
+import type { Route } from '@/types'
 
 export const route: Route = {
     path: '/article',
@@ -23,16 +23,16 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.ainvest.com/news/articles-latest/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
-    const items = await fetchContentItems([109], limit);
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
+    const items = await fetchContentItems([109], limit)
 
     return {
         title: 'AInvest - Latest Articles',
         link: 'https://www.ainvest.com/news/articles-latest/',
         language: 'en',
         item: items,
-    };
+    }
 }

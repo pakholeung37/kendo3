@@ -1,28 +1,28 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://lib.tsinghua.edu.cn';
-    const currentUrl = new URL(`zydt${category ? `/${category}` : ''}.htm`, rootUrl).href;
+    const rootUrl = 'https://lib.tsinghua.edu.cn'
+    const currentUrl = new URL(`zydt${category ? `/${category}` : ''}.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.notice-list li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('div.notice-list-tt a').text(),
@@ -33,34 +33,34 @@ export const handler = async (ctx) => {
                     .toArray()
                     .map((c) => $(c).text()),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h2').text();
-                const description = $$('div.v_news_content').html();
+                const title = $$('h2').text()
+                const description = $$('div.v_news_content').html()
 
-                item.title = title;
-                item.description = description;
+                item.title = title
+                item.description = description
                 item.content = {
                     html: description,
                     text: $$('div.v_news_content').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('div.logo a img').prop('href'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('div.logo a img').prop('href'), rootUrl).href
 
     return {
         title,
@@ -71,8 +71,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/).pop(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/lib/zydt/:category?',
@@ -105,9 +105,9 @@ export const route: Route = {
         {
             source: ['lib.tsinghua.edu.cn/zydt/:category?'],
             target: (params) => {
-                const category = params.category?.replace(/\.htm$/, '');
+                const category = params.category?.replace(/\.htm$/, '')
 
-                return `/tsinghua/lib/zydt${category ? `/${category}` : ''}`;
+                return `/tsinghua/lib/zydt${category ? `/${category}` : ''}`
             },
         },
         {
@@ -126,4 +126,4 @@ export const route: Route = {
             target: '/lib/zydt/sy',
         },
     ],
-};
+}

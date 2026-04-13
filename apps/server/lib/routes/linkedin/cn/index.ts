@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { parseJobPosting, parseSearchHit } from './utils';
+import { parseJobPosting, parseSearchHit } from './utils'
 
-const siteUrl = 'https://www.linkedin.cn/incareer/jobs/search';
+const siteUrl = 'https://www.linkedin.cn/incareer/jobs/search'
 
 export const route: Route = {
     path: '/cn/jobs/:keywords?',
@@ -34,14 +34,14 @@ export const route: Route = {
   [\`/linkedin/cn/jobs/Software?location=shanghai&period=1\`](https://rsshub.app/linkedin/cn/jobs/Software?location=shanghai&period=1): 查找所有在上海的今日发布的所有 Software 工作
 
   **为了方便起见，建议您在 [LinkedIn.cn](https://www.linkedin.cn/incareer/jobs/search) 上进行搜索，并使用 [RSSHub Radar](https://github.com/DIYgod/RSSHub-Radar) 加载特定的 feed。**`,
-};
+}
 
 async function handler(ctx) {
-    const { title, jobs } = await parseSearchHit(ctx);
-    const items = await Promise.all(jobs.map((job) => parseJobPosting(ctx, job)));
+    const { title, jobs } = await parseSearchHit(ctx)
+    const items = await Promise.all(jobs.map((job) => parseJobPosting(ctx, job)))
     return {
         title: `领英 - ${title}`,
         link: siteUrl,
         item: items,
-    };
+    }
 }

@@ -18,17 +18,17 @@ export enum Parameter {
 }
 
 /** The languages supported by the API. */
-export const SUPPORTED_LANGUAGES = Object.values(Language);
+export const SUPPORTED_LANGUAGES = Object.values(Language)
 
 export interface Article {
-    articleContent?: string;
-    articleDesc: string;
-    articleId: number;
-    articleTitle: string;
-    articleType: number;
-    createTime: string;
-    sortingMark: number;
-    startTime: string;
-    suggestCover: string;
-    top: number;
+    articleContent?: string
+    articleDesc: string
+    articleId: number
+    articleTitle: string
+    articleType: number
+    createTime: string
+    sortingMark: number
+    startTime: string
+    suggestCover: string
+    top: number
 }

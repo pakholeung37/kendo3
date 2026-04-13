@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/tugua',
@@ -18,8 +18,8 @@ export const route: Route = {
     name: '图卦',
     maintainers: ['tgly307'],
     handler,
-};
+}
 
 async function handler() {
-    return await utils.parseFeed({ subjectid: 70 });
+    return await utils.parseFeed({ subjectid: 70 })
 }

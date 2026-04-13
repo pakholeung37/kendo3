@@ -1,11 +1,11 @@
-import * as cheerio from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const urlMap = {
     srac: {
@@ -20,15 +20,15 @@ const urlMap = {
     sraw: {
         baseUrl: 'https://wealth.hket.com',
     },
-};
+}
 
 const renderImage = (alt, src) =>
     renderToString(
         <figure>
             <img alt={alt} src={src} />
             <figcaption>{alt}</figcaption>
-        </figure>
-    );
+        </figure>,
+    )
 
 export const route: Route = {
     path: '/:category?',
@@ -128,26 +128,26 @@ export const route: Route = {
 | -------- | ------------ | --------- | --------- | --------- |
 | ESG 主页 | ESG 趋势政策 | ESG 投资  | ESG 企业  | ESG 社会  |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'sran001' } = ctx.req.param();
-    const baseUrl = urlMap[category.slice(0, 4)].baseUrl;
+    const { category = 'sran001' } = ctx.req.param()
+    const baseUrl = urlMap[category.slice(0, 4)].baseUrl
 
-    const response = await ofetch(`${baseUrl}/${category}`);
+    const response = await ofetch(`${baseUrl}/${category}`)
 
-    const $ = cheerio.load(response);
+    const $ = cheerio.load(response)
 
     const list = $('.main-listing-container div.listing-title > a')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const url = item.parent().parent().find('.share-button').data('url');
+            item = $(item)
+            const url = item.parent().parent().find('.share-button').data('url')
             return {
                 title: item.text().trim(),
                 link: url.startsWith('http') ? url : baseUrl + url,
-            };
-        }) as DataItem[];
+            }
+        }) as DataItem[]
 
     const items = await Promise.all(
         list.map((item) =>
@@ -172,60 +172,60 @@ async function handler(ctx) {
                                   id: item.link!.split('/').pop(),
                                   channel: 'epc',
                               },
-                          }));
+                          }))
 
-                    item.pubDate = timezone(parseDate(data.displayDate), +8);
-                    item.updated = timezone(parseDate(data.lastModifiedDate), +8);
-                    item.author = data.authors?.map((e) => e.name).join(', ');
-                    item.description = data.content.full || data.content.partial;
-                    item.category = data.contentTags?.map((e) => e.name);
+                    item.pubDate = timezone(parseDate(data.displayDate), +8)
+                    item.updated = timezone(parseDate(data.lastModifiedDate), +8)
+                    item.author = data.authors?.map((e) => e.name).join(', ')
+                    item.description = data.content.full || data.content.partial
+                    item.category = data.contentTags?.map((e) => e.name)
 
-                    return item;
+                    return item
                 }
 
-                const response = await ofetch(item.link!);
-                const $ = cheerio.load(response);
+                const response = await ofetch(item.link!)
+                const $ = cheerio.load(response)
 
                 item.category = $('.contentTags-container > .hotkey-container-wrapper > .hotkey-container > a')
                     .toArray()
-                    .map((e) => $(e).text().trim());
+                    .map((e) => $(e).text().trim())
 
                 // remove unwanted elements
-                $('source').remove();
-                $('p.article-detail_caption, .article-extend-button, span.click-to-enlarge').remove();
-                $('.loyalty-promotion-container, .relatedContents-container, .article-details-center-sharing-btn, .article-detail_login').remove();
-                $('.gallery-related-container, .contentTags-container').remove();
-                $('.listing-widget-126, div.template-default.hket-row.no-padding.detail-widget').remove();
+                $('source').remove()
+                $('p.article-detail_caption, .article-extend-button, span.click-to-enlarge').remove()
+                $('.loyalty-promotion-container, .relatedContents-container, .article-details-center-sharing-btn, .article-detail_login').remove()
+                $('.gallery-related-container, .contentTags-container').remove()
+                $('.listing-widget-126, div.template-default.hket-row.no-padding.detail-widget').remove()
 
                 // remove ads
-                $('.ad_MobileMain, .adunit, .native-ad').remove();
+                $('.ad_MobileMain, .adunit, .native-ad').remove()
 
                 $('span').each((_, e) => {
                     if ($(e).text().startsWith('+')) {
-                        $(e).remove();
+                        $(e).remove()
                     }
-                });
+                })
 
                 // fix lazyload image and caption
                 $('img').each((_, e) => {
-                    e = $(e);
-                    e.replaceWith(renderImage(e.data('alt'), e.data('src') ?? e.attr('src')));
-                });
+                    e = $(e)
+                    e.replaceWith(renderImage(e.data('alt'), e.data('src') ?? e.attr('src')))
+                })
 
                 const ldJson = JSON.parse(
                     $('script[type="application/ld+json"]')
                         .toArray()
-                        .find((e) => $(e).text().includes('NewsArticle'))?.children[0].data
-                );
+                        .find((e) => $(e).text().includes('NewsArticle'))?.children[0].data,
+                )
 
-                item.description = $('div.article-detail-body-container').html()!;
-                item.pubDate = parseDate(ldJson.datePublished);
-                item.updated = parseDate(ldJson.dateModified);
+                item.description = $('div.article-detail-body-container').html()!
+                item.pubDate = parseDate(ldJson.datePublished)
+                item.updated = parseDate(ldJson.dateModified)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head meta[name=title]').attr('content')?.trim(),
@@ -233,5 +233,5 @@ async function handler(ctx) {
         description: $('head meta[name=description]').attr('content')?.trim(),
         item: items,
         language: 'zh-hk',
-    };
+    }
 }

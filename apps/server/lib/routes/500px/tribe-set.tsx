@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getTribeDetail, getTribeSets } from './utils';
+import { baseUrl, getTribeDetail, getTribeSets } from './utils'
 
 export const route: Route = {
     path: '/tribe/set/:id',
@@ -15,14 +15,14 @@ export const route: Route = {
     name: '部落影集',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = Number.parseInt(ctx.req.query('limit')) || 100;
+    const id = ctx.req.param('id')
+    const limit = Number.parseInt(ctx.req.query('limit')) || 100
 
-    const { tribe } = await getTribeDetail(id);
-    const tribeSets = await getTribeSets(id, limit);
+    const { tribe } = await getTribeDetail(id)
+    const tribeSets = await getTribeSets(id, limit)
 
     const items = tribeSets.map((item) => ({
         title: item.title,
@@ -30,12 +30,12 @@ async function handler(ctx) {
             <>
                 {item.description ? <p>{item.description}</p> : null}
                 {item.photos ? item.photos.map((photo) => <img src={`${photo.url.baseUrl}!p5`} />) : null}
-            </>
+            </>,
         ),
         author: item.uploaderInfo.nickName,
         pubDate: parseDate(item.createdTime, 'x'),
         link: `${baseUrl}/community/set/${item.id}/details`,
-    }));
+    }))
 
     return {
         title: tribe.name,
@@ -43,5 +43,5 @@ async function handler(ctx) {
         link: `${baseUrl}/page/tribe/detail?tribeId=${id}&pagev=set`,
         image: tribe.avatar.a1,
         item: items,
-    };
+    }
 }

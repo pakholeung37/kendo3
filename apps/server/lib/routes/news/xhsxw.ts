@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: ['/xhsxw', '/whxw'],
@@ -30,27 +30,27 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'news.cn/xhsxw.htm',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'http://www.news.cn';
-    const currentUrl = new URL('xhsxw.htm', rootUrl).href;
+    const rootUrl = 'http://www.news.cn'
+    const currentUrl = new URL('xhsxw.htm', rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
     const id = $('ul.wz-list')
         .prop('data')
-        .replace(/datasource:/, '');
+        .replace(/datasource:/, '')
 
-    const apiUrl = new URL(`ds_${id}.json`, rootUrl).href;
+    const apiUrl = new URL(`ds_${id}.json`, rootUrl).href
 
     const {
         data: { datasource: response },
-    } = await got(apiUrl);
+    } = await got(apiUrl)
 
     let items = response.slice(0, limit).map((item) => ({
         title: item.title,
@@ -67,31 +67,31 @@ async function handler(ctx) {
         category: item.keywords.split(/-|,/),
         guid: `news-${item.contentId}`,
         pubDate: timezone(parseDate(item.publishTime), +8),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 try {
-                    const { data: detailResponse } = await got(item.link);
+                    const { data: detailResponse } = await got(item.link)
 
-                    const content = load(detailResponse);
+                    const content = load(detailResponse)
 
                     item.description += renderDescription({
                         description: content('#detailContent').html(),
-                    });
+                    })
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL('20141223_xhsxw_logo_v1.png', rootUrl).href;
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const title = $('title').text()
+    const image = new URL('20141223_xhsxw_logo_v1.png', rootUrl).href
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items,
@@ -104,5 +104,5 @@ async function handler(ctx) {
         logo: icon,
         author: title.split(/_/).pop(),
         allowEmpty: true,
-    };
+    }
 }

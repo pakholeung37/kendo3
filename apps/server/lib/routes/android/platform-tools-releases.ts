@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/platform-tools-releases',
@@ -26,11 +26,11 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'developer.android.com/studio/releases/platform-tools',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://developer.android.com';
-    const currentUrl = `${rootUrl}/studio/releases/platform-tools`;
+    const rootUrl = 'https://developer.android.com'
+    const currentUrl = `${rootUrl}/studio/releases/platform-tools`
 
     const response = await got({
         method: 'get',
@@ -38,36 +38,36 @@ async function handler() {
         headers: {
             cookie: 'signin=autosignin',
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    $('.hide-from-toc').remove();
-    $('.devsite-dialog, .devsite-badge-awarder, .devsite-hats-survey').remove();
+    $('.hide-from-toc').remove()
+    $('.devsite-dialog, .devsite-badge-awarder, .devsite-hats-survey').remove()
 
     const items = $('h4')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.attr('data-text');
+            const title = item.attr('data-text')
 
-            let description = '';
+            let description = ''
             item.nextUntil('h4').each(function () {
-                description += $(this).html();
-            });
+                description += $(this).html()
+            })
 
             return {
                 title,
                 description,
                 link: `${currentUrl}#${item.attr('id')}`,
                 pubDate: parseDate(title.match(/\((.*)\)/)[1], 'MMMM YYYY'),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

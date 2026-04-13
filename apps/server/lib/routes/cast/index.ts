@@ -1,43 +1,43 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const baseUrl = 'https://www.cast.org.cn';
+const baseUrl = 'https://www.cast.org.cn'
 
 async function parsePage(html: string) {
     return await Promise.all(
         load(html)('li')
             .toArray()
             .map((el) => {
-                const title = load(el)('a');
-                let articleUrl = title.attr('href');
+                const title = load(el)('a')
+                let articleUrl = title.attr('href')
 
                 if (articleUrl?.startsWith('http')) {
                     return {
                         title: title.text(),
                         link: title.attr('href'),
-                    };
+                    }
                 }
-                articleUrl = `${baseUrl}${title.attr('href')}`;
+                articleUrl = `${baseUrl}${title.attr('href')}`
 
                 return cache.tryGet(articleUrl, async () => {
-                    const res = await got.get<string>(articleUrl!);
-                    const article = load(res.data);
-                    const pubDate = timezone(parseDate(article('meta[name=PubDate]').attr('content')!, 'YYYY-MM-DD HH:mm'), +8);
+                    const res = await got.get<string>(articleUrl!)
+                    const article = load(res.data)
+                    const pubDate = timezone(parseDate(article('meta[name=PubDate]').attr('content')!, 'YYYY-MM-DD HH:mm'), +8)
 
                     return {
                         title: title.text(),
                         pubDate,
                         description: article('#zoom').html(),
                         link: articleUrl,
-                    };
-                });
-            })
-    );
+                    }
+                })
+            }),
+    )
 }
 
 export const route: Route = {
@@ -75,43 +75,43 @@ export const route: Route = {
 | 党建     | dj   |
 | 数据     | sj   |
 | 新闻     | xw   |`,
-};
+}
 
 async function handler(ctx) {
-    const { column, subColumn, category } = ctx.req.param();
-    const { limit = 10 } = ctx.req.query();
-    let link = `${baseUrl}/${column}/${subColumn}`;
+    const { column, subColumn, category } = ctx.req.param()
+    const { limit = 10 } = ctx.req.query()
+    let link = `${baseUrl}/${column}/${subColumn}`
     if (category) {
-        link += `/${category}/index.html`;
+        link += `/${category}/index.html`
     }
-    const { data: indexData } = await got.get<string>(link);
+    const { data: indexData } = await got.get<string>(link)
 
-    const $ = load(indexData);
+    const $ = load(indexData)
 
-    let items: DataItem[];
+    let items: DataItem[]
 
     // 新闻-视频首页特殊处理
     if (column === 'xw' && subColumn === 'SP' && !category) {
-        items = await parsePage(indexData);
+        items = await parsePage(indexData)
     } else {
-        const buildUnitScript = $('script[parseType="bulidstatic"]');
-        const queryUrl = `${baseUrl}${buildUnitScript.attr('url')}`;
-        const queryData = JSON.parse(buildUnitScript.attr('querydata')?.replaceAll("'", '"') ?? '{}');
-        queryData.paramJson = `{"pageNo":1,"pageSize":${limit}}`;
+        const buildUnitScript = $('script[parseType="bulidstatic"]')
+        const queryUrl = `${baseUrl}${buildUnitScript.attr('url')}`
+        const queryData = JSON.parse(buildUnitScript.attr('querydata')?.replaceAll("'", '"') ?? '{}')
+        queryData.paramJson = `{"pageNo":1,"pageSize":${limit}}`
 
         const { data } = await got.get<{ data: { html: string } }>(queryUrl, {
             searchParams: new URLSearchParams(queryData),
-        });
+        })
 
-        items = await parsePage(data.data.html);
+        items = await parsePage(data.data.html)
     }
 
-    const pageTitle = $('head title').text();
+    const pageTitle = $('head title').text()
 
     return {
         title: pageTitle,
         link,
         image: 'https://www.cast.org.cn/favicon.ico',
         item: items,
-    };
+    }
 }

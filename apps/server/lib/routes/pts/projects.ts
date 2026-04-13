@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/projects',
@@ -28,26 +28,26 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'news.pts.org.tw/projects',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://news.pts.org.tw';
-    const currentUrl = `${rootUrl}/projects`;
+    const rootUrl = 'https://news.pts.org.tw'
+    const currentUrl = `${rootUrl}/projects`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('h3 a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const projectDiv = item.parent().parent();
-            const description = projectDiv.find('p').text();
+            const projectDiv = item.parent().parent()
+            const description = projectDiv.find('p').text()
 
             return {
                 title: item.text(),
@@ -57,8 +57,8 @@ async function handler() {
                     image: projectDiv.parent().find('.cover-fit')?.attr('src') ?? projectDiv.parent().parent().find('.cover-fit').attr('src'),
                     description: description ? `<p>${description}</p>` : '',
                 }),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title')
@@ -66,5 +66,5 @@ async function handler() {
             .replace(/第\d+頁 ｜ /, ''),
         link: currentUrl,
         item: items,
-    };
+    }
 }

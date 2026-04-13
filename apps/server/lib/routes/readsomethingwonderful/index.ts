@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -23,10 +23,10 @@ export const route: Route = {
     ],
     maintainers: ['ttttmr'],
     handler,
-};
+}
 
 async function handler() {
-    const { data: response } = await got('https://api.getmatter.com/tools/api/rsw_entries/?format=json');
+    const { data: response } = await got('https://api.getmatter.com/tools/api/rsw_entries/?format=json')
 
     const items = response.results.map((item) => ({
         title: item.title,
@@ -37,11 +37,11 @@ async function handler() {
             ${item.recommender_name ? `<p>Recommended by: ${item.recommender_name}</p>` : ''}
             ${item.screenshot ? `<img src="${item.screenshot}" alt="Screenshot - ${item.title}">` : ''}
         `,
-    }));
+    }))
 
     return {
         title: 'Read Something Wonderful',
         link: 'https://readsomethingwonderful.com/',
         item: items,
-    };
+    }
 }

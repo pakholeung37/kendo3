@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
-import { hash } from './utils';
+import { hash } from './utils'
 
 export const route: Route = {
     path: '/build/:owner/:image/:tag?',
@@ -28,19 +28,19 @@ export const route: Route = {
     name: 'Image New Build',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { owner, image, tag = 'latest' } = ctx.req.param();
+    const { owner, image, tag = 'latest' } = ctx.req.param()
 
-    const namespace = `${owner}/${image}`;
+    const namespace = `${owner}/${image}`
 
-    const link = `https://hub.docker.com/r/${namespace}`;
+    const link = `https://hub.docker.com/r/${namespace}`
 
-    const data = await got.get(`https://hub.docker.com/v2/repositories/${namespace}/tags/${tag}`);
-    const metadata = await got.get(`https://hub.docker.com/v2/repositories/${namespace}/`);
+    const data = await got.get(`https://hub.docker.com/v2/repositories/${namespace}/tags/${tag}`)
+    const metadata = await got.get(`https://hub.docker.com/v2/repositories/${namespace}/`)
 
-    const item = data.data;
+    const item = data.data
 
     return {
         title: `${namespace}:${tag} build history`,
@@ -56,5 +56,5 @@ async function handler(ctx) {
                 guid: hash(item.images),
             },
         ],
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { getDataByUsername as getDataByUsernameGoogle } from './api/google';
-import { getDataByUsername as getDataByUsernameYoutubei } from './api/youtubei';
-import { callApi } from './utils';
+import { getDataByUsername as getDataByUsernameGoogle } from './api/google'
+import { getDataByUsername as getDataByUsernameYoutubei } from './api/youtubei'
+import { callApi } from './utils'
 
 export const route: Route = {
     path: '/user/:username/:routeParams?',
@@ -43,29 +43,29 @@ export const route: Route = {
     name: 'Channel with user handle',
     maintainers: ['DIYgod', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('username');
+    const username = ctx.req.param('username')
 
     // Parse route parameters
-    const routeParams = ctx.req.param('routeParams');
-    const params = new URLSearchParams(routeParams);
+    const routeParams = ctx.req.param('routeParams')
+    const params = new URLSearchParams(routeParams)
 
     // Get embed parameter
-    const embed = !params.get('embed');
+    const embed = !params.get('embed')
 
     // Get filterShorts parameter (default to true if not specified)
-    const filterShortsStr = params.get('filterShorts');
-    const filterShorts = filterShortsStr === null || filterShortsStr === '' || filterShortsStr === 'true';
+    const filterShortsStr = params.get('filterShorts')
+    const filterShorts = filterShortsStr === null || filterShortsStr === '' || filterShortsStr === 'true'
 
-    const isJsonFeed = ctx.req.query('format') === 'json';
+    const isJsonFeed = ctx.req.query('format') === 'json'
 
     const data = await callApi({
         googleApi: getDataByUsernameGoogle,
         youtubeiApi: getDataByUsernameYoutubei,
         params: { username, embed, filterShorts, isJsonFeed },
-    });
+    })
 
-    return data;
+    return data
 }

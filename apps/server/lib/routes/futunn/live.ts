@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/live/:lang?',
@@ -46,15 +46,15 @@ export const route: Route = {
     name: '快讯',
     maintainers: ['kennyfong19931'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30;
-    const lang = ctx.req.param('lang') ?? 'Mandarin';
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30
+    const lang = ctx.req.param('lang') ?? 'Mandarin'
 
-    const rootUrl = 'https://news.futunn.com';
-    const link = `${rootUrl}/main${lang === 'Mandarin' ? '' : lang === 'Cantonese' ? '/hk' : '/en'}/live`;
-    const apiUrl = `${rootUrl}/news-site-api/main/get-flash-list?pageSize=${limit}`;
+    const rootUrl = 'https://news.futunn.com'
+    const link = `${rootUrl}/main${lang === 'Mandarin' ? '' : lang === 'Cantonese' ? '/hk' : '/en'}/live`
+    const apiUrl = `${rootUrl}/news-site-api/main/get-flash-list?pageSize=${limit}`
 
     const response = await got({
         method: 'get',
@@ -62,10 +62,10 @@ async function handler(ctx) {
         headers: {
             'x-news-site-lang': lang === 'Mandarin' ? 0 : lang === 'Cantonese' ? 1 : 2,
         },
-    });
+    })
 
     const items = response.data.data.data.news.map((item) => {
-        const audio = item.audioInfos.find((audio) => audio.language === lang);
+        const audio = item.audioInfos.find((audio) => audio.language === lang)
         return {
             title: item.title || item.content,
             description: item.content,
@@ -87,8 +87,8 @@ async function handler(ctx) {
                     url: item.pic,
                 },
             },
-        };
-    });
+        }
+    })
 
     return {
         title: lang === 'Mandarin' ? '富途牛牛 - 快讯' : lang === 'Cantonese' ? '富途牛牛 - 快訊' : 'Futubull - Latest',
@@ -97,5 +97,5 @@ async function handler(ctx) {
         language: lang === 'Mandarin' ? 'zh-CN' : lang === 'Cantonese' ? 'zh-HK' : 'en',
         itunes_author: lang === 'Mandarin' || lang === 'Cantonese' ? '富途牛牛' : 'Futubull',
         itunes_category: 'News',
-    };
+    }
 }

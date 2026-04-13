@@ -1,19 +1,19 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-const baseUrl = 'https://www.woshipm.com';
+const baseUrl = 'https://www.woshipm.com'
 
 const parseArticle = (item, tryGet) =>
     tryGet(item.link, async () => {
-        const { data: response } = await got(item.link);
+        const { data: response } = await got(item.link)
 
-        const $ = load(response);
-        $('.support-author').remove();
+        const $ = load(response)
+        $('.support-author').remove()
 
-        item.description = $('.article--content').html();
+        item.description = $('.article--content').html()
 
-        return item;
-    });
+        return item
+    })
 
-export { baseUrl, parseArticle };
+export { baseUrl, parseArticle }

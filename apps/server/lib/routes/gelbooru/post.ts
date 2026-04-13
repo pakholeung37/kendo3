@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
-import queryString from 'query-string';
+import type { Context } from 'hono'
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getAPIKeys, renderDesc } from './utils';
+import { getAPIKeys, renderDesc } from './utils'
 
 export const route: Route = {
     path: '/post/:tags?/:quality?',
@@ -61,15 +61,15 @@ export const route: Route = {
 e.g.: \`/gelbooru/post?limit=20&\`
 `,
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const { tags: _tags = '', quality = 'sample' }: { tags?: string; quality?: 'sample' | 'orig' } = ctx.req.param();
+    const { tags: _tags = '', quality = 'sample' }: { tags?: string; quality?: 'sample' | 'orig' } = ctx.req.param()
 
-    const tags = decodeURIComponent(_tags).trim();
+    const tags = decodeURIComponent(_tags).trim()
 
-    const { limit = 40 }: { limit?: number } = ctx.req.query();
-    const { apiKey, userId } = getAPIKeys();
+    const { limit = 40 }: { limit?: number } = ctx.req.query()
+    const { apiKey, userId } = getAPIKeys()
 
     const response = await got({
         url: 'https://gelbooru.com/index.php',
@@ -83,9 +83,9 @@ async function handler(ctx: Context) {
             limit: limit <= 0 || limit > 100 ? 40 : limit,
             json: 1,
         }),
-    });
+    })
 
-    const posts = response.data.post;
+    const posts = response.data.post
 
     return {
         title: tags ? `${tags} - gelbooru.com` : 'gelbooru.com post list',
@@ -112,5 +112,5 @@ async function handler(ctx: Context) {
             },
             category: post.tags.split(/\s+/g),
         })),
-    };
+    }
 }

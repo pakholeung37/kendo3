@@ -1,8 +1,8 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { getItems } from './utils';
+import { getItems } from './utils'
 
 export const route: Route = {
     path: '/category/:category',
@@ -37,20 +37,20 @@ export const route: Route = {
 | Investor's Psychology | behavioral-finance |
 | Mutual Funds          | mutual-fund        |
 :::`,
-};
+}
 
 async function handler(ctx: Context) {
-    const { category } = ctx.req.param();
+    const { category } = ctx.req.param()
     const extra = {
         description: (topic: string) => `Articles for your research and knowledge under ${topic}`,
         date: true,
         selector: `div.card`,
-    };
-    return await commonHandler('https://insider.finology.in', `/${category}`, extra);
+    }
+    return await commonHandler('https://insider.finology.in', `/${category}`, extra)
 }
 
 export async function commonHandler(baseUrl: string, route: string, extra: any): Promise<Data> {
-    const { items, topicName } = await getItems(`${baseUrl}${route}`, extra);
+    const { items, topicName } = await getItems(`${baseUrl}${route}`, extra)
     return {
         title: `${topicName} - Finology Insider`,
         link: `${baseUrl}${route}`,
@@ -59,5 +59,5 @@ export async function commonHandler(baseUrl: string, route: string, extra: any):
         logo: 'https://insider.finology.in/Images/favicon/favicon.ico',
         icon: 'https://insider.finology.in/Images/favicon/favicon.ico',
         language: 'en-us',
-    };
+    }
 }

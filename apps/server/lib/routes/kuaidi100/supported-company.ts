@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/company',
@@ -24,10 +24,10 @@ export const route: Route = {
     maintainers: ['NeverBehave'],
     handler,
     url: 'kuaidi100.com/',
-};
+}
 
 async function handler() {
-    const ls = await utils.company();
+    const ls = await utils.company()
     return {
         title: `快递100 快递列表`,
         link: 'https://www.kuaidi100.com',
@@ -38,5 +38,5 @@ async function handler() {
             category: item.comTypeName,
             link: item.siteUrl,
         })),
-    };
+    }
 }

@@ -1,18 +1,18 @@
-import bbobHTML from '@bbob/html';
-import presetHTML5 from '@bbob/preset-html5';
-import type { BBobCoreTagNodeTree } from '@bbob/types';
-import { renderToString } from 'hono/jsx/dom/server';
+import bbobHTML from '@bbob/html'
+import presetHTML5 from '@bbob/preset-html5'
+import type { BBobCoreTagNodeTree } from '@bbob/types'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://instant.1point3acres.com';
-const apiRootUrl = 'https://api.1point3acres.com';
+const rootUrl = 'https://instant.1point3acres.com'
+const apiRootUrl = 'https://api.1point3acres.com'
 
 const types = {
     new: '最新帖子',
     hot: '热门帖子',
-};
+}
 
 const swapLinebreak = (tree: BBobCoreTagNodeTree) =>
     tree.walk((node) => {
@@ -20,10 +20,10 @@ const swapLinebreak = (tree: BBobCoreTagNodeTree) =>
             return {
                 tag: 'br',
                 content: null,
-            };
+            }
         }
-        return node;
-    });
+        return node
+    })
 
 const ProcessThreads = async (tryGet, apiUrl, order) => {
     const response = await got({
@@ -32,7 +32,7 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
         headers: {
             referer: rootUrl,
         },
-    });
+    })
 
     const items = await Promise.all(
         response.data.threads.map((item) => {
@@ -44,7 +44,7 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                 description: item.summary,
                 pubDate: parseDate((order === '' ? item.lastpost : item.dateline) * 1000),
                 category: [item.forum_name, ...(item.tags ? item.tags.map((t) => t.displayname) : [])],
-            };
+            }
 
             return tryGet(result.link, async () => {
                 try {
@@ -54,15 +54,15 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                         headers: {
                             referer: rootUrl,
                         },
-                    });
+                    })
 
-                    const thread = detailResponse.data.thread;
+                    const thread = detailResponse.data.thread
 
                     const customPreset = presetHTML5.extend((tags) => ({
                         ...tags,
                         attach: (node, { render }) => {
-                            const id = render(node.content);
-                            const attachment = thread.attachment_list.find((a) => a.aid === Number.parseInt(id));
+                            const id = render(node.content)
+                            const attachment = thread.attachment_list.find((a) => a.aid === Number.parseInt(id))
 
                             if (attachment.isimage) {
                                 return {
@@ -70,7 +70,7 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                                     attrs: {
                                         src: attachment.url,
                                     },
-                                };
+                                }
                             }
 
                             return {
@@ -81,12 +81,12 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                                     target: '_blank',
                                 },
                                 content: `https://www.1point3acres.com/bbs/plugin.php?id=attachcenter:page&aid=${id}`,
-                            };
+                            }
                         },
                         url: (node) => {
-                            const link = Object.keys(node.attrs as Record<string, string>)[0];
+                            const link = Object.keys(node.attrs as Record<string, string>)[0]
                             if (link.startsWith('https://link.1p3a.com/?url=')) {
-                                const url = decodeURIComponent(link.replace('https://link.1p3a.com/?url=', ''));
+                                const url = decodeURIComponent(link.replace('https://link.1p3a.com/?url=', ''))
                                 return {
                                     tag: 'a',
                                     attrs: {
@@ -95,7 +95,7 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                                         target: '_blank',
                                     },
                                     content: node.content,
-                                };
+                                }
                             }
 
                             return {
@@ -106,29 +106,29 @@ const ProcessThreads = async (tryGet, apiUrl, order) => {
                                     target: '_blank',
                                 },
                                 content: node.content,
-                            };
+                            }
                         },
-                    }));
+                    }))
 
-                    result.description = bbobHTML(thread.message_bbcode, [customPreset(), swapLinebreak]);
+                    result.description = bbobHTML(thread.message_bbcode, [customPreset(), swapLinebreak])
 
                     if (!thread.message_bbcode.includes('[attach]') && thread.attachment_list.length > 0) {
                         for (const a of thread.attachment_list) {
-                            result.description += a.isimage === 1 ? '<br>' + renderAttachmentImage(a.url, a.height, a.width) : '';
+                            result.description += a.isimage === 1 ? '<br>' + renderAttachmentImage(a.url, a.height, a.width) : ''
                         }
                     }
                 } catch {
                     // no-empty
                 }
 
-                return result;
-            });
-        })
-    );
+                return result
+            })
+        }),
+    )
 
-    return items;
-};
+    return items
+}
 
-export { apiRootUrl, ProcessThreads, rootUrl, types };
+export { apiRootUrl, ProcessThreads, rootUrl, types }
 
-const renderAttachmentImage = (url: string, height?: number, width?: number): string => renderToString(<img src={url} height={height} width={width} />);
+const renderAttachmentImage = (url: string, height?: number, width?: number): string => renderToString(<img src={url} height={height} width={width} />)

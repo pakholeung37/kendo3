@@ -1,36 +1,36 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, gqlEndpoint, parseItem } from './utils';
+import { baseUrl, gqlEndpoint, parseItem } from './utils'
 
 interface Tag {
-    type: string;
-    generated: boolean;
-    id: string;
-    typename: string;
+    type: string
+    generated: boolean
+    id: string
+    typename: string
 }
 
 const getTagId = (tid: string) =>
     cache.tryGet(`matters:tags:${tid}`, async () => {
-        const response = await ofetch(`${baseUrl}/tags/${tid}`);
-        const $ = cheerio.load(response);
-        const nextData = JSON.parse($('script#__NEXT_DATA__').text());
+        const response = await ofetch(`${baseUrl}/tags/${tid}`)
+        const $ = cheerio.load(response)
+        const nextData = JSON.parse($('script#__NEXT_DATA__').text())
 
         const node = Object.entries(nextData.props.apolloState.data.ROOT_QUERY)
             .find(([key]) => key.startsWith('node'))
-            ?.pop() as Tag;
+            ?.pop() as Tag
 
-        return node?.id.split(':')[1];
-    });
+        return node?.id.split(':')[1]
+    })
 
 const handler = async (ctx) => {
-    const { tid } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { tid } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const tagId = await getTagId(tid);
+    const tagId = await getTagId(tid)
 
     const gqlResponse = await ofetch(gqlEndpoint, {
         method: 'POST',
@@ -60,17 +60,17 @@ const handler = async (ctx) => {
                 }
               }`,
         },
-    });
+    })
 
-    const node = gqlResponse.data.node;
+    const node = gqlResponse.data.node
 
     return {
         title: `Matters | ${node.content}`,
         link: `${baseUrl}/tags/${tid}`,
         description: node.description,
         item: node.articles.edges.map(({ node }) => parseItem(node)),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/tags/:tid',
@@ -84,4 +84,4 @@ export const route: Route = {
             source: ['matters.town/tags/:tid'],
         },
     ],
-};
+}

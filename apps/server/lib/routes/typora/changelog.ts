@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/changelog',
@@ -27,12 +27,12 @@ export const route: Route = {
     maintainers: ['cnzgray'],
     handler,
     url: 'support.typora.io/',
-};
+}
 
 async function handler() {
-    const host = 'https://support.typora.io';
+    const host = 'https://support.typora.io'
 
-    const { data } = await got(`${host}/store/`);
+    const { data } = await got(`${host}/store/`)
 
     const list = Object.values(data)
         .filter((i) => i.category === 'new')
@@ -41,21 +41,21 @@ async function handler() {
             author: i.author,
             description: i.content,
             link: `${host}${i.url}`,
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(item.link);
-                const $ = load(data);
+                const { data } = await got(item.link)
+                const $ = load(data)
 
-                item.pubDate = parseDate($('.post-meta time').text());
-                item.description = $('#post-content').html();
+                item.pubDate = parseDate($('.post-meta time').text())
+                item.description = $('#post-content').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Typora Changelog',
@@ -63,5 +63,5 @@ async function handler() {
         description: 'Typora Changelog',
         image: `${host}/assets/img/favicon-128.png`,
         item: items,
-    };
+    }
 }

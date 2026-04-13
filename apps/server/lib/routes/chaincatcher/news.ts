@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.chaincatcher.com';
+const rootUrl = 'https://www.chaincatcher.com'
 
 export const route: Route = {
     path: '/news',
@@ -29,7 +29,7 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'chaincatcher.com/news',
-};
+}
 
 async function handler() {
     const { data } = await got.post(`${rootUrl}/index/content/lists`, {
@@ -37,24 +37,24 @@ async function handler() {
             page: 1,
             categoryid: 3,
         },
-    });
+    })
 
-    const $ = load(data.data, null, false);
+    const $ = load(data.data, null, false)
 
-    $('.share').remove();
+    $('.share').remove()
     const items = $('.block')
         .toArray()
         .map((item) => {
-            item = $(item);
-            item.find('.tips').remove();
-            const act = !!item.find('.act-title').text();
+            item = $(item)
+            item.find('.tips').remove()
+            const act = !!item.find('.act-title').text()
             return {
                 title: `${act ? '[重] ' : ''}${item.find('.title').text()}`,
                 description: item.find('.summary').text(),
                 link: `${rootUrl}${item.find('a').first().attr('href')}`,
                 pubDate: timezone(parseDate(item.find('.time').text(), 'YYYY-MM-DD HH:mm:ss'), 8),
-            };
-        });
+            }
+        })
 
     return {
         title: '最新资讯-ChainCatcher',
@@ -62,5 +62,5 @@ async function handler() {
         image: `${rootUrl}/logo.png`,
         link: `${rootUrl}/news`,
         item: items,
-    };
+    }
 }

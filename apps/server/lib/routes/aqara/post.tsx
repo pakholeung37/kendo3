@@ -1,71 +1,71 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '*',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://aqara.com';
-    const apiSlug = 'wp-json/wp/v2';
+    const rootUrl = 'https://aqara.com'
+    const apiSlug = 'wp-json/wp/v2'
 
-    let filterName;
+    let filterName
 
-    let currentUrl = rootUrl;
-    let apiUrl = new URL(`${apiSlug}/posts?_embed=true&per_page=${limit}`, rootUrl).href;
+    let currentUrl = rootUrl
+    let apiUrl = new URL(`${apiSlug}/posts?_embed=true&per_page=${limit}`, rootUrl).href
 
-    const filterMatches = getSubPath(ctx).match(/^\/([^/]*)\/([^/]*)\/(.*)$/);
+    const filterMatches = getSubPath(ctx).match(/^\/([^/]*)\/([^/]*)\/(.*)$/)
 
     if (filterMatches) {
-        const filterRegion = filterMatches[1];
-        const filterType = filterMatches[2] === 'tag' ? 'tags' : filterMatches[2] === 'category' ? 'categories' : filterMatches[2];
-        const filterKeyword = decodeURI(filterMatches[3].split('/').pop());
-        const filterApiUrl = new URL(`${filterRegion}/${apiSlug}/${filterType}?search=${filterKeyword}`, rootUrl).href;
+        const filterRegion = filterMatches[1]
+        const filterType = filterMatches[2] === 'tag' ? 'tags' : filterMatches[2] === 'category' ? 'categories' : filterMatches[2]
+        const filterKeyword = decodeURI(filterMatches[3].split('/').pop())
+        const filterApiUrl = new URL(`${filterRegion}/${apiSlug}/${filterType}?search=${filterKeyword}`, rootUrl).href
 
-        const { data: filterResponse } = await got(filterApiUrl);
+        const { data: filterResponse } = await got(filterApiUrl)
 
-        const filter = filterResponse.pop();
+        const filter = filterResponse.pop()
 
         if (filter?.id ?? undefined) {
-            filterName = filter.name ?? filterKeyword;
-            currentUrl = filter.link ?? currentUrl;
-            apiUrl = new URL(`${filterRegion}/${apiSlug}/posts?_embed=true&per_page=${limit}&${filterType}=${filter.id}`, rootUrl).href;
+            filterName = filter.name ?? filterKeyword
+            currentUrl = filter.link ?? currentUrl
+            apiUrl = new URL(`${filterRegion}/${apiSlug}/posts?_embed=true&per_page=${limit}&${filterType}=${filter.id}`, rootUrl).href
         }
     }
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
     const items = response.slice(0, limit).map((item) => {
-        const terminologies = item._embedded['wp:term'];
+        const terminologies = item._embedded['wp:term']
 
-        const content = load(item.content?.rendered ?? item.content);
+        const content = load(item.content?.rendered ?? item.content)
 
         // To handle lazy-loaded images.
 
         content('figure').each(function () {
-            const image = content(this).find('img');
-            const src = (image.prop('data-actualsrc') ?? image.prop('data-original') ?? image.prop('src')).replace(/(-\d+x\d+)/, '');
-            const width = image.prop('data-rawwidth') ?? image.prop('width');
-            const height = image.prop('data-rawheight') ?? image.prop('height');
+            const image = content(this).find('img')
+            const src = (image.prop('data-actualsrc') ?? image.prop('data-original') ?? image.prop('src')).replace(/(-\d+x\d+)/, '')
+            const width = image.prop('data-rawwidth') ?? image.prop('width')
+            const height = image.prop('data-rawheight') ?? image.prop('height')
 
             content(this).replaceWith(
                 renderToString(
                     <figure>
                         <img src={src} width={width} height={height} />
-                    </figure>
-                )
-            );
-        });
+                    </figure>,
+                ),
+            )
+        })
 
         return {
             title: item.title?.rendered ?? item.title,
@@ -76,15 +76,15 @@ async function handler(ctx) {
             guid: item.guid?.rendered ?? item.guid,
             pubDate: parseDate(item.date_gmt),
             updated: parseDate(item.modified_gmt),
-        };
-    });
+        }
+    })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const icon = $('link[rel="apple-touch-icon"]').first().prop('href');
-    const title = $('meta[property="og:site_name"]').prop('content') ?? 'Aqara';
+    const icon = $('link[rel="apple-touch-icon"]').first().prop('href')
+    const title = $('meta[property="og:site_name"]').prop('content') ?? 'Aqara'
 
     return {
         item: items,
@@ -97,5 +97,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('meta[property="og:type"]').prop('content'),
         author: title,
-    };
+    }
 }

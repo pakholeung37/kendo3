@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/entry/:id',
@@ -26,16 +26,16 @@ export const route: Route = {
     name: '制作者 / 游戏新闻',
     maintainers: ['kmod-midori'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const entryId = ctx.req.param('id');
+    const entryId = ctx.req.param('id')
 
-    const response = await got(`https://api.cngal.org/api/entries/GetEntryView/${entryId}`);
+    const response = await got(`https://api.cngal.org/api/entries/GetEntryView/${entryId}`)
 
-    const data = response.data;
+    const data = response.data
 
-    ctx.set('json', response.data);
+    ctx.set('json', response.data)
     return {
         title: `CnGal - ${data.name} 的动态`,
         link: `https://www.cngal.org/entries/index/${entryId}`,
@@ -45,7 +45,7 @@ async function handler(ctx) {
             pubDate: timezone(parseDate(item.happenedTime), +8),
             link: item.link,
         })),
-    };
+    }
 }
 
 const renderDescription = (item): string =>
@@ -53,5 +53,5 @@ const renderDescription = (item): string =>
         <>
             <p>{item.briefIntroduction}</p>
             {item.image ? <img src={item.image} /> : null}
-        </>
-    );
+        </>,
+    )

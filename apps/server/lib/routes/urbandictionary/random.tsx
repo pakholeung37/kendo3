@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/random',
@@ -26,11 +26,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'urbandictionary.com/random.php',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.urbandictionary.com';
-    const { data } = await got('https://api.urbandictionary.com/v0/random');
+    const baseUrl = 'https://www.urbandictionary.com'
+    const { data } = await got('https://api.urbandictionary.com/v0/random')
 
     const items = data.list.map((item) => ({
         title: item.word,
@@ -53,17 +53,17 @@ async function handler() {
                         by <a href={`https://www.urbandictionary.com/author.php?author=${item.author}`}>{item.author}</a>
                     </>
                 ) : null}
-            </>
+            </>,
         ),
         link: `${baseUrl}/define.php?term=${item.word}`,
         guid: item.permalink,
         pubDate: parseDate(item.written_on),
         author: item.author,
-    }));
+    }))
 
     return {
         title: 'Urban Dictionary: Random words',
         link: `${baseUrl}/random.php`,
         item: items,
-    };
+    }
 }

@@ -1,46 +1,46 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://bullionvault.com';
-    const targetUrl: string = new URL(`gold-news${category ? `/${category}` : ''}`, baseUrl).href;
+    const baseUrl = 'https://bullionvault.com'
+    const targetUrl: string = new URL(`gold-news${category ? `/${category}` : ''}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('section#block-bootstrap-views-block-latest-articles-block div.media, div.gold-news-content table tr')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('td.views-field-title a, div.views-field-title a').first();
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('td.views-field-title a, div.views-field-title a').first()
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('td.views-field-created, div.views-field-created').text().trim();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const authorEls: Element[] = $el.find('a.username').toArray();
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('td.views-field-created, div.views-field-created').text().trim()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const authorEls: Element[] = $el.find('a.username').toArray()
             const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                const $authorEl: Cheerio<Element> = $(authorEl);
+                const $authorEl: Cheerio<Element> = $(authorEl)
 
                 return {
                     name: $authorEl.text(),
                     url: $authorEl.attr('href'),
                     avatar: undefined,
-                };
-            });
-            const upDatedStr: string | undefined = pubDateStr;
+                }
+            })
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -49,37 +49,37 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 author: authors,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('article.article h1').text();
-                    const description: string | undefined = $$('div.content').html() ?? '';
-                    const pubDateStr: string | undefined = $$('div.submitted').text().split(/,/).pop();
-                    const categories: string[] = $$('meta[name="news_keywords"]').attr('content')?.split(/,/) ?? [];
-                    const authorEls: Element[] = $$('div.view-author-bio').toArray();
+                    const title: string = $$('article.article h1').text()
+                    const description: string | undefined = $$('div.content').html() ?? ''
+                    const pubDateStr: string | undefined = $$('div.submitted').text().split(/,/).pop()
+                    const categories: string[] = $$('meta[name="news_keywords"]').attr('content')?.split(/,/) ?? []
+                    const authorEls: Element[] = $$('div.view-author-bio').toArray()
                     const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                        const $$authorEl: Cheerio<Element> = $$(authorEl);
+                        const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                         return {
                             name: $$authorEl.find('h1').text(),
                             url: undefined,
                             avatar: $$authorEl.find('img').attr('src'),
-                        };
-                    });
-                    const upDatedStr: string | undefined = pubDateStr;
+                        }
+                    })
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -93,16 +93,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -114,8 +114,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:title"]').attr('content')?.split(/\|/).pop(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/gold-news/:category?',
@@ -186,9 +186,9 @@ If you subscribe to [Gold Price News](https://www.bullionvault.com/gold-news/gol
         {
             source: ['bullionvault.com/gold-news/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/bullionvault/gold-news${category ? `/${category}` : ''}`;
+                return `/bullionvault/gold-news${category ? `/${category}` : ''}`
             },
         },
         {
@@ -228,4 +228,4 @@ If you subscribe to [Gold Price News](https://www.bullionvault.com/gold-news/gol
         },
     ],
     view: ViewType.Articles,
-};
+}

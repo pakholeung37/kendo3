@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'TokenInsight',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 TokenInsight also provides official RSS, you can take a look at [https://api.tokeninsight.com/reference/rss](https://api.tokeninsight.com/reference/rss).
 :::`,
     lang: 'en',
-};
+}

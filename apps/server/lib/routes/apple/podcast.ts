@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/podcast/:id/:region?',
@@ -31,36 +31,36 @@ export const route: Route = {
     maintainers: ['Acring'],
     handler,
     url: 'www.apple.com/apple-podcasts/',
-};
+}
 
 async function handler(ctx) {
-    const { id, region } = ctx.req.param();
-    const numericId = id.match(/id(\d+)/)?.[1];
-    const baseUrl = 'https://podcasts.apple.com';
-    const link = `${baseUrl}/${region || `cn`}/podcast/${id}`;
+    const { id, region } = ctx.req.param()
+    const numericId = id.match(/id(\d+)/)?.[1]
+    const baseUrl = 'https://podcasts.apple.com'
+    const link = `${baseUrl}/${region || `cn`}/podcast/${id}`
 
-    const response = await ofetch(link);
+    const response = await ofetch(link)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const rawServerData = JSON.parse($('#serialized-server-data').text());
-    const serverData = (Array.isArray(rawServerData) ? rawServerData : rawServerData.data)[0].data;
-    const header = serverData.shelves.find((item) => item.contentType === 'showHeaderRegular').items[0];
+    const rawServerData = JSON.parse($('#serialized-server-data').text())
+    const serverData = (Array.isArray(rawServerData) ? rawServerData : rawServerData.data)[0].data
+    const header = serverData.shelves.find((item) => item.contentType === 'showHeaderRegular').items[0]
 
     const bearerToken = await cache.tryGet(
         'apple:podcast:bearer',
         async () => {
-            const moduleAddress = new URL($('head script[type="module"]').attr('src'), baseUrl).href;
+            const moduleAddress = new URL($('head script[type="module"]').attr('src'), baseUrl).href
             const modulesResponse = await ofetch(moduleAddress, {
                 parseResponse: (txt) => txt,
-            });
-            const bearerToken = modulesResponse.match(/="(eyJhbGci.*?)",/)[1];
+            })
+            const bearerToken = modulesResponse.match(/="(eyJhbGci.*?)",/)[1]
 
-            return bearerToken as string;
+            return bearerToken as string
         },
         config.cache.contentExpire,
-        false
-    );
+        false,
+    )
 
     const episodeReponse = await ofetch(`https://amp-api.podcasts.apple.com/v1/catalog/us/podcasts/${numericId}/episodes`, {
         query: {
@@ -74,11 +74,11 @@ async function handler(ctx) {
             Authorization: `Bearer ${bearerToken}`,
             Origin: baseUrl,
         },
-    });
+    })
 
     const episodes = episodeReponse.data.map(({ attributes: item }) => {
         // Try to keep line breaks in the description
-        const offer = item.offers[0];
+        const offer = item.offers[0]
 
         return {
             title: item.name,
@@ -91,10 +91,10 @@ async function handler(ctx) {
             author: item.artistName,
             itunes_item_image: item.artwork.url.replace(/\{w\}x\{h\}(?:\{c\}|bb)\.\{f\}/, '3000x3000bb.webp'),
             category: item.genreNames,
-        };
-    });
+        }
+    })
 
-    const channel = episodeReponse.data.find((d) => d.type === 'podcast-episodes')?.relationships?.channel?.data?.find((d) => d.type === 'podcast-channels')?.attributes;
+    const channel = episodeReponse.data.find((d) => d.type === 'podcast-episodes')?.relationships?.channel?.data?.find((d) => d.type === 'podcast-channels')?.attributes
 
     return {
         title: channel?.name ?? header.title,
@@ -104,5 +104,5 @@ async function handler(ctx) {
         description: (header.description || channel?.description.standard)?.replaceAll('\n', ' '),
         image: ((channel?.logoArtwork || channel?.subscriptionArtwork)?.url || header.contextAction.podcastOffer.artwork.template).replace(/\{w\}x\{h\}(?:\{c\}|bb)\.\{f\}/, '3000x3000bb.webp'),
         itunes_category: header.metadata.find((d) => Object.hasOwn(d, 'category')).category?.title || header.metadata.find((d) => Object.hasOwn(d, 'category')).category,
-    };
+    }
 }

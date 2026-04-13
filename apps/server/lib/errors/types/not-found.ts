@@ -1,5 +1,5 @@
 class NotFoundError extends Error {
-    name = 'NotFoundError';
+    name = 'NotFoundError'
 }
 
-export default NotFoundError;
+export default NotFoundError

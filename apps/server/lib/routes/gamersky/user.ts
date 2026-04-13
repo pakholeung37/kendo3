@@ -1,8 +1,8 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getUserArticle, getUserArticleList, parseUserArticleList } from './utils';
+import { getUserArticle, getUserArticleList, parseUserArticleList } from './utils'
 
 export const route: Route = {
     path: '/user/:userId/:detail?',
@@ -23,19 +23,19 @@ export const route: Route = {
     name: '用户动态',
     maintainers: ['hualiong'],
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const { userId, detail } = ctx.req.param();
+    const { userId, detail } = ctx.req.param()
 
-    const body = await getUserArticleList(userId);
-    const articles = parseUserArticleList(body);
+    const body = await getUserArticleList(userId)
+    const articles = parseUserArticleList(body)
     if (detail) {
-        articles.list = await Promise.all(articles.list.map((item) => getUserArticle(item)));
+        articles.list = await Promise.all(articles.list.map((item) => getUserArticle(item)))
     }
     return {
         title: `${articles.uname}的动态 - 游民星空`,
         link: articles.link,
         item: articles.list,
-    };
+    }
 }

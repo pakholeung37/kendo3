@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { extractNotes, notesUrl } from '../utils';
+import { extractNotes, notesUrl } from '../utils'
 
 export const route: Route = {
     path: '/notes/:lang?/user/:uid',
@@ -21,21 +21,21 @@ export const route: Route = {
     name: 'User Notes',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { uid, lang } = ctx.req.param();
-    const link = `${notesUrl}${lang ? `/${lang}` : ''}/user/${uid}`;
+    const { uid, lang } = ctx.req.param()
+    const link = `${notesUrl}${lang ? `/${lang}` : ''}/user/${uid}`
 
-    const { data: response } = await got(link);
-    const $ = load(response);
+    const { data: response } = await got(link)
+    const $ = load(response)
 
-    const items = extractNotes($);
+    const items = extractNotes($)
 
     return {
         title: $('head title').text(),
         link,
         language: $('html').attr('lang'),
         item: items,
-    };
+    }
 }

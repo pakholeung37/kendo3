@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/blog/:type?/:time?/:sort?',
@@ -40,36 +40,36 @@ export const route: Route = {
 | 按发表时间排序 | 按评论数排序 | 按点击数排序 |
 | -------------- | ------------ | ------------ |
 | 1              | 2            | 3            |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'recommend';
-    const time = ctx.req.param('time') ?? '5';
-    const sort = ctx.req.param('sort') ?? '1';
+    const type = ctx.req.param('type') ?? 'recommend'
+    const time = ctx.req.param('time') ?? '5'
+    const sort = ctx.req.param('sort') ?? '1'
 
-    const rootUrl = 'http://blog.sciencenet.cn';
-    const currentUrl = `${rootUrl}/blog.php?mod=${type}&type=list&op=${time}&ord=${sort}`;
+    const rootUrl = 'http://blog.sciencenet.cn'
+    const currentUrl = `${rootUrl}/blog.php?mod=${type}&type=list&op=${time}&ord=${sort}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response.data, 'gbk'));
+    const $ = load(iconv.decode(response.data, 'gbk'))
 
     let items = $('tr td a[title]')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}/${item.attr('href')}`,
                 pubDate: new Date(item.next().text()).toUTCString(),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -78,22 +78,22 @@ async function handler(ctx) {
                     method: 'get',
                     url: item.link,
                     responseType: 'buffer',
-                });
+                })
 
-                const content = load(iconv.decode(detailResponse.data, 'gbk'));
+                const content = load(iconv.decode(detailResponse.data, 'gbk'))
 
-                item.author = content('.xs2').text();
-                item.description = content('#blog_article').html();
-                item.pubDate = timezone(parseDate(content('.xg1').eq(5).text()), +8);
+                item.author = content('.xs2').text()
+                item.description = content('#blog_article').html()
+                item.pubDate = timezone(parseDate(content('.xg1').eq(5).text()), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '科学网 - 精选博文',
         link: currentUrl,
         item: items,
-    };
+    }
 }

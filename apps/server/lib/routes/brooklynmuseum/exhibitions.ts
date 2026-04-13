@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
 export const route: Route = {
     path: '/exhibitions/:state?',
@@ -17,19 +17,19 @@ export const route: Route = {
     name: 'Exhibitions',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let link;
-    const state = ctx.req.param('state');
+    let link
+    const state = ctx.req.param('state')
 
     switch (state) {
         case undefined:
         case 'current':
-            link = 'https://www.brooklynmuseum.org/exhibitions/';
-            break;
+            link = 'https://www.brooklynmuseum.org/exhibitions/'
+            break
         default:
-            link = `https://www.brooklynmuseum.org/exhibitions/${state}`;
+            link = `https://www.brooklynmuseum.org/exhibitions/${state}`
     }
 
     return await buildData({
@@ -42,5 +42,5 @@ async function handler(ctx) {
             link: `$('h2 > a, h3 > a').attr('href')`,
             description: `$('h6').text()`,
         },
-    });
+    })
 }

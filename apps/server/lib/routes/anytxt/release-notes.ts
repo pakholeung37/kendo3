@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://anytxt.net';
-    const targetUrl: string = new URL('download/', baseUrl).href;
+    const baseUrl = 'https://anytxt.net'
+    const targetUrl: string = new URL('download/', baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en-US';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en-US'
 
-    const image: string | undefined = $('meta[property="og:image"]').attr('content');
+    const image: string | undefined = $('meta[property="og:image"]').attr('content')
 
     const items: DataItem[] = $('p.has-medium-font-size')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.text();
-            const description: string | undefined = $el.next().html() ?? '';
-            const pubDateStr: string | undefined = title.split(/\s/)[0];
-            const linkUrl: string | undefined = targetUrl;
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $el.text()
+            const description: string | undefined = $el.next().html() ?? ''
+            const pubDateStr: string | undefined = title.split(/\s/)[0]
+            const linkUrl: string | undefined = targetUrl
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -45,11 +45,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
+            return processedItem
         })
-        .filter((_): _ is DataItem => true);
+        .filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -61,8 +61,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/release-notes',
@@ -90,4 +90,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

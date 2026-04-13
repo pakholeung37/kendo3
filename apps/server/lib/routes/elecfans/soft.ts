@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/soft/:atype',
@@ -26,45 +26,45 @@ export const route: Route = {
     ],
     maintainers: ['tian051011'],
     handler: async (ctx) => {
-        const { atype } = ctx.req.param();
-        const response = await ofetch(`https://www.elecfans.com/soft/${atype}/`);
-        const $ = load(response);
+        const { atype } = ctx.req.param()
+        const response = await ofetch(`https://www.elecfans.com/soft/${atype}/`)
+        const $ = load(response)
         const list = $('#mainContent li')
             .toArray()
             .map((item) => {
-                item = $(item);
-                const a = item.find('a').eq(1);
+                item = $(item)
+                const a = item.find('a').eq(1)
                 return {
                     title: a.text(),
                     link: String(a.attr('href')),
-                };
-            });
+                }
+            })
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const response = await ofetch(item.link);
-                    const $ = load(response);
+                    const response = await ofetch(item.link)
+                    const $ = load(response)
 
-                    item.pubDate = parseDate($('.data-info-content2021 .upload-date').eq(1).text());
-                    const mid = $('#filed_mid2021').first().text();
-                    const userInfoApi = `https://www.elecfans.com/webapi/user/getSoftUserInfo?mid=${mid}`;
+                    item.pubDate = parseDate($('.data-info-content2021 .upload-date').eq(1).text())
+                    const mid = $('#filed_mid2021').first().text()
+                    const userInfoApi = `https://www.elecfans.com/webapi/user/getSoftUserInfo?mid=${mid}`
                     item.author = await cache.tryGet(userInfoApi, async () => {
-                        const userResponse = await ofetch(userInfoApi);
-                        return userResponse.data.uname;
-                    });
-                    item.description = $('.simditor-body').first().html();
+                        const userResponse = await ofetch(userInfoApi)
+                        return userResponse.data.uname
+                    })
+                    item.description = $('.simditor-body').first().html()
                     item.category = $('.nTags a > span')
                         .toArray()
-                        .map((item) => $(item).text().trim());
+                        .map((item) => $(item).text().trim())
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
         return {
             title: `elecfans ${atype} softs`,
             link: `https://www.elecfans.com/soft/${atype}/`,
             item: items,
-        };
+        }
     },
-};
+}

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.hellobtc.com';
+const rootUrl = 'https://www.hellobtc.com'
 
 export const route: Route = {
     path: '/news',
@@ -29,13 +29,13 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'hellobtc.com/news',
-};
+}
 
 async function handler() {
-    const url = `${rootUrl}/news`;
+    const url = `${rootUrl}/news`
 
-    const response = await got(url);
-    const $ = load(response.data);
+    const response = await got(url)
+    const $ = load(response.data)
     const items = $('nav.js-nav')
         .find('div.item')
         .toArray()
@@ -45,11 +45,11 @@ async function handler() {
             description: $(item).find('div.sub').text(),
             pubDate: timezone(parseDate($(item).find('span.date').text(), 'MM-DD HH:mm'), +8),
         }))
-        .filter(Boolean);
+        .filter(Boolean)
 
     return {
         title: `白话区块链 - 快讯`,
         link: url,
         item: items,
-    };
+    }
 }

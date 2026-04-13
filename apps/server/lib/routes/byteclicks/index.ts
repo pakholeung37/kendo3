@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
-const baseUrl = 'https://byteclicks.com';
+const baseUrl = 'https://byteclicks.com'
 
 export const route: Route = {
     path: '/',
@@ -17,16 +17,16 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'byteclicks.com/',
-};
+}
 
 async function handler(ctx) {
     const { data } = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
             per_page: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100,
         },
-    });
+    })
 
-    const items = parseItem(data);
+    const items = parseItem(data)
 
     return {
         title: '字节点击 - 聚合全球优质资源，跟踪世界前沿科技',
@@ -35,5 +35,5 @@ async function handler(ctx) {
         image: 'https://byteclicks.com/wp-content/themes/RK-Blogger/images/wbolt.ico',
         link: baseUrl,
         item: items,
-    };
+    }
 }

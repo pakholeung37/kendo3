@@ -1,4 +1,4 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
 export const route: Route = {
     path: '/coronavirus',
@@ -16,8 +16,8 @@ export const route: Route = {
     name: 'South China Morning Post - China coronavirus outbreak',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 function handler(ctx) {
-    ctx.set('redirect', '/scmp/topics/coronavirus-pandemic-all-stories');
+    ctx.set('redirect', '/scmp/topics/coronavirus-pandemic-all-stories')
 }

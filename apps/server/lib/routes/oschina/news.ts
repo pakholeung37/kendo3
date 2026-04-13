@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, blogBaseUrl, getBlog, getBlogListCategory, getNews } from './utils';
+import { baseUrl, blogBaseUrl, getBlog, getBlogListCategory, getNews } from './utils'
 
 const configs = {
     0: {
@@ -69,7 +69,7 @@ const configs = {
     17: {
         name: '多媒体处理',
     },
-};
+}
 
 export const route: Route = {
     path: '/news/:category?',
@@ -99,30 +99,30 @@ export const route: Route = {
     name: '资讯',
     maintainers: ['tgly307', 'zengxs'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    let { category = '0' } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') ?? 30, 10);
+    let { category = '0' } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') ?? 30, 10)
 
     switch (category) {
         case 'all':
-            category = '0';
-            break;
+            category = '0'
+            break
         case 'industry':
         case 'industry-news':
         case 'programming':
-            category = '9998';
-            break;
+            category = '9998'
+            break
         case 'project':
-            category = '9999';
-            break;
+            category = '9999'
+            break
         default:
-            break;
+            break
     }
 
-    const blogListCategory = await getBlogListCategory();
-    const config = blogListCategory.find((item) => item.id.toString() === category) ?? blogListCategory[0];
+    const blogListCategory = await getBlogListCategory()
+    const config = blogListCategory.find((item) => item.id.toString() === category) ?? blogListCategory[0]
 
     const response = await ofetch(`${baseUrl}/ApiHomeNew${config.apiPath}`, {
         query: {
@@ -130,7 +130,7 @@ async function handler(ctx) {
             pageSize: limit,
             type: category,
         },
-    });
+    })
 
     const list = response.result.map((item) => ({
         title: item.obj_title,
@@ -142,23 +142,23 @@ async function handler(ctx) {
         pubDate: parseDate(item.create_time, 'x'),
         author: item.userVo.name,
         image: item.image,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.guid, async () => {
                 if (item.objectType === 4) {
-                    const response = await getNews(item.detailId);
-                    item.description = response.code === 200 ? response.result.detail : item.description;
+                    const response = await getNews(item.detailId)
+                    item.description = response.code === 200 ? response.result.detail : item.description
                 } else if (item.objectType === 3) {
-                    const response = await getBlog(item.detailId);
-                    item.description = response.code === 200 ? response.result.content : item.description;
+                    const response = await getBlog(item.detailId)
+                    item.description = response.code === 200 ? response.result.content : item.description
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `开源中国-${config.name}`,
@@ -167,5 +167,5 @@ async function handler(ctx) {
         image: config.logo,
         language: 'zh-CN' as const,
         item: items,
-    };
+    }
 }

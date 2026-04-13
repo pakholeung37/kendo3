@@ -1,13 +1,13 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { Essential, Mylist, UserInfo, VideoItem } from './types';
+import type { Essential, Mylist, UserInfo, VideoItem } from './types'
 
-export const getUserInfoById = (id: string) => cache.tryGet(`nicovideo:user:${id}`, () => ofetch<UserInfo>(`https://embed.nicovideo.jp/users/${id}`)) as Promise<UserInfo>;
+export const getUserInfoById = (id: string) => cache.tryGet(`nicovideo:user:${id}`, () => ofetch<UserInfo>(`https://embed.nicovideo.jp/users/${id}`)) as Promise<UserInfo>
 
 export const getUserVideosById = (id: string) =>
     cache.tryGet(
@@ -24,13 +24,13 @@ export const getUserVideosById = (id: string) =>
                     pageSize: 100,
                     page: 1,
                 },
-            });
+            })
 
-            return data.items;
+            return data.items
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<VideoItem[]>;
+        false,
+    ) as Promise<VideoItem[]>
 
 export const getMylist = (id: string): Promise<Mylist> =>
     cache.tryGet<Mylist>(
@@ -51,12 +51,12 @@ export const getMylist = (id: string): Promise<Mylist> =>
                     pageSize: 500,
                     page: 1,
                 },
-            });
-            return data.mylist;
+            })
+            return data.mylist
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 export const renderVideo = (video: Essential, embed: boolean) =>
     renderToString(
@@ -68,5 +68,5 @@ export const renderVideo = (video: Essential, embed: boolean) =>
             )}
             <br />
             {video.shortDescription ? <>{raw(video.shortDescription)}</> : null}
-        </>
-    );
+        </>,
+    )

@@ -1,15 +1,15 @@
-import * as cheerio from 'cheerio';
-import sanitizeHtml from 'sanitize-html';
-import xxhash from 'xxhash-wasm';
+import * as cheerio from 'cheerio'
+import sanitizeHtml from 'sanitize-html'
+import xxhash from 'xxhash-wasm'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const link = 'https://www.economist.com/the-world-in-brief';
+const link = 'https://www.economist.com/the-world-in-brief'
 
 export const route: Route = {
     path: '/espresso',
@@ -34,29 +34,29 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'economist.com/the-world-in-brief',
-};
+}
 
 async function handler() {
-    const { h64ToString } = await xxhash();
+    const { h64ToString } = await xxhash()
     const nextData = await cache.tryGet(
         link,
         async () => {
-            const response = await ofetch(link);
-            const $ = cheerio.load(response);
-            return JSON.parse($('script#__NEXT_DATA__').text());
+            const response = await ofetch(link)
+            const $ = cheerio.load(response)
+            return JSON.parse($('script#__NEXT_DATA__').text())
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const { content, metadata } = nextData.props.pageProps;
+    const { content, metadata } = nextData.props.pageProps
     const items = content.gobbets.map((item) => ({
         link,
         title: sanitizeHtml(item, { allowedTags: [], allowedAttributes: {} }),
         pubDate: parseDate(content.datePublished),
         description: item,
         guid: `${link}#${h64ToString(item)}`,
-    }));
+    }))
 
     return {
         title: metadata.title,
@@ -65,5 +65,5 @@ async function handler() {
         language: 'en-gb',
         image: metadata.imageUrl,
         item: items,
-    };
+    }
 }

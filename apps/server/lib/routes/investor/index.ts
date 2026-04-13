@@ -1,35 +1,35 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'home/zxdt' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { id = 'home/zxdt' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://www.investor.org.cn';
-    const targetUrl: string = new URL(id.endsWith('/') ? id : `${id}/`, baseUrl).href;
+    const baseUrl = 'https://www.investor.org.cn'
+    const targetUrl: string = new URL(id.endsWith('/') ? id : `${id}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('div.right_content_item a')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('div.title').text();
-            const pubDateStr: string | undefined = $el.find('div.date').text();
-            const linkUrl: string | undefined = $el.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $el.find('div.title').text()
+            const pubDateStr: string | undefined = $el.find('div.date').text()
+            const linkUrl: string | undefined = $el.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -37,37 +37,37 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl ? new URL(linkUrl, targetUrl).href : undefined,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link || item.link.endsWith('.pdf')) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('div.text_content_detail_title h1').text() ?? item.title;
-                const description: string | undefined = $$('div.trs_editor_view').html() ?? undefined;
+                const title: string = $$('div.text_content_detail_title h1').text() ?? item.title
+                const description: string | undefined = $$('div.trs_editor_view').html() ?? undefined
                 const pubDateStr: string | undefined = $$('div.base_info_left span')
                     .toArray()
                     .some((el) => $$(el).text().includes('时间'))
                     ? $$(
                           $$('div.base_info_left span')
                               .toArray()
-                              .find((el) => $$(el).text().includes('时间'))
+                              .find((el) => $$(el).text().includes('时间')),
                       )
                           .text()
                           .split(/：/)
                           .pop()
                           ?.trim()
-                    : undefined;
-                const upDatedStr: string | undefined = pubDateStr;
+                    : undefined
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -79,17 +79,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -101,8 +101,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/\|/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:id{.+}?',
@@ -423,4 +423,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,16 +1,16 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { cnNewsHander } from './news-cn';
+import { cnNewsHander } from './news-cn'
 
 const languages = {
     en: 'fcbayern.com-en-gb',
     es: 'fcbayern.com-es-es',
     de: 'fcbayern.com-de-de',
-};
+}
 
 const query = /* GraphQL */ `
     query Web_NewsSearch($channelId: String!, $query: String!, $filterTags: [String!], $filterSections: [String!], $filterTypes: [String!], $count: Int!, $offset: Int, $excludeHeroStageResultFromPageId: String) {
@@ -123,7 +123,7 @@ const query = /* GraphQL */ `
         }
         __typename
     }
-`;
+`
 
 export const route: Route = {
     path: '/news/:language?',
@@ -155,18 +155,18 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'fcbayern.com',
-};
+}
 
 async function handler(ctx: Context) {
-    const { language = 'en' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')!, 10) : 20;
+    const { language = 'en' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')!, 10) : 20
 
     if (language === 'zh') {
-        return cnNewsHander(limit);
+        return cnNewsHander(limit)
     }
 
-    const baseUrl = 'https://fcbayern.com';
-    const channelId = languages[language] ?? languages.en;
+    const baseUrl = 'https://fcbayern.com'
+    const channelId = languages[language] ?? languages.en
 
     const response = await ofetch(`${baseUrl}/graphql`, {
         method: 'POST',
@@ -186,7 +186,7 @@ async function handler(ctx: Context) {
             },
             query,
         },
-    });
+    })
 
     const items = response.data.newsSearch.results.map((item) => ({
         title: item.teaserTitle,
@@ -195,7 +195,7 @@ async function handler(ctx: Context) {
         pubDate: item.publicationDate ? parseDate(item.publicationDate) : undefined,
         image: item.teaserImage?.url,
         category: item.tag ? [item.tag] : undefined,
-    }));
+    }))
 
     return {
         title: 'FC Bayern München - News',
@@ -203,5 +203,5 @@ async function handler(ctx: Context) {
         language,
         image: `${baseUrl}/favicon.ico`,
         item: items,
-    };
+    }
 }

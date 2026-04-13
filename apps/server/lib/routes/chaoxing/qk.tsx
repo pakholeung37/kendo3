@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/qk/:id/:needContent?',
@@ -35,24 +35,24 @@ export const route: Route = {
 
   在根据上文设置 **需要获取文章全文** 为不需要时，你可以将 \`limit\` 值增大，从而获取更多的条目，此时因为不获取全文也不会触发反爬机制，如 [\`/chaoxing/qk/6b5c39b3dd84352be512e29df0297437/false?limit=100\`](https://rsshub.app/chaoxing/qk/6b5c39b3dd84352be512e29df0297437/false?limit=100)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const needContent = /t|y/i.test(ctx.req.param('needContent') ?? 'true');
+    const id = ctx.req.param('id')
+    const needContent = /t|y/i.test(ctx.req.param('needContent') ?? 'true')
 
-    const rootUrl = 'http://m.chaoxing.com';
-    const currentUrl = `${rootUrl}/mqk/json?size=${ctx.req.query('limit') ?? 30}&mags=${id}&isort=20`;
+    const rootUrl = 'http://m.chaoxing.com'
+    const currentUrl = `${rootUrl}/mqk/json?size=${ctx.req.query('limit') ?? 30}&mags=${id}&isort=20`
 
     const headers = {
         cookie: 'duxiu=userName_dsr%2C%3Dmmxy%2C!userid_dsr%2C%3D837%2C!enc_dsr%2C%3D7EDE234634FC80D554A7F6D1AA0D3629; AID_dsr=665; msign_dsr=1638170006420;',
-    };
+    }
 
     const response = await got({
         method: 'get',
         url: currentUrl,
         headers,
-    });
+    })
 
     let items = response.data.list.map((item) => ({
         title: item.infos.C301,
@@ -61,7 +61,7 @@ async function handler(ctx) {
         category: [item.infos.C314, item.infos.C031],
         pubDate: parseDate(item.infos.C103, 'YYYYMMDD'),
         description: renderToString(<>{(item.infos.M305 ?? item.infos.C305 ?? '').trim() ? <p>{(item.infos.M305 ?? item.infos.C305 ?? '').trim()}</p> : null}</>),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -71,20 +71,20 @@ async function handler(ctx) {
                         method: 'get',
                         url: item.link,
                         headers,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    item.description = content('#article_content').html() ?? content('body').html();
+                    item.description = content('#article_content').html() ?? content('body').html()
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: response.data.list[0].infos.C307,
         link: `${rootUrl}/mqk/list?mags=${id}&isort=20&from=space`,
         item: items,
-    };
+    }
 }

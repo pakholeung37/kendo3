@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionProps = {
-    embed: boolean;
-    ugc?: boolean;
-    ogv?: boolean;
-    aid?: string;
-    cid?: string;
-    bvid?: string;
-    seasonId?: string;
-    episodeId?: string;
-    img?: string;
-    description?: string;
-};
+    embed: boolean
+    ugc?: boolean
+    ogv?: boolean
+    aid?: string
+    cid?: string
+    bvid?: string
+    seasonId?: string
+    episodeId?: string
+    img?: string
+    description?: string
+}
 
 const Description = ({ embed, ugc, ogv, aid, cid, bvid, seasonId, episodeId, img, description }: DescriptionProps) => (
     <>
@@ -31,6 +31,6 @@ const Description = ({ embed, ugc, ogv, aid, cid, bvid, seasonId, episodeId, img
         ) : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
-export const renderDescription = (props: DescriptionProps): string => renderToString(<Description {...props} />);
+export const renderDescription = (props: DescriptionProps): string => renderToString(<Description {...props} />)

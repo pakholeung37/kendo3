@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:keywords/:security_key?',
@@ -18,11 +18,11 @@ export const route: Route = {
     maintainers: ['nightmare-mio'],
     handler,
     url: 'lightNovel.us/',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.lightnovel.us';
-    const { type, keywords, security_key = config.lightnovel.cookie } = ctx.req.param();
+    const baseUrl = 'https://www.lightnovel.us'
+    const { type, keywords, security_key = config.lightnovel.cookie } = ctx.req.param()
     const { data: response } = await got({
         method: 'POST',
         url: `${baseUrl}/proxy/api/search/search-result`,
@@ -43,7 +43,7 @@ async function handler(ctx) {
                 security_key,
             },
         },
-    });
+    })
     const list = response.data.articles
         .map((item) => ({
             title: item.title,
@@ -51,7 +51,7 @@ async function handler(ctx) {
             pubDate: parseDate(item.time),
             author: item.author,
         }))
-        .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5);
+        .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5)
 
     const items = await Promise.all(
         list.map((item) =>
@@ -62,18 +62,18 @@ async function handler(ctx) {
                     headers: {
                         'User-Agent': config.trueUA,
                     },
-                });
+                })
 
-                const $ = load(response);
-                item.description = $('#article-main-contents').html();
-                return item;
-            })
-        )
-    );
+                const $ = load(response)
+                item.description = $('#article-main-contents').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `轻之国度-追踪${keywords}更新-${type} `,
         link: baseUrl,
         item: items,
-    };
+    }
 }

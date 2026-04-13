@@ -1,102 +1,102 @@
 /* eslint-disable unicorn/prefer-code-point */
-import CryptoJS from 'crypto-js';
+import CryptoJS from 'crypto-js'
 
-import { config } from '@/config';
-import md5 from '@/utils/md5';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import md5 from '@/utils/md5'
+import ofetch from '@/utils/ofetch'
 
-import { renderDescription } from './templates/description';
-import type { MediaResult, ResultResponse, SeasonResult } from './types';
+import { renderDescription } from './templates/description'
+import type { MediaResult, ResultResponse, SeasonResult } from './types'
 
 // a
 function randomHexStr(length) {
-    let string = '';
+    let string = ''
     for (let r = 0; r < length; r++) {
-        string += dec2HexUpper(16 * Math.random());
+        string += dec2HexUpper(16 * Math.random())
     }
-    return padStringWithZeros(string, length);
+    return padStringWithZeros(string, length)
 }
 
 // o
 function dec2HexUpper(e) {
-    return Math.ceil(e).toString(16).toUpperCase();
+    return Math.ceil(e).toString(16).toUpperCase()
 }
 
 // s
 function padStringWithZeros(string, length) {
-    let padding = '';
+    let padding = ''
     if (string.length < length) {
         for (let n = 0; n < length - string.length; n++) {
-            padding += '0';
+            padding += '0'
         }
     }
-    return padding + string;
+    return padding + string
 }
 
 function lsid() {
-    const e = Date.now().toString(16).toUpperCase();
-    const lsid = randomHexStr(8) + '_' + e;
-    return lsid;
+    const e = Date.now().toString(16).toUpperCase()
+    const lsid = randomHexStr(8) + '_' + e
+    return lsid
 }
 
 function _uuid() {
-    const e = randomHexStr(8);
-    const t = randomHexStr(4);
-    const r = randomHexStr(4);
-    const n = randomHexStr(4);
-    const o = randomHexStr(12);
-    const i = Date.now();
-    return e + '-' + t + '-' + r + '-' + n + '-' + o + padStringWithZeros((i % 100000).toString(), 5) + 'infoc';
+    const e = randomHexStr(8)
+    const t = randomHexStr(4)
+    const r = randomHexStr(4)
+    const n = randomHexStr(4)
+    const o = randomHexStr(12)
+    const i = Date.now()
+    return e + '-' + t + '-' + r + '-' + n + '-' + o + padStringWithZeros((i % 100000).toString(), 5) + 'infoc'
 }
 
 // P
 function shiftCharByOne(string) {
-    let shiftedStr = '';
+    let shiftedStr = ''
     for (let n = 0; n < string.length; n++) {
-        shiftedStr += String.fromCharCode(string.charCodeAt(n) - 1);
+        shiftedStr += String.fromCharCode(string.charCodeAt(n) - 1)
     }
-    return shiftedStr;
+    return shiftedStr
 }
 
 // o
 function hexsign(e) {
-    const n = 'YhxToH[2q';
-    const r = CryptoJS.HmacSHA256('ts'.concat(e), shiftCharByOne(n));
-    const o = CryptoJS.enc.Hex.stringify(r);
-    return o;
+    const n = 'YhxToH[2q'
+    const r = CryptoJS.HmacSHA256('ts'.concat(e), shiftCharByOne(n))
+    const o = CryptoJS.enc.Hex.stringify(r)
+    return o
 }
 
 function addRenderData(params, renderData) {
-    return `${params}&w_webid=${encodeURIComponent(renderData)}`;
+    return `${params}&w_webid=${encodeURIComponent(renderData)}`
 }
 
 function addWbiVerifyInfo(params, wbiVerifyString) {
-    const searchParams = new URLSearchParams(params);
-    searchParams.sort();
-    const verifyParam = searchParams.toString();
-    const wts = Math.round(Date.now() / 1000);
-    const w_rid = md5(`${verifyParam}&wts=${wts}${wbiVerifyString}`);
-    return `${params}&w_rid=${w_rid}&wts=${wts}`;
+    const searchParams = new URLSearchParams(params)
+    searchParams.sort()
+    const verifyParam = searchParams.toString()
+    const wts = Math.round(Date.now() / 1000)
+    const w_rid = md5(`${verifyParam}&wts=${wts}${wbiVerifyString}`)
+    return `${params}&w_rid=${w_rid}&wts=${wts}`
 }
 
 // https://github.com/errcw/gaussian/blob/master/lib/box-muller.js
 function generateGaussianInteger(mean, std) {
-    const _2PI = Math.PI * 2;
-    const u1 = Math.random();
-    const u2 = Math.random();
+    const _2PI = Math.PI * 2
+    const u1 = Math.random()
+    const u2 = Math.random()
 
-    const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(_2PI * u2);
+    const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(_2PI * u2)
 
-    return Math.round(z0 * std + mean);
+    return Math.round(z0 * std + mean)
 }
 
 function getDmImgList() {
     if (config.bilibili.dmImgList !== undefined) {
-        const dmImgList = JSON.parse(config.bilibili.dmImgList);
-        return JSON.stringify([dmImgList[Math.floor(Math.random() * dmImgList.length)]]);
+        const dmImgList = JSON.parse(config.bilibili.dmImgList)
+        return JSON.stringify([dmImgList[Math.floor(Math.random() * dmImgList.length)]])
     }
-    const x = Math.max(generateGaussianInteger(1245, 5), 0);
-    const y = Math.max(generateGaussianInteger(1285, 5), 0);
+    const x = Math.max(generateGaussianInteger(1245, 5), 0)
+    const y = Math.max(generateGaussianInteger(1285, 5), 0)
     const path = [
         {
             x: 3 * x + 2 * y,
@@ -105,21 +105,21 @@ function getDmImgList() {
             timestamp: Math.max(generateGaussianInteger(30, 5), 0),
             type: 0,
         },
-    ];
-    return JSON.stringify(path);
+    ]
+    return JSON.stringify(path)
 }
 
 function getDmImgInter() {
     if (config.bilibili.dmImgInter !== undefined) {
-        const dmImgInter = JSON.parse(config.bilibili.dmImgInter);
-        return JSON.stringify([dmImgInter[Math.floor(Math.random() * dmImgInter.length)]]);
+        const dmImgInter = JSON.parse(config.bilibili.dmImgInter)
+        return JSON.stringify([dmImgInter[Math.floor(Math.random() * dmImgInter.length)]])
     }
-    const p1 = getDmImgInterWh(274, 601);
-    const s1 = getDmImgInterOf(134, 30);
-    const p2 = getDmImgInterWh(332, 64);
-    const s2 = getDmImgInterOf(1101, 338);
-    const of = getDmImgInterOf(0, 0);
-    const wh = getDmImgInterWh(1245, 1285);
+    const p1 = getDmImgInterWh(274, 601)
+    const s1 = getDmImgInterOf(134, 30)
+    const p2 = getDmImgInterWh(332, 64)
+    const s2 = getDmImgInterOf(1101, 338)
+    const of = getDmImgInterOf(0, 0)
+    const wh = getDmImgInterWh(1245, 1285)
     const ds = [
         {
             t: getDmImgInterT('div'),
@@ -133,8 +133,8 @@ function getDmImgInter() {
             p: [p2[0], p2[2], p2[1]],
             s: [s2[2], s2[0], s2[1]],
         },
-    ];
-    return JSON.stringify({ ds, wh, of });
+    ]
+    return JSON.stringify({ ds, wh, of })
 }
 
 function getDmImgInterT(tag: string) {
@@ -168,34 +168,34 @@ function getDmImgInterT(tag: string) {
         th: 24,
         tr: 22,
         ul: 8,
-    }[tag];
+    }[tag]
 }
 
 function getDmImgInterC(className: string) {
-    return Buffer.from(className).toString('base64').slice(0, -2);
+    return Buffer.from(className).toString('base64').slice(0, -2)
 }
 
 function getDmImgInterOf(top: number, left: number) {
-    const seed = Math.floor(514 * Math.random());
-    return [3 * top + 2 * left + seed, 4 * top - 4 * left + 2 * seed, seed];
+    const seed = Math.floor(514 * Math.random())
+    return [3 * top + 2 * left + seed, 4 * top - 4 * left + 2 * seed, seed]
 }
 
 function getDmImgInterWh(width: number, height: number) {
-    const seed = Math.floor(114 * Math.random());
-    return [2 * width + 2 * height + 3 * seed, 4 * width - height + seed, seed];
+    const seed = Math.floor(114 * Math.random())
+    return [2 * width + 2 * height + 3 * seed, 4 * width - height + seed, seed]
 }
 
 function addDmVerifyInfo(params: string, dmImgList: string) {
-    const dmImgStr = Buffer.from('no webgl').toString('base64').slice(0, -2);
-    const dmCoverImgStr = Buffer.from('no webgl').toString('base64').slice(0, -2);
-    return `${params}&dm_img_list=${dmImgList}&dm_img_str=${dmImgStr}&dm_cover_img_str=${dmCoverImgStr}`;
+    const dmImgStr = Buffer.from('no webgl').toString('base64').slice(0, -2)
+    const dmCoverImgStr = Buffer.from('no webgl').toString('base64').slice(0, -2)
+    return `${params}&dm_img_list=${dmImgList}&dm_img_str=${dmImgStr}&dm_cover_img_str=${dmCoverImgStr}`
 }
 
 function addDmVerifyInfoWithInter(params: string, dmImgList: string, dmImgInter: string) {
-    return `${addDmVerifyInfo(params, dmImgList)}&dm_img_inter=${dmImgInter}`;
+    return `${addDmVerifyInfo(params, dmImgList)}&dm_img_inter=${dmImgInter}`
 }
 
-const bvidTime = 1_589_990_400;
+const bvidTime = 1_589_990_400
 
 /**
  * 获取番剧信息并缓存
@@ -212,16 +212,16 @@ export const getBangumi = (id: string, cache): Promise<MediaResult> =>
                 query: {
                     media_id: id,
                 },
-            });
+            })
             if (res.result.share_url === undefined) {
                 // reference: https://api.bilibili.com/pgc/review/user?media_id=${id}
-                res.result.share_url = `https://www.bilibili.com/bangumi/media/md${res.result.media_id}`;
+                res.result.share_url = `https://www.bilibili.com/bangumi/media/md${res.result.media_id}`
             }
-            return res.result;
+            return res.result
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<MediaResult>;
+        false,
+    ) as Promise<MediaResult>
 
 /**
  * 获取番剧分集信息并缓存
@@ -238,12 +238,12 @@ export const getBangumiItems = (id: string, cache): Promise<SeasonResult> =>
                 query: {
                     season_id: id,
                 },
-            });
-            return res.result;
+            })
+            return res.result
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<SeasonResult>;
+        false,
+    ) as Promise<SeasonResult>
 
 /**
  * Render the UGC (user-generated content) description.
@@ -268,9 +268,9 @@ export const renderUGCDescription = (embed: boolean, img: string, description: s
         bvid,
         img: img.replace('http://', 'https://'),
         description,
-    });
-    return rendered;
-};
+    })
+    return rendered
+}
 
 /**
  * Render the OGV (original video) description.
@@ -293,16 +293,16 @@ export const renderOGVDescription = (embed: boolean, img: string, description: s
         episodeId,
         img: img.replace('http://', 'https://'),
         description,
-    });
-    return rendered;
-};
-
-export function getVideoUrl(bvid: string): string;
-export function getVideoUrl(bvid?: string): string | undefined;
-export function getVideoUrl(bvid?: string): string | undefined {
-    return bvid ? `https://www.bilibili.com/blackboard/newplayer.html?isOutside=true&autoplay=true&danmaku=true&muted=false&highQuality=true&bvid=${bvid}` : undefined;
+    })
+    return rendered
 }
-export const getLiveUrl = (roomId?: string) => (roomId ? `https://www.bilibili.com/blackboard/live/live-activity-player.html?cid=${roomId}` : undefined);
+
+export function getVideoUrl(bvid: string): string
+export function getVideoUrl(bvid?: string): string | undefined
+export function getVideoUrl(bvid?: string): string | undefined {
+    return bvid ? `https://www.bilibili.com/blackboard/newplayer.html?isOutside=true&autoplay=true&danmaku=true&muted=false&highQuality=true&bvid=${bvid}` : undefined
+}
+export const getLiveUrl = (roomId?: string) => (roomId ? `https://www.bilibili.com/blackboard/live/live-activity-player.html?cid=${roomId}` : undefined)
 
 export default {
     lsid,
@@ -320,4 +320,4 @@ export default {
     renderUGCDescription,
     renderOGVDescription,
     getVideoUrl,
-};
+}

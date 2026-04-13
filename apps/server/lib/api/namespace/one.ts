@@ -1,7 +1,7 @@
-import type { RouteHandler } from '@hono/zod-openapi';
-import { createRoute, z } from '@hono/zod-openapi';
+import type { RouteHandler } from '@hono/zod-openapi'
+import { createRoute, z } from '@hono/zod-openapi'
 
-import { namespaces } from '@/registry';
+import { namespaces } from '@/registry'
 
 const ParamsSchema = z.object({
     namespace: z.string().openapi({
@@ -11,7 +11,7 @@ const ParamsSchema = z.object({
         },
         example: 'github',
     }),
-});
+})
 
 const route = createRoute({
     method: 'get',
@@ -26,11 +26,11 @@ const route = createRoute({
             description: 'Namespace registry data for a namespace',
         },
     },
-});
+})
 
 const handler: RouteHandler<typeof route> = (ctx) => {
-    const { namespace } = ctx.req.valid('param');
-    return ctx.json(namespaces[namespace]);
-};
+    const { namespace } = ctx.req.valid('param')
+    return ctx.json(namespaces[namespace])
+}
 
-export { handler, route };
+export { handler, route }

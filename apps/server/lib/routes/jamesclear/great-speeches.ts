@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchContent, processItem, rootUrl } from './utils';
+import { fetchContent, processItem, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/great-speeches',
@@ -25,11 +25,11 @@ export const route: Route = {
     name: 'Great Speeches',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const speeches = await fetchContent('great-speeches');
-    const items = speeches.map((item) => processItem(item));
+    const speeches = await fetchContent('great-speeches')
+    const items = speeches.map((item) => processItem(item))
 
     return {
         title: 'James Clear - Great Speeches',
@@ -38,5 +38,5 @@ async function handler(): Promise<Data> {
         item: items,
         language: 'en',
         icon: `${rootUrl}/favicon.ico`,
-    };
+    }
 }

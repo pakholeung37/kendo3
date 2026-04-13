@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/interview/:jobId',
@@ -27,21 +27,21 @@ export const route: Route = {
     maintainers: ['xia0ne'],
     handler,
     url: 'nowcoder.com/',
-};
+}
 async function handler(ctx) {
-    const jobId = ctx.req.param('jobId');
+    const jobId = ctx.req.param('jobId')
 
-    const link = `https://gw-c.nowcoder.com/api/sparta/job-experience/experience/job/list?_=${Date.now()}`;
+    const link = `https://gw-c.nowcoder.com/api/sparta/job-experience/experience/job/list?_=${Date.now()}`
     const payload = {
         jobId,
         level: 3,
         order: 3,
         page: 1,
-    };
+    }
 
-    const responseBody = (await got.post(link, { json: payload })).data;
+    const responseBody = (await got.post(link, { json: payload })).data
     if (responseBody.code !== 0) {
-        throw new Error(`接口错误，错误代码:${responseBody.code},错误原因:${responseBody.msg}`);
+        throw new Error(`接口错误，错误代码:${responseBody.code},错误原因:${responseBody.msg}`)
     }
 
     const items = (responseBody.data.records ?? [])
@@ -52,12 +52,12 @@ async function handler(ctx) {
             description: m.content ?? '',
             link: `https://www.nowcoder.com/feed/main/detail/${m.uuid}`,
             pubDate: parseDate(m.createdAt),
-        }));
+        }))
 
     return {
         title: '牛客网-面试经验',
         link: 'https://www.nowcoder.com/interview/',
         description: '牛客网面试经验',
         item: items,
-    };
+    }
 }

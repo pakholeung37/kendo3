@@ -6,14 +6,14 @@
 // scirobotics:    Science Robotics
 // signaling:      Science Signaling
 // stm:            Science Translational Medicine
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, fetchDesc, getItem } from './utils';
+import { baseUrl, fetchDesc, getItem } from './utils'
 
 export const route: Route = {
     path: '/current/:journal?',
@@ -48,27 +48,27 @@ export const route: Route = {
 
   -   Using route (\`/science/current/\` + "short name for a journal") to get current issue of a journal from AAAS.
   -   Leaving it empty (\`/science/current\`) to get update from Science.`,
-};
+}
 
 async function handler(ctx) {
-    const { journal = 'science' } = ctx.req.param();
-    const pageURL = `${baseUrl}/toc/${journal}/current`;
+    const { journal = 'science' } = ctx.req.param()
+    const pageURL = `${baseUrl}/toc/${journal}/current`
 
     const { data: pageResponse } = await got(pageURL, {
         headers: {
             cookie: 'cookiePolicy=iaccept;',
         },
-    });
-    const $ = load(pageResponse);
-    const pageTitleName = $('head > title').text();
+    })
+    const $ = load(pageResponse)
+    const pageTitleName = $('head > title').text()
 
     const list = $('.toc__section .card')
         .toArray()
-        .map((item) => getItem(item, $));
+        .map((item) => getItem(item, $))
 
-    const browser = await puppeteer();
-    const items = await fetchDesc(list, browser, cache.tryGet);
-    await browser.close();
+    const browser = await puppeteer()
+    const items = await fetchDesc(list, browser, cache.tryGet)
+    await browser.close()
 
     return {
         title: `${pageTitleName} | Current Issue`,
@@ -77,5 +77,5 @@ async function handler(ctx) {
         link: pageURL,
         language: 'en-US',
         item: items,
-    };
+    }
 }

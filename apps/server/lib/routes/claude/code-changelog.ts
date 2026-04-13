@@ -1,35 +1,35 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const handler = async (ctx: Context): Promise<Data> => {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '25', 10);
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '25', 10)
 
-    const baseUrl = 'https://code.claude.com';
-    const targetUrl = `${baseUrl}/docs/en/changelog`;
+    const baseUrl = 'https://code.claude.com'
+    const targetUrl = `${baseUrl}/docs/en/changelog`
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
 
     const items: DataItem[] = $('div.update-container')
         .slice(0, limit)
         .toArray()
         .map((el): DataItem => {
-            const $entry = $(el);
-            const version = $entry.find('[data-component-part="update-label"]').text().trim();
+            const $entry = $(el)
+            const version = $entry.find('[data-component-part="update-label"]').text().trim()
             if (!version) {
-                return null as unknown as DataItem;
+                return null as unknown as DataItem
             }
 
-            const dateText = $entry.find('[data-component-part="update-description"]').text().trim();
-            const description = $entry.find('[data-component-part="update-content"]').html() ?? '';
+            const dateText = $entry.find('[data-component-part="update-description"]').text().trim()
+            const description = $entry.find('[data-component-part="update-content"]').html() ?? ''
 
-            const anchor = $entry.attr('id') ?? version.replaceAll('.', '-');
-            const link = `${targetUrl}#${anchor}`;
+            const anchor = $entry.attr('id') ?? version.replaceAll('.', '-')
+            const link = `${targetUrl}#${anchor}`
 
             return {
                 title: version,
@@ -38,9 +38,9 @@ const handler = async (ctx: Context): Promise<Data> => {
                 pubDate: dateText ? parseDate(dateText) : undefined,
                 guid: `claude-code-${version}`,
                 id: `claude-code-${version}`,
-            };
+            }
         })
-        .filter(Boolean);
+        .filter(Boolean)
 
     return {
         title: 'Claude Code Changelog',
@@ -48,8 +48,8 @@ const handler = async (ctx: Context): Promise<Data> => {
         link: targetUrl,
         item: items,
         allowEmpty: true,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/code/changelog',
@@ -74,4 +74,4 @@ export const route: Route = {
             target: '/code/changelog',
         },
     ],
-};
+}

@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, puppeteerGet } from './utils';
+import { baseUrl, puppeteerGet } from './utils'
 
 export const route: Route = {
     path: '/topic/:topic',
@@ -16,16 +16,16 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['zphw'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = `${baseUrl}/topic/${ctx.req.param('topic')}`;
+    const url = `${baseUrl}/topic/${ctx.req.param('topic')}`
 
     // use Puppeteer due to the obstacle by cloudflare challenge
-    const html = await puppeteerGet(url, cache);
+    const html = await puppeteerGet(url, cache)
 
-    const $ = load(html);
-    const list = $('div.aw-item');
+    const $ = load(html)
+    const list = $('div.aw-item')
 
     return {
         title: `品葱 - ${ctx.req.param('topic')}`,
@@ -35,5 +35,5 @@ async function handler(ctx) {
             link: baseUrl + $(item).find('h4 a').attr('href'),
             pubDate: parseDate($(item).attr('data-created-at') * 1000),
         })),
-    };
+    }
 }

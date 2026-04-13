@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/prime/community',
@@ -29,29 +29,29 @@ export const route: Route = {
     name: '会员社区',
     maintainers: ['mintyfrankie'],
     handler,
-};
+}
 
-const TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyNzU3NiIsInR5cGUiOiJ1c2VyIiwiZXhwIjoxNzQ4NTI2MDEzfQ.di8RB-lxHI_JMBQHFd2xhcpk6Zd_3bvfQlAti6HAuZA';
+const TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjcyNzU3NiIsInR5cGUiOiJ1c2VyIiwiZXhwIjoxNzQ4NTI2MDEzfQ.di8RB-lxHI_JMBQHFd2xhcpk6Zd_3bvfQlAti6HAuZA'
 
 async function handler() {
-    let token;
-    const cacheIn = await cache.get('sspai:token');
+    let token
+    const cacheIn = await cache.get('sspai:token')
 
     if (cacheIn) {
-        token = cacheIn;
+        token = cacheIn
     } else if (config.sspai.bearertoken) {
-        token = config.sspai.bearertoken;
-        cache.set('sspai:token', config.sspai.bearertoken);
+        token = config.sspai.bearertoken
+        cache.set('sspai:token', config.sspai.bearertoken)
     } else {
-        token = TOKEN;
+        token = TOKEN
     }
 
-    const feedEndpoint = 'https://sspai.com/api/v1/community/page/get';
+    const feedEndpoint = 'https://sspai.com/api/v1/community/page/get'
     const headers = {
         Authorization: token,
-    };
+    }
 
-    const response = await ofetch(feedEndpoint, { headers });
+    const response = await ofetch(feedEndpoint, { headers })
     const list = response.data.map((item) => ({
         title: item.title,
         link: `https://sspai.com/t/${item.id_hash}`,
@@ -59,19 +59,19 @@ async function handler() {
         author: item.author.nickname,
         category: item.channel.title,
         id_hash: item.id_hash,
-    }));
+    }))
 
     // FIXME: TypeError: Cannot read properties of null (reading 'body')
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const postEndpoint = `https://sspai.com/api/v1/community/topic/single/info/get?id_hash=${item.id_hash}`;
-                const response = await ofetch(postEndpoint, { headers });
-                item.description = response.data.body || 'No content';
-                return item;
-            })
-        )
-    );
+                const postEndpoint = `https://sspai.com/api/v1/community/topic/single/info/get?id_hash=${item.id_hash}`
+                const response = await ofetch(postEndpoint, { headers })
+                item.description = response.data.body || 'No content'
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '少数派会员社区',
@@ -79,5 +79,5 @@ async function handler() {
         lang: 'zh-CN',
         description: '少数派会员社区',
         item: items,
-    };
+    }
 }

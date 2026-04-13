@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:name',
@@ -28,39 +28,39 @@ export const route: Route = {
     name: 'Archive',
     maintainers: ['stjohnjohnson'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const baseURL = 'https://comicskingdom.com';
-    const name = ctx.req.param('name');
-    const url = `${baseURL}/${name}/archive`;
-    const { data } = await got(url);
+    const baseURL = 'https://comicskingdom.com'
+    const name = ctx.req.param('name')
+    const url = `${baseURL}/${name}/archive`
+    const { data } = await got(url)
 
-    const $ = load(data);
+    const $ = load(data)
 
     // Determine Comic and Author from main page
-    const comic = $('title').text().replace('Comics Kingdom - ', '').trim();
-    const author = $('.feature-title h2').text();
+    const comic = $('title').text().replace('Comics Kingdom - ', '').trim()
+    const author = $('.feature-title h2').text()
 
     // Find the links for all non-archived items
     const links = $('div.tile')
         .toArray()
-        .map((el) => $(el).find('a').first().attr('href'));
+        .map((el) => $(el).find('a').first().attr('href'))
 
     if (links.length === 0) {
-        throw new InvalidParameterError(`Comic Not Found - ${name}`);
+        throw new InvalidParameterError(`Comic Not Found - ${name}`)
     }
     const items = await Promise.all(
         links.map((link) =>
             cache.tryGet(link, async () => {
-                const detailResponse = await got(link);
-                const content = load(detailResponse.data);
+                const detailResponse = await got(link)
+                const content = load(detailResponse.data)
 
-                const title = content('meta[property="og:description"]').attr('content');
-                const image = content('meta[property="og:image"]').attr('content');
-                const description = renderToString(<img src={image} />);
+                const title = content('meta[property="og:description"]').attr('content')
+                const image = content('meta[property="og:image"]').attr('content')
+                const description = renderToString(<img src={image} />)
                 // Pull the date out of the URL
-                const pubDate = parseDate(link.slice(link.lastIndexOf('/') + 1), 'YYYY-MM-DD');
+                const pubDate = parseDate(link.slice(link.lastIndexOf('/') + 1), 'YYYY-MM-DD')
 
                 return {
                     title,
@@ -69,10 +69,10 @@ async function handler(ctx) {
                     description,
                     pubDate,
                     link,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: comic,
@@ -80,5 +80,5 @@ async function handler(ctx) {
         image: $('.feature-logo').attr('src'),
         item: items,
         language: 'en-US',
-    };
+    }
 }

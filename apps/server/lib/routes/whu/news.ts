@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
-import { domain, getMeta, processItems, processMeta } from './util';
+import { renderDescription } from './templates/description'
+import { domain, getMeta, processItems, processMeta } from './util'
 
 export const route: Route = {
     path: '/news/:category{.+}?',
@@ -25,31 +25,31 @@ category 参数可选，范围如下:
 
 此外 route 后可以加上 \`?limit=n\` 的查询参数，表示只获取前 n 条新闻；如果不指定默认为 10。
 `,
-};
+}
 
 const parseCategory = (category: string | number) => {
-    const outputs = ['wdzx/wdyw', 'kydt', 'stkj/ljyx', 'stkj/wdsp'];
+    const outputs = ['wdzx/wdyw', 'kydt', 'stkj/ljyx', 'stkj/wdsp']
     if (['0', '1', '2', '3'].includes(category)) {
-        return outputs[category];
+        return outputs[category]
     }
     if (outputs.includes(category)) {
-        return category;
+        return category
     }
-    return 'wdzx/wdyw';
-};
+    return 'wdzx/wdyw'
+}
 
 async function handler(ctx) {
-    let { category } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    let { category } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    category = parseCategory(category);
+    category = parseCategory(category)
 
-    const rootUrl = `https://news.${domain}`;
-    const currentUrl = new URL(`${category}.htm`, rootUrl).href;
+    const rootUrl = `https://news.${domain}`
+    const currentUrl = new URL(`${category}.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     // The elements where the information is located vary with the category.
     // 武大资讯 https://news.whu.edu.cn/wdzx/wdyw.htm => ul.wdzxList li a[title]
@@ -60,9 +60,9 @@ async function handler(ctx) {
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const image = item.find('div.img img');
+            const image = item.find('div.img img')
 
             return {
                 title: item.prop('title') ?? item.find('h4.eclips').text(),
@@ -77,16 +77,16 @@ async function handler(ctx) {
                           }
                         : undefined,
                 }),
-            };
-        });
+            }
+        })
 
-    items = await processItems(items, cache.tryGet, rootUrl);
+    items = await processItems(items, cache.tryGet, rootUrl)
 
-    const meta = processMeta(response);
-    const siteName = getMeta(meta, 'SiteName');
-    const columnName = getMeta(meta, 'ColumnName');
+    const meta = processMeta(response)
+    const siteName = getMeta(meta, 'SiteName')
+    const columnName = getMeta(meta, 'ColumnName')
 
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -100,5 +100,5 @@ async function handler(ctx) {
         subtitle: columnName,
         author: siteName,
         allowEmpty: true,
-    };
+    }
 }

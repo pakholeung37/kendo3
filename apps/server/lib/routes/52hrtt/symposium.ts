@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/symposium/:id?/:classId?',
@@ -35,27 +35,27 @@ export const route: Route = {
 ::: tip
   更多的专题可以点击 [这里](https://www.52hrtt.com/global/n/w/symposium)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
-    const classId = ctx.req.param('classId') ?? '';
+    const id = ctx.req.param('id') ?? ''
+    const classId = ctx.req.param('classId') ?? ''
 
-    const rootUrl = 'https://www.52hrtt.com';
-    const currentUrl = `${rootUrl}/global/n/w/symposium/${id}`;
-    const apiUrl = `${rootUrl}/s/webapi/global/symposium/getInfoList?symposiumId=${id}${classId ? `&symposiumclassId=${classId}` : ''}`;
+    const rootUrl = 'https://www.52hrtt.com'
+    const currentUrl = `${rootUrl}/global/n/w/symposium/${id}`
+    const apiUrl = `${rootUrl}/s/webapi/global/symposium/getInfoList?symposiumId=${id}${classId ? `&symposiumclassId=${classId}` : ''}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const titleResponse = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(titleResponse.data);
+    const $ = load(titleResponse.data)
 
     const list = response.data.data
         .filter((item) => item.infoTitle)
@@ -64,7 +64,7 @@ async function handler(ctx) {
             author: item.quoteFrom,
             pubDate: timezone(parseDate(item.infoStartTime), +8),
             link: `${rootUrl}/global/n/w/info/${item.infoCentreId}`,
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -72,19 +72,19 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.description = content('.info-content').html();
+                item.description = content('.info-content').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

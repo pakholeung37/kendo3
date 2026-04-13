@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Data, Route } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/',
@@ -30,13 +30,13 @@ export const route: Route = {
         },
     ],
     description: 'Get latest news from Decrypt.',
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
-    const rssUrl = 'https://decrypt.co/feed';
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
+    const rssUrl = 'https://decrypt.co/feed'
 
-    const feed = await parser.parseURL(rssUrl);
+    const feed = await parser.parseURL(rssUrl)
 
     const items = await Promise.all(
         feed.items
@@ -45,11 +45,11 @@ async function handler(ctx): Promise<Data> {
             .map((item) =>
                 cache.tryGet(`decrypt:article:${item.link}`, async () => {
                     if (!item.link) {
-                        return {};
+                        return {}
                     }
 
                     try {
-                        const result = await extractFullText(item.link);
+                        const result = await extractFullText(item.link)
                         return {
                             title: item.title || 'Untitled',
                             link: item.link.split('?')[0], // Clean URL by removing query parameters
@@ -59,9 +59,9 @@ async function handler(ctx): Promise<Data> {
                             category: result?.tags ? [...new Set([...(item.categories ?? []), ...result.tags])] : item.categories || [],
                             guid: item.guid || item.link,
                             image: result?.featuredImage ?? item.enclosure?.url,
-                        };
+                        }
                     } catch (error: any) {
-                        logger.warn(`Couldn't fetch full content for ${item.link}: ${error.message}`);
+                        logger.warn(`Couldn't fetch full content for ${item.link}: ${error.message}`)
 
                         // Fallback to RSS content
                         return {
@@ -73,11 +73,11 @@ async function handler(ctx): Promise<Data> {
                             category: item.categories || [],
                             guid: item.guid || item.link,
                             image: item.enclosure?.url,
-                        };
+                        }
                     }
-                })
-            )
-    );
+                }),
+            ),
+    )
 
     return {
         title: feed.title || 'Decrypt',
@@ -86,31 +86,31 @@ async function handler(ctx): Promise<Data> {
         item: items,
         language: feed.language || 'en',
         image: feed.image?.url,
-    } as Data;
+    } as Data
 }
 
 async function extractFullText(url: string): Promise<{ fullText: string; featuredImage: string; tags: string[] } | null> {
     try {
-        const response = await ofetch(url);
+        const response = await ofetch(url)
 
-        const $ = load(response);
+        const $ = load(response)
 
-        const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-        const post = nextData.props.pageProps.post;
+        const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+        const post = nextData.props.pageProps.post
 
         if (post.content.length) {
-            const fullText = `<img src="${post.featuredImage.src}" alt="${post.featuredImage.alt}">` + post.content;
+            const fullText = `<img src="${post.featuredImage.src}" alt="${post.featuredImage.alt}">` + post.content
 
             return {
                 fullText,
                 featuredImage: post.featuredImage.src,
                 tags: post.tags.data.map((tag) => tag.name),
-            };
+            }
         }
 
-        return null;
+        return null
     } catch (error) {
-        logger.error(`Error extracting full text from ${url}: ${error}`);
-        return null;
+        logger.error(`Error extracting full text from ${url}: ${error}`)
+        return null
     }
 }

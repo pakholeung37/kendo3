@@ -1,8 +1,8 @@
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import parser from '@/utils/rss-parser';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import parser from '@/utils/rss-parser'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
 export const route: Route = {
     path: '/news',
@@ -27,16 +27,16 @@ export const route: Route = {
         },
     ],
     description: 'Get latest news from CoinDesk with full text.',
-};
+}
 
 async function handler(): Promise<Data> {
-    const rssUrl = 'https://feeds.feedburner.com/Coindesk';
-    const feed = await parser.parseURL(rssUrl);
+    const rssUrl = 'https://feeds.feedburner.com/Coindesk'
+    const feed = await parser.parseURL(rssUrl)
 
-    const items = await Promise.all(feed.items.map((item) => cache.tryGet(item.link, () => parseItem(item))));
+    const items = await Promise.all(feed.items.map((item) => cache.tryGet(item.link, () => parseItem(item))))
 
     // Filter out null items
-    const validItems = items.filter((item): item is DataItem => item !== null);
+    const validItems = items.filter((item): item is DataItem => item !== null)
 
     return {
         title: feed.title || 'CoinDesk News',
@@ -44,5 +44,5 @@ async function handler(): Promise<Data> {
         description: feed.description || 'Latest news from CoinDesk',
         language: feed.language || 'en',
         item: validItems,
-    };
+    }
 }

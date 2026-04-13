@@ -1,20 +1,20 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type AudioData = {
-    src?: string;
-    type?: string;
-};
+    src?: string
+    type?: string
+}
 
 type TextData = {
-    startTime?: string;
-    endTime?: string;
-    text?: string;
-};
+    startTime?: string
+    endTime?: string
+    text?: string
+}
 
 type DescriptionData = {
-    audios?: AudioData[];
-    texts?: TextData[];
-};
+    audios?: AudioData[]
+    texts?: TextData[]
+}
 
 const TranscriptForestDescription = ({ audios, texts }: DescriptionData) => (
     <>
@@ -26,7 +26,7 @@ const TranscriptForestDescription = ({ audios, texts }: DescriptionData) => (
                         <embed src={audio.src} />
                     </object>
                 </audio>
-            ) : null
+            ) : null,
         )}
         {texts?.map((text) => (
             <>
@@ -39,6 +39,6 @@ const TranscriptForestDescription = ({ audios, texts }: DescriptionData) => (
             </>
         ))}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<TranscriptForestDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<TranscriptForestDescription {...data} />)

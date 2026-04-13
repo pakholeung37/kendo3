@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import type { Collection, CollectionItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Collection, CollectionItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { header } from './utils';
+import { header } from './utils'
 
 export const route: Route = {
     path: '/people/allCollections/:id',
@@ -35,20 +35,20 @@ export const route: Route = {
     name: '用户全部收藏内容',
     maintainers: ['Healthyyue'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const apiPath = `https://api.zhihu.com/people/${id}/collections`;
+    const id = ctx.req.param('id')
+    const apiPath = `https://api.zhihu.com/people/${id}/collections`
 
     const response = await got(apiPath, {
         headers: {
             cookie: config.zhihu.cookies,
             Referer: `https://www.zhihu.com/people/${id}/collections`,
         },
-    });
+    })
 
-    const collections = response.data.data as Collection[];
+    const collections = response.data.data as Collection[]
 
     const allCollectionItems = await Promise.all(
         collections.map(async (collection) => {
@@ -58,15 +58,15 @@ async function handler(ctx) {
                     cookie: config.zhihu.cookies,
                     Referer: `https://www.zhihu.com/collection/${collection.id}`,
                 },
-            });
+            })
 
             const {
                 data: items,
                 paging: { totals },
-            } = firstPageResponse.data;
+            } = firstPageResponse.data
 
             if (totals > 20) {
-                const offsetList = Array.from({ length: Math.ceil(totals / 20) - 1 }, (_, index) => (index + 1) * 20);
+                const offsetList = Array.from({ length: Math.ceil(totals / 20) - 1 }, (_, index) => (index + 1) * 20)
 
                 const otherPages = await Promise.all(
                     offsetList.map((offset) =>
@@ -77,36 +77,36 @@ async function handler(ctx) {
                                     cookie: config.zhihu.cookies,
                                     Referer: `https://www.zhihu.com/collection/${collection.id}`,
                                 },
-                            });
-                            return response.data.data;
-                        })
-                    )
-                );
+                            })
+                            return response.data.data
+                        }),
+                    ),
+                )
 
-                items.push(...otherPages.flat());
+                items.push(...otherPages.flat())
             }
 
             return {
                 collectionId: collection.id,
                 collectionTitle: collection.title,
                 items,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     const items = allCollectionItems.flatMap(
         (collection) =>
             collection.items.map((item) => ({
                 ...item,
                 collectionTitle: collection.collectionTitle,
-            })) as CollectionItem[]
-    );
+            })) as CollectionItem[],
+    )
 
     return {
         title: `${collections[0].creator.name}的知乎收藏`,
         link: `https://www.zhihu.com/people/${id}/collections`,
         item: items.map((item) => {
-            const content = item.content;
+            const content = item.content
 
             return {
                 title: content.type === 'article' || content.type === 'zvideo' ? content.title : content.question.title,
@@ -114,7 +114,7 @@ async function handler(ctx) {
                 description: content.type === 'zvideo' ? `<img src=${content.video.url}/>` : content.content,
                 pubDate: parseDate((content.type === 'article' ? content.updated : content.updated_time) * 1000),
                 category: [item.collectionTitle],
-            };
+            }
         }),
-    };
+    }
 }

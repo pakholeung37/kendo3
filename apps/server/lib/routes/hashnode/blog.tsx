@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseApiUrl = 'https://api.hashnode.com';
+const baseApiUrl = 'https://api.hashnode.com'
 const renderDescription = (image, brief) =>
     renderToString(
         <>
             <img src={image} />
             {brief ? <>{raw(brief)}</> : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/blog/:username',
@@ -39,12 +39,12 @@ export const route: Route = {
     description: `::: tip
   username 为博主用户名，而非\`xxx.hashnode.dev\`中\`xxx\`所代表的 blog 地址。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('username');
+    const username = ctx.req.param('username')
     if (!username) {
-        return;
+        return
     }
 
     const query = `
@@ -61,9 +61,9 @@ async function handler(ctx) {
             }
         }
     }
-    `;
+    `
 
-    const userUrl = `https://${username}.hashnode.dev`;
+    const userUrl = `https://${username}.hashnode.dev`
     const response = await got({
         method: 'POST',
         url: baseApiUrl,
@@ -72,14 +72,14 @@ async function handler(ctx) {
             'Content-type': 'application/json',
         },
         body: JSON.stringify({ query }),
-    });
+    })
 
-    const publication = response.data.data.user.publication;
+    const publication = response.data.data.user.publication
     if (!publication) {
-        return;
+        return
     }
 
-    const list = publication.posts;
+    const list = publication.posts
     return {
         title: `Hashnode by ${username}`,
         link: userUrl,
@@ -91,5 +91,5 @@ async function handler(ctx) {
                 link: `${userUrl}/${item.slug}`,
             }))
             .filter((item) => item !== ''),
-    };
+    }
 }

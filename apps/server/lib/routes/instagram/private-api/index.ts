@@ -1,52 +1,52 @@
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
 
-import { renderItems } from '../common-utils';
-import { ig, login } from './utils';
+import { renderItems } from '../common-utils'
+import { ig, login } from './utils'
 
 // loadContent pulls the desired user/tag/etc
 async function loadContent(category, nameOrId, tryGet) {
-    let feedTitle, feedLink, feedDescription, feedLogo;
-    let itemsRaw;
+    let feedTitle, feedLink, feedDescription, feedLogo
+    let itemsRaw
 
     switch (category) {
         case 'user': {
-            let userInfo, username, id;
+            let userInfo, username, id
             if (Number.isNaN(nameOrId)) {
-                username = nameOrId;
-                id = await tryGet(`instagram:getIdByUsername:${username}`, () => ig.user.getIdByUsername(username), 31_536_000); // 1 year since it will never change
-                userInfo = await tryGet(`instagram:userInfo:${id}`, () => ig.user.info(id));
+                username = nameOrId
+                id = await tryGet(`instagram:getIdByUsername:${username}`, () => ig.user.getIdByUsername(username), 31_536_000) // 1 year since it will never change
+                userInfo = await tryGet(`instagram:userInfo:${id}`, () => ig.user.info(id))
             } else {
-                id = nameOrId;
-                userInfo = await tryGet(`instagram:userInfo:${id}`, () => ig.user.info(id));
-                username = userInfo.username;
+                id = nameOrId
+                userInfo = await tryGet(`instagram:userInfo:${id}`, () => ig.user.info(id))
+                username = userInfo.username
             }
 
-            feedDescription = userInfo.biography;
+            feedDescription = userInfo.biography
             // exists in web api ?? exist in private api ?? exist in both
-            feedLogo = userInfo.profile_pic_url_hd ?? userInfo.hd_profile_pic_url_info?.url ?? userInfo.profile_pic_url;
-            const fullName = userInfo.full_name;
-            feedTitle = `${fullName} (@${username}) - Instagram`;
-            feedLink = `https://www.instagram.com/${username}`;
+            feedLogo = userInfo.profile_pic_url_hd ?? userInfo.hd_profile_pic_url_info?.url ?? userInfo.profile_pic_url
+            const fullName = userInfo.full_name
+            feedTitle = `${fullName} (@${username}) - Instagram`
+            feedLink = `https://www.instagram.com/${username}`
 
-            itemsRaw = await tryGet(`instagram:feed:${id}`, () => ig.feed.user(id).items(), config.cache.routeExpire, false);
-            break;
+            itemsRaw = await tryGet(`instagram:feed:${id}`, () => ig.feed.user(id).items(), config.cache.routeExpire, false)
+            break
         }
         case 'tags': {
-            const tag = nameOrId;
+            const tag = nameOrId
 
-            feedTitle = `#${tag} - Instagram`;
-            feedLink = `https://www.instagram.com/explore/tags/${tag}`;
+            feedTitle = `#${tag} - Instagram`
+            feedLink = `https://www.instagram.com/explore/tags/${tag}`
 
-            itemsRaw = await tryGet(`instagram:tags:${tag}`, () => ig.feed.tags(tag, 'recent').items(), config.cache.routeExpire, false);
-            break;
+            itemsRaw = await tryGet(`instagram:tags:${tag}`, () => ig.feed.tags(tag, 'recent').items(), config.cache.routeExpire, false)
+            break
         }
         default:
-            break;
+            break
     }
 
     return {
@@ -55,7 +55,7 @@ async function loadContent(category, nameOrId, tryGet) {
         feedDescription,
         feedLogo,
         itemsRaw,
-    };
+    }
 }
 
 export const route: Route = {
@@ -105,7 +105,7 @@ export const route: Route = {
     name: 'User Profile / Hashtag - Private API',
     maintainers: ['oppilate', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
     // https://github.com/dilame/instagram-private-api#feeds
@@ -113,26 +113,26 @@ async function handler(ctx) {
     //     "discover", "pendingFriendships", "blockedUsers", "directInbox", "directPending",
     //     "directThread", "user", "tag", "location", "mediaComments", "reelsMedia", "reelsTray",
     //     "timeline", "musicTrending", "musicSearch", "musicGenre", "musicMood", "usertags", "saved"];
-    const availableCategories = ['user', 'tags'];
+    const availableCategories = ['user', 'tags']
     // Unique key for a feed category
     // e.g. username for user feed
-    const { category, key } = ctx.req.param();
+    const { category, key } = ctx.req.param()
     if (!availableCategories.includes(category)) {
-        throw new InvalidParameterError('Such feed is not supported.');
+        throw new InvalidParameterError('Such feed is not supported.')
     }
 
     if (config.instagram && config.instagram.proxy) {
-        ig.state.proxyUrl = config.instagram.proxy;
+        ig.state.proxyUrl = config.instagram.proxy
     }
 
-    await login(ig, cache);
+    await login(ig, cache)
 
-    let data;
+    let data
     try {
-        data = await loadContent(category, key, cache.tryGet);
+        data = await loadContent(category, key, cache.tryGet)
     } catch (error) {
-        logger.error(`Instagram error: ${error}`);
-        throw error;
+        logger.error(`Instagram error: ${error}`)
+        throw error
     }
 
     return {
@@ -144,5 +144,5 @@ async function handler(ctx) {
         logo: data.feedLogo,
         image: data.feedLogo,
         allowEmpty: true,
-    };
+    }
 }

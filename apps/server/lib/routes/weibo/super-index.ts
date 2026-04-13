@@ -1,11 +1,11 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import weiboUtils from './utils';
+import weiboUtils from './utils'
 
 export const route: Route = {
     path: '/super_index/:id/:type?/:routeParams?',
@@ -43,15 +43,15 @@ export const route: Route = {
 | hot_sort  | 热门             |
 | sort_time | 最新帖子         |
 | feed       | 最新评论         |`,
-};
+}
 
 interface Card {
-    card_group?: Card[];
+    card_group?: Card[]
 }
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const type = ctx.req.param('type') ?? 'feed';
+    const id = ctx.req.param('id')
+    const type = ctx.req.param('type') ?? 'feed'
 
     const containerData = (await weiboUtils.tryWithCookies((cookies, verifier) =>
         cache.tryGet(
@@ -68,35 +68,35 @@ async function handler(ctx) {
                         Cookie: cookies,
                         ...weiboUtils.apiHeaders,
                     },
-                });
-                verifier(_r);
-                return _r.data.data;
+                })
+                verifier(_r)
+                return _r.data.data
             },
             config.cache.routeExpire,
-            false
-        )
+            false,
+        ),
     )) as {
-        cards?: Card[];
+        cards?: Card[]
         pageInfo?: {
-            page_title: string;
-        };
-    };
+            page_title: string
+        }
+    }
 
-    const resultItems = [];
+    const resultItems = []
 
     function handleCard(ctx, card, resultItems) {
         if (card.card_type === '9' && 'mblog' in card) {
-            const formatExtended = weiboUtils.formatExtended(ctx, card.mblog, undefined);
-            resultItems.push(formatExtended);
+            const formatExtended = weiboUtils.formatExtended(ctx, card.mblog, undefined)
+            resultItems.push(formatExtended)
         }
     }
     for (const card of containerData?.cards ?? []) {
-        handleCard(ctx, card, resultItems);
+        handleCard(ctx, card, resultItems)
         if (!('card_group' in card)) {
-            continue;
+            continue
         }
         for (const mblogCard of card.card_group!) {
-            handleCard(ctx, mblogCard, resultItems);
+            handleCard(ctx, mblogCard, resultItems)
         }
     }
 
@@ -105,5 +105,5 @@ async function handler(ctx) {
         link: `https://weibo.com/p/${id}/super_index`,
         description: `#${containerData?.pageInfo?.page_title}# 的超话`,
         item: resultItems,
-    });
+    })
 }

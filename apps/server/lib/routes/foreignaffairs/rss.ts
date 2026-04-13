@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/rss',
@@ -21,12 +21,12 @@ export const route: Route = {
     name: 'RSS',
     maintainers: ['dzx-dzx'],
     handler,
-};
+}
 
 async function handler() {
-    const link = 'https://www.foreignaffairs.com/rss.xml';
+    const link = 'https://www.foreignaffairs.com/rss.xml'
 
-    const feed = await parser.parseURL(link);
+    const feed = await parser.parseURL(link)
 
     const items = await Promise.all(
         feed.items.map((item) =>
@@ -34,23 +34,23 @@ async function handler() {
                 const response = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const $ = load(response.data);
+                const $ = load(response.data)
 
-                $('.paywall').remove();
-                $('.loading-indicator').remove();
-                item.description = $('.article-dropcap').html();
-                item.author = item.creator;
+                $('.paywall').remove()
+                $('.loading-indicator').remove()
+                item.description = $('.article-dropcap').html()
+                item.author = item.creator
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Foreign Affairs - RSS',
         link,
         item: items,
-    };
+    }
 }

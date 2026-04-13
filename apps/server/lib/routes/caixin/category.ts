@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
+import { isValidHost } from '@/utils/valid-host'
 
-import { parseArticle } from './utils';
+import { parseArticle } from './utils'
 
 export const route: Route = {
     path: '/:column/:category',
@@ -43,25 +43,25 @@ export const route: Route = {
 | 封面报道   | 开卷  | 社论      | 时事             | 编辑寄语     | 经济    | 金融    | 商业     | 环境与科技              | 民生    | 副刊   |
 | ---------- | ----- | --------- | ---------------- | ------------ | ------- | ------- | -------- | ----------------------- | ------- | ------ |
 | coverstory | first | editorial | current_affairs | editor_desk | economy | finance | business | environment_technology | cwcivil | column |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const column = ctx.req.param('column');
-    const url = `https://${column}.caixin.com/${category}`;
+    const category = ctx.req.param('category')
+    const column = ctx.req.param('column')
+    const url = `https://${column}.caixin.com/${category}`
     if (!isValidHost(column)) {
-        throw new InvalidParameterError('Invalid column');
+        throw new InvalidParameterError('Invalid column')
     }
 
-    const response = await got(url);
+    const response = await got(url)
 
-    const $ = load(response.data);
-    const title = $('head title').text();
+    const $ = load(response.data)
+    const title = $('head title').text()
     const entity = JSON.parse(
         $('script')
             .text()
-            .match(/var entity = ({.*?})/)[1]
-    );
+            .match(/var entity = ({.*?})/)[1],
+    )
 
     const {
         data: { datas: data },
@@ -73,7 +73,7 @@ async function handler(ctx) {
             picdim: '_266_177',
             start: 0,
         },
-    });
+    })
 
     const list = data.map((item) => ({
         title: item.desc,
@@ -83,14 +83,14 @@ async function handler(ctx) {
         category: item.keyword.split(' '),
         audio: item.audioUrl,
         audio_image_url: item.pict.imgs[0].url,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))))
 
     return {
         title,
         link: url,
         description: '财新网 - 提供财经新闻及资讯服务',
         item: items,
-    };
+    }
 }

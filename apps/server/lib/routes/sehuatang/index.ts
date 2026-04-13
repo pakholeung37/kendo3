@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const host = 'https://www.sehuatang.net/';
+const host = 'https://www.sehuatang.net/'
 
 const forumIdMaps = {
     // 原创 BT 电影
@@ -37,7 +37,7 @@ const forumIdMaps = {
     ai: '113', //     AI 换脸电影
     ydsc: '111', //   原档收藏 WMV
     hrxazp: '98', //  华人性爱自拍
-};
+}
 
 export const route: Route = {
     path: ['/bt/:subforumid?', '/picture/:subforumid', '/:subforumid?/:type?', '/:subforumid?', ''],
@@ -58,106 +58,106 @@ export const route: Route = {
 | 原创自拍 | 转贴自拍 | 华人街拍 | 亚洲性爱 | 欧美性爱 | 卡通动漫 | 套图下载 |
 | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | yczp     | ztzp     | hrjp     | yzxa     | omxa     | ktdm     | ttxz     |`,
-};
+}
 
 const getSafeId = () =>
     cache.tryGet(
         'sehuatang:safeid',
         async () => {
-            const response = await ofetch(host);
-            const $ = load(response);
+            const response = await ofetch(host)
+            const $ = load(response)
             const safeId = $('script:contains("safeid")')
                 .text()
-                .match(/safeid\s*=\s*'(.+)';/)?.[1];
-            return safeId;
+                .match(/safeid\s*=\s*'(.+)';/)?.[1]
+            return safeId
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 async function handler(ctx) {
-    const subformName = ctx.req.param('subforumid') ?? 'gqzwzm';
-    const subformId = subformName in forumIdMaps ? forumIdMaps[subformName] : subformName;
-    const type = ctx.req.param('type');
-    const typefilter = type ? `&filter=typeid&typeid=${type}` : '';
-    const link = `${host}forum.php?mod=forumdisplay&orderby=dateline&fid=${subformId}${typefilter}`;
+    const subformName = ctx.req.param('subforumid') ?? 'gqzwzm'
+    const subformId = subformName in forumIdMaps ? forumIdMaps[subformName] : subformName
+    const type = ctx.req.param('type')
+    const typefilter = type ? `&filter=typeid&typeid=${type}` : ''
+    const link = `${host}forum.php?mod=forumdisplay&orderby=dateline&fid=${subformId}${typefilter}`
     const headers = {
         Cookie: `_safe=${await getSafeId()};`,
-    };
+    }
 
     const response = await ofetch(link, {
         headers,
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
     const list = $('#threadlisttableid tbody[id^=normalthread]')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 25)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const hasCategory = item.find('th em a').length;
+            item = $(item)
+            const hasCategory = item.find('th em a').length
             return {
                 title: `${hasCategory ? `[${item.find('th em a').text()}]` : ''} ${item.find('a.xst').text()}`,
                 link: host + item.find('a.xst').attr('href'),
                 pubDate: parseDate(item.find('td.by').find('em span span').attr('title')),
                 author: item.find('td.by cite a').first().text(),
-            };
-        });
+            }
+        })
 
     const out = await Promise.all(
         list.map((info) =>
             cache.tryGet(info.link, async () => {
                 const response = await ofetch(info.link, {
                     headers,
-                });
+                })
 
-                const $ = load(response);
-                const postMessage = $('div[id^="postmessage"], td[id^="postmessage"]').slice(0, 1);
-                const images = $(postMessage).find('img');
+                const $ = load(response)
+                const postMessage = $('div[id^="postmessage"], td[id^="postmessage"]').slice(0, 1)
+                const images = $(postMessage).find('img')
                 for (const image of images) {
-                    const file = $(image).attr('file');
+                    const file = $(image).attr('file')
                     if (!file || file === 'undefined') {
-                        $(image).replaceWith('');
+                        $(image).replaceWith('')
                     } else {
-                        $(image).replaceWith($(`<img src="${file}">`));
+                        $(image).replaceWith($(`<img src="${file}">`))
                     }
                 }
                 // also parse image url from `.pattl`
-                const pattl = $('.pattl');
-                const pattlImages = $(pattl).find('img');
+                const pattl = $('.pattl')
+                const pattlImages = $(pattl).find('img')
                 for (const pattlImage of pattlImages) {
-                    const file = $(pattlImage).attr('file');
+                    const file = $(pattlImage).attr('file')
                     if (!file || file === 'undefined') {
-                        $(pattlImage).replaceWith('');
+                        $(pattlImage).replaceWith('')
                     } else {
-                        $(pattlImage).replaceWith($(`<img src="${file}" />`));
+                        $(pattlImage).replaceWith($(`<img src="${file}" />`))
                     }
                 }
-                postMessage.append($(pattl));
-                $('em[onclick]').remove();
+                postMessage.append($(pattl))
+                $('em[onclick]').remove()
 
-                info.description = (postMessage.html() || '抓取原帖失败').replaceAll('ignore_js_op', 'div');
-                info.pubDate = timezone(parseDate($('.authi em span').attr('title')), 8);
+                info.description = (postMessage.html() || '抓取原帖失败').replaceAll('ignore_js_op', 'div')
+                info.pubDate = timezone(parseDate($('.authi em span').attr('title')), 8)
 
-                const magnet = postMessage.find('div.blockcode li').first().text();
-                const isMag = magnet.startsWith('magnet');
-                const torrent = postMessage.find('p.attnm a').attr('href');
+                const magnet = postMessage.find('div.blockcode li').first().text()
+                const isMag = magnet.startsWith('magnet')
+                const torrent = postMessage.find('p.attnm a').attr('href')
 
-                const hasEnclosureUrl = isMag || torrent !== undefined;
+                const hasEnclosureUrl = isMag || torrent !== undefined
                 if (hasEnclosureUrl) {
-                    const enclosureUrl = isMag ? magnet : new URL(torrent, host).href;
-                    info.enclosure_url = enclosureUrl;
-                    info.enclosure_type = isMag ? 'application/x-bittorrent' : 'application/octet-stream';
+                    const enclosureUrl = isMag ? magnet : new URL(torrent, host).href
+                    info.enclosure_url = enclosureUrl
+                    info.enclosure_type = isMag ? 'application/x-bittorrent' : 'application/octet-stream'
                 }
 
-                return info;
-            })
-        )
-    );
+                return info
+            }),
+        ),
+    )
 
     return {
         title: `色花堂 - ${$('#pt > div:nth-child(1) > a:last-child').text()}`,
         link,
         item: out,
-    };
+    }
 }

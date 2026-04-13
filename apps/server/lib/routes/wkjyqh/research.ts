@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/research',
@@ -19,11 +19,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.wkjyqh.com/main/research_center/yjbg/index.shtml',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.wkjyqh.com';
-    const link = `${baseUrl}/main/research_center/yjbg/index.shtml`;
+    const baseUrl = 'https://www.wkjyqh.com'
+    const link = `${baseUrl}/main/research_center/yjbg/index.shtml`
 
     const apiResponse = await ofetch(`${baseUrl}/servlet/json`, {
         method: 'POST',
@@ -42,29 +42,29 @@ async function handler() {
             rightId: '',
         }),
         responseType: 'json',
-    });
+    })
 
     const list: DataItem[] = apiResponse.results[0].data.map((item) => ({
         title: item.title,
         link: new URL(item.url, baseUrl).href,
         pubDate: timezone(parseDate(item.publish_date), +8),
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link!, async () => {
-                const response = await ofetch(item.link!);
-                const $ = load(response);
+                const response = await ofetch(item.link!)
+                const $ = load(response)
 
-                const content = $('.article_detail');
-                item.pubDate = timezone(parseDate(content.find('b#time').text()), +8);
-                content.find('h2, .tips').remove();
-                item.description = content.html()?.trim();
+                const content = $('.article_detail')
+                item.pubDate = timezone(parseDate(content.find('b#time').text()), +8)
+                content.find('h2, .tips').remove()
+                item.description = content.html()?.trim()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '五矿期货 - 研究报告',
@@ -72,5 +72,5 @@ async function handler() {
         language: 'zh-CN' as const,
         image: `${baseUrl}/favicon.ico`,
         item: items,
-    };
+    }
 }

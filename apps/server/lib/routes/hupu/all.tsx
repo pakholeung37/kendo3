@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/all/:id?',
@@ -33,32 +33,32 @@ export const route: Route = {
     description: `::: tip
   更多热帖版面参见 [论坛](https://bbs.hupu.com)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'topic-daily';
+    const id = ctx.req.param('id') ?? 'topic-daily'
 
-    const rootUrl = 'https://bbs.hupu.com';
-    const currentUrl = `${rootUrl}/${id}`;
+    const rootUrl = 'https://bbs.hupu.com'
+    const currentUrl = `${rootUrl}/${id}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('div.t-info > a, a.p-title')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `https://m.hupu.com/bbs${item.attr('href')}`,
                 pubDate: timezone(parseDate(item.parent().parent().find('.post-time').text(), 'MM-DD HH:mm'), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -67,22 +67,22 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    const videos = [];
+                    const videos = []
 
                     content('.hupu-post-video').each(function () {
                         videos.push({
                             source: content(this).attr('src'),
                             poster: content(this).attr('poster'),
-                        });
-                    });
+                        })
+                    })
 
-                    item.author = content('.bbs-user-wrapper-content-name-span').first().text();
-                    item.pubDate = item.pubDate ?? timezone(parseRelativeDate(content('.second-line-user-info').first().text()), +8);
-                    const description = content('.bbs-content').first().html();
+                    item.author = content('.bbs-user-wrapper-content-name-span').first().text()
+                    item.pubDate = item.pubDate ?? timezone(parseRelativeDate(content('.second-line-user-info').first().text()), +8)
+                    const description = content('.bbs-content').first().html()
                     item.description = renderToString(
                         <>
                             {videos.length
@@ -93,20 +93,20 @@ async function handler(ctx) {
                                   ))
                                 : null}
                             {description ? raw(description) : null}
-                        </>
-                    );
+                        </>,
+                    )
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `虎扑社区 - ${$('.middle-title, .bbs-sl-web-intro-detail-title').text()}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ImageProps = {
-    url?: string;
-    alt?: string;
-    caption?: string;
-    author?: string;
-};
+    url?: string
+    alt?: string
+    caption?: string
+    author?: string
+}
 
 const ImageFigure = ({ url, alt, caption, author }: ImageProps) => (
     <figure>
@@ -19,6 +19,6 @@ const ImageFigure = ({ url, alt, caption, author }: ImageProps) => (
             {author}
         </figcation>
     </figure>
-);
+)
 
-export const renderImage = (props: ImageProps): string => renderToString(<ImageFigure {...props} />);
+export const renderImage = (props: ImageProps): string => renderToString(<ImageFigure {...props} />)

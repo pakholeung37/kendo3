@@ -1,33 +1,33 @@
-import { load } from 'cheerio'; // html parser
+import { load } from 'cheerio' // html parser
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const handler = async (ctx): Promise<Data> => {
-    const feed = await parser.parseURL('https://feed.iplaysoft.com');
-    const limit = Number.parseInt(ctx.req.query('limit') || '20', 10);
+    const feed = await parser.parseURL('https://feed.iplaysoft.com')
+    const limit = Number.parseInt(ctx.req.query('limit') || '20', 10)
 
     const filteredItems = feed.items
         .filter((item) => {
             if (!item?.link || !item?.pubDate) {
-                return false;
+                return false
             }
-            return new URL(item.link).hostname.match(/.*\.iplaysoft\.com$/);
+            return new URL(item.link).hostname.match(/.*\.iplaysoft\.com$/)
         })
-        .slice(0, limit) as DataItem[];
+        .slice(0, limit) as DataItem[]
 
     const items: DataItem[] = await Promise.all(
         filteredItems.map(
             (item) =>
                 cache.tryGet(item.link as string, async () => {
-                    const response = await ofetch(item.link);
-                    const $ = load(response);
+                    const response = await ofetch(item.link)
+                    const $ = load(response)
 
-                    $('.entry-content').find('div[style*="overflow:hidden"]').remove();
+                    $('.entry-content').find('div[style*="overflow:hidden"]').remove()
 
                     return {
                         title: item.title,
@@ -35,10 +35,10 @@ export const handler = async (ctx): Promise<Data> => {
                         link: item.link,
                         author: item.author,
                         pubDate: parseDate(item.pubDate as string),
-                    } as DataItem;
-                }) as Promise<DataItem>
-        )
-    );
+                    } as DataItem
+                }) as Promise<DataItem>,
+        ),
+    )
 
     return {
         title: '异次元软件世界',
@@ -46,8 +46,8 @@ export const handler = async (ctx): Promise<Data> => {
         language: 'zh-CN',
         link: 'https://www.iplaysoft.com',
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/',
@@ -74,4 +74,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

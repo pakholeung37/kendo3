@@ -1,50 +1,50 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filter = 'order=sell_desc' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '24', 10);
+    const { filter = 'order=sell_desc' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '24', 10)
 
-    const baseUrl = 'https://www.bookwalker.com.tw';
-    const targetUrl: string = new URL(`search?${filter}`, baseUrl).href;
+    const baseUrl = 'https://www.bookwalker.com.tw'
+    const targetUrl: string = new URL(`search?${filter}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-TW';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-TW'
 
     const items: DataItem[] = $('div.bwbook_package')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const name: string = $el.find('h4.bookname').text();
-            const price: string = $el.find('h5.bprice').text();
-            const authorStr: string = $el.find('h5.booknamesub').text().trim();
+            const name: string = $el.find('h4.bookname').text()
+            const price: string = $el.find('h5.bprice').text()
+            const authorStr: string = $el.find('h5.booknamesub').text().trim()
 
-            const title = `${name} - ${authorStr} ${price}`;
+            const title = `${name} - ${authorStr} ${price}`
             const image: string | undefined = $el
                 .find('img')
                 .attr('data-src')
-                ?.replace(/_\d+(\.\w+)$/, '$1');
+                ?.replace(/_\d+(\.\w+)$/, '$1')
             const description: string | undefined = renderToString(
                 image ? (
                     <figure>
                         <img src={image} alt={name} />
                     </figure>
-                ) : null
-            );
-            const linkUrl: string | undefined = $el.find('div.bwbookitem a').attr('href');
+                ) : null,
+            )
+            const linkUrl: string | undefined = $el.find('div.bwbookitem a').attr('href')
             const authors: DataItem['author'] = authorStr.split(/,/).map((a) => ({
                 name: a,
-            }));
+            }))
 
             const processedItem: DataItem = {
                 title,
@@ -58,10 +58,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -73,8 +73,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/search/:filter?',
@@ -108,4 +108,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

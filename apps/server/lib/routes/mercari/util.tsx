@@ -1,29 +1,29 @@
-import { Buffer } from 'node:buffer';
-import crypto from 'node:crypto';
+import { Buffer } from 'node:buffer'
+import crypto from 'node:crypto'
 
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { DataItem } from '@/types';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem } from '@/types'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { ItemDetail, SearchResponse, ShopItemDetail } from './types';
+import type { ItemDetail, SearchResponse, ShopItemDetail } from './types'
 
-const rootURL = 'https://api.mercari.jp/';
-const rootProductURL = 'https://jp.mercari.com/item/';
-const rootShopProductURL = 'https://jp.mercari.com/shops/product/';
-const searchURL = `${rootURL}v2/entities:search`;
-const itemInfoURL = `${rootURL}items/get`;
-const shopItemInfoURL = `${rootURL}v1/marketplaces/shops/products/`;
-const uuidv4 = () => crypto.randomUUID();
+const rootURL = 'https://api.mercari.jp/'
+const rootProductURL = 'https://jp.mercari.com/item/'
+const rootShopProductURL = 'https://jp.mercari.com/shops/product/'
+const searchURL = `${rootURL}v2/entities:search`
+const itemInfoURL = `${rootURL}items/get`
+const shopItemInfoURL = `${rootURL}v1/marketplaces/shops/products/`
+const uuidv4 = () => crypto.randomUUID()
 
 const MercariStatus = {
     default: '',
     onsale: 'STATUS_ON_SALE',
     soldout: 'STATUS_SOLD_OUT',
-} as const;
+} as const
 
 const MercariSort = {
     default: 'SORT_DEFAULT',
@@ -31,12 +31,12 @@ const MercariSort = {
     like: 'SORT_NUM_LIKES',
     score: 'SORT_SCORE',
     price: 'SORT_PRICE',
-} as const;
+} as const
 
 const MercariOrder = {
     desc: 'ORDER_DESC',
     asc: 'ORDER_ASC',
-} as const;
+} as const
 
 const renderItemDescription = (data: ItemDetail['data']) =>
     renderToString(
@@ -83,8 +83,8 @@ const renderItemDescription = (data: ItemDetail['data']) =>
                 <img src={data.seller.photo_url} style="width: 4em; height: 4em; border-radius: 50%;" />
                 <p> {data.seller.name}</p>
             </div>
-        </>
-    );
+        </>,
+    )
 
 const renderShopItemDescription = (detail: ShopItemDetail) =>
     renderToString(
@@ -135,25 +135,25 @@ const renderShopItemDescription = (detail: ShopItemDetail) =>
                 <img src={detail.productDetail.shop.thumbnail} style="width: 4em; height: 4em; border-radius: 50%;" />
                 <p> {detail.productDetail.shop.displayName}</p>
             </div>
-        </>
-    );
+        </>,
+    )
 
 function bytesToBase64URL(b: Buffer): string {
-    return b.toString('base64').replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+    return b.toString('base64').replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
 }
 
 function strToBase64URL(s: string): string {
-    return bytesToBase64URL(Buffer.from(s, 'utf-8'));
+    return bytesToBase64URL(Buffer.from(s, 'utf-8'))
 }
 
 function publicKeyToJWK(publicKey: crypto.KeyObject): any {
-    const jwk = publicKey.export({ format: 'jwk' }) as { x: string; y: string };
+    const jwk = publicKey.export({ format: 'jwk' }) as { x: string; y: string }
     return {
         crv: 'P-256',
         kty: 'EC',
         x: jwk.x,
         y: jwk.y,
-    };
+    }
 }
 
 function publicKeyToHeader(publicKey: crypto.KeyObject): any {
@@ -161,77 +161,77 @@ function publicKeyToHeader(publicKey: crypto.KeyObject): any {
         typ: 'dpop+jwt',
         alg: 'ES256',
         jwk: publicKeyToJWK(publicKey),
-    };
+    }
 }
 
 function derDecode(der: Buffer): { r: Buffer; s: Buffer } {
-    let offset = 0;
+    let offset = 0
 
     if (der[offset++] !== 0x30) {
-        throw new Error('Invalid DER signature');
+        throw new Error('Invalid DER signature')
     }
-    const lenInfo = readDerLength(der, offset);
-    offset += lenInfo.bytesRead;
+    const lenInfo = readDerLength(der, offset)
+    offset += lenInfo.bytesRead
 
     if (der[offset++] !== 0x02) {
-        throw new Error('Expected INTEGER for R');
+        throw new Error('Expected INTEGER for R')
     }
-    const rLen = readDerLength(der, offset);
-    offset += rLen.bytesRead;
-    const r = der.subarray(offset, offset + rLen.length);
-    offset += rLen.length;
+    const rLen = readDerLength(der, offset)
+    offset += rLen.bytesRead
+    const r = der.subarray(offset, offset + rLen.length)
+    offset += rLen.length
 
     if (der[offset++] !== 0x02) {
-        throw new Error('Expected INTEGER for S');
+        throw new Error('Expected INTEGER for S')
     }
-    const sLen = readDerLength(der, offset);
-    offset += sLen.bytesRead;
-    const s = der.subarray(offset, offset + sLen.length);
-    offset += sLen.length;
+    const sLen = readDerLength(der, offset)
+    offset += sLen.bytesRead
+    const s = der.subarray(offset, offset + sLen.length)
+    offset += sLen.length
 
     if (offset !== der.length) {
-        throw new Error('Extra bytes in DER signature');
+        throw new Error('Extra bytes in DER signature')
     }
 
     return {
         r: fixBufferLength(r, 32),
         s: fixBufferLength(s, 32),
-    };
+    }
 }
 
 function readDerLength(buf: Buffer, offset: number): { length: number; bytesRead: number } {
-    const byte = buf[offset];
+    const byte = buf[offset]
     if (byte < 0x80) {
-        return { length: byte, bytesRead: 1 };
+        return { length: byte, bytesRead: 1 }
     }
-    const bytesCount = byte & 0x7f;
+    const bytesCount = byte & 0x7f
     if (bytesCount > 4) {
-        throw new Error('DER length too long');
+        throw new Error('DER length too long')
     }
 
-    let length = 0;
+    let length = 0
     for (let i = 0; i < bytesCount; i++) {
-        length = (length << 8) | buf[offset + 1 + i];
+        length = (length << 8) | buf[offset + 1 + i]
     }
-    return { length, bytesRead: 1 + bytesCount };
+    return { length, bytesRead: 1 + bytesCount }
 }
 
 function fixBufferLength(buffer: Buffer, length: number): Buffer {
     if (buffer.length > length) {
-        const start = buffer.length - length;
-        return buffer.subarray(start);
+        const start = buffer.length - length
+        return buffer.subarray(start)
     }
     if (buffer.length < length) {
-        return Buffer.concat([Uint8Array.from(Buffer.alloc(length - buffer.length)), Uint8Array.from(buffer)]);
+        return Buffer.concat([Uint8Array.from(Buffer.alloc(length - buffer.length)), Uint8Array.from(buffer)])
     }
-    return buffer;
+    return buffer
 }
 
 function generateDPOP({ uuid, method, url }: { uuid: string; method: string; url: string }): string {
     // Generate ECDSA key pair
     const { privateKey, publicKey } = crypto.generateKeyPairSync('ec', {
         namedCurve: 'prime256v1',
-    });
+    })
 
     // Create JWT payload
     const payload = {
@@ -239,26 +239,26 @@ function generateDPOP({ uuid, method, url }: { uuid: string; method: string; url
         jti: uuid,
         htu: url,
         htm: method.toUpperCase(),
-    };
+    }
 
     // Create JWT header
-    const header = publicKeyToHeader(publicKey);
+    const header = publicKeyToHeader(publicKey)
 
     // Prepare signing input
-    const headerB64 = strToBase64URL(JSON.stringify(header));
-    const payloadB64 = strToBase64URL(JSON.stringify(payload));
-    const signingInput = `${headerB64}.${payloadB64}`;
+    const headerB64 = strToBase64URL(JSON.stringify(header))
+    const payloadB64 = strToBase64URL(JSON.stringify(payload))
+    const signingInput = `${headerB64}.${payloadB64}`
 
     // Sign the input
-    const sign = crypto.createSign('SHA256');
-    sign.update(signingInput);
-    const derSignature = sign.sign(privateKey);
+    const sign = crypto.createSign('SHA256')
+    sign.update(signingInput)
+    const derSignature = sign.sign(privateKey)
 
     // Process signature
-    const { r, s } = derDecode(derSignature);
-    const signature = bytesToBase64URL(Buffer.concat([Uint8Array.from(r), Uint8Array.from(s)]));
+    const { r, s } = derDecode(derSignature)
+    const signature = bytesToBase64URL(Buffer.concat([Uint8Array.from(r), Uint8Array.from(s)]))
 
-    return `${signingInput}.${signature}`;
+    return `${signingInput}.${signature}`
 }
 
 const fetchFromMercari = async function fetchFromMercari<T>(url: string, data: any, method: 'POST' | 'GET' = 'POST'): Promise<T> {
@@ -266,48 +266,48 @@ const fetchFromMercari = async function fetchFromMercari<T>(url: string, data: a
         uuid: uuidv4(),
         method,
         url,
-    });
+    })
 
     const headers = new Headers({
         DPOP,
         'X-Platform': 'web',
         'Accept-Encoding': 'gzip, deflate',
         'Content-Type': 'application/json; charset=utf-8',
-    });
+    })
 
     const options = {
         method,
         headers,
         body: method === 'POST' ? JSON.stringify(data) : undefined,
         query: method === 'GET' ? data : undefined,
-    };
+    }
 
     try {
-        return await ofetch<T>(url, options);
+        return await ofetch<T>(url, options)
     } catch (error) {
-        throw new Error(`API request failed: ${error}`, { cause: error });
+        throw new Error(`API request failed: ${error}`, { cause: error })
     }
-};
+}
 
 const pageToPageToken = (page: number): string => {
     if (page === 0) {
-        return '';
+        return ''
     }
-    return `v1:${page}`;
-};
+    return `v1:${page}`
+}
 
 interface SearchOptions {
-    categoryId?: number[];
-    brandId?: number[];
-    priceMin?: number;
-    priceMax?: number;
-    itemConditionId?: number[];
-    excludeKeyword?: string;
-    itemTypes?: string[];
+    categoryId?: number[]
+    brandId?: number[]
+    priceMin?: number
+    priceMax?: number
+    itemConditionId?: number[]
+    excludeKeyword?: string
+    itemTypes?: string[]
     attributes?: Array<{
-        id: string;
-        values: string[];
-    }>;
+        id: string
+        values: string[]
+    }>
 }
 
 const fetchSearchItems = async (sort: string, order: string, status: string[], keyword: string, options: SearchOptions = {}): Promise<SearchResponse> => {
@@ -356,11 +356,11 @@ const fetchSearchItems = async (sort: string, order: string, status: string[], k
         withProductArticles: true,
         withSearchConditionId: true,
         withAuction: true,
-    };
+    }
 
-    logger.debug(JSON.stringify(data));
-    return await fetchFromMercari<SearchResponse>(searchURL, data, 'POST');
-};
+    logger.debug(JSON.stringify(data))
+    return await fetchFromMercari<SearchResponse>(searchURL, data, 'POST')
+}
 
 const fetchItemDetail = (item_id: string, item_type: string, country_code?: string): Promise<ItemDetail | ShopItemDetail> => {
     if (item_type === 'ITEM_TYPE_BEYOND') {
@@ -370,8 +370,8 @@ const fetchItemDetail = (item_id: string, item_type: string, country_code?: stri
                 view: 'FULL',
                 imageType: 'JPEG',
             },
-            'GET'
-        );
+            'GET',
+        )
     }
 
     return fetchFromMercari<ItemDetail>(
@@ -388,13 +388,13 @@ const fetchItemDetail = (item_id: string, item_type: string, country_code?: stri
             include_item_attributes_sections: true,
             include_auction: false,
         },
-        'GET'
-    );
-};
+        'GET',
+    )
+}
 
 const formatItemDetail = (detail: ItemDetail | ShopItemDetail): DataItem => {
     if ((detail as ShopItemDetail).displayName) {
-        const shopItemDetail = detail as ShopItemDetail;
+        const shopItemDetail = detail as ShopItemDetail
         return {
             title: shopItemDetail.displayName,
             description: renderShopItemDescription(shopItemDetail),
@@ -405,10 +405,10 @@ const formatItemDetail = (detail: ItemDetail | ShopItemDetail): DataItem => {
             language: 'ja',
             author: shopItemDetail.productDetail.shop.displayName,
             updated: parseDate(shopItemDetail.updateTime),
-        };
+        }
     }
 
-    const itemDetail = detail as ItemDetail;
+    const itemDetail = detail as ItemDetail
     return {
         title: itemDetail.data.name,
         description: renderItemDescription(itemDetail.data),
@@ -419,7 +419,7 @@ const formatItemDetail = (detail: ItemDetail | ShopItemDetail): DataItem => {
         language: 'ja',
         author: itemDetail.data.seller.name,
         updated: parseDate(itemDetail.data.updated * 1000),
-    };
-};
+    }
+}
 
-export { fetchItemDetail, fetchSearchItems, formatItemDetail, MercariOrder, MercariSort, MercariStatus };
+export { fetchItemDetail, fetchSearchItems, formatItemDetail, MercariOrder, MercariSort, MercariStatus }

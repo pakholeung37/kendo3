@@ -1,1 +1,1 @@
-export { announcementsRouter as default } from './physics-school-announcements-and-news';
+export { announcementsRouter as default } from './physics-school-announcements-and-news'

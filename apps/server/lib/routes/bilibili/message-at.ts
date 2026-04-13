@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/message/at/:uid',
@@ -34,59 +34,59 @@ export const route: Route = {
     description: `:::warning
   用户消息需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 interface AtItem {
-    id: number;
+    id: number
     user: {
-        mid: number;
-        fans: number;
-        nickname: string;
-        avatar: string;
-        mid_link: string;
-        follow: boolean;
-    };
+        mid: number
+        fans: number
+        nickname: string
+        avatar: string
+        mid_link: string
+        follow: boolean
+    }
     item: {
-        subject_id: number;
-        root_id: number;
-        source_id: number;
-        target_id: number;
-        type: string;
-        business_id: number;
-        business: string;
-        title: string;
-        desc: string;
-        image: string;
-        uri: string;
-        native_uri: string;
-        detail_title: string;
-        source_content: string;
-        at_details: unknown[];
-    };
-    at_time: number;
+        subject_id: number
+        root_id: number
+        source_id: number
+        target_id: number
+        type: string
+        business_id: number
+        business: string
+        title: string
+        desc: string
+        image: string
+        uri: string
+        native_uri: string
+        detail_title: string
+        source_content: string
+        at_details: unknown[]
+    }
+    at_time: number
 }
 
 interface AtResponse {
-    code: number;
-    message: string;
-    ttl: number;
+    code: number
+    message: string
+    ttl: number
     data: {
         cursor: {
-            is_end: boolean;
-            id: number;
-            time: number;
-        };
-        items: AtItem[];
-    };
+            is_end: boolean
+            id: number
+            time: number
+        }
+        items: AtItem[]
+    }
 }
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const name = await cache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await ofetch<AtResponse>('https://api.bilibili.com/x/msgfeed/at', {
@@ -99,32 +99,32 @@ async function handler(ctx) {
             Referer: 'https://message.bilibili.com/',
             Cookie: cookie,
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message ?? `Error code ${response.code}`);
+        throw new Error(response.message ?? `Error code ${response.code}`)
     }
 
     const items: DataItem[] = (response.data.items || []).map((item) => {
-        const atUser = item.user;
-        const atItem = item.item;
-        const sourceContent = atItem.source_content;
+        const atUser = item.user
+        const atItem = item.item
+        const sourceContent = atItem.source_content
 
-        let description = `<p><strong>${atUser.nickname}</strong> @了你：</p>`;
-        description += `<blockquote>${sourceContent}</blockquote>`;
+        let description = `<p><strong>${atUser.nickname}</strong> @了你：</p>`
+        description += `<blockquote>${sourceContent}</blockquote>`
 
         if (atItem.image) {
-            description += `<p><img src="${atItem.image.replace('http://', 'https://')}" /></p>`;
+            description += `<p><img src="${atItem.image.replace('http://', 'https://')}" /></p>`
         }
 
-        description += `<p>来自：${atItem.business} - ${atItem.title}</p>`;
+        description += `<p>来自：${atItem.business} - ${atItem.title}</p>`
 
         // Generate link with root_id for direct navigation
-        let link = atItem.uri;
+        let link = atItem.uri
         if (atItem.root_id && atItem.uri) {
-            link = `${atItem.uri}/#reply${atItem.root_id}`;
+            link = `${atItem.uri}/#reply${atItem.root_id}`
         } else if (atItem.source_id && atItem.uri) {
-            link = `${atItem.uri}/#reply${atItem.source_id}`;
+            link = `${atItem.uri}/#reply${atItem.source_id}`
         }
 
         return {
@@ -133,8 +133,8 @@ async function handler(ctx) {
             link,
             pubDate: parseDate(item.at_time * 1000),
             author: atUser.nickname,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} 的 B站消息 - @我的`,
@@ -142,5 +142,5 @@ async function handler(ctx) {
         description: `${name} 的 B站消息 - @我的`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

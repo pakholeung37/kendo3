@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/monthly-games',
@@ -28,36 +28,36 @@ export const route: Route = {
     maintainers: ['justjustCC'],
     handler,
     url: 'www.playstation.com/en-sg/ps-plus/whats-new',
-};
+}
 
 const renderDescription = (img, text) =>
     renderToString(
         <>
             <img src={img} />
             {text}
-        </>
-    );
+        </>,
+    )
 
 async function handler() {
-    const baseUrl = 'https://www.playstation.com/en-sg/ps-plus/whats-new/';
+    const baseUrl = 'https://www.playstation.com/en-sg/ps-plus/whats-new/'
 
-    const { data: response } = await got(baseUrl);
-    const $ = load(response);
+    const { data: response } = await got(baseUrl)
+    const $ = load(response)
 
     const list = $('#monthly-games .box--light ')
         .toArray()
         .map((e) => {
-            const item = $(e);
+            const item = $(e)
             return {
                 title: item.find('h3').text(),
                 description: renderDescription(item.find('.media-block__img source').attr('srcset'), item.find('h3 + p').text()),
                 link: item.find('.btn--cta').attr('href'),
-            };
-        });
+            }
+        })
 
     return {
         title: 'PlayStation Plus Monthly Games',
         link: baseUrl,
         item: list,
-    };
+    }
 }

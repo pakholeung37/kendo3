@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const md = MarkdownIt({
     html: true,
     breaks: true,
-});
+})
 
 export const route: Route = {
     path: '/dailyquestion/solution/cn',
@@ -21,19 +21,19 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'leetcode.cn/',
-};
+}
 
 async function handler() {
-    const baseurl = `https://leetcode.cn`;
-    const url = `${baseurl}/graphql/`;
+    const baseurl = `https://leetcode.cn`
+    const url = `${baseurl}/graphql/`
     const headers = {
         'content-type': 'application/json',
-    };
+    }
     const emoji = {
         Medium: '🟡',
         Easy: '🟢',
         Hard: '🔴',
-    };
+    }
     // 获取每日一题
     const data = (
         await got({
@@ -61,9 +61,9 @@ async function handler() {
             },
             headers,
         })
-    ).data.data;
-    const questionTitle = data.todayRecord[0].question.titleSlug;
-    const questionUrl = `${baseurl}/problems/${questionTitle}/`;
+    ).data.data
+    const questionTitle = data.todayRecord[0].question.titleSlug
+    const questionUrl = `${baseurl}/problems/${questionTitle}/`
 
     // 获取题目内容
     const question = (
@@ -96,8 +96,8 @@ async function handler() {
             },
             headers,
         })
-    ).data.data.question;
-    const diffEmoji = emoji[question.difficulty] || '';
+    ).data.data.question
+    const diffEmoji = emoji[question.difficulty] || ''
     // 获取题解（点赞前3）
     const articles = (
         await got({
@@ -140,7 +140,7 @@ async function handler() {
             },
             headers,
         })
-    ).data.data.questionSolutionArticles.edges;
+    ).data.data.questionSolutionArticles.edges
     // 获取题解内容
     const articleContent = (
         await Promise.all(
@@ -179,16 +179,16 @@ async function handler() {
                         },
                     },
                     headers,
-                })
-            )
+                }),
+            ),
         )
-    ).map((v) => v.data.data.solutionArticle);
+    ).map((v) => v.data.data.solutionArticle)
 
     const handleText = (s) => {
         // 处理多语言代码展示问题
-        s = s.replaceAll(/(```)([\d#+A-Za-z-]+)\s*?(\[.*?])?\n/g, '\r\n###$2\r\n$1$2\r\n');
-        return s;
-    };
+        s = s.replaceAll(/(```)([\d#+A-Za-z-]+)\s*?(\[.*?])?\n/g, '\r\n###$2\r\n$1$2\r\n')
+        return s
+    }
     return {
         title: 'LeetCode 每日一题题解',
         description: 'LeetCode 每日一题题解',
@@ -208,5 +208,5 @@ async function handler() {
                 author: art.author.username,
             })),
         ],
-    };
+    }
 }

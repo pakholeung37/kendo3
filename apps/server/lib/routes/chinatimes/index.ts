@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:category?',
@@ -33,24 +33,24 @@ export const route: Route = {
     description: `|     即時     |   熱門  |   政治  | 生活 | 娛樂 |  財經 |  國際 |   言論  |   兩岸  |   軍事   |   社會  |  健康  |  體育  |      科技      |   運勢  | 有影 |  寶島  |
 | :----------: | :-----: | :-----: | :--: | :--: | :---: | :---: | :-----: | :-----: | :------: | :-----: | :----: | :----: | :------------: | :-----: | :--: | :----: |
 | realtimenews | hotnews | politic | life | star | money | world | opinion | chinese | armament | society | health | sports | technologynews | fortune | tube | taiwan |`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.chinatimes.com';
+    const baseUrl = 'https://www.chinatimes.com'
 
-    const { category = 'realtimenews' } = ctx.req.param('category');
-    const link = `${baseUrl}/${category}/?chdtv`;
+    const { category = 'realtimenews' } = ctx.req.param('category')
+    const link = `${baseUrl}/${category}/?chdtv`
 
-    const response = await ofetch(link);
-    const $ = load(response);
-    const browser = await puppeteer();
+    const response = await ofetch(link)
+    const $ = load(response)
+    const browser = await puppeteer()
 
     const list = $('.articlebox-compact')
         .toArray()
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20)
         .map((item) => {
-            const $item = $(item);
-            const a = $item.find('.title a');
+            const $item = $(item)
+            const a = $item.find('.title a')
             return {
                 title: a.text().trim(),
                 link: `${baseUrl}${a.attr('href')}?chdtv`,
@@ -60,25 +60,25 @@ async function handler(ctx) {
                     .find('.category a')
                     .toArray()
                     .map((i) => $(i).text().trim()),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const page = await browser.newPage();
-                await page.setRequestInterception(true);
+                const page = await browser.newPage()
+                await page.setRequestInterception(true)
                 page.on('request', (request) => {
-                    request.resourceType() === 'document' ? request.continue() : request.abort();
-                });
-                logger.http(`Requesting ${item.link}`);
+                    request.resourceType() === 'document' ? request.continue() : request.abort()
+                })
+                logger.http(`Requesting ${item.link}`)
                 await page.goto(item.link, {
                     waitUntil: 'domcontentloaded',
-                });
+                })
 
-                const response = await page.content();
-                await page.close();
-                const $ = load(response);
+                const response = await page.content()
+                await page.close()
+                const $ = load(response)
 
                 item.category = [
                     ...new Set([
@@ -87,18 +87,18 @@ async function handler(ctx) {
                             .toArray()
                             .map((i) => $(i).text().trim()),
                     ]),
-                ];
+                ]
 
-                $('.ad, #donate-form-container, .promote-word, .google-news-promote, .article-hash-tag').remove();
+                $('.ad, #donate-form-container, .promote-word, .google-news-promote, .article-hash-tag').remove()
 
-                item.description = $('.main-figure').html() + $('.article-body').html();
+                item.description = $('.main-figure').html() + $('.article-body').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: $('head title').text(),
@@ -107,5 +107,5 @@ async function handler(ctx) {
         language: $('html').attr('lang'),
         image: `${baseUrl}/images/2020/apple-touch-icon.png`,
         item: items,
-    };
+    }
 }

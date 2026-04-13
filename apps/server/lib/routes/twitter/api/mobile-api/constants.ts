@@ -1,7 +1,7 @@
-const baseUrl = 'https://api.x.com';
+const baseUrl = 'https://api.x.com'
 
-const consumerKey = '3nVuSoBZnx6U4vzUxf5w';
-const consumerSecret = 'Bcs59EFbbsdF6Sl9Ng71smgStWEGwXXKSjYvPVt7qys';
+const consumerKey = '3nVuSoBZnx6U4vzUxf5w'
+const consumerSecret = 'Bcs59EFbbsdF6Sl9Ng71smgStWEGwXXKSjYvPVt7qys'
 
 const graphQLEndpointsPlain = [
     '/graphql/u7wQyGi6oExe8_TRWGMq4Q/UserResultByScreenNameQuery',
@@ -16,9 +16,9 @@ const graphQLEndpointsPlain = [
     '/graphql/-kmqNvm5Y-cVrfvBy6docg/ListBySlug',
     '/graphql/P4NpVZDqUD_7MEM84L-8nw/ListMembers',
     '/graphql/BbGLL1ZfMibdFNWlk7a0Pw/ListTimeline',
-];
+]
 
-const gqlMap = Object.fromEntries(graphQLEndpointsPlain.map((endpoint) => [endpoint.split('/')[3].replace(/V2$|Query$|QueryV2$/, ''), endpoint]));
+const gqlMap = Object.fromEntries(graphQLEndpointsPlain.map((endpoint) => [endpoint.split('/')[3].replace(/V2$|Query$|QueryV2$/, ''), endpoint]))
 
 const gqlFeatures = JSON.stringify({
     android_graphql_skip_api_media_color_palette: false,
@@ -61,7 +61,7 @@ const gqlFeatures = JSON.stringify({
     verified_phone_label_enabled: false,
     vibe_api_enabled: false,
     view_counts_everywhere_api_enabled: false,
-});
+})
 
 const timelineParams = {
     include_can_media_tag: 1,
@@ -77,10 +77,10 @@ const timelineParams = {
     tweet_mode: 'extended',
     send_error_codes: 1,
     simple_quoted_tweet: 1,
-};
+}
 
-const bearerToken = 'Bearer AAAAAAAAAAAAAAAAAAAAAFXzAwAAAAAAMHCxpeSDG1gLNLghVe8d74hl6k4%3DRUMF4xAQLsbeBhTSRrCiQpJtxoGWeyHrDb5te2jpGskWDFW82F';
+const bearerToken = 'Bearer AAAAAAAAAAAAAAAAAAAAAFXzAwAAAAAAMHCxpeSDG1gLNLghVe8d74hl6k4%3DRUMF4xAQLsbeBhTSRrCiQpJtxoGWeyHrDb5te2jpGskWDFW82F'
 
-const guestActivateUrl = baseUrl + '/1.1/guest/activate.json';
+const guestActivateUrl = baseUrl + '/1.1/guest/activate.json'
 
-export { baseUrl, bearerToken, consumerKey, consumerSecret, gqlFeatures, gqlMap, guestActivateUrl, timelineParams };
+export { baseUrl, bearerToken, consumerKey, consumerSecret, gqlFeatures, gqlMap, guestActivateUrl, timelineParams }

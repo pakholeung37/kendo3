@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: 'News',
@@ -22,4 +22,4 @@ export const route: Route = {
 | Headlines | Explainer | India | Entertainment | Sports | Viral | Lifestyle | Education | Business | World |
 | --------- | --------- | ----- | ------------- | ------ | ----- | --------- | --------- | -------- | ----- |
 | headlines | explainer | india | entertainment | sports | viral | lifestyle | education | business | world |`,
-};
+}

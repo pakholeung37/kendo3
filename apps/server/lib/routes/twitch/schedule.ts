@@ -1,9 +1,9 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 // https://github.com/streamlink/streamlink/blob/master/src/streamlink/plugins/twitch.py#L286
-const TWITCH_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+const TWITCH_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko'
 
 export const route: Route = {
     path: '/schedule/:login',
@@ -26,13 +26,13 @@ export const route: Route = {
     name: 'Stream Schedule',
     maintainers: ['hoilc'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const login = ctx.req.param('login');
+    const login = ctx.req.param('login')
 
-    const today = new Date();
-    const oneWeekLater = new Date(today.getTime() + 86_400_000 * 7);
+    const today = new Date()
+    const oneWeekLater = new Date(today.getTime() + 86_400_000 * 7)
     const response = await got({
         method: 'post',
         url: 'https://gql.twitch.tv/gql',
@@ -71,16 +71,16 @@ async function handler(ctx) {
                 },
             },
         ],
-    });
+    })
 
-    const channelShellData = response.data[0].data;
-    const streamScheduleData = response.data[1].data;
+    const channelShellData = response.data[0].data
+    const streamScheduleData = response.data[1].data
 
     if (!streamScheduleData.user.id) {
-        throw new InvalidParameterError(`Username does not exist`);
+        throw new InvalidParameterError(`Username does not exist`)
     }
 
-    const displayName = channelShellData.userOrError.displayName;
+    const displayName = channelShellData.userOrError.displayName
 
     // schedule segments may be null
     const out = streamScheduleData.user.channel.schedule.segments?.map((item) => ({
@@ -90,12 +90,12 @@ async function handler(ctx) {
         author: displayName,
         description: `StartAt: ${item.startAt}</br>EndAt: ${item.endAt}`,
         category: item.categories.map((item) => item.name),
-    }));
+    }))
 
     return {
         title: `Twitch - ${displayName} - Schedule`,
         link: `https://www.twitch.tv/${login}`,
         item: out,
         allowEmpty: true,
-    };
+    }
 }

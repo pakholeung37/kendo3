@@ -1,8 +1,8 @@
-import { renderItemActionToHTML } from '@rss3/sdk';
+import { renderItemActionToHTML } from '@rss3/sdk'
 
-import type { DataItem, Route } from '@/types';
-import { camelcaseKeys } from '@/utils/camelcase-keys';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import { camelcaseKeys } from '@/utils/camelcase-keys'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/:account/:network?/:tag?',
@@ -118,14 +118,14 @@ export const route: Route = {
             ],
         },
     },
-};
+}
 
 async function handler(ctx) {
-    const { account, network, tag } = ctx.req.param();
+    const { account, network, tag } = ctx.req.param()
 
     // Check if account contains "://" or "/"
     if (account.includes('://') || account.includes('/')) {
-        throw new Error('Account should not contain "://" or path components');
+        throw new Error('Account should not contain "://" or path components')
     }
 
     const { data } = await ofetch(
@@ -133,16 +133,16 @@ async function handler(ctx) {
             limit: '20',
             ...(network && network !== 'all' && { network }),
             ...(tag && tag !== 'all' && { tag }),
-        })}`
-    );
+        })}`,
+    )
 
     return {
         title: `${account} activities`,
         link: 'https://rss3.io',
         item: data.map((item) => {
-            const content = renderItemActionToHTML(camelcaseKeys(item.actions));
+            const content = renderItemActionToHTML(camelcaseKeys(item.actions))
 
-            const description = `New ${item.tag} ${item.type} action on ${item.network}<br /><br />From: ${item.from}<br/>To: ${item.to}`;
+            const description = `New ${item.tag} ${item.type} action on ${item.network}<br /><br />From: ${item.from}<br/>To: ${item.to}`
             return {
                 title: `New ${item.tag} ${item.type} action on ${item.network}`,
                 description: content ?? description,
@@ -156,7 +156,7 @@ async function handler(ctx) {
                 ],
 
                 _extra: { raw: item },
-            } as DataItem;
+            } as DataItem
         }),
-    };
+    }
 }

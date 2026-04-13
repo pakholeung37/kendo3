@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    cover?: string;
-    category?: string[];
-    introduction?: string;
-    images?: string[];
-};
+    cover?: string
+    category?: string[]
+    introduction?: string
+    images?: string[]
+}
 
 export const renderDescription = ({ cover, category = [], introduction, images = [] }: DescriptionData): string =>
     renderToString(
@@ -20,5 +20,5 @@ export const renderDescription = ({ cover, category = [], introduction, images =
             {images.map((image) => (
                 <img src={image} />
             ))}
-        </>
-    );
+        </>,
+    )

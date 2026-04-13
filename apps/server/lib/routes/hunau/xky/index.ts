@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import getContent from '../utils/common';
+import getContent from '../utils/common'
 
 export const route: Route = {
     path: '/xky/:category?/:page?',
@@ -28,7 +28,7 @@ export const route: Route = {
     description: `| 分类 | 通知公告   | 学院新闻 | 其他分类通知... |
 | ---- | ---------- | -------- | --------------- |
 | 参数 | tzgg_8472 | xyxw     | 对应 URL        |`,
-};
+}
 
 async function handler(ctx) {
     await getContent(ctx, {
@@ -38,5 +38,5 @@ async function handler(ctx) {
         baseDescription: '湖南农业大学信息与智能科学技术学院',
         baseDeparment: 'xky',
         baseClass: 'div.right_list ul li:has(a)',
-    });
+    })
 }

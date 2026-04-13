@@ -1,19 +1,19 @@
-import type { FC } from 'hono/jsx';
+import type { FC } from 'hono/jsx'
 
-import { config } from '@/config';
-import { getDebugInfo } from '@/utils/debug-info';
-import { gitDate, gitHash } from '@/utils/git-hash';
-import { Layout } from '@/views/layout';
+import { config } from '@/config'
+import { getDebugInfo } from '@/utils/debug-info'
+import { gitDate, gitHash } from '@/utils/git-hash'
+import { Layout } from '@/views/layout'
 
-const startTime = Date.now();
+const startTime = Date.now()
 
 const Index: FC<{ debugQuery: string | undefined }> = ({ debugQuery }) => {
-    const debug = getDebugInfo();
+    const debug = getDebugInfo()
 
-    const showDebug = !config.debugInfo || config.debugInfo === 'false' ? false : config.debugInfo === 'true' || config.debugInfo === debugQuery;
-    const { disallowRobot, nodeName, cache } = config;
+    const showDebug = !config.debugInfo || config.debugInfo === 'false' ? false : config.debugInfo === 'true' || config.debugInfo === debugQuery
+    const { disallowRobot, nodeName, cache } = config
 
-    const duration = Date.now() - startTime;
+    const duration = Date.now() - startTime
 
     const info = {
         showDebug,
@@ -124,7 +124,7 @@ const Index: FC<{ debugQuery: string | undefined }> = ({ debugQuery }) => {
                     )),
             },
         ],
-    };
+    }
 
     return (
         <Layout>
@@ -212,7 +212,7 @@ const Index: FC<{ debugQuery: string | undefined }> = ({ debugQuery }) => {
                 </p>
             </div>
         </Layout>
-    );
-};
+    )
+}
 
-export default Index;
+export default Index

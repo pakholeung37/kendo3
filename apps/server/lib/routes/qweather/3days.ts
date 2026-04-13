@@ -1,13 +1,13 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import type { WeatherForecastItem } from './util';
-import { render3DaysDescription } from './util';
+import type { WeatherForecastItem } from './util'
+import { render3DaysDescription } from './util'
 
-const author = 'QWeather';
+const author = 'QWeather'
 
 export const route: Route = {
     path: '/3days/:location',
@@ -35,45 +35,45 @@ export const route: Route = {
     maintainers: ['Rein-Ou', 'la3rence'],
     handler,
     description: '获取订阅近三天天气预报',
-};
+}
 
 async function handler(ctx) {
     if (!config.hefeng.key || !config.hefeng.apiHost) {
-        throw new ConfigNotFoundError('QWeather RSS is disabled due to the lack of <a href="https://docs.rsshub.app/zh/install/config#%E5%92%8C%E9%A3%8E%E5%A4%A9%E6%B0%94">relevant config</a>');
+        throw new ConfigNotFoundError('QWeather RSS is disabled due to the lack of <a href="https://docs.rsshub.app/zh/install/config#%E5%92%8C%E9%A3%8E%E5%A4%A9%E6%B0%94">relevant config</a>')
     }
 
-    const WEATHER_API = `https://${config.hefeng.apiHost}/v7/weather/3d`;
-    const AIR_QUALITY_API = `https://${config.hefeng.apiHost}/v7/air/5d`;
-    const CIRY_LOOKUP_API = `https://${config.hefeng.apiHost}/geo/v2/city/lookup`;
+    const WEATHER_API = `https://${config.hefeng.apiHost}/v7/weather/3d`
+    const AIR_QUALITY_API = `https://${config.hefeng.apiHost}/v7/air/5d`
+    const CIRY_LOOKUP_API = `https://${config.hefeng.apiHost}/geo/v2/city/lookup`
 
     const id = await cache.tryGet('qweather:' + ctx.req.param('location') + ':id', async () => {
-        const response = await got(`${CIRY_LOOKUP_API}?location=${ctx.req.param('location')}&key=${config.hefeng.key}`);
-        return response.data.location[0].id;
-    });
+        const response = await got(`${CIRY_LOOKUP_API}?location=${ctx.req.param('location')}&key=${config.hefeng.key}`)
+        return response.data.location[0].id
+    })
     const weatherData = await cache.tryGet(
         'qweather:' + ctx.req.param('location'),
         async () => {
-            const response = await got(`${WEATHER_API}?key=${config.hefeng.key}&location=${id}`);
-            return response.data;
+            const response = await got(`${WEATHER_API}?key=${config.hefeng.key}&location=${id}`)
+            return response.data
         },
         config.cache.contentExpire,
-        false
-    );
+        false,
+    )
     const airQualityData = await cache.tryGet(
         `qweather:air:${ctx.req.param('location')}`,
         async () => {
-            const airQualityResponse = await got(`${AIR_QUALITY_API}?location=${id}&key=${config.hefeng.key}`);
-            return airQualityResponse.data;
+            const airQualityResponse = await got(`${AIR_QUALITY_API}?location=${id}&key=${config.hefeng.key}`)
+            return airQualityResponse.data
         },
         config.cache.contentExpire,
-        false
-    );
+        false,
+    )
     // merge weather data with air quality data
     const combined = {
         updateTime: weatherData.updateTime,
         fxLink: weatherData.fxLink,
         daily: weatherData.daily.map((weatherItem: WeatherForecastItem) => {
-            const dailyAirQuality = airQualityData.daily.find((airQualityItem) => airQualityItem.fxDate === weatherItem.fxDate);
+            const dailyAirQuality = airQualityData.daily.find((airQualityItem) => airQualityItem.fxDate === weatherItem.fxDate)
             if (dailyAirQuality) {
                 return {
                     ...weatherItem,
@@ -81,11 +81,11 @@ async function handler(ctx) {
                     aqiLevel: dailyAirQuality.level,
                     aqiCategory: dailyAirQuality.category,
                     aqiPrimary: dailyAirQuality.primary,
-                };
+                }
             }
-            return weatherItem;
+            return weatherItem
         }),
-    };
+    }
     const items = combined.daily.map((item: WeatherForecastItem) => ({
         title: `${item.fxDate}: ${item.textDay === item.textNight ? item.textDay : item.textDay + '转' + item.textNight} ${item.tempMin}~${item.tempMax}℃`,
         description: render3DaysDescription(item),
@@ -93,7 +93,7 @@ async function handler(ctx) {
         guid: '位置：' + ctx.req.param('location') + '--日期：' + item.fxDate,
         link: combined.fxLink,
         author,
-    }));
+    }))
 
     return {
         title: ctx.req.param('location') + '未来三天天气',
@@ -101,5 +101,5 @@ async function handler(ctx) {
         item: items,
         link: combined.fxLink,
         author,
-    };
+    }
 }

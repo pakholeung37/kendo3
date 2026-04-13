@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '南京信息工程大学',
@@ -17,4 +17,4 @@ export const namespace: Namespace = {
 [https://rsshub.app/**nuist**/\`bulletin\`](https://rsshub.app/nuist/bulletin) 或 [https://rsshub.app/**nuist**/\`bulletin\`/\`791\`](https://rsshub.app/nuist/bulletin)
 :::`,
     lang: 'zh-CN',
-};
+}

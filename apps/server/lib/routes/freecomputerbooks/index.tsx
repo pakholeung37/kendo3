@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const baseURL = 'https://freecomputerbooks.com/';
+const baseURL = 'https://freecomputerbooks.com/'
 
 async function cheerioLoad(url) {
-    const response = await got(url);
-    return load(response.data);
+    const response = await got(url)
+    return load(response.data)
 }
 
 export const route: Route = {
@@ -39,17 +39,17 @@ export const route: Route = {
             target: '',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const categoryId = ctx.req.param('category')?.trim();
-    const requestURL = categoryId ? new URL(`${categoryId}.html`, baseURL).href : baseURL;
-    const $ = await cheerioLoad(requestURL);
+    const categoryId = ctx.req.param('category')?.trim()
+    const requestURL = categoryId ? new URL(`${categoryId}.html`, baseURL).href : baseURL
+    const $ = await cheerioLoad(requestURL)
 
     // As observation has shown that each page only has one element of the
     // class, thus to simplify the processing the text is directly extracted.
     // Needing more robust processing if some day more such elements show up.
-    const categoryTitle = $('.maintitlebar').text();
+    const categoryTitle = $('.maintitlebar').text()
 
     return {
         title: 'Free Computer Books - ' + categoryTitle,
@@ -61,16 +61,16 @@ async function handler(ctx) {
         item: await Promise.all(
             $('ul[id^=newBooks] > li')
                 .toArray()
-                .map((elem) => buildPostItem($(elem), categoryTitle, cache))
+                .map((elem) => buildPostItem($(elem), categoryTitle, cache)),
         ),
-    };
+    }
 }
 
 function buildPostItem(listItem, categoryTitle, cache) {
-    const $ = load(''); // the only use below doesn't care about the content
+    const $ = load('') // the only use below doesn't care about the content
 
-    const postLink = listItem.find('a:first');
-    const postInfo = listItem.find('p:contains("Post under")');
+    const postLink = listItem.find('a:first')
+    const postInfo = listItem.find('p:contains("Post under")')
     const postItem = {
         title: postLink.text(),
         link: new URL(postLink.attr('href'), baseURL).href,
@@ -84,13 +84,13 @@ function buildPostItem(listItem, categoryTitle, cache) {
                   .toArray()
                   .map((elem) => $(elem).text())
             : categoryTitle,
-    };
+    }
 
-    return cache.tryGet(postItem.link, () => insertDescriptionInto(postItem));
+    return cache.tryGet(postItem.link, () => insertDescriptionInto(postItem))
 }
 
 async function insertDescriptionInto(item) {
-    const $ = await cheerioLoad(item.link);
+    const $ = await cheerioLoad(item.link)
 
     // Eliminate all comment nodes to avoid their being selected and rendered in
     // the final output (I know this is actually unnecessary, but please forgive
@@ -99,15 +99,15 @@ async function insertDescriptionInto(item) {
         .find('*')
         .contents()
         .filter((_, node) => node.type === 'comment')
-        .remove();
+        .remove()
 
-    const imageURL = $('#bookdesc img[title]').attr('src');
-    const metadata = $('#booktitle ul').removeAttr('style');
-    const content = $('#bookdesccontent').removeAttr('id');
+    const imageURL = $('#bookdesc img[title]').attr('src')
+    const metadata = $('#booktitle ul').removeAttr('style')
+    const content = $('#bookdesccontent').removeAttr('id')
 
-    metadata.find('li:contains(Share This)').remove();
-    content.find('img[src$="/hot.gif"]').remove();
-    content.find(':contains(Similar Books)').nextAll().addBack().remove();
+    metadata.find('li:contains(Share This)').remove()
+    content.find('img[src$="/hot.gif"]').remove()
+    content.find(':contains(Similar Books)').nextAll().addBack().remove()
 
     item.description = renderToString(
         <>
@@ -116,8 +116,8 @@ async function insertDescriptionInto(item) {
             </figure>
             {raw(metadata.toString())}
             {raw(content.toString())}
-        </>
-    );
+        </>,
+    )
 
-    return item;
+    return item
 }

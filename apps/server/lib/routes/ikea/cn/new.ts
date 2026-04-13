@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { generateProductItem, generateRequestHeaders } from './utils';
+import { generateProductItem, generateRequestHeaders } from './utils'
 
 const request = ({ moreToken = '' }) =>
     got({
@@ -13,7 +13,7 @@ const request = ({ moreToken = '' }) =>
             moreToken,
         },
         json: {},
-    });
+    })
 
 export const route: Route = {
     path: '/cn/new',
@@ -37,29 +37,29 @@ export const route: Route = {
     maintainers: ['jzhangdev'],
     handler,
     url: 'ikea.cn/cn/zh/new/',
-};
+}
 
 async function handler() {
-    const allProductSummaries = [];
+    const allProductSummaries = []
 
     const loadMoreRequest = async ({ moreToken }) => {
-        const response = await request({ moreToken });
-        const { data } = response;
-        allProductSummaries.push(data.productSummaries);
+        const response = await request({ moreToken })
+        const { data } = response
+        allProductSummaries.push(data.productSummaries)
         if (data.moreToken) {
-            await loadMoreRequest({ moreToken: data.moreToken });
+            await loadMoreRequest({ moreToken: data.moreToken })
         }
-        return;
-    };
+        return
+    }
 
-    await loadMoreRequest({});
+    await loadMoreRequest({})
 
-    const products = allProductSummaries.flat();
+    const products = allProductSummaries.flat()
 
     return {
         title: 'IKEA 宜家 - 当季新品推荐',
         link: 'https://www.ikea.cn/cn/zh/new/',
         description: '当季新品推荐',
         item: products.map((element) => generateProductItem(element)),
-    };
+    }
 }

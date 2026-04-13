@@ -1,94 +1,94 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { type = '1' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { type = '1' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'http://www.ccfa.org.cn';
-    const currentUrl = new URL(`portal/cn/xiehui_list.jsp?type=${type}`, rootUrl).href;
+    const rootUrl = 'http://www.ccfa.org.cn'
+    const currentUrl = new URL(`portal/cn/xiehui_list.jsp?type=${type}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div.page_right ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('span.list_time').text(), 'YYYY/MM/DD'),
                 link: new URL(a.prop('href'), currentUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.includes('ccfa.org.cn')) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h2#title').text();
-                const intro = $$('div.artical_info_jianjie').html();
-                const descriptionHtml = $$('div.news_artical_txt').html();
+                const title = $$('h2#title').text()
+                const intro = $$('div.artical_info_jianjie').html()
+                const descriptionHtml = $$('div.news_artical_txt').html()
                 const description = renderToString(
                     <>
                         {intro ? <blockquote>{intro}</blockquote> : null}
                         {descriptionHtml ? raw(descriptionHtml) : null}
-                    </>
-                );
+                    </>,
+                )
 
                 const pubDate =
                     $$('div.artical_info_left')
                         .text()
-                        .match(/(\d{4}(?:\/\d{2}){2})/)?.[1] ?? undefined;
+                        .match(/(\d{4}(?:\/\d{2}){2})/)?.[1] ?? undefined
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = pubDate ? parseDate(pubDate, 'YYYY/MM/DD') : item.pubDate;
+                item.title = title
+                item.description = description
+                item.pubDate = pubDate ? parseDate(pubDate, 'YYYY/MM/DD') : item.pubDate
                 item.author = $$('div.artical_info_left')
                     .text()
                     .split(/来源：/)
-                    .pop();
+                    .pop()
                 item.content = {
                     html: description,
                     text: $$('div.news_artical_txt').text(),
-                };
+                }
 
                 const attachmentEl =
                     $$('p.download').length === 0
                         ? undefined
                         : $$('div.news_artical_txt a')
                               .toArray()
-                              .find((a) => $$(a).prop('href')?.includes('downFiles.do'));
+                              .find((a) => $$(a).prop('href')?.includes('downFiles.do'))
 
-                item.enclosure_url = attachmentEl ? new URL($$(attachmentEl).prop('href'), rootUrl) : undefined;
-                item.enclosure_title = attachmentEl ? $$(attachmentEl).text() : undefined;
+                item.enclosure_url = attachmentEl ? new URL($$(attachmentEl).prop('href'), rootUrl) : undefined
+                item.enclosure_title = attachmentEl ? $$(attachmentEl).text() : undefined
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const description = $('li.page_tit').contents().last().text().split(/>/).pop();
-    const image = new URL($('div.logo img').prop('src'), currentUrl).href;
-    const author = $('title').text();
+    const description = $('li.page_tit').contents().last().text().split(/>/).pop()
+    const image = new URL($('div.logo img').prop('src'), currentUrl).href
+    const author = $('title').text()
 
     return {
         title: `${author} - ${description}`,
@@ -98,8 +98,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:type?',
@@ -153,10 +153,10 @@ export const route: Route = {
                 'www.ccfa.org.cn/portal/cn/fangyizhuanqu_list.jsp',
             ],
             target: (_, url) => {
-                url = new URL(url);
-                const type = url.searchParams.get('type');
+                url = new URL(url)
+                const type = url.searchParams.get('type')
 
-                return type ? `/${type}` : '';
+                return type ? `/${type}` : ''
             },
         },
         {
@@ -215,4 +215,4 @@ export const route: Route = {
             target: '/40',
         },
     ],
-};
+}

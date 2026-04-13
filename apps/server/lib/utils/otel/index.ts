@@ -1,2 +1,2 @@
-export * from './metric';
-export * from './trace';
+export * from './metric'
+export * from './trace'

@@ -1,4 +1,4 @@
-import type { FC } from 'hono/jsx';
+import type { FC } from 'hono/jsx'
 
 export const Layout: FC = (props) => (
     <html>
@@ -47,4 +47,4 @@ export const Layout: FC = (props) => (
         </head>
         <body className="antialiased min-h-screen text-zinc-700 flex flex-col">{props.children}</body>
     </html>
-);
+)

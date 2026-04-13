@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.safe.gov.cn';
+const rootUrl = 'https://www.safe.gov.cn'
 
 const zxfkCategoryApis = {
     // 业务咨询 https://www.safe.gov.cn/<site>/ywzx/index.html
@@ -12,35 +12,35 @@ const zxfkCategoryApis = {
 
     // 投诉建议 https://www.safe.gov.cn/<site>/tsjy/index.html
     tsjy: 'www/complaint/complaintQuery?siteid=',
-};
+}
 
 const processZxfkItems = async (site = 'beijing', category = 'ywzx', limit = '3') => {
-    const apiUrl = new URL(`${zxfkCategoryApis[category]}${site}`, rootUrl).href;
-    const currentUrl = new URL(`${site}/${category}/index.html`, rootUrl).href;
+    const apiUrl = new URL(`${zxfkCategoryApis[category]}${site}`, rootUrl).href
+    const currentUrl = new URL(`${site}/${category}/index.html`, rootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const items = $('#complaint')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const spans = item.find('span[objid]');
+            const spans = item.find('span[objid]')
 
             const message = {
                 author: spans.first().text().replace(/:$/, ''),
                 content: spans.eq(1).text(),
                 date: spans.eq(2).text(),
-            };
+            }
 
             const reply = {
                 author: spans.eq(3).text().replace(/:$/, ''),
                 content: spans.eq(4).text(),
                 date: spans.eq(5).text(),
-            };
+            }
 
             return {
                 title: `${message.author}: ${message.content}`,
@@ -68,25 +68,25 @@ const processZxfkItems = async (site = 'beijing', category = 'ywzx', limit = '3'
                                 </tr>
                             ) : null}
                         </tbody>
-                    </table>
+                    </table>,
                 ),
                 author: `${message.author}/${reply.author}`,
                 guid: `${currentUrl}#${message.author}(${message.date})/${reply.author}(${reply.date})`,
                 pubDate: parseDate(message.date),
                 updated: parseDate(reply.date),
-            };
-        });
+            }
+        })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const content = load(currentResponse);
+    const content = load(currentResponse)
 
-    const author = content('meta[name="ColumnName"]').prop('content');
-    const subtitle = content('meta[name="ColumnType"]').prop('content');
+    const author = content('meta[name="ColumnName"]').prop('content')
+    const subtitle = content('meta[name="ColumnType"]').prop('content')
 
-    const imagePath = 'safe/templateresource/372b1dfdab204181b9b4f943a8e926a6';
-    const image = new URL(`${imagePath}/logo_06.png`, rootUrl).href;
-    const icon = new URL(`${imagePath}/safe.ico`, rootUrl).href;
+    const imagePath = 'safe/templateresource/372b1dfdab204181b9b4f943a8e926a6'
+    const image = new URL(`${imagePath}/logo_06.png`, rootUrl).href
+    const icon = new URL(`${imagePath}/safe.ico`, rootUrl).href
 
     return {
         item: items,
@@ -100,7 +100,7 @@ const processZxfkItems = async (site = 'beijing', category = 'ywzx', limit = '3'
         subtitle,
         author,
         allowEmpty: true,
-    };
-};
+    }
+}
 
-export { processZxfkItems };
+export { processZxfkItems }

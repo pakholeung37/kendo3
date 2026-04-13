@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/topic/:id',
@@ -24,44 +24,44 @@ export const route: Route = {
     name: '专题',
     maintainers: ['kennyfong19931'],
     handler,
-};
+}
 
 async function getTopic(rootUrl, id, seqMarkInput = '') {
     const topicListResponse = await got({
         method: 'get',
         url: `${rootUrl}/news-site-api/main/get-topics-list?pageSize=48&seqMark=${seqMarkInput}`,
-    });
-    const { hasMore, seqMark, list } = topicListResponse.data.data.data;
-    const topic = list.find((item) => item.idx === id);
+    })
+    const { hasMore, seqMark, list } = topicListResponse.data.data.data
+    const topic = list.find((item) => item.idx === id)
     if (topic) {
         return {
             topicTitle: topic.title,
             topicDescription: topic.detail,
-        };
+        }
     } else if (hasMore === 1) {
-        return getTopic(rootUrl, id, seqMark);
+        return getTopic(rootUrl, id, seqMark)
     } else {
         return {
             topicTitle: '',
             topicDescription: '',
-        };
+        }
     }
 }
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 48;
-    const id = ctx.req.param('id');
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 48
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://news.futunn.com';
-    const link = `${rootUrl}/news-topics/${id}/`;
-    const apiUrl = `${rootUrl}/news-site-api/topic/get-topics-news-list?topicsId=${id}&pageSize=${limit}`;
+    const rootUrl = 'https://news.futunn.com'
+    const link = `${rootUrl}/news-topics/${id}/`
+    const apiUrl = `${rootUrl}/news-site-api/topic/get-topics-news-list?topicsId=${id}&pageSize=${limit}`
 
-    const { topicTitle, topicDescription } = await cache.tryGet(link, async () => await getTopic(rootUrl, id));
+    const { topicTitle, topicDescription } = await cache.tryGet(link, async () => await getTopic(rootUrl, id))
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     let items = response.data.data.data.map((item) => ({
         title: item.title,
@@ -72,7 +72,7 @@ async function handler(ctx) {
             abs: item.abstract,
             pic: item.pic,
         }),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -81,16 +81,16 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    content('.futu-news-time-stamp').remove();
+                    content('.futu-news-time-stamp').remove()
                     content('.nnstock').each(function () {
-                        content(this).replaceWith(`<a href="${content(this).attr('href')}">${content(this).text().replaceAll('$', '')}</a>`);
-                    });
+                        content(this).replaceWith(`<a href="${content(this).attr('href')}">${content(this).text().replaceAll('$', '')}</a>`)
+                    })
 
-                    item.description = content('.origin_content').html();
+                    item.description = content('.origin_content').html()
                     item.category = [
                         ...content('.news__from-topic__title')
                             .toArray()
@@ -98,18 +98,18 @@ async function handler(ctx) {
                         ...content('#relatedStockWeb .stock-name')
                             .toArray()
                             .map((s) => content(s).text().trim()),
-                    ];
+                    ]
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `富途牛牛 - 专题 - ${topicTitle}`,
         link,
         description: topicDescription,
         item: items,
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import CryptoJS from 'crypto-js';
+import CryptoJS from 'crypto-js'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-const apiHost = 'https://api.creative-comic.tw';
-const device = 'web_desktop';
-const DEFAULT_TOKEN = 'freeforccc2020reading';
+const apiHost = 'https://api.creative-comic.tw'
+const device = 'web_desktop'
+const DEFAULT_TOKEN = 'freeforccc2020reading'
 
 const getBook = (bookId, uuid) =>
     got(`${apiHost}/book/${bookId}/info`, {
@@ -12,7 +12,7 @@ const getBook = (bookId, uuid) =>
             device,
             uuid,
         },
-    });
+    })
 
 const getChapter = (id, uuid) =>
     got(`${apiHost}/book/chapter/${id}`, {
@@ -20,7 +20,7 @@ const getChapter = (id, uuid) =>
             device,
             uuid,
         },
-    });
+    })
 
 const getChapters = (bookId, uuid) =>
     got(`${apiHost}/book/${bookId}/chapter`, {
@@ -28,7 +28,7 @@ const getChapters = (bookId, uuid) =>
             device,
             uuid,
         },
-    });
+    })
 
 const getImgEncrypted = async (pageId, quality) => {
     const { data: res } = await got(`https://storage.googleapis.com/ccc-www/fs/chapter_content/encrypt/${pageId}/${quality}`, {
@@ -36,9 +36,9 @@ const getImgEncrypted = async (pageId, quality) => {
             device,
         },
         responseType: 'buffer',
-    });
-    return Buffer.from(res).toString('base64');
-};
+    })
+    return Buffer.from(res).toString('base64')
+}
 
 const getImgKey = (pageId, uuid) =>
     got(`${apiHost}/book/chapter/image/${pageId}`, {
@@ -46,7 +46,7 @@ const getImgKey = (pageId, uuid) =>
             device,
             uuid,
         },
-    });
+    })
 
 const getUuid = (tryGet) =>
     tryGet('creative-comic:uuid', async () => {
@@ -54,33 +54,33 @@ const getUuid = (tryGet) =>
             headers: {
                 device,
             },
-        });
-        return data.data;
-    });
+        })
+        return data.data
+    })
 
 const decrypt = (encrypted, secrets) =>
     CryptoJS.AES.decrypt(encrypted, CryptoJS.enc.Hex.parse(secrets.key), {
         iv: CryptoJS.enc.Hex.parse(secrets.iv),
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7,
-    }).toString(CryptoJS.enc.Utf8);
+    }).toString(CryptoJS.enc.Utf8)
 
 const token2Key = (token) => {
-    const t = CryptoJS.SHA512(token).toString();
+    const t = CryptoJS.SHA512(token).toString()
     return {
         key: t.slice(0, 64),
         iv: t.slice(30, 62), // t.substr(30, 32)
-    };
-};
+    }
+}
 
 const getRealKey = (imgKey, token = DEFAULT_TOKEN) => {
-    const secrets = token2Key(token);
-    const key = decrypt(imgKey, secrets);
-    const realKey = key.split(':');
+    const secrets = token2Key(token)
+    const key = decrypt(imgKey, secrets)
+    const realKey = key.split(':')
     return {
         key: realKey[0],
         iv: realKey[1],
-    };
-};
+    }
+}
 
-export { apiHost, decrypt, getBook, getChapter, getChapters, getImgEncrypted, getImgKey, getRealKey, getUuid, token2Key };
+export { apiHost, decrypt, getBook, getChapter, getChapters, getImgEncrypted, getImgKey, getRealKey, getUuid, token2Key }

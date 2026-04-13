@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseRelativeDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseRelativeDate } from '@/utils/parse-date'
 
-const host = 'https://guangdiu.com';
+const host = 'https://guangdiu.com'
 
 export const route: Route = {
     path: '/cheaps/:query?',
@@ -22,14 +22,14 @@ export const route: Route = {
     name: '九块九',
     maintainers: ['fatpandac'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const query = ctx.req.param('query') ?? '';
-    const url = `${host}/cheaps.php${query ? `?${query}` : ''}`;
+    const query = ctx.req.param('query') ?? ''
+    const url = `${host}/cheaps.php${query ? `?${query}` : ''}`
 
-    const response = await got(url);
-    const $ = load(response.data);
+    const response = await got(url)
+    const $ = load(response.data)
 
     const items = $('div.cheapitem.rightborder')
         .toArray()
@@ -38,11 +38,11 @@ async function handler(ctx) {
             link: $(item).find('a.cheappriceword').attr('href'),
             description: $(item).find('div.cheapimga').html(),
             pubDate: parseRelativeDate($(item).find('span.cheapaddtimeword').text()),
-        }));
+        }))
 
     return {
         title: `逛丢 - 九块九`,
         link: url,
         item: items,
-    };
+    }
 }

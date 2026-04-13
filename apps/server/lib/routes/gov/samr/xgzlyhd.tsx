@@ -1,39 +1,39 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://xgzlyhd.samr.gov.cn';
-const apiUrl = new URL('gjjly/message/getMessageList', rootUrl).href;
-const apiDataUrl = new URL('gjjly/message/getDataList', rootUrl).href;
-const currentUrl = new URL('gjjly/index', rootUrl).href;
+const rootUrl = 'https://xgzlyhd.samr.gov.cn'
+const apiUrl = new URL('gjjly/message/getMessageList', rootUrl).href
+const apiDataUrl = new URL('gjjly/message/getDataList', rootUrl).href
+const currentUrl = new URL('gjjly/index', rootUrl).href
 
 const types = {
     category: '1',
     department: '2',
-};
+}
 
 const fetchOptions = async (type) => {
     const { data: response } = await got.post(apiDataUrl, {
         json: {
             type: types[type],
         },
-    });
+    })
 
-    return response.data;
-};
+    return response.data
+}
 
 const getOption = async (type, name) => {
-    const options = await fetchOptions(type);
-    const results = options.filter((o) => o.name === name || o.code === name);
+    const options = await fetchOptions(type)
+    const results = options.filter((o) => o.name === name || o.code === name)
 
     if (results.length > 0) {
-        return results.pop();
+        return results.pop()
     }
-    return;
-};
+    return
+}
 
 export const route: Route = {
     path: '/samr/xgzlyhd/:category?/:department?',
@@ -150,21 +150,21 @@ export const route: Route = {
 | 国际司                       | f784499ef24541f5b20de4c24cfc61e7 |
 | 机关党委                     | a49119c6f40045dd994f3910500cedfa |
 | 离退办                       | 6bf265ffd1c94fa4a3f1687b03fa908b |`,
-};
+}
 
 async function handler(ctx) {
-    const { category, department } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category, department } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    let categoryOption;
-    let departmentOption;
+    let categoryOption
+    let departmentOption
 
     if (category) {
-        categoryOption = await getOption('category', category);
+        categoryOption = await getOption('category', category)
     }
 
     if (department) {
-        departmentOption = await getOption('department', department);
+        departmentOption = await getOption('department', department)
     }
 
     const { data: response } = await got.post(apiUrl, {
@@ -179,7 +179,7 @@ async function handler(ctx) {
             startTime: '',
             zj: '',
         },
-    });
+    })
 
     const items = response.data.data.slice(0, limit).map((item) => ({
         title: item.lybt,
@@ -206,22 +206,22 @@ async function handler(ctx) {
                         <div style="word-break: break-all;">{item.clyj}</div>
                     </div>
                 </div>
-            ) : null
+            ) : null,
         ),
         author: `${item.lyr} ⇄ ${item.fzsjCn}`,
         category: [item.fzsjCn],
         guid: `${currentUrl}#${item.zj}`,
         pubDate: parseDate(item.pubtime),
-    }));
+    }))
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = '国家市场监督管理总局';
-    const title = $('title').text();
-    const subtitle = [categoryOption ? categoryOption.name : undefined, departmentOption ? departmentOption.name : undefined].filter(Boolean).join(' - ');
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const author = '国家市场监督管理总局'
+    const title = $('title').text()
+    const subtitle = [categoryOption ? categoryOption.name : undefined, departmentOption ? departmentOption.name : undefined].filter(Boolean).join(' - ')
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -235,5 +235,5 @@ async function handler(ctx) {
         subtitle,
         author,
         allowEmpty: true,
-    };
+    }
 }

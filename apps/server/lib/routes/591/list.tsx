@@ -1,56 +1,56 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import { CookieJar } from 'tough-cookie'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
-const cookieJar = new CookieJar();
+const cookieJar = new CookieJar()
 
 const client = got.extend({
     cookieJar,
-});
+})
 
 function appendRentalAPIParams(urlString) {
-    const searchParams = new URLSearchParams(urlString);
+    const searchParams = new URLSearchParams(urlString)
 
-    searchParams.set('is_format_data', '1');
-    searchParams.set('is_new_list', '1');
-    searchParams.set('type', '1');
+    searchParams.set('is_format_data', '1')
+    searchParams.set('is_new_list', '1')
+    searchParams.set('type', '1')
 
-    return searchParams.toString();
+    return searchParams.toString()
 }
 
 async function getToken() {
-    const html = await client('https://rent.591.com.tw').text();
+    const html = await client('https://rent.591.com.tw').text()
 
-    const $ = load(html);
-    const csrfToken = $('meta[name="csrf-token"]').attr('content');
+    const $ = load(html)
+    const csrfToken = $('meta[name="csrf-token"]').attr('content')
 
     if (!csrfToken) {
-        throw new Error('CSRF token not found');
+        throw new Error('CSRF token not found')
     }
 
-    return csrfToken;
+    return csrfToken
 }
 
 async function getHouseList(houseListURL) {
-    const csrfToken = await getToken();
+    const csrfToken = await getToken()
 
     const data = await client({
         url: houseListURL,
         headers: {
             'X-CSRF-TOKEN': csrfToken,
         },
-    }).json();
+    }).json()
 
     const {
         data: { data: houseList },
-    } = data;
+    } = data
 
-    return houseList;
+    return houseList
 }
 
 /**
@@ -102,7 +102,7 @@ async function getHouseList(houseListURL) {
 */
 
 const renderHouse = (house) => {
-    const photoList = house.photo_list.slice(1);
+    const photoList = house.photo_list.slice(1)
 
     return renderToString(
         <>
@@ -152,9 +152,9 @@ const renderHouse = (house) => {
                     <img src={photo} style="margin-bottom: 20px;" />
                 ))}
             </div>
-        </>
-    );
-};
+        </>,
+    )
+}
 
 export const route: Route = {
     path: '/:country/rent/:query?',
@@ -175,44 +175,44 @@ export const route: Route = {
     description: `::: tip
   Copy the URL of the 591 filter housing page and remove the front part \`https://rent.591.com.tw/?\`, you will get the query parameters.
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const query = ctx.req.param('query') ?? '';
-    const country = ctx.req.param('country') ?? 'tw';
+    const query = ctx.req.param('query') ?? ''
+    const country = ctx.req.param('country') ?? 'tw'
 
     if (!isValidHost(country) && country !== 'tw') {
-        throw new InvalidParameterError('Invalid country codes. Only "tw" is supported now.');
+        throw new InvalidParameterError('Invalid country codes. Only "tw" is supported now.')
     }
 
     /** @type {House[]} */
-    const houses = await getHouseList(`https://rent.591.com.tw/home/search/rsList?${appendRentalAPIParams(query)}`);
+    const houses = await getHouseList(`https://rent.591.com.tw/home/search/rsList?${appendRentalAPIParams(query)}`)
 
-    const queryUrl = `https://rent.591.com.tw/?${query}`;
+    const queryUrl = `https://rent.591.com.tw/?${query}`
 
     const items = houses.map((house) => {
-        const { title, post_id, price, price_unit } = house;
+        const { title, post_id, price, price_unit } = house
 
-        const itemUrl = `https://rent.591.com.tw/home/${post_id}`;
-        const itemTitle = `${title} - ${price} ${price_unit}`;
+        const itemUrl = `https://rent.591.com.tw/home/${post_id}`
+        const itemTitle = `${title} - ${price} ${price_unit}`
 
-        const description = renderHouse(house);
+        const description = renderHouse(house)
 
         return {
             title: itemTitle,
             description,
             link: itemUrl,
-        };
-    });
+        }
+    })
 
     ctx.set('json', {
         houses,
-    });
+    })
 
     return {
         title: '591 租屋 - 自訂查詢',
         link: queryUrl,
         description: `591 租屋 - 自訂查詢, query: ${query}`,
         item: items,
-    };
+    }
 }

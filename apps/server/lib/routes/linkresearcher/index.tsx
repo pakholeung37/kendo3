@@ -1,16 +1,16 @@
-import crypto from 'node:crypto';
+import crypto from 'node:crypto'
 
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { DetailResponse, SearchResultItem } from './types';
+import type { DetailResponse, SearchResultItem } from './types'
 
 const renderBilingual = (zh, en) =>
     renderToString(
@@ -22,11 +22,11 @@ const renderBilingual = (zh, en) =>
                     <p>{zh[index]}</p>
                 </>
             ))}
-        </>
-    );
+        </>,
+    )
 
-const baseURL = 'https://www.linkresearcher.com';
-const apiURL = `${baseURL}/api`;
+const baseURL = 'https://www.linkresearcher.com'
+const apiURL = `${baseURL}/api`
 
 export const route: Route = {
     name: 'Articles',
@@ -47,46 +47,46 @@ export const route: Route = {
     'zh-TW': {
         name: '文章',
     },
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const categoryMap = { theses: '论文', information: '新闻', careers: '职业' } as const;
-    const params = ctx.req.param('params');
-    const filters = new URLSearchParams(params);
+    const categoryMap = { theses: '论文', information: '新闻', careers: '职业' } as const
+    const params = ctx.req.param('params')
+    const filters = new URLSearchParams(params)
 
-    const subject = filters.get('subject');
-    const columns = filters.get('columns');
-    const query = filters.get('query') ?? '';
-    const category = filters.get('category') ?? ('theses' as keyof typeof categoryMap);
+    const subject = filters.get('subject')
+    const columns = filters.get('columns')
+    const query = filters.get('query') ?? ''
+    const category = filters.get('category') ?? ('theses' as keyof typeof categoryMap)
 
     if (!(category in categoryMap)) {
-        throw new InvalidParameterError('Invalid category');
+        throw new InvalidParameterError('Invalid category')
     }
-    let title = categoryMap[category] as string;
+    let title = categoryMap[category] as string
 
-    const token = crypto.randomUUID();
+    const token = crypto.randomUUID()
 
     const data: {
         filters: {
-            status: boolean;
-            subject?: string;
-            columns?: string;
-        };
-    } = { filters: { status: true } };
+            status: boolean
+            subject?: string
+            columns?: string
+        }
+    } = { filters: { status: true } }
 
     if (subject) {
-        data.filters.subject = subject;
-        title = `${title}「${subject}」`;
+        data.filters.subject = subject
+        title = `${title}「${subject}」`
     }
 
     if (columns) {
-        data.filters.columns = columns;
-        title = `${title}「${columns}」`;
+        data.filters.columns = columns
+        title = `${title}「${columns}」`
     }
 
-    const dataURL = `${baseURL}/api/${category === 'careers' ? 'articles' : category}/search`;
+    const dataURL = `${baseURL}/api/${category === 'careers' ? 'articles' : category}/search`
     const pageResponse = await ofetch<{
-        hits: SearchResultItem[];
+        hits: SearchResultItem[]
     }>(dataURL, {
         method: 'POST',
         headers: {
@@ -103,15 +103,15 @@ async function handler(ctx: Context): Promise<Data> {
             ...data,
             query,
         },
-    });
+    })
 
     const items = await Promise.all(
         pageResponse.hits.map((item) => {
-            const link = `${baseURL}/${category}/${item.id}`;
+            const link = `${baseURL}/${category}/${item.id}`
             return cache.tryGet(link, async () => {
                 const response = await ofetch<DetailResponse>(`${apiURL}/${category === 'theses' ? 'theses' : 'information'}/${item.id}`, {
                     responseType: 'json',
-                });
+                })
 
                 const dataItem: DataItem = {
                     title: response.title,
@@ -119,18 +119,18 @@ async function handler(ctx: Context): Promise<Data> {
                     link,
                     image: response.cover,
                     description: 'zhTextList' in response && 'enTextList' in response ? renderBilingual(response.zhTextList, response.enTextList) : response.content,
-                };
-
-                if ('paperList' in response) {
-                    const { doi, authors } = response.paperList[0];
-                    dataItem.doi = doi;
-                    dataItem.author = authors.map((author) => ({ name: author }));
                 }
 
-                return dataItem;
-            }) as unknown as DataItem;
-        })
-    );
+                if ('paperList' in response) {
+                    const { doi, authors } = response.paperList[0]
+                    dataItem.doi = doi
+                    dataItem.author = authors.map((author) => ({ name: author }))
+                }
+
+                return dataItem
+            }) as unknown as DataItem
+        }),
+    )
 
     return {
         title: `领研 | ${title}`,
@@ -139,5 +139,5 @@ async function handler(ctx: Context): Promise<Data> {
         image: `${baseURL}/assets/images/logo-app.png`,
         link: baseURL,
         item: items,
-    };
+    }
 }

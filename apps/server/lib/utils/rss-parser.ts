@@ -1,6 +1,6 @@
-import Parser from 'rss-parser';
+import Parser from 'rss-parser'
 
-import { config } from '@/config';
+import { config } from '@/config'
 
 const parser = new Parser({
     customFields: {
@@ -9,6 +9,6 @@ const parser = new Parser({
     headers: {
         'User-Agent': config.ua,
     },
-});
+})
 
-export default parser;
+export default parser

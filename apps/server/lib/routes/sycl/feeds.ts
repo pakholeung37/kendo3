@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:feed?',
@@ -21,15 +21,15 @@ export const route: Route = {
     description: `|  Events  | News |    Research Paper     |  Videos  |
 | :----: | :--: | :-------------: | :----: |
 | events | news | research_papers | videos |`,
-};
+}
 
 async function handler(ctx) {
-    const feeds: string[] = ['news', 'events', 'research_papers', 'videos'];
-    let { feed = 'news' } = ctx.req.param();
+    const feeds: string[] = ['news', 'events', 'research_papers', 'videos']
+    let { feed = 'news' } = ctx.req.param()
     if (!feeds.includes(feed)) {
-        feed = 'news';
+        feed = 'news'
     }
-    const data = await ofetch(`https://feeds.sycl.tech/${feed}/feed.json`);
+    const data = await ofetch(`https://feeds.sycl.tech/${feed}/feed.json`)
 
     const items = data.items.map((item) => ({
         title: item.title,
@@ -37,11 +37,11 @@ async function handler(ctx) {
         description: item.content_html,
         pubDate: parseDate(item.date_published),
         author: item.author.name,
-    }));
+    }))
 
     return {
         title: `SYCL.tech ${feed}`,
         link: `https://feeds.sycl.tech/${feed}/feed.json`,
         item: items,
-    };
+    }
 }

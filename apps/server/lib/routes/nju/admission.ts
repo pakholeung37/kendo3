@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/admission',
@@ -26,25 +26,25 @@ export const route: Route = {
     maintainers: ['ret-1'],
     handler,
     url: 'admission.nju.edu.cn/tzgg/index.html',
-};
+}
 
 async function handler() {
     const category_dict = {
         tzgg: '通知公告',
-    };
+    }
 
     const items = await Promise.all(
         Object.keys(category_dict).map(async () => {
-            const response = await got(`https://admission.nju.edu.cn/tzgg`);
+            const response = await got(`https://admission.nju.edu.cn/tzgg`)
 
-            const data = response.data;
-            const $ = load(data);
-            let script = $('ul').find('script');
-            script = script['1'].children[0].data;
+            const data = response.data
+            const $ = load(data)
+            let script = $('ul').find('script')
+            script = script['1'].children[0].data
 
-            const start = script.indexOf('[');
-            const end = script.lastIndexOf(']');
-            const t = JSON.parse(script.slice(start, end + 1));
+            const start = script.indexOf('[')
+            const end = script.lastIndexOf(']')
+            const t = JSON.parse(script.slice(start, end + 1))
 
             // only read first page
             return t[0].infolist.map((item) => ({
@@ -53,13 +53,13 @@ async function handler() {
                 link: item.url,
                 author: item.username,
                 pubDate: parseDate(item.releasetime, 'x'),
-            }));
-        })
-    );
+            }))
+        }),
+    )
 
     return {
         title: '本科迎新-通知公告',
         link: 'https://admission.nju.edu.cn/tzgg',
         item: items[0],
-    };
+    }
 }

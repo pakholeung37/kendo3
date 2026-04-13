@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://developers.googleblog.com';
+const baseUrl = 'https://developers.googleblog.com'
 
 export const route: Route = {
     path: '/developers/:locale?',
@@ -36,23 +36,23 @@ export const route: Route = {
             source: ['developers.googleblog.com'],
         },
     ],
-};
+}
 
 async function handler(ctx: Context) {
-    const locale = ctx.req.param('locale') ?? 'en';
+    const locale = ctx.req.param('locale') ?? 'en'
 
-    const response = await ofetch(`${baseUrl}/${locale}/search`);
-    const $ = load(response);
+    const response = await ofetch(`${baseUrl}/${locale}/search`)
+    const $ = load(response)
 
     const items = $('.search-result')
         .toArray()
         .map((element) => {
-            const dateCategory = $(element).find('.search-result__eyebrow').text().trim();
-            const [date, category] = dateCategory.split(' / ');
-            const titleElement = $(element).find('.search-result__title a');
-            const title = titleElement.text().trim();
-            const link = titleElement.attr('href');
-            const summary = $(element).find('.search-result__summary').text().trim();
+            const dateCategory = $(element).find('.search-result__eyebrow').text().trim()
+            const [date, category] = dateCategory.split(' / ')
+            const titleElement = $(element).find('.search-result__title a')
+            const title = titleElement.text().trim()
+            const link = titleElement.attr('href')
+            const summary = $(element).find('.search-result__summary').text().trim()
 
             return {
                 title,
@@ -61,12 +61,12 @@ async function handler(ctx: Context) {
                 description: summary,
                 author: 'Google',
                 category: [category],
-            };
-        });
+            }
+        })
 
     return {
         title: 'Google Developers Blog',
         link: baseUrl,
         item: items,
-    };
+    }
 }

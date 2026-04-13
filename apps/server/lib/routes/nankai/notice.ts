@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/notice',
@@ -27,30 +27,30 @@ export const route: Route = {
     name: '通知公告',
     maintainers: ['vicguo0724'],
     handler: async () => {
-        const baseUrl = 'https://www.nankai.edu.cn';
-        const listUrl = `${baseUrl}/157/list.htm`;
-        const { data: response } = await got(listUrl);
-        const $ = load(response);
+        const baseUrl = 'https://www.nankai.edu.cn'
+        const listUrl = `${baseUrl}/157/list.htm`
+        const { data: response } = await got(listUrl)
+        const $ = load(response)
 
         const list = $('ul.newslist li')
             .toArray()
             .map((item) => {
-                const $item = $(item);
-                const $time = $item.find('.time');
-                const day = $time.find('.time-d').text().trim();
-                const monthYear = $time.contents().last().text().trim();
-                const pubDate = timezone(parseDate(`${monthYear}-${day}`, 'YYYY-MM-DD'), +8);
+                const $item = $(item)
+                const $time = $item.find('.time')
+                const day = $time.find('.time-d').text().trim()
+                const monthYear = $time.contents().last().text().trim()
+                const pubDate = timezone(parseDate(`${monthYear}-${day}`, 'YYYY-MM-DD'), +8)
 
-                const $link = $item.find('.tit a');
-                let href = $link.attr('href') || '';
-                href = href.startsWith('http') ? href : new URL(href, baseUrl).href;
+                const $link = $item.find('.tit a')
+                let href = $link.attr('href') || ''
+                href = href.startsWith('http') ? href : new URL(href, baseUrl).href
 
                 return {
                     title: $link.text().trim(),
                     link: href,
                     pubDate,
-                };
-            });
+                }
+            })
 
         const items = await Promise.all(
             list.map((item) =>
@@ -58,28 +58,28 @@ export const route: Route = {
                     try {
                         // 判断link如果是https://xb.nankai.edu.cn/的则为校内访问的
                         if (item.link.includes('xb.nankai.edu.cn')) {
-                            item.description = '该通知可能需要校内访问权限';
+                            item.description = '该通知可能需要校内访问权限'
                         } else {
-                            const { data: detailResponse } = await got(item.link);
-                            const $detail = load(detailResponse);
+                            const { data: detailResponse } = await got(item.link)
+                            const $detail = load(detailResponse)
 
                             // 提取正文内容
-                            const content = $detail('.wp_articlecontent').html() || '';
-                            item.description = content;
+                            const content = $detail('.wp_articlecontent').html() || ''
+                            item.description = content
                         }
                     } catch {
                         // 如果提取正文内容失败，则返回默认内容
-                        item.description = '正文内容获取失败';
+                        item.description = '正文内容获取失败'
                     }
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: '南开大学通知公告',
             link: listUrl,
             item: items,
-        };
+        }
     },
-};
+}

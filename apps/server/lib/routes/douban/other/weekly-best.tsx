@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/movie/weekly/:type?',
@@ -22,13 +22,13 @@ export const route: Route = {
     description: `| 一周口碑电影榜      | 华语口碑剧集榜            |
 | ------------------- | ------------------------- |
 | movie_weekly_best | tv_chinese_best_weekly |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'movie_weekly_best';
+    const type = ctx.req.param('type') || 'movie_weekly_best'
 
-    const link = 'https://m.douban.com/movie';
-    const apiUrl = `https://m.douban.com/rexxar/api/v2/subject_collection/${type}`;
+    const link = 'https://m.douban.com/movie'
+    const apiUrl = `https://m.douban.com/rexxar/api/v2/subject_collection/${type}`
 
     const itemResponse = await got({
         method: 'get',
@@ -36,16 +36,16 @@ async function handler(ctx) {
         headers: {
             Referer: link,
         },
-    });
+    })
     const infoResponse = await got({
         method: 'get',
         url: apiUrl,
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const data = itemResponse.data.subject_collection_items;
+    const data = itemResponse.data.subject_collection_items
 
     return {
         title: infoResponse.data.title,
@@ -53,9 +53,9 @@ async function handler(ctx) {
         description: infoResponse.data.description,
 
         item: data.map(({ title, cover, cover_url, url, rating, null_rating_reason, description, card_subtitle, photos }) => {
-            const rate = rating ? `${rating.value.toFixed(1)}分` : null_rating_reason;
+            const rate = rating ? `${rating.value.toFixed(1)}分` : null_rating_reason
             if (cover && cover.url) {
-                cover_url = cover.url;
+                cover_url = cover.url
             }
 
             return {
@@ -69,9 +69,9 @@ async function handler(ctx) {
                     photos,
                 }),
                 link: url,
-            };
+            }
         }),
-    };
+    }
 }
 
 const renderDescription = ({ title, rate, card_subtitle, description, cover_url, photos }: { title: string; rate?: string; card_subtitle?: string; description?: string; cover_url?: string; photos?: string[] }): string =>
@@ -87,5 +87,5 @@ const renderDescription = ({ title, rate, card_subtitle, description, cover_url,
                     <img key={`${photo}-${index}`} src={photo} />
                 ))}
             </p>
-        </>
-    );
+        </>,
+    )

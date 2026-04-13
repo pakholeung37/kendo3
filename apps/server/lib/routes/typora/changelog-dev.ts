@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/changelog/dev',
@@ -26,18 +26,18 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'support.typora.io/',
-};
+}
 
 async function handler() {
-    const currentUrl = 'https://typora.io/releases/dev';
-    const response = await got(currentUrl);
+    const currentUrl = 'https://typora.io/releases/dev'
+    const response = await got(currentUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('h2')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text(),
                 link: `${currentUrl}#${item.text()}`,
@@ -46,13 +46,13 @@ async function handler() {
                     .toArray()
                     .map((item) => $(item).html())
                     .join(''),
-            };
-        });
+            }
+        })
 
     return {
         title: `Typora Changelog - Dev`,
         link: currentUrl,
         description: 'Typora Changelog',
         item: items,
-    };
+    }
 }

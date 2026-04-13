@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:node',
@@ -34,13 +34,13 @@ export const route: Route = {
 | 广州 | 广州 - 广州要闻 | 广州 - 社会百态 | 广州 - 深读广州 | 广州 - 生活服务 | 今日大湾区 | 广东 - 政经热闻 | 广东 - 民生视点 | 广东 - 滚动新闻 |
 | ---- | --------------- | --------------- | --------------- | --------------- | ---------- | --------------- | --------------- | --------------- |
 | 18   | 5261            | 6030            | 13352           | 83422           | 100418     | 13074           | 12252           | 12212           |`,
-};
+}
 
 async function handler(ctx) {
-    const node = ctx.req.param('node') ?? 1;
-    const currentUrl = `https://6api.ycwb.com/app_if/jy/getArticles?nodeid=${node}&pagesize=15`;
+    const node = ctx.req.param('node') ?? 1
+    const currentUrl = `https://6api.ycwb.com/app_if/jy/getArticles?nodeid=${node}&pagesize=15`
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
     const list = response.artiles.map((item) => ({
         title: item.TITLE,
@@ -60,15 +60,15 @@ async function handler(ctx) {
                         <br />
                     </>
                 ) : null}
-            </>
+            </>,
         ),
         pubDate: timezone(parseDate(item.PUBTIME), +8),
         link: item.PUBURL,
         nodeName: item.NODENAME,
-    }));
+    }))
 
-    let nodeName = '';
-    let nodeLink = '';
+    let nodeName = ''
+    let nodeLink = ''
 
     const items = await Promise.all(
         list.map((item) =>
@@ -76,52 +76,52 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
                 const $comments = content('.main_article')
                     .contents()
                     .filter(function () {
-                        return this.nodeType === 8;
-                    });
+                        return this.nodeType === 8
+                    })
                 $comments.each(function () {
                     // Remove useless comments
                     if (/audioPlayer|audio-box/.test(this.data)) {
-                        this.data = '';
+                        this.data = ''
                     }
                     // Filter author from comments
                     if (/author/.test(this.data)) {
-                        item.author = this.data.split('<author>')[1].split('</author>')[0];
+                        item.author = this.data.split('<author>')[1].split('</author>')[0]
                     }
-                });
+                })
 
-                nodeName = nodeName === '' ? item.nodeName : nodeName;
+                nodeName = nodeName === '' ? item.nodeName : nodeName
 
                 // Filter node link from content('.path a')
-                const children = content('.path').children('a');
+                const children = content('.path').children('a')
                 for (const child of children) {
                     if (content(child).text() === nodeName && nodeLink === '') {
-                        nodeLink = content(child).attr('href');
+                        nodeLink = content(child).attr('href')
                     }
                 }
 
-                content('span').removeAttr('style').removeAttr('class');
-                content('img').removeAttr('style').removeAttr('class').removeAttr('placement').removeAttr('data-toggle').removeAttr('trigger').removeAttr('referrerpolicy');
-                content('br').removeAttr('style').removeAttr('class');
-                content('p').removeAttr('style').removeAttr('class');
-                content('.space10, .ddf').remove();
+                content('span').removeAttr('style').removeAttr('class')
+                content('img').removeAttr('style').removeAttr('class').removeAttr('placement').removeAttr('data-toggle').removeAttr('trigger').removeAttr('referrerpolicy')
+                content('br').removeAttr('style').removeAttr('class')
+                content('p').removeAttr('style').removeAttr('class')
+                content('.space10, .ddf').remove()
 
-                item.description += content('.main_article').html() ?? '';
+                item.description += content('.main_article').html() ?? ''
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `羊城晚报金羊网 - ${nodeName}`,
         link: String(nodeLink === '' ? 'https://www.ycwb.com/' : nodeLink),
         item: items,
-    };
+    }
 }

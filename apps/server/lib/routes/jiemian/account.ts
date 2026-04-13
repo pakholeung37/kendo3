@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     path: '/account/main/1',
@@ -13,4 +13,4 @@ export const route: Route = {
 | ----------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
 | 1                                                     | 2                                                     | 3                                                     |
 `,
-};
+}

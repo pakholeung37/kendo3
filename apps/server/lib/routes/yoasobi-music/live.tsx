@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseJSONP } from './jsonp-helper';
+import { parseJSONP } from './jsonp-helper'
 
 export const route: Route = {
     path: '/live',
@@ -28,22 +28,22 @@ export const route: Route = {
     maintainers: ['Kiotlin'],
     handler,
     url: 'www.yoasobi-music.jp/',
-};
+}
 
 async function handler() {
     const ARTIST = 'YOASOBI',
         SONYJPURL = 'https://www.sonymusic.co.jp',
         BASEURL = 'https://www.sonymusic.co.jp/json/v2/artist',
-        POSTFIX = 'start/0/count/-1';
+        POSTFIX = 'start/0/count/-1'
 
-    const api = `${BASEURL}/${ARTIST}/live/${POSTFIX}`;
-    const officialUrl = 'https://www.yoasobi-music.jp/live';
-    const title = 'LATEST LIVE';
+    const api = `${BASEURL}/${ARTIST}/live/${POSTFIX}`
+    const officialUrl = 'https://www.yoasobi-music.jp/live'
+    const title = 'LATEST LIVE'
 
     const response = await got({
         method: 'get',
         url: api,
-    });
+    })
 
     const data = parseJSONP(response.data).items.map((item) => ({
         title: item.tourName,
@@ -52,7 +52,7 @@ async function handler() {
         description: item.tourInfo,
         // @param {Array} liveItem - An array contains all the sessions
         sessions: item.liveItem,
-    }));
+    }))
 
     return {
         // the source title
@@ -71,7 +71,7 @@ async function handler() {
             // the article link
             link: item.link,
         })),
-    };
+    }
 }
 
 const renderDescription = (image: string | null, description: string, sessions): string =>
@@ -96,5 +96,5 @@ const renderDescription = (image: string | null, description: string, sessions):
                     </p>
                 </div>
             ))}
-        </>
-    );
+        </>,
+    )

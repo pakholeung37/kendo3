@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getPosts, getTagInfo, SUB_URL } from './utils';
+import { getPosts, getTagInfo, SUB_URL } from './utils'
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -25,17 +25,17 @@ export const route: Route = {
     maintainers: ['KotoriK'],
     handler,
     url: '8kcosplay.com/',
-};
+}
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10);
-    const tag = ctx.req.param('tag');
-    const tagInfo = await getTagInfo(tag);
-    const items = await getPosts(limit, { tags: tagInfo.id });
+    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10)
+    const tag = ctx.req.param('tag')
+    const tagInfo = await getTagInfo(tag)
+    const items = await getPosts(limit, { tags: tagInfo.id })
 
     return {
         title: `${tagInfo.title}`,
         link: `${SUB_URL}/tag/${tag}/`,
         item: items,
-    };
+    }
 }

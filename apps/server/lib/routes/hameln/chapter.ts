@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/chapter/:id',
@@ -28,43 +28,43 @@ export const route: Route = {
     maintainers: ['huangliangshusheng'],
     handler,
     description: `Eg: [https://syosetu.org/novel/264928](https://syosetu.org/novel/264928)`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = Number.parseInt(ctx.req.query('limit')) || 5;
-    const link = `https://syosetu.org/novel/${id}`;
-    const html = await get(link);
-    const $ = load(html);
+    const id = ctx.req.param('id')
+    const limit = Number.parseInt(ctx.req.query('limit')) || 5
+    const link = `https://syosetu.org/novel/${id}`
+    const html = await get(link)
+    const $ = load(html)
 
-    const title = $('span[itemprop="name"]').text();
-    const description = $('div.ss:nth-child(2)').text();
+    const title = $('span[itemprop="name"]').text()
+    const description = $('div.ss:nth-child(2)').text()
 
     const chapter_list = $('tr[bgcolor]')
         .toArray()
         .map((chapter) => {
-            const $_chapter = $(chapter);
-            const chapter_link = $_chapter.find('a');
+            const $_chapter = $(chapter)
+            const chapter_link = $_chapter.find('a')
             return {
                 title: chapter_link.text(),
                 link: chapter_link.attr('href'),
                 pubDate: timezone(parseDate($_chapter.find('nobr').text(), 'YYYYMMDD HH:mm'), +9),
-            };
+            }
         })
         .toSorted((a, b) => (a.pubDate <= b.pubDate ? 1 : -1))
-        .slice(0, limit);
+        .slice(0, limit)
 
     const item_list = await Promise.all(
         chapter_list.map((chapter) => {
-            chapter.link = `${link}/${chapter.link}`;
+            chapter.link = `${link}/${chapter.link}`
             return cache.tryGet(chapter.link, async () => {
-                const html = await get(chapter.link);
-                const content = load(html);
-                chapter.description = content('#honbun').html();
-                return chapter;
-            });
-        })
-    );
+                const html = await get(chapter.link)
+                const content = load(html)
+                chapter.description = content('#honbun').html()
+                return chapter
+            })
+        }),
+    )
 
     return {
         title,
@@ -72,7 +72,7 @@ async function handler(ctx) {
         link,
         language: 'ja',
         item: item_list,
-    };
+    }
 }
 
 const get = async (url) => {
@@ -82,7 +82,7 @@ const get = async (url) => {
         headers: {
             cookie: 'over18=off',
         },
-    });
+    })
 
-    return response.data;
-};
+    return response.data
+}

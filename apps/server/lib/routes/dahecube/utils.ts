@@ -35,10 +35,10 @@ const TYPE = {
         name: '专栏',
         id: 33,
     },
-};
-
-function parseUrl(type) {
-    return type === 'recommend' ? 'https://www.dahecube.com/index.html?recid=1' : `https://www.dahecube.com/channel.html?recid=${TYPE[type].id}`;
 }
 
-export default { TYPE, parseUrl };
+function parseUrl(type) {
+    return type === 'recommend' ? 'https://www.dahecube.com/index.html?recid=1' : `https://www.dahecube.com/channel.html?recid=${TYPE[type].id}`
+}
+
+export default { TYPE, parseUrl }

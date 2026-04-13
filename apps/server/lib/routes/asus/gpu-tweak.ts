@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const pageUrl = 'https://www.asus.com/campaign/GPU-Tweak-III/tw/index.php';
+const pageUrl = 'https://www.asus.com/campaign/GPU-Tweak-III/tw/index.php'
 
 export const route: Route = {
     path: '/gpu-tweak',
@@ -28,24 +28,24 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'asus.com/campaign/GPU-Tweak-III/*',
-};
+}
 
 async function handler() {
-    const response = await got(pageUrl);
-    const $ = load(response.data);
+    const response = await got(pageUrl)
+    const $ = load(response.data)
 
     const items = $('section div.inner div.item')
         .toArray()
         .map((item) => {
-            item = $(item);
-            item.find('.last').remove();
+            item = $(item)
+            item.find('.last').remove()
             return {
                 title: item.find('.ver h6').text().trim(),
                 description: item.find('.btnbox a.open_patch_lightbox').attr('data-info'),
                 pubDate: parseDate(item.find('.ti').text()),
                 link: item.find('.btnbox a[download=]').attr('href'),
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text(),
@@ -54,5 +54,5 @@ async function handler() {
         link: pageUrl,
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }

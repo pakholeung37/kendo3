@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/hr/:category?',
@@ -32,33 +32,33 @@ export const route: Route = {
 
   如 [中国人民大学人事处 - 办事机构 - 教师事务办公室 - 教师通知公告](http://hr.ruc.edu.cn/bsjg/bsjsswbgs/jstzgg/index.htm) 的网址为 \`http://hr.ruc.edu.cn/bsjg/bsjsswbgs/jstzgg/index.htm\` 其中介于 **\`http://hr.ruc.edu.cn/\`** 和 **/index.htm** 中间的一段为 \`bsjg/bsjsswbgs/jstzgg\`。随后，并将其中的 \`/\` 修改为 \`-\`，可以得到 \`bsjg-bsjsswbgs-jstzgg\`。所以最终我们的路由为 [\`/ruc/hr/bsjg-bsjsswbgs-jstzgg\`](https://rsshub.app/ruc/hr/bsjg-bsjsswbgs-jstzgg)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category')?.replaceAll('-', '/') ?? 'tzgg';
+    const category = ctx.req.param('category')?.replaceAll('-', '/') ?? 'tzgg'
 
-    const rootUrl = 'http://hr.ruc.edu.cn';
-    const currentUrl = `${rootUrl}/${category}/index.htm`;
+    const rootUrl = 'http://hr.ruc.edu.cn'
+    const currentUrl = `${rootUrl}/${category}/index.htm`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('a[title]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.attr('href');
+            const link = item.attr('href')
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${link.indexOf('..') === 0 ? link.replace(/\.\./, '') : `/${category}/${link}`}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -67,24 +67,24 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
-                    item.description = content('.neirong').html();
-                    item.pubDate = parseDate(detailResponse.data.match(/日期：(\d{4}-\d{2}-\d{2})/)[1]);
+                    item.description = content('.neirong').html()
+                    item.pubDate = parseDate(detailResponse.data.match(/日期：(\d{4}-\d{2}-\d{2})/)[1])
                 } catch {
-                    item.description = 'Not Found';
+                    item.description = 'Not Found'
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

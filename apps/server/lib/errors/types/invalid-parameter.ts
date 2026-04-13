@@ -1,5 +1,5 @@
 class InvalidParameterError extends Error {
-    name = 'InvalidParameterError';
+    name = 'InvalidParameterError'
 }
 
-export default InvalidParameterError;
+export default InvalidParameterError

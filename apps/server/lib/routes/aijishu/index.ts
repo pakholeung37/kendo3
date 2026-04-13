@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/:type/:name?',
@@ -26,27 +26,27 @@ export const route: Route = {
 | channel | 频道 |
 | blog    | 专栏 |
 | u       | 用户 |`,
-};
+}
 
 async function handler(ctx) {
-    const { type, name = 'newest' } = ctx.req.param();
-    const u = name === 'newest' ? `https://aijishu.com/` : `https://aijishu.com/${type}/${name}`;
-    const html = await got(u);
+    const { type, name = 'newest' } = ctx.req.param()
+    const u = name === 'newest' ? `https://aijishu.com/` : `https://aijishu.com/${type}/${name}`
+    const html = await got(u)
 
-    const $ = load(html.data);
-    const title = $('title').text();
-    const api_path = $('li[data-js-stream-load-more]').attr('data-api-url');
+    const $ = load(html.data)
+    const title = $('title').text()
+    const api_path = $('li[data-js-stream-load-more]').attr('data-api-url')
 
-    const channel_url = `https://aijishu.com${api_path}?page=1`;
-    const channel_url_resp = await got(channel_url);
-    const resp = channel_url_resp.data;
-    const list = resp.data.rows;
+    const channel_url = `https://aijishu.com${api_path}?page=1`
+    const channel_url_resp = await got(channel_url)
+    const resp = channel_url_resp.data
+    const list = resp.data.rows
 
-    const items = await Promise.all(list.filter((item) => item?.url?.startsWith('/a/') || item?.object?.url.startsWith('/a/')).map((item) => utils.parseArticle(item)));
+    const items = await Promise.all(list.filter((item) => item?.url?.startsWith('/a/') || item?.object?.url.startsWith('/a/')).map((item) => utils.parseArticle(item)))
 
     return {
         title: title.split(' - ').slice(0, 2).join(' - '),
         link: u,
         item: items,
-    };
+    }
 }

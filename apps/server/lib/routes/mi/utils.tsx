@@ -1,19 +1,19 @@
-import 'dayjs/locale/zh-cn.js';
+import 'dayjs/locale/zh-cn.js'
 
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat.js';
-import timezone from 'dayjs/plugin/timezone.js';
-import utc from 'dayjs/plugin/utc.js';
-import { renderToString } from 'hono/jsx/dom/server';
+import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat.js'
+import timezone from 'dayjs/plugin/timezone.js'
+import utc from 'dayjs/plugin/utc.js'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { CrowdfundingData, CrowdfundingDetailData, CrowdfundingDetailInfo, CrowdfundingItem, CrowdfundingList, DataResponse } from './types';
+import type { CrowdfundingData, CrowdfundingDetailData, CrowdfundingDetailInfo, CrowdfundingItem, CrowdfundingList, DataResponse } from './types'
 
-dayjs.extend(localizedFormat);
-dayjs.extend(timezone);
-dayjs.extend(utc);
+dayjs.extend(localizedFormat)
+dayjs.extend(timezone)
+dayjs.extend(utc)
 
 /**
  * Fetch the list of crowdfunding projects.
@@ -26,9 +26,9 @@ export const getCrowdfundingList = async (): Promise<CrowdfundingList[]> => {
             referer: 'https://m.mi.com/',
         },
         method: 'POST',
-    });
-    return response.data.list;
-};
+    })
+    return response.data.list
+}
 
 /**
  * Fetch and cache crowdfunding project details.
@@ -46,21 +46,21 @@ export const getCrowdfundingItem = (item: CrowdfundingItem): Promise<Crowdfundin
             query: {
                 project_id: item.project_id,
             },
-        });
+        })
         // Suggested retail price.
         if (response.data.crowd_funding_info.product_market_price === undefined) {
-            response.data.crowd_funding_info.product_market_price = item.product_market_price;
+            response.data.crowd_funding_info.product_market_price = item.product_market_price
         }
         // Crowdfunding starts.
         if (response.data.crowd_funding_info.start_time_desc === undefined) {
-            response.data.crowd_funding_info.start_time_desc = formatDate(response.data.crowd_funding_info.start_time);
+            response.data.crowd_funding_info.start_time_desc = formatDate(response.data.crowd_funding_info.start_time)
         }
         // Crowdfunding ends.
         if (response.data.crowd_funding_info.end_time_desc === undefined) {
-            response.data.crowd_funding_info.end_time_desc = formatDate(response.data.crowd_funding_info.end_time);
+            response.data.crowd_funding_info.end_time_desc = formatDate(response.data.crowd_funding_info.end_time)
         }
-        return response.data.crowd_funding_info;
-    }) as Promise<CrowdfundingDetailInfo>;
+        return response.data.crowd_funding_info
+    }) as Promise<CrowdfundingDetailInfo>
 
 const CrowdfundingDescription = ({ item }: { item: CrowdfundingDetailInfo }) => (
     <>
@@ -93,7 +93,7 @@ const CrowdfundingDescription = ({ item }: { item: CrowdfundingDetailInfo }) => 
             </tbody>
         </table>
     </>
-);
+)
 
 /**
  * Render the crowdfunding item description.
@@ -101,12 +101,12 @@ const CrowdfundingDescription = ({ item }: { item: CrowdfundingDetailInfo }) => 
  * @param {CrowdfundingDetailInfo} item - Crowdfunding item details.
  * @returns {string} Rendered description HTML.
  */
-export const renderCrowdfunding = (item: CrowdfundingDetailInfo): string => renderToString(<CrowdfundingDescription item={item} />);
+export const renderCrowdfunding = (item: CrowdfundingDetailInfo): string => renderToString(<CrowdfundingDescription item={item} />)
 
-const formatDate = (timestamp: number): string => dayjs.unix(timestamp).tz('Asia/Shanghai').locale('zh-cn').format('lll');
+const formatDate = (timestamp: number): string => dayjs.unix(timestamp).tz('Asia/Shanghai').locale('zh-cn').format('lll')
 
 export default {
     getCrowdfundingList,
     getCrowdfundingItem,
     renderCrowdfunding,
-};
+}

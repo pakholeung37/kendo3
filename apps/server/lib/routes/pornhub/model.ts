@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { isValidHost } from '@/utils/valid-host'
 
-import { getRadarDomin, headers, parseItems } from './utils';
+import { getRadarDomin, headers, parseItems } from './utils'
 
 export const route: Route = {
     path: '/model/:username/:language?/:sort?/:img?',
@@ -32,21 +32,21 @@ export const route: Route = {
     name: 'Model',
     maintainers: ['I2IMk', 'queensferryme'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { language = 'www', username, sort = '', img } = ctx.req.param();
-    const link = `https://${language}.pornhub.com/model/${username}/videos${sort ? `?o=${sort}` : ''}`;
+    const { language = 'www', username, sort = '', img } = ctx.req.param()
+    const link = `https://${language}.pornhub.com/model/${username}/videos${sort ? `?o=${sort}` : ''}`
     if (!isValidHost(language)) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
 
-    const { data: response } = await got(link, { headers });
-    const $ = load(response);
-    const showImages = img === 'img=1';
+    const { data: response } = await got(link, { headers })
+    const $ = load(response)
+    const showImages = img === 'img=1'
     const items = $('#mostRecentVideosSection .videoBox')
         .toArray()
-        .map((e) => parseItems($(e), showImages));
+        .map((e) => parseItems($(e), showImages))
 
     return {
         title: $('h1').first().text(),
@@ -55,5 +55,5 @@ async function handler(ctx): Promise<Data> {
         image: $('#getAvatar').attr('src'),
         language: $('html').attr('lang') as any,
         item: items,
-    };
+    }
 }

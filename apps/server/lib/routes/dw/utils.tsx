@@ -1,89 +1,89 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const formatId = '605';
+const formatId = '605'
 
 const i18n = (word: string, lang: string) => {
     switch (word) {
         case 'Image':
             switch (lang) {
                 case 'sq':
-                    return 'Fotografi';
+                    return 'Fotografi'
                 case 'am':
-                    return 'ምስል';
+                    return 'ምስል'
                 case 'ar':
-                    return 'صورة من';
+                    return 'صورة من'
                 case 'bn':
-                    return 'ছবি';
+                    return 'ছবি'
                 case 'bs':
-                    return 'Foto';
+                    return 'Foto'
                 case 'bg':
-                    return 'Снимка';
+                    return 'Снимка'
                 case 'zh':
-                    return '图像来源';
+                    return '图像来源'
                 case 'zh-hant':
-                    return '圖片來源';
+                    return '圖片來源'
                 case 'hr':
-                    return 'Foto';
+                    return 'Foto'
                 case 'fa-af':
-                    return 'عکس';
+                    return 'عکس'
                 case 'en':
-                    return 'Image';
+                    return 'Image'
                 case 'fr':
-                    return 'Image';
+                    return 'Image'
                 case 'de':
-                    return 'Bild';
+                    return 'Bild'
                 case 'el':
-                    return 'Εικόνα';
+                    return 'Εικόνα'
                 case 'ha':
-                    return 'Hoto';
+                    return 'Hoto'
                 case 'hi':
-                    return 'तस्वीर';
+                    return 'तस्वीर'
                 case 'id':
-                    return 'Foto';
+                    return 'Foto'
                 case 'sw':
-                    return 'Picha';
+                    return 'Picha'
                 case 'mk':
-                    return 'Фотографија';
+                    return 'Фотографија'
                 case 'ps':
-                    return 'انځور';
+                    return 'انځور'
                 case 'fa-ir':
-                    return 'عکس';
+                    return 'عکس'
                 case 'pl':
-                    return 'Zdjęcie';
+                    return 'Zdjęcie'
                 case 'pt-002':
-                    return 'Foto';
+                    return 'Foto'
                 case 'pt-br':
-                    return 'Foto';
+                    return 'Foto'
                 case 'ro':
-                    return 'Imagine';
+                    return 'Imagine'
                 case 'ru':
-                    return 'Фото';
+                    return 'Фото'
                 case 'sr':
-                    return 'Foto';
+                    return 'Foto'
                 case 'es':
-                    return 'Imagen';
+                    return 'Imagen'
                 case 'tr':
-                    return 'Fotoğraf';
+                    return 'Fotoğraf'
                 case 'uk':
-                    return 'Фото';
+                    return 'Фото'
                 case 'ur':
-                    return 'تصویر';
+                    return 'تصویر'
                 default:
-                    return 'Image';
+                    return 'Image'
             }
         default:
-            return word;
+            return word
     }
-};
+}
 
 const m3u8tomp4 = (src: string) =>
-    src.replace('https://hlsvod.dw.com/i/', 'https://tvdownloaddw-a.akamaihd.net/').replace(',AVC_480x270,AVC_512x288,AVC_640x360,AVC_960x540,AVC_1280x720,AVC_1920x1080,.mp4.csmil/master.m3u8', 'AVC_1920x1080.mp4');
+    src.replace('https://hlsvod.dw.com/i/', 'https://tvdownloaddw-a.akamaihd.net/').replace(',AVC_480x270,AVC_512x288,AVC_640x360,AVC_960x540,AVC_1280x720,AVC_1920x1080,.mp4.csmil/master.m3u8', 'AVC_1920x1080.mp4')
 
 const renderLiveblog = (posts) =>
     renderToString(
@@ -107,16 +107,16 @@ const renderLiveblog = (posts) =>
                     {post.text ? <>{raw(post.text)}</> : null}
                 </>
             ))}
-        </>
-    );
+        </>,
+    )
 
 const renderVideo = ({ hlsVideoSrc, mp4VideoSrc, posterImageUrl }) =>
     renderToString(
         <video controls preload="metadata" poster={posterImageUrl ?? undefined}>
             <source src={hlsVideoSrc} type="application/x-mpegURL" />
             <source src={mp4VideoSrc} type="video/mp4" />
-        </video>
-    );
+        </video>,
+    )
 
 const renderDescription = ({ teaser, video, mainImage, text, liveblog, imageI18n }) =>
     renderToString(
@@ -143,55 +143,55 @@ const renderDescription = ({ teaser, video, mainImage, text, liveblog, imageI18n
             ) : null}
             {text ? <>{raw(text)}</> : null}
             {liveblog ? <>{raw(liveblog)}</> : null}
-        </>
-    );
+        </>,
+    )
 
 const processHtml = ($: CheerioAPI, contentLinks) => {
     $('img').each((_, elem) => {
         try {
-            const id = $(elem).attr('data-id');
-            const contentLink = contentLinks.find((item) => String(item.targetId) === id);
+            const id = $(elem).attr('data-id')
+            const contentLink = contentLinks.find((item) => String(item.targetId) === id)
             $(elem).attr({
                 title: contentLink?.name,
                 alt: contentLink?.description,
                 src: `https://static.dw.com/image/${id}_${formatId}.jpg`,
-            });
-            $(elem).removeAttr('style');
+            })
+            $(elem).removeAttr('style')
         } catch {
             // no-empty
         }
-    });
+    })
     $('video').each((_, elem) => {
         try {
-            $(elem).attr('poster', $(elem).attr('data-posterurl'));
+            $(elem).attr('poster', $(elem).attr('data-posterurl'))
         } catch {
             // no-empty
         }
-    });
+    })
     $('iframe').each((_, elem) => {
         try {
-            $(elem).attr('src', $(elem).attr('data-src'));
+            $(elem).attr('src', $(elem).attr('data-src'))
         } catch {
             // no-empty
         }
-    });
-    $('svg').remove(); // svg will screw up in a lot of rss readers
-};
+    })
+    $('svg').remove() // svg will screw up in a lot of rss readers
+}
 
 const processContent = (item, content) => {
-    const $text = load(content.text);
-    processHtml($text, content.contentLinks);
+    const $text = load(content.text)
+    processHtml($text, content.contentLinks)
     const liveblog =
         item.type === 'liveblog' && content.posts
             ? renderLiveblog(
                   content.posts.map((post) => {
-                      const $post = load(post.text);
-                      processHtml($post, content.contentLinks);
-                      post.text = $post.html();
-                      return post;
-                  })
+                      const $post = load(post.text)
+                      processHtml($post, content.contentLinks)
+                      post.text = $post.html()
+                      return post
+                  }),
               )
-            : undefined;
+            : undefined
     const video =
         item.type === 'video' && content.hlsVideoSrc
             ? renderVideo({
@@ -199,7 +199,7 @@ const processContent = (item, content) => {
                   mp4VideoSrc: m3u8tomp4(content.hlsVideoSrc),
                   posterImageUrl: content.posterImageUrl,
               })
-            : undefined;
+            : undefined
     item.description = renderDescription({
         teaser: content.teaser,
         video,
@@ -208,25 +208,25 @@ const processContent = (item, content) => {
         text: $text.html(),
         liveblog,
         imageI18n: i18n('Image', item.language),
-    });
+    })
     if (content.trackingCategories) {
-        item.category = content.trackingCategories;
+        item.category = content.trackingCategories
     }
     if (content.firstPersonArray) {
-        item.author = content.firstPersonArray.map((person) => person.fullName).join(', ');
+        item.author = content.firstPersonArray.map((person) => person.fullName).join(', ')
     }
-    return item;
-};
+    return item
+}
 
 export const processItems = async (items) => {
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await got(`https://www.dw.com/graph-api/${item.language}/content/${item.type}/${item.id}`);
-                const content = response.data.data.content;
-                return processContent(item, content);
-            })
-        )
-    );
-    return items;
-};
+                const response = await got(`https://www.dw.com/graph-api/${item.language}/content/${item.type}/${item.id}`)
+                const content = response.data.data.content
+                return processContent(item, content)
+            }),
+        ),
+    )
+    return items
+}

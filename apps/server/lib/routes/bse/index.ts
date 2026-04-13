@@ -1,7 +1,7 @@
-import type { DataItem, Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const nodes = {
     important_news: {
@@ -118,7 +118,7 @@ const nodes = {
         url: '/notice/audit_result.html',
         type: '/disclosureInfoController/zoneInfoResult',
     },
-};
+}
 
 export const route: Route = {
     path: '/:category?/:keyword?',
@@ -161,15 +161,15 @@ export const route: Route = {
 | 并购重组委会议结果公告 | 并购重组委会议变更公告 | 终止审核           | 注册结果      |
 | ---------------------- | ---------------------- | ------------------ | ------------- |
 | bgcz_result           | bgcz_change           | termination_audit | audit_result |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'important_news';
-    const keyword = ctx.req.param('keyword') ?? '';
+    const category = ctx.req.param('category') ?? 'important_news'
+    const keyword = ctx.req.param('keyword') ?? ''
 
-    const type = nodes[category].type;
-    const rootUrl = 'http://www.bse.cn';
-    const currentUrl = `${rootUrl}${type}.do`;
+    const type = nodes[category].type
+    const rootUrl = 'http://www.bse.cn'
+    const currentUrl = `${rootUrl}${type}.do`
 
     const response = await got({
         method: 'post',
@@ -181,11 +181,11 @@ async function handler(ctx) {
             'nodeIds[]': type === '/info/listse' ? nodes[category].id : undefined,
             disclosureSubtype: type === '/info/listse' ? undefined : nodes[category].id,
         },
-    });
+    })
 
-    const data = JSON.parse(response.data.match(/null\(\[({.*})]\)/)[1]);
+    const data = JSON.parse(response.data.match(/null\(\[({.*})]\)/)[1])
 
-    let items: DataItem[];
+    let items: DataItem[]
 
     switch (type) {
         case '/info/listse':
@@ -195,19 +195,19 @@ async function handler(ctx) {
                 description: item.text,
                 link: `${rootUrl}${item.htmlUrl}`,
                 pubDate: timezone(parseDate(item.publishDate), +8),
-            }));
-            break;
+            }))
+            break
 
         case '/disclosureInfoController/zoneInfoResult':
             items = data.listInfo.content.map((item) => ({
                 title: item.disclosureTitle,
                 link: `${rootUrl}${item.destFilePath}`,
                 pubDate: parseDate(item.pubDate.time),
-            }));
-            break;
+            }))
+            break
 
         default:
-            throw new Error(`Unknown type: ${type}`);
+            throw new Error(`Unknown type: ${type}`)
     }
 
     return {
@@ -215,5 +215,5 @@ async function handler(ctx) {
         link: `${rootUrl}${nodes[category].url}`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

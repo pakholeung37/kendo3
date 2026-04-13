@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '0xxx.ws',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     categories: ['multimedia'],
     description: 'Best 0day Porn Source',
     lang: 'en',
-};
+}

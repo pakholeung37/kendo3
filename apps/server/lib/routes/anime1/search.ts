@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: 'search/:keyword',
@@ -23,29 +23,29 @@ export const route: Route = {
         supportScihub: false,
     },
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { keyword } = ctx.req.param();
+    const { keyword } = ctx.req.param()
 
-    const response = await ofetch(`https://anime1.me/?s=${keyword}`);
+    const response = await ofetch(`https://anime1.me/?s=${keyword}`)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const title = $('page-title').text().trim();
+    const title = $('page-title').text().trim()
 
     const items = $('article.type-post')
         .toArray()
         .map((el) => {
-            const $el = $(el);
-            const title = $el.find('.entry-title a').text().trim();
+            const $el = $(el)
+            const title = $el.find('.entry-title a').text().trim()
             return {
                 title,
                 link: $el.find('.entry-title a').attr('href'),
                 description: title,
                 pubDate: parseDate($el.find('time').attr('datetime') || ''),
-            };
-        });
+            }
+        })
 
     return {
         title,
@@ -54,5 +54,5 @@ async function handler(ctx) {
         itunes_author: 'Anime1',
         itunes_image: 'https://anime1.me/wp-content/uploads/2021/02/cropped-1-180x180.png',
         item: items,
-    };
+    }
 }

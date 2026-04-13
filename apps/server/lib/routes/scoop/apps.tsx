@@ -1,71 +1,71 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const orderbys = (desc: string) => {
     const base = {
         0: 'search.score() desc, Metadata/OfficialRepositoryNumber desc, NameSortable asc',
         1: 'NameSortable asc, Metadata/OfficialRepositoryNumber desc, Metadata/RepositoryStars desc, Metadata/Committed desc',
         2: 'Metadata/Committed desc, Metadata/OfficialRepositoryNumber desc, Metadata/RepositoryStars desc',
-    };
+    }
 
     if (desc === '1') {
-        return base;
+        return base
     }
 
-    const inverted = {};
+    const inverted = {}
     for (const key in base) {
-        const orderStr = base[key];
-        inverted[key] = orderStr.replaceAll(/\b(desc|asc)\b/gi, (match) => (match.toLowerCase() === 'desc' ? 'asc' : 'desc'));
+        const orderStr = base[key]
+        inverted[key] = orderStr.replaceAll(/\b(desc|asc)\b/gi, (match) => (match.toLowerCase() === 'desc' ? 'asc' : 'desc'))
     }
-    return inverted;
-};
+    return inverted
+}
 
 const filters = {
     o: 'Metadata/OfficialRepositoryNumber eq 1', // offical buckets only
     dm: 'Metadata/DuplicateOf eq null', // distinct manifests only
-};
+}
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { query = 's=2&d=1&n=true&dm=true&o=true' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { query = 's=2&d=1&n=true&dm=true&o=true' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const baseUrl = 'https://scoop.sh';
-    const apiBaseUrl = 'https://scoopsearch.search.windows.net';
-    const targetUrl: string = new URL(`/#/apps?${query}`, baseUrl).href;
-    const apiUrl: string = new URL('indexes/apps/docs/search', apiBaseUrl).href;
+    const baseUrl = 'https://scoop.sh'
+    const apiBaseUrl = 'https://scoopsearch.search.windows.net'
+    const targetUrl: string = new URL(`/#/apps?${query}`, baseUrl).href
+    const apiUrl: string = new URL('indexes/apps/docs/search', apiBaseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'en';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'en'
 
-    const scriptRegExp = /<script type="module" crossorigin src="(.*?)"><\/script>/;
-    const scriptUrl: string = scriptRegExp.test(targetResponse) ? new URL(targetResponse.match(scriptRegExp)?.[1], baseUrl).href : '';
+    const scriptRegExp = /<script type="module" crossorigin src="(.*?)"><\/script>/
+    const scriptUrl: string = scriptRegExp.test(targetResponse) ? new URL(targetResponse.match(scriptRegExp)?.[1], baseUrl).href : ''
 
     if (!scriptUrl) {
-        throw new Error('JavaScript file not found.');
+        throw new Error('JavaScript file not found.')
     }
 
     const scriptResponse = await ofetch(scriptUrl, {
         parseResponse: (txt) => txt,
-    });
+    })
 
-    const key: string = scriptResponse.match(/VITE_APP_AZURESEARCH_KEY:"(.*?)"/)?.[1];
+    const key: string = scriptResponse.match(/VITE_APP_AZURESEARCH_KEY:"(.*?)"/)?.[1]
 
     if (!key) {
-        throw new Error('Key not found.');
+        throw new Error('Key not found.')
     }
 
-    const isOffcial = !query.includes('o=false');
-    const isDistinct = !query.includes('dm=false');
-    const sort: string = query.match(/s=(\d+)/)?.[1] ?? '2';
-    const desc: string = query.match(/d=(\d+)/)?.[1] ?? '1';
+    const isOffcial = !query.includes('o=false')
+    const isDistinct = !query.includes('dm=false')
+    const sort: string = query.match(/s=(\d+)/)?.[1] ?? '2'
+    const desc: string = query.match(/d=(\d+)/)?.[1] ?? '1'
 
     const response = await ofetch(apiUrl, {
         method: 'post',
@@ -90,24 +90,24 @@ export const handler = async (ctx: Context): Promise<Data> => {
             highlightPreTag: '<mark>',
             highlightPostTag: '</mark>',
         },
-    });
+    })
 
     const items: DataItem[] = response.value.slice(0, limit).map((item): DataItem => {
-        const repositorySplits: string[] = item.Metadata.Repository.split(/\//);
-        const repositoryName: string = repositorySplits.slice(-2).join('/');
-        const title = `${item.Name} ${item.Version} in ${repositoryName}`;
-        const description: string | undefined = renderToString(<ScoopDescription item={item} />);
-        const pubDate: number | string = item.Metadata.Committed;
-        const linkUrl: string | undefined = item.Homepage;
+        const repositorySplits: string[] = item.Metadata.Repository.split(/\//)
+        const repositoryName: string = repositorySplits.slice(-2).join('/')
+        const title = `${item.Name} ${item.Version} in ${repositoryName}`
+        const description: string | undefined = renderToString(<ScoopDescription item={item} />)
+        const pubDate: number | string = item.Metadata.Committed
+        const linkUrl: string | undefined = item.Homepage
         const authors: DataItem['author'] = [
             {
                 name: repositoryName,
                 url: item.Metadata.Repository,
                 avatar: undefined,
             },
-        ];
-        const guid = `scoop-${item.Name}-${item.Version}-${item.Metadata.Sha}`;
-        const updated: number | string = pubDate;
+        ]
+        const guid = `scoop-${item.Name}-${item.Version}-${item.Metadata.Sha}`
+        const updated: number | string = pubDate
 
         const processedItem: DataItem = {
             title,
@@ -123,12 +123,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
             },
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
-    const author = 'Scoop';
+    const author = 'Scoop'
 
     return {
         title: `${author} - Apps`,
@@ -139,11 +139,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 const ScoopDescription = ({ item }: { item: any }) => {
-    const repositoryName = item.Metadata.Repository.split(/\//).slice(-2).join('/');
+    const repositoryName = item.Metadata.Repository.split(/\//).slice(-2).join('/')
 
     return (
         <table>
@@ -206,8 +206,8 @@ const ScoopDescription = ({ item }: { item: any }) => {
                 ) : null}
             </tbody>
         </table>
-    );
-};
+    )
+}
 
 export const route: Route = {
     path: '/apps/:query?',
@@ -238,12 +238,12 @@ To subscribe to [Apps](https://scoop.sh/#/apps?s=2&d=1&n=true&dm=true&o=true), w
         {
             source: ['scoop.sh/#/apps', 'scoop.sh'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const query: string | undefined = urlObj.searchParams.toString() ?? undefined;
+                const urlObj: URL = new URL(url)
+                const query: string | undefined = urlObj.searchParams.toString() ?? undefined
 
-                return `/scoop/apps${query ? `/${query}` : ''}`;
+                return `/scoop/apps${query ? `/${query}` : ''}`
             },
         },
     ],
     view: ViewType.Notifications,
-};
+}

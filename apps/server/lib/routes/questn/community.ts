@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/community/:communityUrl',
@@ -27,25 +27,25 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = 'https://api.questn.com/consumer/explore/entity_list/';
+    const url = 'https://api.questn.com/consumer/explore/entity_list/'
 
     const params = {
         count: ctx.req.query('limit') || '20',
         page: '1',
         community_url: ctx.req.param('communityUrl') || 'questn', // default to questn
-    };
+    }
 
     const response = await ofetch(`${url}?${new URLSearchParams(params)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-    });
+    })
 
-    const data = await response.result.data;
+    const data = await response.result.data
 
     const items = data.map((item) => ({
         title: item.title,
@@ -54,7 +54,7 @@ async function handler(ctx) {
         guid: item.id,
         pubDate: parseDate(item.start_time * 1000),
         itunes_duration: item.end_time > 0 ? item.end_time - item.start_time : 0,
-    }));
+    }))
 
     return {
         title: `QuestN Community - ${data[0].community_info ? data[0].community_info.name : ''} Events`,
@@ -72,5 +72,5 @@ async function handler(ctx) {
                           description: 'No events found',
                       },
                   ],
-    };
+    }
 }

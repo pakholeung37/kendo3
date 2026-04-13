@@ -1,10 +1,10 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, getItem } from './utils';
+import { baseUrl, getItem } from './utils'
 
 export const route: Route = {
     path: '/magazine/:magazine',
@@ -19,47 +19,47 @@ export const route: Route = {
     name: '在线读刊',
     maintainers: ['TonyRL', 'cscnk52'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { magazine } = ctx.req.param();
+    const { magazine } = ctx.req.param()
 
-    const link = `${baseUrl}/${magazine}/mulu.htm`;
-    const yearResponse = await ofetch(link);
+    const link = `${baseUrl}/${magazine}/mulu.htm`
+    const yearResponse = await ofetch(link)
 
-    const $ = cheerio.load(yearResponse);
+    const $ = cheerio.load(yearResponse)
 
     const yearList = $('.booktitle a')
         .toArray()
         .map((item) => {
-            const $item = $(item);
+            const $item = $(item)
             return {
                 title: $item.text(),
                 link: new URL($item.attr('href')!, baseUrl).href,
-            };
-        });
+            }
+        })
 
-    const issueResponse = await ofetch(yearList[0].link);
-    const $$ = cheerio.load(issueResponse);
+    const issueResponse = await ofetch(yearList[0].link)
+    const $$ = cheerio.load(issueResponse)
 
     const list = $$('.highlight a')
         .toArray()
         .map((item) => {
-            const $item = $$(item);
+            const $item = $$(item)
             return {
                 title: $item.text(),
                 link: $item.attr('href')!,
-            };
+            }
         })
         .toReversed()
-        .filter((item) => item.title);
+        .filter((item) => item.title)
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))))
 
     return {
         title: $('head title').text(),
         link,
         image: new URL($('.book img').attr('src')!, link).href,
         item: items,
-    };
+    }
 }

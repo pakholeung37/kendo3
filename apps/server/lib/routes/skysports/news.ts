@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:team',
@@ -21,31 +21,31 @@ export const route: Route = {
     name: 'News',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const team = ctx.req.param('team');
+    const team = ctx.req.param('team')
 
-    const rootUrl = 'https://www.skysports.com';
-    const currentUrl = `${rootUrl}/${team}-news`;
+    const rootUrl = 'https://www.skysports.com'
+    const currentUrl = `${rootUrl}/${team}-news`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.news-list__headline-link')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -53,24 +53,24 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.roadblock').remove();
-                content('.sdc-article-widget, .sdc-site-layout-sticky-region').remove();
+                content('.roadblock').remove()
+                content('.sdc-article-widget, .sdc-site-layout-sticky-region').remove()
 
-                item.description = content('.sdc-article-body, .polaris-tile-group-separator').html();
-                item.pubDate = parseDate(detailResponse.data.match(/"datePublished": ?"(.*)","dateModified"/)[1]);
+                item.description = content('.sdc-article-body, .polaris-tile-group-separator').html()
+                item.pubDate = parseDate(detailResponse.data.match(/"datePublished": ?"(.*)","dateModified"/)[1])
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

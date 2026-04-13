@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 /**
  * 获取最新的帖子回复（倒序查看）
@@ -21,13 +21,13 @@ async function getPost(id, lz = 0, pn = 7e6) {
         headers: {
             Referer: 'https://tieba.baidu.com/',
         },
-    });
-    const $ = load(data);
-    const max = Number.parseInt($('[max-page]').attr('max-page'));
+    })
+    const $ = load(data)
+    const max = Number.parseInt($('[max-page]').attr('max-page'))
     if (max > pn) {
-        return getPost(id, max);
+        return getPost(id, max)
     }
-    return data;
+    return data
 }
 
 export const route: Route = {
@@ -51,39 +51,39 @@ export const route: Route = {
     name: '帖子动态',
     maintainers: ['u3u'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const lz = ctx.req.path.includes('lz') ? 1 : 0;
-    const html = await getPost(id, lz);
-    const $ = load(html);
-    const title = $('.core_title_txt').attr('title');
+    const id = ctx.req.param('id')
+    const lz = ctx.req.path.includes('lz') ? 1 : 0
+    const html = await getPost(id, lz)
+    const $ = load(html)
+    const title = $('.core_title_txt').attr('title')
     // .substr(3);
-    const list = $('.p_postlist > [data-field]:not(:has(.ad_bottom_view))');
+    const list = $('.p_postlist > [data-field]:not(:has(.ad_bottom_view))')
 
     return {
         title: lz ? `【只看楼主】${title}` : title,
         link: `https://tieba.baidu.com/p/${id}?see_lz=${lz}`,
         description: `${title}的最新回复`,
         item: list.toArray().map((element) => {
-            const item = $(element);
-            const { author, content } = item.data('field');
+            const item = $(element)
+            const { author, content } = item.data('field')
             const tempList = item
                 .find('.post-tail-wrap > .tail-info')
                 .toArray()
-                .map((element) => $(element).text());
-            let [pubContent, from, num, time] = ['', '', '', ''];
+                .map((element) => $(element).text())
+            let [pubContent, from, num, time] = ['', '', '', '']
             if (0 === tempList.length && 'date' in content) {
-                num = `${content.post_no}楼`;
-                time = content.date;
-                pubContent = item.find('.j_d_post_content').html();
+                num = `${content.post_no}楼`
+                time = content.date
+                pubContent = item.find('.j_d_post_content').html()
             } else if (2 === tempList.length) {
-                [num, time] = tempList;
-                pubContent = content.content;
+                ;[num, time] = tempList
+                pubContent = content.content
             } else if (3 === tempList.length) {
-                [from, num, time] = tempList;
-                pubContent = content.content;
+                ;[from, num, time] = tempList
+                pubContent = content.content
             }
             return {
                 title: `${author.user_name}回复了帖子《${title}》`,
@@ -96,11 +96,11 @@ async function handler(ctx) {
                         楼层：{num}
                         <br />
                         {from}
-                    </>
+                    </>,
                 ),
                 pubDate: timezone(parseDate(time, 'YYYY-MM-DD hh:mm'), +8),
                 link: `https://tieba.baidu.com/p/${id}?pid=${content.post_id}#${content.post_id}`,
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,35 +1,35 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest'
 
-const captureException = vi.fn();
-const setTag = vi.fn();
+const captureException = vi.fn()
+const setTag = vi.fn()
 
 vi.mock('@sentry/node', () => ({
     withScope: (cb: (scope: { setTag: typeof setTag }) => void) => cb({ setTag }),
     captureException,
-}));
+}))
 
 vi.mock('hono/route', () => ({
     routePath: () => '/test/path',
-}));
+}))
 
 vi.mock('@/utils/logger', () => ({
     default: {
         error: vi.fn(),
     },
-}));
+}))
 
 vi.mock('@/utils/otel', () => ({
     requestMetric: {
         error: vi.fn(),
     },
-}));
+}))
 
 describe('error handler sentry', () => {
     it('sends errors to sentry when enabled', async () => {
-        process.env.SENTRY = 'dsn';
-        vi.resetModules();
+        process.env.SENTRY = 'dsn'
+        vi.resetModules()
 
-        const { errorHandler } = await import('@/errors');
+        const { errorHandler } = await import('@/errors')
 
         const ctx = {
             req: {
@@ -45,13 +45,13 @@ describe('error handler sentry', () => {
             header: vi.fn(),
             json: (payload: unknown) => payload,
             html: (payload: unknown) => payload,
-        };
+        }
 
-        errorHandler(new Error('boom'), ctx as any);
+        errorHandler(new Error('boom'), ctx as any)
 
-        expect(setTag).toHaveBeenCalledWith('name', 'test');
-        expect(captureException).toHaveBeenCalled();
+        expect(setTag).toHaveBeenCalledWith('name', 'test')
+        expect(captureException).toHaveBeenCalled()
 
-        delete process.env.SENTRY;
-    });
-});
+        delete process.env.SENTRY
+    })
+})

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import loadArticle from './article';
-import { SUB_NAME_PREFIX, SUB_URL } from './const';
+import loadArticle from './article'
+import { SUB_NAME_PREFIX, SUB_URL } from './const'
 
 export const route: Route = {
     path: '/',
@@ -30,12 +30,12 @@ export const route: Route = {
     maintainers: ['AiraNadih'],
     handler,
     url: 'baobua.com/',
-};
+}
 
 async function handler() {
-    const response = await got(SUB_URL);
-    const $ = load(response.body);
-    const itemRaw = $('.thcovering-video').toArray();
+    const response = await got(SUB_URL)
+    const $ = load(response.body)
+    const itemRaw = $('.thcovering-video').toArray()
 
     return {
         title: `${SUB_NAME_PREFIX} - Latest`,
@@ -43,17 +43,17 @@ async function handler() {
         item: await Promise.all(
             itemRaw
                 .map((e) => {
-                    const item = $(e);
-                    let link = item.find('a').attr('href');
+                    const item = $(e)
+                    let link = item.find('a').attr('href')
                     if (!link) {
-                        return null;
+                        return null
                     }
                     if (link.startsWith('/')) {
-                        link = new URL(link, SUB_URL).href;
+                        link = new URL(link, SUB_URL).href
                     }
-                    return cache.tryGet(link, () => loadArticle(link));
+                    return cache.tryGet(link, () => loadArticle(link))
                 })
-                .filter(Boolean)
+                .filter(Boolean),
         ),
-    };
+    }
 }

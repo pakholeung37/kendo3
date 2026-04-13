@@ -1,40 +1,40 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/v/:category{.+}?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'sdws/sdxwlb' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'sdws/sdxwlb' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'http://v.iqilu.com';
-    const currentUrl = new URL(category, rootUrl).href;
+    const rootUrl = 'http://v.iqilu.com'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('#jmzhanshi1 dl')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a').first();
-            const image = item.find('img').first();
+            const a = item.find('a').first()
+            const image = item.find('img').first()
 
-            item.find('dd').last().remove();
+            item.find('dd').last().remove()
 
             return {
                 title: a.prop('title'),
@@ -50,22 +50,22 @@ async function handler(ctx) {
                         .find('dd')
                         .last()
                         .text()
-                        .match(/(\d{4}-\d{2}-\d{2})/)[1]
+                        .match(/(\d{4}-\d{2}-\d{2})/)[1],
                 ),
                 itunes_item_image: image.prop('src'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = content('div.vtitle').text();
-                item.enclosure_url = content('#copy_mp4text').prop('value');
-                item.enclosure_type = item.enclosure_url ? `video/${item.enclosure_url.split(/\./).pop()}` : undefined;
+                item.title = content('div.vtitle').text()
+                item.enclosure_url = content('#copy_mp4text').prop('value')
+                item.enclosure_type = item.enclosure_url ? `video/${item.enclosure_url.split(/\./).pop()}` : undefined
 
                 item.description = renderDescription({
                     image: {
@@ -77,18 +77,18 @@ async function handler(ctx) {
                         type: item.enclosure_type,
                     },
                     description: content('div.vinfo').text().trim(),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
     const author = $('div.host_pic dl dd a')
         .toArray()
         .map((a) => $(a).text())
-        .join('/');
+        .join('/')
 
     return {
         item: items,
@@ -104,5 +104,5 @@ async function handler(ctx) {
         itunes_author: author,
         itunes_category: 'News',
         allowEmpty: true,
-    };
+    }
 }

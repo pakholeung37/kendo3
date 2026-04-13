@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/call-for-paper/:subject',
@@ -21,33 +21,33 @@ export const route: Route = {
     handler,
     url: 'sciencedirect.com/browse/calls-for-papers',
     description: '`sciencedirect.com/browse/calls-for-papers?subject=education` -> `/sciencedirect/call-for-paper/education`',
-};
+}
 
 async function handler(ctx) {
-    const { subject = '' } = ctx.req.param();
-    const apiUrl = `https://www.sciencedirect.com/browse/calls-for-papers?subject=${subject}`;
-    const response = await got(apiUrl);
-    const $ = load(response.body);
+    const { subject = '' } = ctx.req.param()
+    const apiUrl = `https://www.sciencedirect.com/browse/calls-for-papers?subject=${subject}`
+    const response = await got(apiUrl)
+    const $ = load(response.body)
 
-    const scriptJSON = $('script[data-iso-key="_0"]').text();
+    const scriptJSON = $('script[data-iso-key="_0"]').text()
     if (!scriptJSON) {
-        throw new Error('Cannot find the script with data-iso-key="_0"');
+        throw new Error('Cannot find the script with data-iso-key="_0"')
     }
 
-    let data;
+    let data
     try {
-        data = JSON.parse(JSON.parse(scriptJSON));
+        data = JSON.parse(JSON.parse(scriptJSON))
     } catch (error: any) {
-        throw new Error(`Failed to parse embedded script JSON: ${error.message}`, { cause: error });
+        throw new Error(`Failed to parse embedded script JSON: ${error.message}`, { cause: error })
     }
 
-    const cfpList = data?.callsForPapers?.list || [];
+    const cfpList = data?.callsForPapers?.list || []
     if (!cfpList.length) {
-        throw new Error('No Calls for Papers found');
+        throw new Error('No Calls for Papers found')
     }
 
     const items = cfpList.map((cfp) => {
-        const link = `https://www.sciencedirect.com/special-issue/${cfp.contentId}/${cfp.url}`;
+        const link = `https://www.sciencedirect.com/special-issue/${cfp.contentId}/${cfp.url}`
         const description = renderToString(
             <div>
                 <p>
@@ -59,8 +59,8 @@ async function handler(ctx) {
                 <p>
                     <strong>Journal:</strong> {`${cfp.journal.displayName} (IF: ${cfp.journal.impactFactor}, CiteScore: ${cfp.journal.citeScore})`}
                 </p>
-            </div>
-        );
+            </div>,
+        )
 
         return {
             title: cfp.title,
@@ -68,13 +68,13 @@ async function handler(ctx) {
             link,
             description,
             pubDate: cfp.submissionDeadline || '',
-        };
-    });
+        }
+    })
 
     return {
         title: `ScienceDirect Calls for Papers - ${subject}`,
         link: apiUrl,
         description: `Calls for Papers on ScienceDirect for subject: ${subject}`,
         item: items,
-    };
+    }
 }

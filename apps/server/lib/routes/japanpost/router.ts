@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { track } from './track';
+import { track } from './track'
 
 export const route: Route = {
     name: 'Track & Trace Service',
@@ -38,4 +38,4 @@ export const route: Route = {
 | ---- | ---- |
 | ja   | en   |`,
     },
-};
+}

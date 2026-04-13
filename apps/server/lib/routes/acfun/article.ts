@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.acfun.cn';
+const baseUrl = 'https://www.acfun.cn'
 const categoryMap = {
     184: {
         title: '二次元画师',
@@ -33,9 +33,9 @@ const categoryMap = {
         title: '漫画文学',
         realmId: 'realmId=15&realmId=23&realmId=16',
     },
-};
-const sortTypeEnum = new Set(['createTime', 'lastCommentTime', 'hotScore']);
-const timeRangeEnum = new Set(['all', 'oneDay', 'threeDay', 'oneWeek', 'oneMonth']);
+}
+const sortTypeEnum = new Set(['createTime', 'lastCommentTime', 'hotScore'])
+const timeRangeEnum = new Set(['all', 'oneDay', 'threeDay', 'oneWeek', 'oneMonth'])
 
 export const route: Route = {
     path: '/article/:categoryId/:sortType?/:timeRange?',
@@ -90,29 +90,29 @@ export const route: Route = {
 | 时间不限 | 24 小时 | 三天     | 一周    | 一个月   |
 | -------- | ------- | -------- | ------- | -------- |
 | all      | oneDay  | threeDay | oneWeek | oneMonth |`,
-};
+}
 
 async function handler(ctx) {
-    const { categoryId, sortType = 'createTime', timeRange = 'all' } = ctx.req.param();
+    const { categoryId, sortType = 'createTime', timeRange = 'all' } = ctx.req.param()
     if (!categoryMap[categoryId]) {
-        throw new InvalidParameterError(`Invalid category Id: ${categoryId}`);
+        throw new InvalidParameterError(`Invalid category Id: ${categoryId}`)
     }
     if (!sortTypeEnum.has(sortType)) {
-        throw new InvalidParameterError(`Invalid sort type: ${sortType}`);
+        throw new InvalidParameterError(`Invalid sort type: ${sortType}`)
     }
     if (!timeRangeEnum.has(timeRange)) {
-        throw new InvalidParameterError(`Invalid time range: ${timeRange}`);
+        throw new InvalidParameterError(`Invalid time range: ${timeRange}`)
     }
 
-    const url = `${baseUrl}/v/list${categoryId}/index.htm`;
+    const url = `${baseUrl}/v/list${categoryId}/index.htm`
     const response = await got.post(
         `${baseUrl}/rest/pc-direct/article/feed?cursor=first_page&onlyOriginal=false&limit=10&sortType=${sortType}&timeRange=${sortType === 'hotScore' ? timeRange : 'all'}&${categoryMap[categoryId].realmId}`,
         {
             headers: {
                 referer: url,
             },
-        }
-    );
+        },
+    )
 
     const list = response.data.data.map((item) => ({
         title: item.title,
@@ -120,7 +120,7 @@ async function handler(ctx) {
         author: item.userName,
         pubDate: parseDate(item.createTime, 'x'),
         category: item.realmName,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -129,26 +129,26 @@ async function handler(ctx) {
                     headers: {
                         referer: url,
                     },
-                });
-                const $ = load(response.data);
+                })
+                const $ = load(response.data)
                 const articleInfo = $('.main script')
                     .text()
-                    .match(/window.articleInfo = (.*);\n\s*window.likeDomain/)[1];
-                const data = JSON.parse(articleInfo);
+                    .match(/window.articleInfo = (.*);\n\s*window.likeDomain/)[1]
+                const data = JSON.parse(articleInfo)
 
-                item.description = data.parts[0].content;
+                item.description = data.parts[0].content
                 if (data.tagList) {
-                    item.category = [item.category, ...data.tagList.map((tag) => tag.name)];
+                    item.category = [item.category, ...data.tagList.map((tag) => tag.name)]
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: categoryMap[categoryId].title,
         link: url,
         item: items,
-    };
+    }
 }

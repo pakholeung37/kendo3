@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { SourceMapConsumer } from 'source-map';
+import { load } from 'cheerio'
+import { SourceMapConsumer } from 'source-map'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/essay',
@@ -27,23 +27,23 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'kunchengblog.com/essay',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'https://www.kunchengblog.com';
-    const currentUrl = new URL('essay', rootUrl).href;
+    const rootUrl = 'https://www.kunchengblog.com'
+    const currentUrl = new URL('essay', rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const title = $('title').text();
+    const title = $('title').text()
 
-    const mapUrl = new URL(`${$('script').first().prop('src')}.map`, rootUrl).href;
+    const mapUrl = new URL(`${$('script').first().prop('src')}.map`, rootUrl).href
 
-    const { data: response } = await got(mapUrl);
+    const { data: response } = await got(mapUrl)
 
     const items = await SourceMapConsumer.with(response, null, (consumer) =>
         consumer.sources
@@ -51,14 +51,14 @@ async function handler(ctx) {
             .toReversed()
             .slice(0, limit)
             .map((item) => {
-                const source = consumer.sourceContentFor(item).replaceAll(/\s\n/g, '');
+                const source = consumer.sourceContentFor(item).replaceAll(/\s\n/g, '')
 
                 const processedSource = source.replaceAll(/(\w+)={+([^{}]+)}+/g, (match, key, value) => {
-                    const processedValue = value.slice(1, -1).replaceAll('"', "'").trim();
-                    return `${key}="${processedValue}"`;
-                });
+                    const processedValue = value.slice(1, -1).replaceAll('"', "'").trim()
+                    return `${key}="${processedValue}"`
+                })
 
-                const content = load(processedSource);
+                const content = load(processedSource)
 
                 return {
                     title: content('title').text(),
@@ -69,12 +69,12 @@ async function handler(ctx) {
                         .map((p) => content(p).html())
                         .join(''),
                     author: title,
-                };
-            })
-    );
+                }
+            }),
+    )
 
-    const description = $('meta[name="description"]').prop('content');
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const description = $('meta[name="description"]').prop('content')
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -88,5 +88,5 @@ async function handler(ctx) {
         subtitle: description,
         author: title,
         allowEmpty: true,
-    };
+    }
 }

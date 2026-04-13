@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import fetchFeed from './utils';
+import fetchFeed from './utils'
 
 export const route: Route = {
     path: '/search/:keyword?',
@@ -25,11 +25,11 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'ruancan.com/',
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
-    const currentUrl = `/?s=${keyword}`;
+    const keyword = ctx.req.param('keyword')
+    const currentUrl = `/?s=${keyword}`
 
-    return await fetchFeed(ctx, currentUrl);
+    return await fetchFeed(ctx, currentUrl)
 }

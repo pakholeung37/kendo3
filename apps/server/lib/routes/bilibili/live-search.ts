@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/live/search/:key/:order',
@@ -20,28 +20,28 @@ export const route: Route = {
     name: '直播搜索',
     maintainers: ['Qixingchen'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const key = ctx.req.param('key');
-    const order = ctx.req.param('order');
+    const key = ctx.req.param('key')
+    const order = ctx.req.param('order')
 
-    const urlEncodedKey = encodeURIComponent(key);
-    let orderTitle: string;
+    const urlEncodedKey = encodeURIComponent(key)
+    let orderTitle: string
 
     switch (order) {
         case 'live_time':
-            orderTitle = '最新开播';
-            break;
+            orderTitle = '最新开播'
+            break
         case 'online':
-            orderTitle = '人气直播';
-            break;
+            orderTitle = '人气直播'
+            break
         default:
-            throw new Error(`Unknown order: ${order}`);
+            throw new Error(`Unknown order: ${order}`)
     }
-    const wbiVerifyString = await cache.getWbiVerifyString();
-    let params = `__refresh__=true&_extra=&context=&page=1&page_size=42&order=${order}&duration=&from_source=&from_spmid=333.337&platform=pc&highlight=1&single_column=0&keyword=${urlEncodedKey}&ad_resource=&source_tag=3&gaia_vtoken=&category_id=&search_type=live&dynamic_offset=0&web_location=1430654`;
-    params = utils.addWbiVerifyInfo(params, wbiVerifyString);
+    const wbiVerifyString = await cache.getWbiVerifyString()
+    let params = `__refresh__=true&_extra=&context=&page=1&page_size=42&order=${order}&duration=&from_source=&from_spmid=333.337&platform=pc&highlight=1&single_column=0&keyword=${urlEncodedKey}&ad_resource=&source_tag=3&gaia_vtoken=&category_id=&search_type=live&dynamic_offset=0&web_location=1430654`
+    params = utils.addWbiVerifyInfo(params, wbiVerifyString)
 
     const response = await got({
         method: 'get',
@@ -50,8 +50,8 @@ async function handler(ctx) {
             Referer: `https://search.bilibili.com/live?keyword=${urlEncodedKey}&from_source=webtop_search&spm_id_from=444.7&search_source=3&search_type=live_room`,
             Cookie: await cache.getCookie(),
         },
-    });
-    const data = response.data.data.result.live_room;
+    })
+    const data = response.data.data.result.live_room
 
     return {
         title: `哔哩哔哩直播-${key}-${orderTitle}`,
@@ -66,5 +66,5 @@ async function handler(ctx) {
                 guid: `https://live.bilibili.com/${item.roomid} ${item.live_time}`,
                 link: `https://live.bilibili.com/${item.roomid}`,
             })),
-    };
+    }
 }

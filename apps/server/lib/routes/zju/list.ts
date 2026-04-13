@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'https://www.zju.edu.cn/';
+const host = 'https://www.zju.edu.cn/'
 export const route: Route = {
     path: '/list/:type',
     categories: ['university'],
@@ -22,22 +22,22 @@ export const route: Route = {
     name: '普通栏目 如学术 / 图片 / 新闻等',
     maintainers: ['Jeason0228'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'xs';
-    const link = host + type + `/list.htm`;
+    const type = ctx.req.param('type') ?? 'xs'
+    const link = host + type + `/list.htm`
     const response = await got({
         method: 'get',
         url: link,
         headers: {
             Referer: host,
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     function sortUrl(e) {
-        return e.search('redirect') === -1 ? e : link;
+        return e.search('redirect') === -1 ? e : link
     }
     const list = $('#wp_news_w7 ul.news li')
         .toArray()
@@ -48,15 +48,15 @@ async function handler(ctx) {
                 date: $(element)
                     .text()
                     .match(/\d{4}-\d{2}-\d{2}/)[0],
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const out = await Promise.all(
         list.map((info) => {
-            const title = info.title;
-            const date = info.date;
-            const itemUrl = new URL(info.link, host).href;
+            const title = info.title
+            const date = info.date
+            const itemUrl = new URL(info.link, host).href
             return cache.tryGet(itemUrl, async () => {
                 const response = await got({
                     method: 'get',
@@ -64,21 +64,21 @@ async function handler(ctx) {
                     headers: {
                         Referer: link,
                     },
-                });
-                const $ = load(response.data);
-                const description = $('.right_content').html();
+                })
+                const $ = load(response.data)
+                const description = $('.right_content').html()
                 return {
                     title,
                     link: itemUrl,
                     description,
                     pubDate: parseDate(date),
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
     return {
         title: `浙江大学` + $('ul.submenu .selected').text(),
         link,
         item: out,
-    };
+    }
 }

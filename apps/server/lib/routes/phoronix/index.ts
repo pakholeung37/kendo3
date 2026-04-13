@@ -1,27 +1,27 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone.js';
-import utc from 'dayjs/plugin/utc.js';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone.js'
+import utc from 'dayjs/plugin/utc.js'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
-const redirectCacheKey = 'phoronix:redirect';
-const webArticlesCacheKey = 'phoronix:web-articles';
-const articleCacheKey = 'phoronix:articles';
+const redirectCacheKey = 'phoronix:redirect'
+const webArticlesCacheKey = 'phoronix:web-articles'
+const articleCacheKey = 'phoronix:articles'
 
-const baseUrl = 'https://www.phoronix.com';
-const rssUrl = `${baseUrl}/rss.php`;
+const baseUrl = 'https://www.phoronix.com'
+const rssUrl = `${baseUrl}/rss.php`
 
 const feedFetch = async () => {
-    const feedStr = await ofetch(rssUrl);
-    const feed = await parser.parseString(feedStr);
+    const feedStr = await ofetch(rssUrl)
+    const feed = await parser.parseString(feedStr)
     return {
         title: feed.title,
         link: feed.link,
@@ -45,11 +45,11 @@ const feedFetch = async () => {
             'Ubuntu hardware',
             'Phoronix Test Suite',
         ],
-    };
-};
+    }
+}
 
 const webFetchCb = (response) => {
-    const $ = load(response.body);
+    const $ = load(response.body)
     return {
         title: $('title').text(),
         link: response.url,
@@ -58,7 +58,7 @@ const webFetchCb = (response) => {
             ...new Set(
                 $('#main a')
                     .toArray()
-                    .map((e) => e.attribs.href)
+                    .map((e) => e.attribs.href),
             ),
         ]
             .filter((link) => link && (link.startsWith('/review/') || link.startsWith('/news/')))
@@ -68,53 +68,53 @@ const webFetchCb = (response) => {
         image: 'https://www.phoronix.com/android-chrome-192x192.png',
         logo: 'https://www.phoronix.com/phxcms7-css/phoronix.png',
         category: $('meta[name="keywords"]').attr('content').split(', '),
-    };
-};
+    }
+}
 
 const webFetch = (url) =>
     cache.tryGet(`${webArticlesCacheKey}:${url}`, async () => {
         try {
-            return webFetchCb(await got(url));
+            return webFetchCb(await got(url))
         } catch (error) {
             if ((error.name === 'HTTPError' || error.name === 'FetchError') && error.response.statusCode === 404) {
-                return '404';
+                return '404'
             }
-            throw error;
+            throw error
         }
-    });
+    })
 
 const legacyFetch = async (page, queryOrItem) => {
-    const legacyUrl = new URL('/scan.php', baseUrl);
-    legacyUrl.searchParams.set('page', page);
+    const legacyUrl = new URL('/scan.php', baseUrl)
+    legacyUrl.searchParams.set('page', page)
     if (queryOrItem) {
         if (page === 'category') {
-            legacyUrl.searchParams.set('item', queryOrItem);
+            legacyUrl.searchParams.set('item', queryOrItem)
         } else {
-            legacyUrl.searchParams.set('q', queryOrItem);
+            legacyUrl.searchParams.set('q', queryOrItem)
         }
     }
 
-    let response;
+    let response
     const webUrl = await cache.tryGet(`${redirectCacheKey}:${legacyUrl.toString()}`, async () => {
-        response = await got(legacyUrl.toString());
-        return response.url;
-    });
+        response = await got(legacyUrl.toString())
+        return response.url
+    })
     if (response) {
-        const feed = webFetchCb(response);
-        cache.set(`${webArticlesCacheKey}:${webUrl}`, feed);
-        return feed;
+        const feed = webFetchCb(response)
+        cache.set(`${webArticlesCacheKey}:${webUrl}`, feed)
+        return feed
     }
-    return await webFetch(webUrl);
-};
+    return await webFetch(webUrl)
+}
 
 const tryFetch = async (category, topic) => {
-    const webUrl = topic ? `${baseUrl}/${category}/${topic}` : `${baseUrl}/${category}`;
-    let feed = await webFetch(webUrl);
+    const webUrl = topic ? `${baseUrl}/${category}/${topic}` : `${baseUrl}/${category}`
+    let feed = await webFetch(webUrl)
     if (feed === '404') {
-        feed = await legacyFetch(category, topic);
+        feed = await legacyFetch(category, topic)
     }
-    return feed;
-};
+    return feed
+}
 
 export const route: Route = {
     path: '/:category?/:topic?',
@@ -140,55 +140,55 @@ export const route: Route = {
     name: 'News & Reviews',
     maintainers: ['oppliate', 'Rongronggg9'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category, topic } = ctx.req.param();
-    let feed;
+    const { category, topic } = ctx.req.param()
+    let feed
     switch (category) {
         case 'category':
         case 'news_topic':
-            feed = await legacyFetch(category, topic);
-            break;
+            feed = await legacyFetch(category, topic)
+            break
         case 'rss':
-            feed = await feedFetch();
-            break;
+            feed = await feedFetch()
+            break
         default:
-            feed = category ? await tryFetch(category, topic) : await feedFetch();
-            break;
+            feed = category ? await tryFetch(category, topic) : await feedFetch()
+            break
     }
 
     feed.item = await Promise.all(
         feed.item.map((item) =>
             cache.tryGet(`${articleCacheKey}:${item.link}`, async () => {
-                const response = await got(item.link);
-                const html = response.body;
-                const $ = load(html);
-                const content = $('.content');
+                const response = await got(item.link)
+                const html = response.body
+                const $ = load(html)
+                const content = $('.content')
 
                 // Author
-                const authorSelector = $('.author > a');
+                const authorSelector = $('.author > a')
                 // the last 2 are the category and comments
                 const author = authorSelector
                     .slice(0, -2)
                     .toArray()
-                    .map((e) => $(e).text());
-                const category = [];
+                    .map((e) => $(e).text())
+                const category = []
                 if (item.link.includes('/news/')) {
-                    category.push('News');
+                    category.push('News')
                 } else if (item.link.includes('/review/')) {
-                    category.push('Review');
+                    category.push('Review')
                 }
-                const categorySelector = authorSelector.eq(-2);
+                const categorySelector = authorSelector.eq(-2)
                 if (categorySelector.length) {
-                    category.push(categorySelector.text());
+                    category.push(categorySelector.text())
                 }
-                let pubDate;
+                let pubDate
                 if (!item.pubDate) {
                     // the text next to the category is the date
-                    let pubDateReadable = categorySelector.length && categorySelector[0].nextSibling?.nodeValue;
+                    let pubDateReadable = categorySelector.length && categorySelector[0].nextSibling?.nodeValue
                     if (pubDateReadable) {
-                        pubDateReadable = pubDateReadable.replaceAll(/on|at|\./g, '').trim();
+                        pubDateReadable = pubDateReadable.replaceAll(/on|at|\./g, '').trim()
                         pubDate = /\d{4}$/.test(pubDateReadable)
                             ? // Only date, no time
                               // Michael Larabel lives in Indiana, USA, so we assume TZ=America/Indiana/Indianapolis
@@ -206,9 +206,9 @@ async function handler(ctx) {
                                   .utc(`${pubDateReadable} 08:00 UTC`)
                                   .tz('America/Indiana/Indianapolis', true)
                             : // date, time, and timezone (including daylight saving)
-                              dayjs(pubDateReadable);
+                              dayjs(pubDateReadable)
                         if (!pubDate.isValid()) {
-                            pubDate = pubDateReadable;
+                            pubDate = pubDateReadable
                         }
                     }
                 }
@@ -217,38 +217,38 @@ async function handler(ctx) {
                 const links = $('.pagination > a')
                     .toArray()
                     .map((pager) => `${baseUrl}${pager.attribs.href}`)
-                    .slice(0, -1); // the last one is "next page"
+                    .slice(0, -1) // the last one is "next page"
 
                 if (links.length) {
                     const pages = await Promise.all(
                         links.map((link) =>
                             cache.tryGet(link, async () => {
-                                const response = await got(link);
-                                const html = response.data;
-                                const $$ = load(html);
-                                const page = $$('.content');
-                                return page.html();
-                            })
-                        )
-                    );
-                    content.append(pages);
+                                const response = await got(link)
+                                const html = response.data
+                                const $$ = load(html)
+                                const page = $$('.content')
+                                return page.html()
+                            }),
+                        ),
+                    )
+                    content.append(pages)
                 }
 
-                const images = content.find('img');
+                const images = content.find('img')
                 // Remove topic image
-                const topicImage = images.first();
+                const topicImage = images.first()
                 if (topicImage.attr('src')?.startsWith('/assets/categories/')) {
-                    const topicImageContainer = topicImage.parent();
+                    const topicImageContainer = topicImage.parent()
                     if (topicImageContainer.text().trim()) {
-                        topicImage.remove();
+                        topicImage.remove()
                     } else {
-                        topicImageContainer.remove();
+                        topicImageContainer.remove()
                     }
                 }
                 // High-res images
                 images.each((_, img) => {
-                    img.attribs.src = img.attribs.src.replace(/_med$/, '');
-                });
+                    img.attribs.src = img.attribs.src.replace(/_med$/, '')
+                })
 
                 return {
                     title: item.title || $('article h1').text(),
@@ -259,10 +259,10 @@ async function handler(ctx) {
                     description: content.html(),
                     image: $('meta[name="twitter:image"]').attr('content'),
                     category: item.category || category,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
-    return feed;
+    return feed
 }

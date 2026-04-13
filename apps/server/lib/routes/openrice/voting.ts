@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const baseUrl = 'https://www.openrice.com';
+const baseUrl = 'https://www.openrice.com'
 
 export const route: Route = {
     path: '/:lang/hongkong/voting/top/:categoryKey',
@@ -22,29 +22,29 @@ export const route: Route = {
 | -------- | -------- | -------- |  -------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | chinese | shanghainese | guangdong | sichuan | hkstyle | congee_noodles | omakase | korean | thai | vietnamese |
   `,
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang') ?? 'zh';
-    const categoryKey = ctx.req.param('categoryKey') ?? 'chinese';
+    const lang = ctx.req.param('lang') ?? 'zh'
+    const categoryKey = ctx.req.param('categoryKey') ?? 'chinese'
 
-    const apiPath = '/api/v2/voting/search/poi';
-    const urlPath = `/${lang}/hongkong/voting/top`;
-    let title: string, description: string;
+    const apiPath = '/api/v2/voting/search/poi'
+    const urlPath = `/${lang}/hongkong/voting/top`
+    let title: string, description: string
     switch (lang) {
         case 'zh-cn':
-            title = 'OpenRice 开饭热店';
-            description = 'OpenRice用戶可以在網站或手機應用程式，點擊餐廳頁面中「投票」按鈕，即可完成投票。參加投票的用戶有機會參加大抽獎，贏取豐富獎品。';
-            break;
+            title = 'OpenRice 开饭热店'
+            description = 'OpenRice用戶可以在網站或手機應用程式，點擊餐廳頁面中「投票」按鈕，即可完成投票。參加投票的用戶有機會參加大抽獎，贏取豐富獎品。'
+            break
         case 'en':
-            title = 'OpenRice Best Restaurant';
+            title = 'OpenRice Best Restaurant'
             description =
-                'OpenRice users can vote by clicking the &quot;Vote&quot; button on the restaurant page on the website or mobile app. Voters will have the opportunity to participate in the grand lottery and win grand prizes.';
-            break;
+                'OpenRice users can vote by clicking the &quot;Vote&quot; button on the restaurant page on the website or mobile app. Voters will have the opportunity to participate in the grand lottery and win grand prizes.'
+            break
         case 'zh':
         default:
-            title = 'OpenRice 開飯熱店';
-            description = 'OpenRice用戶可以在網站或手機應用程式，點擊餐廳頁面中「投票」按鈕，即可完成投票。參加投票的用戶有機會參加大抽獎，贏取豐富獎品。';
+            title = 'OpenRice 開飯熱店'
+            description = 'OpenRice用戶可以在網站或手機應用程式，點擊餐廳頁面中「投票」按鈕，即可完成投票。參加投票的用戶有機會參加大抽獎，贏取豐富獎品。'
     }
     const response = await ofetch(baseUrl + apiPath, {
         headers: {
@@ -61,25 +61,25 @@ async function handler(ctx) {
             needTag: true,
             _isPrivate: true,
         },
-    });
+    })
 
-    const data = response.paginationResult.results;
+    const data = response.paginationResult.results
 
     const resultList = data.map((item) => {
-        const title = item.name ?? '';
-        const link = `${baseUrl}/${lang}/hongkong/r-${item.name}-r${item.poiId}`;
-        const description = `${item.district.name}-${item.categories.map((category) => category.name).join('-')}`;
+        const title = item.name ?? ''
+        const link = `${baseUrl}/${lang}/hongkong/r-${item.name}-r${item.poiId}`
+        const description = `${item.district.name}-${item.categories.map((category) => category.name).join('-')}`
         return {
             title,
             description,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title,
         link: baseUrl + urlPath,
         description,
         item: resultList,
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { apiRootUrl, getInfo, processItems, rootUrl } from './util';
+import { apiRootUrl, getInfo, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/label/:name',
@@ -24,21 +24,21 @@ export const route: Route = {
     name: '标签',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const name = ctx.req.param('name');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const name = ctx.req.param('name')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
 
-    const apiUrl = new URL('v2/content/tag/tagList', apiRootUrl).href;
-    const currentUrl = new URL(`label/${name}`, rootUrl).href;
+    const apiUrl = new URL('v2/content/tag/tagList', apiRootUrl).href
+    const currentUrl = new URL(`label/${name}`, rootUrl).href
 
     const items = await processItems(apiUrl, limit, cache.tryGet, {
         tag: name,
-    });
+    })
 
     return {
         item: items,
         ...(await getInfo(currentUrl, cache.tryGet)),
-    };
+    }
 }

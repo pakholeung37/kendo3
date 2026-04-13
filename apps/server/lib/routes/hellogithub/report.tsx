@@ -1,18 +1,18 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 type ReportListItem = {
-    position: string | number;
-    name: string;
-    rating: string | number;
-    change?: string | number;
-    star?: string | number;
-    total?: string | number;
-    db_model?: string;
-};
+    position: string | number
+    name: string
+    rating: string | number
+    change?: string | number
+    star?: string | number
+    total?: string | number
+    db_model?: string
+}
 
 const renderReport = ({ tiobeList, activeList, allList, dbList }: { tiobeList?: ReportListItem[]; activeList?: ReportListItem[]; allList?: ReportListItem[]; dbList?: ReportListItem[] }) =>
     renderToString(
@@ -112,14 +112,14 @@ const renderReport = ({ tiobeList, activeList, allList, dbList }: { tiobeList?: 
                     </tbody>
                 </table>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 const types = {
     tiobe: '编程语言',
     netcraft: '服务器',
     'db-engines': '数据库',
-};
+}
 
 export const route: Route = {
     path: '/ranking/:type?',
@@ -130,31 +130,31 @@ export const route: Route = {
     description: `| 编程语言 | 服务器   | 数据库     |
 | -------- | -------- | ---------- |
 | tiobe    | netcraft | db-engines |`,
-};
+}
 
 async function handler(ctx) {
-    let type = ctx.req.param('type') ?? 'tiobe';
+    let type = ctx.req.param('type') ?? 'tiobe'
 
-    type = type === 'webserver' ? 'netcraft' : type === 'db' ? 'db-engines' : type;
+    type = type === 'webserver' ? 'netcraft' : type === 'db' ? 'db-engines' : type
 
-    const rootUrl = 'https://hellogithub.com';
-    const currentUrl = `${rootUrl}/report/${type}`;
+    const rootUrl = 'https://hellogithub.com'
+    const currentUrl = `${rootUrl}/report/${type}`
 
     const buildResponse = await got({
         method: 'get',
         url: rootUrl,
-    });
+    })
 
-    const buildId = buildResponse.data.match(/"buildId":"(.*?)",/)[1];
+    const buildId = buildResponse.data.match(/"buildId":"(.*?)",/)[1]
 
-    const apiUrl = `${rootUrl}/_next/data/${buildId}/zh/report/${type}.json`;
+    const apiUrl = `${rootUrl}/_next/data/${buildId}/zh/report/${type}.json`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    const data = response.data.pageProps;
+    const data = response.data.pageProps
 
     const items = [
         {
@@ -169,11 +169,11 @@ async function handler(ctx) {
                 dbList: type === 'db-engines' ? data.list : undefined,
             }),
         },
-    ];
+    ]
 
     return {
         title: `HelloGitHub - ${types[type]}排行榜`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

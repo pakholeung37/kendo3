@@ -668,4 +668,4 @@ export default {
     '/material/new_material/ptee': 3592,
     '/material/new_material/hydrofluoricacid': 4668,
     '/material/new_material/photovoltaic': 4381,
-};
+}

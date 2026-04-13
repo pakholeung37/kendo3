@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { defaultLanguage, ProcessItems, rootUrl } from './utils';
+import { defaultLanguage, ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: ['/users/:id/:type/:language?', '/:type/:id/:language?'],
@@ -14,13 +14,13 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const type = ctx.req.param('type');
-    const language = ctx.req.param('language') ?? defaultLanguage;
-    const currentUrl = `${rootUrl}/${language}/${type}.php?list&u=${id}`;
+    const id = ctx.req.param('id')
+    const type = ctx.req.param('type')
+    const language = ctx.req.param('language') ?? defaultLanguage
+    const currentUrl = `${rootUrl}/${language}/${type}.php?list&u=${id}`
 
-    return await ProcessItems(language, currentUrl, cache.tryGet);
+    return await ProcessItems(language, currentUrl, cache.tryGet)
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/rsc/:category?',
@@ -28,41 +28,41 @@ export const route: Route = {
 | 通知公告 | 工作动态 |
 | :------: | :------: |
 |   tzgg   |   gzdt   |`,
-};
+}
 
 async function handler(ctx) {
-    let category = ctx.req.param('category');
+    let category = ctx.req.param('category')
     // 这里的category是个形参
-    const dic_html = { tzgg: 'tzgg.htm', gzdt: 'gzdt.htm' };
-    const dic_title = { tzgg: '通知公告', gzdt: '工作动态' };
+    const dic_html = { tzgg: 'tzgg.htm', gzdt: 'gzdt.htm' }
+    const dic_title = { tzgg: '通知公告', gzdt: '工作动态' }
 
     // 设置默认值
     if (dic_title[category] === undefined) {
-        category = 'tzgg';
+        category = 'tzgg'
     }
 
     const response = await got({
         method: 'get',
         url: 'http://renshichu.xaut.edu.cn/' + dic_html[category],
-    });
-    const data = response.body;
-    const $ = load(data);
+    })
+    const data = response.body
+    const $ = load(data)
 
     // 这个列表指通知公告详情列表
     const list = $('.vsb-space.n_right .list .cleafix')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             // 工作动态栏目里有一些是外链，这里做个判断
-            const a = item.find('.list_wen a').eq(0).attr('href');
-            const link = a.slice(0, 4) === 'http' ? a : 'http://renshichu.xaut.edu.cn/' + a;
+            const a = item.find('.list_wen a').eq(0).attr('href')
+            const link = a.slice(0, 4) === 'http' ? a : 'http://renshichu.xaut.edu.cn/' + a
             // 这里jquery比较长，引几个中间变量倒是方便阅读，但是我还是觉得不需要
-            const title = item.find('.list_wen a.tit').text();
+            const title = item.find('.list_wen a.tit').text()
             return {
                 title,
                 link,
-            };
-        });
+            }
+        })
     return {
         // 源标题
         title: '西安理工大学人事处-' + dic_title[category],
@@ -80,16 +80,16 @@ async function handler(ctx) {
                         const res = await got({
                             method: 'get',
                             url: item.link,
-                        });
-                        const content = load(res.body);
-                        item.description = content('.vsb-space form[name]').html();
-                        item.pubDate = parseDate(content('.vsb-space form[name] h3 span:contains(时间)').text().slice(3));
+                        })
+                        const content = load(res.body)
+                        item.description = content('.vsb-space form[name]').html()
+                        item.pubDate = parseDate(content('.vsb-space form[name] h3 span:contains(时间)').text().slice(3))
                     } else {
-                        item.description = '这是一个外链("▔□▔)/("▔□▔)/所以你没法直接看到内容' + item.link;
+                        item.description = '这是一个外链("▔□▔)/("▔□▔)/所以你没法直接看到内容' + item.link
                     }
-                    return item;
-                })
-            )
+                    return item
+                }),
+            ),
         ),
-    };
+    }
 }

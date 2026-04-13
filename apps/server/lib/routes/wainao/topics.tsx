@@ -1,13 +1,13 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const renderDescription = (elements) =>
     renderToString(
@@ -15,24 +15,24 @@ const renderDescription = (elements) =>
             {elements?.length
                 ? elements.map((element) => {
                       if (element.type === 'text') {
-                          return <p>{element.content}</p>;
+                          return <p>{element.content}</p>
                       }
                       if (element.type === 'raw_html') {
-                          return <>{raw(element.content ?? '')}</>;
+                          return <>{raw(element.content ?? '')}</>
                       }
-                      return null;
+                      return null
                   })
                 : null}
-        </>
-    );
+        </>,
+    )
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'hotspot' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id = 'hotspot' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.wainao.me';
-    const targetUrl: string = new URL(`topics/${id}`, baseUrl).href;
-    const apiUrl: string = new URL('pf/api/v3/content/fetch/story-feed-sections', baseUrl).href;
+    const baseUrl = 'https://www.wainao.me'
+    const targetUrl: string = new URL(`topics/${id}`, baseUrl).href
+    const apiUrl: string = new URL('pf/api/v3/content/fetch/story-feed-sections', baseUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -44,27 +44,27 @@ export const handler = async (ctx: Context): Promise<Data> => {
             d: 81,
             _website: 'wainao',
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     const items: DataItem[] = response.content_elements
         .slice(0, limit)
         .map((item): DataItem => {
-            const title: string = item.headlines.basic;
-            const description: string = renderDescription(item.content_elements);
-            const pubDate: number | string = item.publish_date;
-            const linkUrl: string | undefined = item.website_url;
-            const categories: string[] = [item.taxonomy?.primary_section?.name].filter(Boolean);
+            const title: string = item.headlines.basic
+            const description: string = renderDescription(item.content_elements)
+            const pubDate: number | string = item.publish_date
+            const linkUrl: string | undefined = item.website_url
+            const categories: string[] = [item.taxonomy?.primary_section?.name].filter(Boolean)
             const authors: DataItem['author'] =
                 item.credits?.by?.map((author) => ({
                     name: author.name,
-                })) ?? [];
-            const guid: string = item.website_url;
-            const image: string | undefined = item.promo_items.basic.url;
-            const updated: number | string = item.last_updated_date;
+                })) ?? []
+            const guid: string = item.website_url
+            const image: string | undefined = item.promo_items.basic.url
+            const updated: number | string = item.last_updated_date
 
             const processedItem: DataItem = {
                 title,
@@ -83,11 +83,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: updated ? parseDate(updated) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
+            return processedItem
         })
-        .filter((_): _ is DataItem => true);
+        .filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -99,8 +99,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/topics/:id?',
@@ -222,4 +222,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

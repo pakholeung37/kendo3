@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const host = 'http://jhsjk.people.cn';
+const host = 'http://jhsjk.people.cn'
 
 export const route: Route = {
     path: '/xjpjh/:keyword?/:year?',
@@ -29,28 +29,28 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'people.com.cn/',
-};
+}
 
 async function handler(ctx) {
-    let keyword = ctx.req.param('keyword') || 'all';
-    let year = ctx.req.param('year') || 0;
+    let keyword = ctx.req.param('keyword') || 'all'
+    let year = ctx.req.param('year') || 0
 
-    let title = '习近平系列重要讲话';
-    title = title + '-' + keyword;
+    let title = '习近平系列重要讲话'
+    title = title + '-' + keyword
     if (keyword === 'all') {
-        keyword = '';
+        keyword = ''
     }
     if (year === 0) {
-        title = title + '-all';
+        title = title + '-all'
     } else {
-        title = title + '-' + year;
-        year = year - 1811;
+        title = title + '-' + year
+        year = year - 1811
     }
 
-    const link = `http://jhsjk.people.cn/result?keywords=${keyword}&year=${year}`;
-    const response = await got.get(link);
+    const link = `http://jhsjk.people.cn/result?keywords=${keyword}&year=${year}`
+    const response = await got.get(link)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('ul.list_14.p1_2.clearfix li')
         .slice(0, 10)
@@ -59,37 +59,37 @@ async function handler(ctx) {
             const info = {
                 title: $(element).find('a').text(),
                 link: $(element).find('a').attr('href'),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const out = await Promise.all(
         list.map(async (info) => {
-            const title = info.title;
-            const itemUrl = new URL(info.link, host).href;
+            const title = info.title
+            const itemUrl = new URL(info.link, host).href
 
-            const cacheIn = await cache.get(itemUrl);
+            const cacheIn = await cache.get(itemUrl)
             if (cacheIn) {
-                return JSON.parse(cacheIn);
+                return JSON.parse(cacheIn)
             }
 
-            const response = await got.get(itemUrl);
-            const $ = load(response.data);
-            const description = $('div.d2txt_con.clearfix').html().trim();
+            const response = await got.get(itemUrl)
+            const $ = load(response.data)
+            const description = $('div.d2txt_con.clearfix').html().trim()
 
             const single = {
                 title,
                 link: itemUrl,
                 description,
-            };
-            cache.set(itemUrl, JSON.stringify(single));
-            return single;
-        })
-    );
+            }
+            cache.set(itemUrl, JSON.stringify(single))
+            return single
+        }),
+    )
 
     return {
         title,
         link,
         item: out,
-    };
+    }
 }

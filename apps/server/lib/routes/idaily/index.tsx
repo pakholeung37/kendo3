@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/:language?'],
@@ -20,23 +20,23 @@ export const route: Route = {
     description: `| 简体中文 | 繁体中文 |
 | -------- | -------- |
 | zh-hans  | zh-hant  |`,
-};
+}
 
 async function handler(ctx) {
-    const { language = 'zh-hans' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const { language = 'zh-hans' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'https://idaily-cdn.idailycdn.com';
-    const apiUrl = new URL(`api/list/v3/iphone/${language}`, rootUrl).href;
-    const currentUrl = 'https://idai.ly';
+    const rootUrl = 'https://idaily-cdn.idailycdn.com'
+    const apiUrl = new URL(`api/list/v3/iphone/${language}`, rootUrl).href
+    const currentUrl = 'https://idai.ly'
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
     const items = response
         .filter((item) => item.ui_sets?.caption_subtitle)
         .slice(0, limit)
         .map((item) => {
-            const image = item.ui_sets?.cover_landscape_hd_4k ?? item.cover_landscape_hd;
+            const image = item.ui_sets?.cover_landscape_hd_4k ?? item.cover_landscape_hd
 
             return {
                 title: `${item.ui_sets?.caption_subtitle} - ${item.title}`,
@@ -50,7 +50,7 @@ async function handler(ctx) {
                               },
                           ]
                         : undefined,
-                    item.content
+                    item.content,
                 ),
                 author: item.location,
                 category: item.tags?.map((c) => c.name),
@@ -59,15 +59,15 @@ async function handler(ctx) {
                 updated: parseDate(item.lastupdate_timestamp, 'X'),
                 enclosure_url: image,
                 enclosure_type: `image/${image.split(/\./).pop()}`,
-            };
-        });
+            }
+        })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const title = $('title').text();
-    const image = new URL('img/idaily/logo_2x.png', currentUrl).href;
+    const title = $('title').text()
+    const image = new URL('img/idaily/logo_2x.png', currentUrl).href
 
     return {
         item: items,
@@ -79,15 +79,15 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author: title.split(/\s/)[0],
         allowEmpty: true,
-    };
+    }
 }
 
 type IdailyImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
-const renderDescription = (images: IdailyImage[] | undefined, intro?: string) => renderToString(<IdailyDescription images={images} intro={intro} />);
+const renderDescription = (images: IdailyImage[] | undefined, intro?: string) => renderToString(<IdailyDescription images={images} intro={intro} />)
 
 const IdailyDescription = ({ images, intro }: { images?: IdailyImage[]; intro?: string }) => (
     <>
@@ -96,8 +96,8 @@ const IdailyDescription = ({ images, intro }: { images?: IdailyImage[]; intro?: 
                 <figure>
                     <img src={image.src} alt={image.alt} />
                 </figure>
-            ) : null
+            ) : null,
         )}
         {intro ? <p>{intro}</p> : null}
     </>
-);
+)

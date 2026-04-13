@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { isValidHost } from '@/utils/valid-host';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { isValidHost } from '@/utils/valid-host'
 
-import type { PostListResponse, UserInfoResponse } from './types';
-import { getHeaders, parseItem } from './utils';
+import type { PostListResponse, UserInfoResponse } from './types'
+import { getHeaders, parseItem } from './utils'
 
 export const route: Route = {
     path: '/:creator',
@@ -26,34 +26,34 @@ export const route: Route = {
         ],
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const creator = ctx.req.param('creator');
+    const creator = ctx.req.param('creator')
     if (!isValidHost(creator)) {
-        throw new InvalidParameterError('Invalid user name');
+        throw new InvalidParameterError('Invalid user name')
     }
 
-    let title = `Fanbox - ${creator}`;
+    let title = `Fanbox - ${creator}`
 
-    let description: string | undefined;
+    let description: string | undefined
 
-    let image: string | undefined;
+    let image: string | undefined
 
     try {
-        const userApi = `https://api.fanbox.cc/creator.get?creatorId=${creator}`;
+        const userApi = `https://api.fanbox.cc/creator.get?creatorId=${creator}`
         const userInfoResponse = (await ofetch(userApi, {
             headers: getHeaders(),
-        })) as UserInfoResponse;
-        title = `Fanbox - ${userInfoResponse.body.user.name}`;
-        description = userInfoResponse.body.description;
-        image = userInfoResponse.body.user.iconUrl;
+        })) as UserInfoResponse
+        title = `Fanbox - ${userInfoResponse.body.user.name}`
+        description = userInfoResponse.body.description
+        image = userInfoResponse.body.user.iconUrl
     } catch {
         // ignore
     }
 
-    const postListResponse = (await ofetch(`https://api.fanbox.cc/post.listCreator?creatorId=${creator}&limit=20&withPinned=true`, { headers: getHeaders() })) as PostListResponse;
-    const items = await Promise.all(postListResponse.body.map((i) => parseItem(i)));
+    const postListResponse = (await ofetch(`https://api.fanbox.cc/post.listCreator?creatorId=${creator}&limit=20&withPinned=true`, { headers: getHeaders() })) as PostListResponse
+    const items = await Promise.all(postListResponse.body.map((i) => parseItem(i)))
 
     return {
         title,
@@ -61,5 +61,5 @@ async function handler(ctx: Context): Promise<Data> {
         description,
         image,
         item: items,
-    };
+    }
 }

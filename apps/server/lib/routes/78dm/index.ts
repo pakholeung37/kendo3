@@ -1,36 +1,36 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = 'news' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { category = 'news' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'https://www.78dm.net';
-    const currentUrl = new URL(category.includes('/') ? `${category}.html` : category, rootUrl).href;
+    const rootUrl = 'https://www.78dm.net'
+    const currentUrl = new URL(category.includes('/') ? `${category}.html` : category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('section.box-content div.card a.card-title')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item).parent();
+            item = $(item).parent()
 
-            const title = item.find('a.card-title').text();
+            const title = item.find('a.card-title').text()
 
-            const src = item.find('a.card-image img').prop('data-src');
-            const image = src?.startsWith('//') ? `https:${src}` : src;
+            const src = item.find('a.card-image img').prop('data-src')
+            const image = src?.startsWith('//') ? `https:${src}` : src
 
             const description = renderDescription({
                 images: image
@@ -41,10 +41,10 @@ export const handler = async (ctx) => {
                           },
                       ]
                     : undefined,
-            });
-            const pubDate = item.find('div.card-info span.item').last().text();
+            })
+            const pubDate = item.find('div.card-info span.item').last().text()
 
-            const href = item.find('a.card-title').prop('href');
+            const href = item.find('a.card-title').prop('href')
 
             return {
                 title,
@@ -63,23 +63,23 @@ export const handler = async (ctx) => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('i.p-status').remove();
+                $$('i.p-status').remove()
 
                 $$('div.image-text-content p img.lazy').each((_, el) => {
-                    el = $$(el);
+                    el = $$(el)
 
-                    const src = el.prop('data-src');
-                    const image = src?.startsWith('//') ? `https:${src}` : src;
+                    const src = el.prop('data-src')
+                    const image = src?.startsWith('//') ? `https:${src}` : src
 
                     el.parent().replaceWith(
                         renderDescription({
@@ -91,34 +91,34 @@ export const handler = async (ctx) => {
                                       },
                                   ]
                                 : undefined,
-                        })
-                    );
-                });
+                        }),
+                    )
+                })
 
-                const title = $$('h2.title').text();
+                const title = $$('h2.title').text()
                 const description =
                     item.description +
                     renderDescription({
                         description: $$('div.image-text-content').first().html() || undefined,
-                    });
+                    })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('p.push-time').text().split(/：/).pop()), +8);
-                item.author = $$('a.push-username').contents().first().text();
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('p.push-time').text().split(/：/).pop()), +8)
+                item.author = $$('a.push-username').contents().first().text()
                 item.content = {
                     html: description,
                     text: $$('div.image-text-content').first().text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('a.logo img').prop('src'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('a.logo img').prop('src'), rootUrl).href
 
     return {
         title: `${title} | ${$('div.actived').text()}`,
@@ -129,8 +129,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -227,9 +227,9 @@ export const route: Route = {
         {
             source: ['www.78dm.net/:category?'],
             target: (params) => {
-                const category = params.category?.replace(/\.html$/, '');
+                const category = params.category?.replace(/\.html$/, '')
 
-                return `/78dm${category ? `/${category}` : ''}`;
+                return `/78dm${category ? `/${category}` : ''}`
             },
         },
         {
@@ -468,4 +468,4 @@ export const route: Route = {
             target: '/ht_list/135/0/0/1',
         },
     ],
-};
+}

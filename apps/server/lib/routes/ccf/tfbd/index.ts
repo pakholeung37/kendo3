@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/tfbd/:caty/:id',
@@ -27,23 +27,23 @@ export const route: Route = {
     name: '大数据专家委员会',
     maintainers: ['tudou027'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const base = utils.urlBase(ctx.req.param('caty'), ctx.req.param('id'));
-    const res = await got(base);
-    const info = utils.fetchAllArticles(res.data);
-    const $ = load(res.data);
+    const base = utils.urlBase(ctx.req.param('caty'), ctx.req.param('id'))
+    const res = await got(base)
+    const info = utils.fetchAllArticles(res.data)
+    const $ = load(res.data)
 
-    const details = await Promise.all(info.map((e) => utils.detailPage(e, cache)));
+    const details = await Promise.all(info.map((e) => utils.detailPage(e, cache)))
 
     ctx.set('json', {
         info,
-    });
+    })
 
     return {
         title: '大数据专家委员会 - ' + $('.position a:last-child').text(),
         link: base,
         item: details,
-    };
+    }
 }

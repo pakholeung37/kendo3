@@ -1,22 +1,22 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/awsblogs/:locale?',
     name: 'Unknown',
     maintainers: ['HankChow'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const locale = ctx.req.param('locale') ?? 'zh_CN';
+    const locale = ctx.req.param('locale') ?? 'zh_CN'
 
     const response = await got({
         url: `https://aws.amazon.com/api/dirs/items/search?item.directoryId=blog-posts&sort_by=item.additionalFields.createdDate&sort_order=desc&size=50&item.locale=${locale}`,
-    });
+    })
 
-    const items = response.data.items;
+    const items = response.data.items
 
     return {
         title: 'AWS Blog',
@@ -31,5 +31,5 @@ async function handler(ctx) {
                 link: item.item.additionalFields.link,
                 author: item.item.additionalFields.contributors,
             })),
-    };
+    }
 }

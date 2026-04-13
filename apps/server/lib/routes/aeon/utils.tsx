@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const ENDPOINT = 'https://api.aeonmedia.co/graphql';
+const ENDPOINT = 'https://api.aeonmedia.co/graphql'
 
 const ESSAY = /* GraphQL */ `
     query getAeonEssay($slug: String!) {
@@ -26,7 +26,7 @@ const ESSAY = /* GraphQL */ `
             body
         }
     }
-`;
+`
 
 const VIDEO = /* GraphQL */ `
     query getAeonVideo($slug: String!, $site: SiteEnum!) {
@@ -43,15 +43,15 @@ const VIDEO = /* GraphQL */ `
             description
         }
     }
-`;
+`
 
 const renderVideoDescription = (article) => {
-    let video = article.hosterId;
+    let video = article.hosterId
 
     if (article.hoster === 'vimeo') {
-        video = `https://player.vimeo.com/video/${video}?dnt=1`;
+        video = `https://player.vimeo.com/video/${video}?dnt=1`
     } else if (article.hoster === 'youtube') {
-        video = `https://www.youtube-nocookie.com/embed/${video}`;
+        video = `https://www.youtube-nocookie.com/embed/${video}`
     }
 
     return renderToString(
@@ -59,9 +59,9 @@ const renderVideoDescription = (article) => {
             <iframe width="672" height="377" src={video} frameborder="0" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
             {article.credits ? raw(article.credits) : null}
             {article.description ? raw(article.description) : null}
-        </>
-    );
-};
+        </>,
+    )
+}
 
 const renderEssayDescription = ({ banner, authorsBio, content }) =>
     renderToString(
@@ -74,13 +74,13 @@ const renderEssayDescription = ({ banner, authorsBio, content }) =>
             ) : null}
             {authorsBio ? raw(authorsBio) : null}
             {content ? raw(content) : null}
-        </>
-    );
+        </>,
+    )
 
 const getJSON = (slug, site) => {
-    const query = site ? VIDEO : ESSAY;
-    const variables = site ? { slug, site } : { slug };
-    const operationName = site ? 'getAeonVideo' : 'getAeonEssay';
+    const query = site ? VIDEO : ESSAY
+    const variables = site ? { slug, site } : { slug }
+    const operationName = site ? 'getAeonVideo' : 'getAeonEssay'
     return ofetch(ENDPOINT, {
         method: 'POST',
         body: {
@@ -88,39 +88,39 @@ const getJSON = (slug, site) => {
             query,
             variables,
         },
-    });
-};
+    })
+}
 
 export const getData = async (list) => {
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const res = await getJSON(item.slug, item.type === 'video' ? 'aeon' : null);
+                const res = await getJSON(item.slug, item.type === 'video' ? 'aeon' : null)
 
-                const data = res.data[item.type];
-                item.pubDate = parseDate(data.publishedAt);
+                const data = res.data[item.type]
+                item.pubDate = parseDate(data.publishedAt)
 
                 if (item.type === 'video') {
-                    item.description = renderVideoDescription(data);
+                    item.description = renderVideoDescription(data)
                 } else {
                     if (data.audioUrl) {
-                        delete item.image;
-                        item.enclosure_url = data.audioUrl;
-                        item.enclosure_type = 'audio/mpeg';
+                        delete item.image
+                        item.enclosure_url = data.audioUrl
+                        item.enclosure_type = 'audio/mpeg'
                     } else if (data.image?.url) {
-                        const imageUrl = data.image.url;
-                        const cleanImageUrl = imageUrl.split('?')[0].toLowerCase();
+                        const imageUrl = data.image.url
+                        const cleanImageUrl = imageUrl.split('?')[0].toLowerCase()
 
-                        item.enclosure_url = imageUrl;
+                        item.enclosure_url = imageUrl
                         if (cleanImageUrl.endsWith('.jpg') || cleanImageUrl.endsWith('.jpeg')) {
-                            item.enclosure_type = 'image/jpeg';
+                            item.enclosure_type = 'image/jpeg'
                         }
-                        item.image = imageUrl;
+                        item.image = imageUrl
                     }
 
-                    const capture = load(data.body, null, false);
-                    const banner = data.image;
-                    capture('p.pullquote').remove();
+                    const capture = load(data.body, null, false)
+                    const banner = data.image
+                    capture('p.pullquote').remove()
 
                     const authorsBio = renderToString(
                         <>
@@ -133,16 +133,16 @@ export const getData = async (list) => {
                             ))}
                             <hr />
                             <br />
-                        </>
-                    );
+                        </>,
+                    )
 
-                    item.description = renderEssayDescription({ banner, authorsBio, content: capture.html() });
+                    item.description = renderEssayDescription({ banner, authorsBio, content: capture.html() })
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    return items;
-};
+    return items
+}

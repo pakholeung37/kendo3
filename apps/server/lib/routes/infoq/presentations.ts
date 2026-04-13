@@ -1,35 +1,35 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { conference } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12;
+    const { conference } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 12
 
-    const rootUrl = 'https://www.infoq.com';
-    const currentUrl = new URL(`${conference ? `${conference}/` : ''}presentations/`, rootUrl).href;
+    const rootUrl = 'https://www.infoq.com'
+    const currentUrl = new URL(`${conference ? `${conference}/` : ''}presentations/`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul[data-tax="presentations"] li[data-path]')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('h3.card__title a');
+            const a = item.find('h3.card__title a')
 
-            const title = a.prop('title') || a.text().trim();
-            const image = item.find('img.card__image').prop('src');
+            const title = a.prop('title') || a.text().trim()
+            const image = item.find('img.card__image').prop('src')
             const description = renderDescription({
                 images: image
                     ? [
@@ -40,10 +40,10 @@ export const handler = async (ctx) => {
                       ]
                     : undefined,
                 intro: item.find('p.card__excerpt').text(),
-            });
-            const link = new URL(a.prop('href'), rootUrl).href;
-            const guid = `infoq-${item.prop('data-path').replace(/^\//, '')}`;
-            const length = item.find('div.card__length').text() || undefined;
+            })
+            const link = new URL(a.prop('href'), rootUrl).href
+            const guid = `infoq-${item.prop('data-path').replace(/^\//, '')}`
+            const length = item.find('div.card__length').text() || undefined
 
             return {
                 title,
@@ -72,25 +72,25 @@ export const handler = async (ctx) => {
                 enclosure_type: length ? 'video/mp4' : undefined,
                 enclosure_title: title,
                 itunes_duration: length,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('div.player').prevAll().remove();
-                $$('div.event__list-box').remove();
+                $$('div.player').prevAll().remove()
+                $$('div.event__list-box').remove()
 
-                const length = $$('div.player__actions span').text() || undefined;
+                const length = $$('div.player__actions span').text() || undefined
 
-                const script = $$('script[type="text/javascript"]').text();
-                const videoSrc = script.match(/P\.s\s=\s'(.*?)';/)?.[1] ?? undefined;
-                const poster = script.match(/P\.c\(.*?isWideScreen,\s'(.*?)',\s/)?.[1] ?? undefined;
-                const topicsStr = script.match(/var\stopicsInPage\s=\sJSON\.parse\('(.*?)'\);/)?.[1]?.replaceAll('\\', '') ?? undefined;
+                const script = $$('script[type="text/javascript"]').text()
+                const videoSrc = script.match(/P\.s\s=\s'(.*?)';/)?.[1] ?? undefined
+                const poster = script.match(/P\.c\(.*?isWideScreen,\s'(.*?)',\s/)?.[1] ?? undefined
+                const topicsStr = script.match(/var\stopicsInPage\s=\sJSON\.parse\('(.*?)'\);/)?.[1]?.replaceAll('\\', '') ?? undefined
 
                 if (videoSrc) {
                     $$('div.player').replaceWith(
@@ -102,23 +102,23 @@ export const handler = async (ctx) => {
                                     type: `video/${videoSrc.split(/\./).pop()}`,
                                 },
                             ],
-                        })
-                    );
+                        }),
+                    )
                 }
 
-                const title = $$('meta[property="og:title"]').prop('content').trim();
-                const image = $$('meta[property="twitter:image"]').prop('content') || $$('meta[property="og:image"]').prop('content');
+                const title = $$('meta[property="og:title"]').prop('content').trim()
+                const image = $$('meta[property="twitter:image"]').prop('content') || $$('meta[property="og:image"]').prop('content')
 
-                item.title = title;
-                item.pubDate = parseDate($$('p.date').text());
-                item.link = $$('meta[property="og:url"]').prop('content');
-                item.category = topicsStr ? JSON.parse(topicsStr).map((t) => t.name) : $$('meta[name="keywords"]').prop('content').split(/,/);
+                item.title = title
+                item.pubDate = parseDate($$('p.date').text())
+                item.link = $$('meta[property="og:url"]').prop('content')
+                item.category = topicsStr ? JSON.parse(topicsStr).map((t) => t.name) : $$('meta[name="keywords"]').prop('content').split(/,/)
                 item.author = $$('ul.authors a.author__link')
                     .toArray()
                     .map((a) => $$(a).text())
-                    .join('/');
+                    .join('/')
 
-                $$('div.article__content').nextAll().remove();
+                $$('div.article__content').nextAll().remove()
 
                 const description = renderDescription({
                     images: image
@@ -130,28 +130,28 @@ export const handler = async (ctx) => {
                           ]
                         : undefined,
                     description: $$('article.article').html(),
-                });
+                })
 
-                item.description = description;
+                item.description = description
                 item.content = {
                     html: description,
                     text: $$('article.article').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
-                item.enclosure_url = videoSrc;
-                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined;
-                item.enclosure_title = title;
-                item.itunes_duration = length;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
+                item.enclosure_url = videoSrc
+                item.enclosure_type = item.enclosure_url ? 'video/mp4' : undefined
+                item.enclosure_title = title
+                item.itunes_duration = length
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = $('meta[property="og:image"]').prop('content');
+    const title = $('title').text()
+    const image = $('meta[property="og:image"]').prop('content')
 
     return {
         title,
@@ -162,8 +162,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/).pop(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/presentations/:conference?',
@@ -192,10 +192,10 @@ export const route: Route = {
         {
             source: ['www.infoq.com/presentations', 'www.infoq.com/:conference/presentations'],
             target: (params) => {
-                const conference = params.conference;
+                const conference = params.conference
 
-                return `/presentations${conference ? `/${conference}` : ''}`;
+                return `/presentations${conference ? `/${conference}` : ''}`
             },
         },
     ],
-};
+}

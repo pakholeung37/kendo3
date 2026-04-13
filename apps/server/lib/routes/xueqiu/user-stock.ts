@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/user_stock/:id',
@@ -33,15 +33,15 @@ export const route: Route = {
     description: `::: warning
   用户自选动态需要登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const cookie = config.xueqiu.cookies;
+    const cookie = config.xueqiu.cookies
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少雪球用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少雪球用户登录后的 Cookie 值')
     }
 
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const {
         data: { stocks: data },
@@ -50,7 +50,7 @@ async function handler(ctx) {
             Cookie: cookie,
             Referer: `https://xueqiu.com/u/${id}`,
         },
-    });
+    })
 
     const {
         user: { screen_name },
@@ -62,7 +62,7 @@ async function handler(ctx) {
             Cookie: cookie,
             Referer: `https://xueqiu.com/u/${id}`,
         },
-    });
+    })
 
     return {
         title: `${screen_name} 的雪球自选动态`,
@@ -74,5 +74,5 @@ async function handler(ctx) {
             pubDate: parseDate(item.created),
             link: `https://xueqiu.com/s/${item.symbol}`,
         })),
-    };
+    }
 }

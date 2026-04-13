@@ -1,51 +1,51 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { state = 'all' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { state = 'all' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const rootUrl = 'https://petition.parliament.uk';
-    const targetUrl: string = new URL(`petitions?state=${state}`, rootUrl).href;
-    const jsonUrl: string = new URL('petitions.json', rootUrl).href;
+    const rootUrl = 'https://petition.parliament.uk'
+    const targetUrl: string = new URL(`petitions?state=${state}`, rootUrl).href
+    const jsonUrl: string = new URL('petitions.json', rootUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language: string = $('html').prop('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language: string = $('html').prop('lang') ?? 'en'
 
     const jsonResponse = await ofetch(jsonUrl, {
         query: {
             page: 1,
             state,
         },
-    });
+    })
 
     const items = jsonResponse.data.slice(0, limit).map((item): DataItem => {
-        const attributes = item.attributes;
+        const attributes = item.attributes
 
-        const title = attributes.action;
+        const title = attributes.action
         const description = renderToString(
             <>
                 {attributes.background ? <blockquote>{attributes.background}</blockquote> : null}
                 {attributes.additional_details ? <p>{attributes.additional_details}</p> : null}
-            </>
-        );
-        const guid = `parliament.uk-petition-${item.id}`;
+            </>,
+        )
+        const guid = `parliament.uk-petition-${item.id}`
 
-        const author: DataItem['author'] = attributes.creator_name;
+        const author: DataItem['author'] = attributes.creator_name
 
         const extraLinks = attributes.departments?.map((link) => ({
             url: link.url,
             type: 'related',
             content_html: link.name,
-        }));
+        }))
 
         return {
             title,
@@ -65,10 +65,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
             _extra: {
                 links: extraLinks?.length ? extraLinks : undefined,
             },
-        };
-    });
+        }
+    })
 
-    const feedImage = $('meta[property="og:image"]').prop('content');
+    const feedImage = $('meta[property="og:image"]').prop('content')
 
     return {
         title: $('h1.page-title').text(),
@@ -80,8 +80,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="msapplication-tooltip"]').prop('content'),
         language,
         id: $('meta[property="og:url"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/petitions/:state?',
@@ -129,10 +129,10 @@ If you subscribe to [Recent petitions](https://petition.parliament.uk/petitions?
         {
             source: ['petition.parliament.uk/petitions'],
             target: (_, url) => {
-                const urlObj = new URL(url);
-                const state = urlObj.searchParams.get('state');
+                const urlObj = new URL(url)
+                const state = urlObj.searchParams.get('state')
 
-                return `/parliament.uk/petitions${state ? `/${state}` : ''}`;
+                return `/parliament.uk/petitions${state ? `/${state}` : ''}`
             },
         },
         {
@@ -187,4 +187,4 @@ If you subscribe to [Recent petitions](https://petition.parliament.uk/petitions?
         },
     ],
     view: ViewType.Articles,
-};
+}

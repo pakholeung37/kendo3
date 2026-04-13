@@ -1,20 +1,20 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 const processItems = (list) =>
     Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await got.post(item.link);
-                const content = load(detailResponse.data);
+                const detailResponse = await got.post(item.link)
+                const content = load(detailResponse.data)
 
-                item.description = content('div.xxy_text').html();
+                item.description = content('div.xxy_text').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-export { processItems };
+export { processItems }

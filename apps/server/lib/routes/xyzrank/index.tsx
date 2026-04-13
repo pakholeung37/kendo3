@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -17,27 +17,27 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'xyzrank.com/',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
+    const category = ctx.req.param('category') ?? ''
 
-    const rootUrl = 'https://xyzrank.com';
-    const currentUrl = `${rootUrl}/#/${category}`;
+    const rootUrl = 'https://xyzrank.com'
+    const currentUrl = `${rootUrl}/#/${category}`
 
     let response = await got({
         method: 'get',
         url: rootUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     response = await got({
         method: 'get',
         url: response.data.match(/<script type="module" crossorigin src="(.*?)"><\/script>/)[1],
-    });
+    })
 
-    const matches = response.data.match(/pI="(.*?)",gI="(.*?)",mI="(.*?)",_I="(.*?)";var/);
+    const matches = response.data.match(/pI="(.*?)",gI="(.*?)",mI="(.*?)",_I="(.*?)";var/)
 
     const categories = {
         '': {
@@ -64,14 +64,14 @@ async function handler(ctx) {
             id: 'new-podcasts',
             type: 'podcasts',
         },
-    };
+    }
 
     response = await got({
         method: 'get',
         url: categories[category].url,
-    });
+    })
 
-    const type = categories[category].type;
+    const type = categories[category].type
 
     const items = response.data.data[type].slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 250).map((item, index) => ({
         title: `#${index + 1} ${item.title ?? item.name}`,
@@ -115,7 +115,7 @@ async function handler(ctx) {
                                   发布时间: item.postTime,
                                   分类: item.primaryGenreName,
                                   链接: item.link,
-                              }
+                              },
                     ).map(([label, value]) =>
                         value ? (
                             <tr>
@@ -124,17 +124,17 @@ async function handler(ctx) {
                                 </td>
                                 <td>{value}</td>
                             </tr>
-                        ) : null
+                        ) : null,
                     )}
                 </table>
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `${$('title').text()} - ${categories[category].title}`,
         link: currentUrl,
         item: items,
         description: $('meta[property="og:description"]').attr('content'),
-    };
+    }
 }

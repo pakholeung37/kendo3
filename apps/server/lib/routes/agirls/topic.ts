@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { baseUrl, parseArticle } from './utils';
+import { baseUrl, parseArticle } from './utils'
 
 export const route: Route = {
     path: '/topic/:topic',
@@ -27,26 +27,26 @@ export const route: Route = {
     name: '精选主题',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const topic = ctx.req.param('topic');
-    const link = `${baseUrl}/topic/${topic}`;
-    const response = await got(link);
+    const topic = ctx.req.param('topic')
+    const link = `${baseUrl}/topic/${topic}`
+    const response = await got(link)
 
-    const $ = load(response.data);
-    const ldJson = JSON.parse($('script[type="application/ld+json"]').text());
+    const $ = load(response.data)
+    const ldJson = JSON.parse($('script[type="application/ld+json"]').text())
     const list = $('.ag-post-item__link')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text().trim(),
                 link: `${baseUrl}${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseArticle(item))))
 
     return {
         title: $('head title').text().trim(),
@@ -54,5 +54,5 @@ async function handler(ctx) {
         description: ldJson['@graph'][0].description,
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }

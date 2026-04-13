@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/category/:category/:staffpicks?',
@@ -28,29 +28,29 @@ export const route: Route = {
     name: 'Category',
     maintainers: ['MisteryMonster'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category, staffpicks } = ctx.req.param();
+    const { category, staffpicks } = ctx.req.param()
 
-    const categoryparams = category;
-    let sortparams = '&direction=desc&sort=date';
-    let feedtitle = category;
+    const categoryparams = category
+    let sortparams = '&direction=desc&sort=date'
+    let feedtitle = category
     if (staffpicks && staffpicks !== 'staffpicks') {
-        return;
+        return
     }
 
     if (staffpicks) {
-        sortparams += '&filter=conditional_featured';
-        feedtitle += `: ${category} staffpicks`;
+        sortparams += '&filter=conditional_featured'
+        feedtitle += `: ${category} staffpicks`
     }
 
-    const url = `https://api.vimeo.com/categories/${categoryparams}/videos?page=1&per_page=18${sortparams}`;
+    const url = `https://api.vimeo.com/categories/${categoryparams}/videos?page=1&per_page=18${sortparams}`
     const tokenresponse = await got({
         method: 'get',
         url: 'https://vimeo.com/_rv/viewer',
-    });
-    const VimeoAuthorization = tokenresponse.data.jwt;
+    })
+    const VimeoAuthorization = tokenresponse.data.jwt
 
     const response = await got({
         method: 'get',
@@ -58,19 +58,19 @@ async function handler(ctx) {
         headers: {
             Authorization: `jwt ${VimeoAuthorization}`,
         },
-    });
+    })
 
-    const vimeojs = response.data.data;
+    const vimeojs = response.data.data
 
-    const feedlink = `https://vimeo.com/categories/${category}/videos/sort:latest`;
-    const feedlinkstaffpicks = '?staffpicked=true';
+    const feedlink = `https://vimeo.com/categories/${category}/videos/sort:latest`
+    const feedlinkstaffpicks = '?staffpicked=true'
     const feedDescription = await cache.tryGet(feedlink + (staffpicks ? feedlinkstaffpicks : ''), async () => {
         const response = await got({
             url: feedlink + (staffpicks ? feedlinkstaffpicks : ''),
-        });
-        const description = load(response.data);
-        return description('meta[name="description"]').attr('content');
-    });
+        })
+        const description = load(response.data)
+        return description('meta[name="description"]').attr('content')
+    })
 
     return {
         title: `${feedtitle} | Vimeo category`,
@@ -86,5 +86,5 @@ async function handler(ctx) {
             link: item.link,
             author: item.user.name,
         })),
-    };
+    }
 }

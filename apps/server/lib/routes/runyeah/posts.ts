@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -15,21 +15,21 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'runyeah.world/',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://runyeah.world';
+    const baseUrl = 'https://runyeah.world'
     const { data: response } = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
             _embed: true,
             per_page: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30,
         },
-    });
+    })
 
-    let data = response;
+    let data = response
     if (typeof response !== 'object') {
         // remove php warnings before JSON
-        data = JSON.parse(response.match(/\[(.*)]/)[0]);
+        data = JSON.parse(response.match(/\[(.*)]/)[0])
     }
 
     const items = data.map((item) => ({
@@ -40,11 +40,11 @@ async function handler(ctx) {
         author: item._embedded.author.map((a) => a.name).join(', '),
         category: item._embedded['wp:term'][0].map((c) => c.name),
         link: item.link,
-    }));
+    }))
 
     return {
         title: '最新文章 - 跑野大爆炸',
         link: baseUrl,
         item: items,
-    };
+    }
 }

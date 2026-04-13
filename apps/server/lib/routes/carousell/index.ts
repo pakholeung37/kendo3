@@ -1,8 +1,8 @@
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { ListingCard } from './types';
+import type { ListingCard } from './types'
 
 export const route: Route = {
     path: '/:region/:keyword',
@@ -41,7 +41,7 @@ export const route: Route = {
         { source: ['www.carousell.sg/search/:keyword'], target: '/sg/:keyword' },
         { source: ['tw.carousell.com/search/:keyword'], target: '/tw/:keyword' },
     ],
-};
+}
 
 const regionMap = {
     au: {
@@ -252,22 +252,22 @@ const regionMap = {
         },
         referer: (query) => `https://tw.carousell.com/search/${query}?addRecent=true&canChangeKeyword=true&includeSuggestions=true&t-search_query_source=direct_search`,
     },
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { region, keyword } = ctx.req.param();
+    const { region, keyword } = ctx.req.param()
 
     if (!Object.keys(regionMap).includes(region)) {
-        throw new Error(`Unsupported region code: ${region}`);
+        throw new Error(`Unsupported region code: ${region}`)
     }
 
-    const baseUrl = regionMap[region].baseUrl;
-    const siteResponse = await ofetch.raw(baseUrl);
+    const baseUrl = regionMap[region].baseUrl
+    const siteResponse = await ofetch.raw(baseUrl)
     const cookies = siteResponse.headers
         .getSetCookie()
         ?.map((c) => c.split(';')[0])
-        .join('; ');
-    const csrfToken = siteResponse._data.match(/"csrfToken":"(.*?)","/)[1];
+        .join('; ')
+    const csrfToken = siteResponse._data.match(/"csrfToken":"(.*?)","/)[1]
 
     const response = await ofetch(regionMap[region].api, {
         method: 'POST',
@@ -280,7 +280,7 @@ async function handler(ctx): Promise<Data> {
             ...regionMap[region].payload,
             query: keyword,
         },
-    });
+    })
 
     const items = response.data.results
         .filter((i) => i.listingCard)
@@ -293,10 +293,10 @@ async function handler(ctx): Promise<Data> {
             pubDate: parseDate(item.overlayContent.timestampContent.seconds.low, 'X'),
             guid: `${region}:${item.id}`,
             link: `${baseUrl}/p/${item.id}/`,
-        })) satisfies DataItem[];
+        })) satisfies DataItem[]
 
     return {
         title: `Carousell ${region.toUpperCase()} Search - ${keyword}`,
         item: items,
-    };
+    }
 }

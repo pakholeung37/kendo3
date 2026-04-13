@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/programme/:id?/:limit?/:isFull?',
@@ -75,30 +75,30 @@ export const route: Route = {
 | 四川党建               | 1014766 |
 | 健康四川               | 1014767 |
 | 技能四川               | 12023   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '1';
-    const limit = ctx.req.param('limit') ? Number.parseInt(ctx.req.param('limit')) : 15;
-    const isFull = /t|y/i.test(ctx.req.param('isFull') ?? 'true');
+    const id = ctx.req.param('id') ?? '1'
+    const limit = ctx.req.param('limit') ? Number.parseInt(ctx.req.param('limit')) : 15
+    const isFull = /t|y/i.test(ctx.req.param('isFull') ?? 'true')
 
-    const rootUrl = 'https://www.sctv.com';
-    const apiRootUrl = 'https://kscgc.sctv-tf.com';
-    const apiUrl = `${apiRootUrl}/sctv/lookback/${id}/date.json`;
-    const listUrl = `${apiRootUrl}/sctv/lookback/index/lookbackList.json`;
-    const currentUrl = `${rootUrl}/column/detail?programmeIndex=/sctv/lookback/${id}/index.json`;
+    const rootUrl = 'https://www.sctv.com'
+    const apiRootUrl = 'https://kscgc.sctv-tf.com'
+    const apiUrl = `${apiRootUrl}/sctv/lookback/${id}/date.json`
+    const listUrl = `${apiRootUrl}/sctv/lookback/index/lookbackList.json`
+    const currentUrl = `${rootUrl}/column/detail?programmeIndex=/sctv/lookback/${id}/index.json`
 
     let response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    let items = [];
+    let items = []
 
     const array = response.data.data.programmeArray.slice(0, limit).map((list) => ({
         guid: list.id,
         link: `${apiRootUrl}${list.programmeListUrl}`,
-    }));
+    }))
 
     await Promise.all(
         array.map((list) =>
@@ -106,7 +106,7 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: list.link,
-                });
+                })
 
                 const currentItems = detailResponse.data.data.programmeList.map((item) => ({
                     guid: item.id,
@@ -116,32 +116,32 @@ async function handler(ctx) {
                     description: renderToString(
                         <video poster={item.programmeImage} controls>
                             <source src={item.programmeUrl} type="video/mp4" />
-                        </video>
+                        </video>,
                     ),
-                }));
+                }))
 
-                let currentFullItems = [];
+                let currentFullItems = []
 
                 if (isFull) {
-                    currentFullItems = currentItems.filter((item) => /（\d{4}(?:\.\d{2}){2}）/.test(item.title));
+                    currentFullItems = currentItems.filter((item) => /（\d{4}(?:\.\d{2}){2}）/.test(item.title))
                 }
 
-                items = [...items, ...(currentFullItems.length === 0 ? currentItems : currentFullItems)];
-            })
-        )
-    );
+                items = [...items, ...(currentFullItems.length === 0 ? currentItems : currentFullItems)]
+            }),
+        ),
+    )
 
     response = await got({
         method: 'get',
         url: listUrl,
-    });
+    })
 
-    let name, cover;
+    let name, cover
     for (const p of response.data.data.programme_official) {
         if (p.programmeId === id) {
-            name = p.programmeName;
-            cover = p.programmeCover;
-            break;
+            name = p.programmeName
+            cover = p.programmeCover
+            break
         }
     }
 
@@ -150,5 +150,5 @@ async function handler(ctx) {
         link: currentUrl,
         item: items.slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100),
         image: cover,
-    };
+    }
 }

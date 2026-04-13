@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/rczp/:type',
@@ -28,16 +28,16 @@ export const route: Route = {
     description: `| 信息发布 | 教研类岗位 | 管理岗位及其他 |
 | -------- | ---------- | -------------- |
 | xxfb     | jylgw      | gllgw          |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
     const title_dict = {
         xxfb: { title: '信息发布', channelid: '9531,9532,9533,9534,9535,9419' },
         jylgw: { title: '教研类岗位', channelid: '9420,9421,9422,9423' },
         gllgw: { title: '管理岗位及其他', channelid: '9424,9425,9426' },
-    };
-    const link = `https://rczp.nju.edu.cn/sylm/${type}/index.html`;
+    }
+    const link = `https://rczp.nju.edu.cn/sylm/${type}/index.html`
 
     const data = await cache.tryGet(
         `nju:rczp:${type}`,
@@ -53,12 +53,12 @@ async function handler(ctx) {
                     pageno: Buffer.from('1').toString('base64'),
                     hasPage: Buffer.from('true').toString('base64'),
                 },
-            });
-            return data;
+            })
+            return data
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = data.infolist.map((item) => ({
         title: item.title,
@@ -66,11 +66,11 @@ async function handler(ctx) {
         link: item.url,
         pubDate: parseDate(item.releasetime, 'x'),
         author: item.username,
-    }));
+    }))
 
     return {
         title: `人才招聘-${title_dict[type].title}`,
         link,
         item: items,
-    };
+    }
 }

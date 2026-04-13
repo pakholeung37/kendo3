@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const apiUrl = 'https://api.github.com';
+const apiUrl = 'https://api.github.com'
 
 export const route: Route = {
     path: '/notifications',
@@ -27,27 +27,27 @@ export const route: Route = {
     maintainers: ['zhzy0077'],
     handler,
     url: 'github.com/notifications',
-};
+}
 
 async function handler(ctx) {
     if (!config.github || !config.github.access_token) {
-        throw new ConfigNotFoundError('GitHub notification RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('GitHub notification RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
     const headers = {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${config.github.access_token}`,
         'X-GitHub-Api-Version': '2022-11-28',
-    };
+    }
 
     const response = await ofetch.raw(`${apiUrl}/notifications`, {
         headers,
-    });
-    const notifications = response._data;
+    })
+    const notifications = response._data
 
     const items = notifications.map((item) => {
-        let originUrl = item.subject.url ? item.subject.url.replace('https://api.github.com/repos/', 'https://github.com/') : 'https://github.com/notifications';
+        let originUrl = item.subject.url ? item.subject.url.replace('https://api.github.com/repos/', 'https://github.com/') : 'https://github.com/notifications'
         if (originUrl.includes('/releases/')) {
-            originUrl = originUrl.replace(/\/releases\/\d+$/, '/releases');
+            originUrl = originUrl.replace(/\/releases\/\d+$/, '/releases')
         }
         return {
             title: item.subject.title,
@@ -55,8 +55,8 @@ async function handler(ctx) {
             pubDate: parseDate(item.updated_at), // item.updated_at follows ISO 8601.
             guid: item.id,
             link: originUrl,
-        };
-    });
+        }
+    })
 
     ctx.set('json', {
         title: 'Github Notifications',
@@ -68,12 +68,12 @@ async function handler(ctx) {
             resoure: response.headers['x-ratelimit-resource'],
             used: Number.parseInt(response.headers['x-ratelimit-used']),
         },
-    });
+    })
 
     return {
         title: 'Github Notifications',
         link: 'https://github.com/notifications',
         item: items,
         allowEmpty: true,
-    };
+    }
 }

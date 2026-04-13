@@ -1,27 +1,27 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:params{.+}?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const params = ctx.req.param('params');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const params = ctx.req.param('params')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://www.liulinblog.com';
-    const currentUrl = params ? new URL(params, rootUrl).href : rootUrl;
+    const rootUrl = 'https://www.liulinblog.com'
+    const currentUrl = params ? new URL(params, rootUrl).href : rootUrl
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div.scroll')
         .first()
@@ -29,9 +29,9 @@ async function handler(ctx) {
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('h2.entry-title a');
+            const a = item.find('h2.entry-title a')
 
             return {
                 title: a.prop('title'),
@@ -49,49 +49,49 @@ async function handler(ctx) {
                 guid: `liulinblog-${item.prop('id')}`,
                 pubDate: parseDate(item.find('span.meta-date time').prop('datetime')),
                 comments: item.find('span.meta-comment').text() ? Number.parseInt(item.find('span.meta-comment').text().trim(), 10) : 0,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                content('div[role="alert"]').remove();
+                content('div[role="alert"]').remove()
 
-                item.title = content('meta[property="og:title"]').prop('content');
-                item.description = content('div.entry-content').html();
+                item.title = content('meta[property="og:title"]').prop('content')
+                item.description = content('div.entry-content').html()
                 item.author = content('div.entry-meta')
                     .first()
                     .find('span.meta-author a')
                     .toArray()
                     .map((a) => content(a).prop('title'))
-                    .join(' / ');
+                    .join(' / ')
                 item.category = content('div.entry-meta')
                     .first()
                     .find('span.meta-category a[rel="category"]')
                     .toArray()
-                    .map((c) => content(c).text());
-                item.guid = `liulinblog-${content('article').first().prop('id')}`;
-                item.pubDate = parseDate(content('span.meta-date time').first().prop('datetime'));
+                    .map((c) => content(c).text())
+                item.guid = `liulinblog-${content('article').first().prop('id')}`
+                item.pubDate = parseDate(content('span.meta-date time').first().prop('datetime'))
                 item.comments = content('h3.comments-title').text()
                     ? Number.parseInt(
                           content('h3.comments-title')
                               .text()
                               .match(/\((\d+)\)/),
-                          10
+                          10,
                       )
-                    : 0;
+                    : 0
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = $('link[rel="icon"]').prop('href');
-    const title = $('img.logo').prop('alt');
+    const icon = $('link[rel="icon"]').prop('href')
+    const title = $('img.logo').prop('alt')
 
     return {
         item: items,
@@ -104,5 +104,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('p.term-description').text(),
         author: title,
-    };
+    }
 }

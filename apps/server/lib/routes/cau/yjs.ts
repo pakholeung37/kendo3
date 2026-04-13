@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjs',
@@ -26,11 +26,11 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'yz.cau.edu.cn/col/col41740/index.html',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://yz.cau.edu.cn';
-    const link = `${baseUrl}/col/col41740/index.html`;
+    const baseUrl = 'https://yz.cau.edu.cn'
+    const link = `${baseUrl}/col/col41740/index.html`
     const response = await got(`${baseUrl}/module/web/jpage/dataproxy.jsp`, {
         searchParams: {
             page: 1,
@@ -42,9 +42,9 @@ async function handler() {
             webname: '中国农业大学研究生院',
             permissiontype: 0,
         },
-    });
-    const $ = load(response.data);
-    const list = $('recordset record');
+    })
+    const $ = load(response.data)
+    const list = $('recordset record')
 
     return {
         title: '中农研究生学院',
@@ -53,8 +53,8 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a
                         .contents()
@@ -62,7 +62,7 @@ async function handler() {
                         .text(),
                     link: `${baseUrl}${a.attr('href')}`,
                     pubDate: parseDate(item.find('span').text().replaceAll(/[[\]]/g, '')),
-                };
+                }
             }),
-    };
+    }
 }

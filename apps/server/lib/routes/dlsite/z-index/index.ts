@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { ProcessItems } from '../utils';
+import { ProcessItems } from '../utils'
 
 export const route: Route = {
     path: '*',
@@ -10,8 +10,8 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    return await ProcessItems(ctx);
+    return await ProcessItems(ctx)
 }

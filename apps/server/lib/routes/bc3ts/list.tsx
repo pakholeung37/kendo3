@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Media, PostResponse } from './types';
+import type { Media, PostResponse } from './types'
 
 export const route: Route = {
     path: '/post/list/:sort?',
@@ -24,11 +24,11 @@ export const route: Route = {
     name: '動態',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
-const baseUrl = 'https://web.bc3ts.net';
+const baseUrl = 'https://web.bc3ts.net'
 
-const renderMedia = (media: Media[]) => renderToString(<MediaList media={media} />);
+const renderMedia = (media: Media[]) => renderToString(<MediaList media={media} />)
 
 const MediaList = ({ media }: { media: Media[] }) => (
     <>
@@ -40,14 +40,14 @@ const MediaList = ({ media }: { media: Media[] }) => (
                 <video controls preload="metadata" poster={`https://img.bc3ts.net/video/post/upload/${m.cover}`}>
                     <source src={m.media_url} type="video/mp4" />
                 </video>
-            ) : null
+            ) : null,
         )}
     </>
-);
+)
 
 async function handler(ctx) {
-    const { sort = '1' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { sort = '1' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
     const response = await ofetch<PostResponse>('https://app.bc3ts.net/post/list/v2', {
         headers: {
@@ -60,7 +60,7 @@ async function handler(ctx) {
             limits: limit,
             sort_type: sort,
         },
-    });
+    })
 
     const items = response.data.map((p) => ({
         title: p.title ?? p.content.split('\n')[0],
@@ -71,7 +71,7 @@ async function handler(ctx) {
         category: p.group.name,
         upvotes: p.like_count,
         comments: p.comment_count,
-    }));
+    }))
 
     return {
         title: `爆料公社${sort === '1' ? '最新' : '熱門'}動態`,
@@ -80,5 +80,5 @@ async function handler(ctx) {
         image: 'https://img.bc3ts.net/image/web/main/logo-white-new-2023.png',
         icon: 'https://img.bc3ts.net/image/web/main/logo/logo_icon_6th_2024_192x192.png',
         item: items,
-    };
+    }
 }

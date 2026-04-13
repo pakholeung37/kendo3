@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import logger from '@/utils/logger';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import logger from '@/utils/logger'
+import puppeteer from '@/utils/puppeteer'
 
-import { BASE_URL, parseCompanyName, parseCompanyPosts } from './utils';
+import { BASE_URL, parseCompanyName, parseCompanyPosts } from './utils'
 
 export const route: Route = {
     path: '/company/:company_id/posts',
@@ -24,32 +24,32 @@ export const route: Route = {
     name: 'Company Posts',
     maintainers: ['saifazmi'],
     handler: async (ctx) => {
-        const company_id = ctx.req.param('company_id');
+        const company_id = ctx.req.param('company_id')
 
         // Puppeteer setup
-        const browser = await puppeteer();
-        const page = await browser.newPage();
-        await page.setRequestInterception(true);
+        const browser = await puppeteer()
+        const page = await browser.newPage()
+        await page.setRequestInterception(true)
 
         page.on('request', (request) => {
-            request.resourceType() === 'document' ? request.continue() : request.abort();
-        });
+            request.resourceType() === 'document' ? request.continue() : request.abort()
+        })
 
-        const url = new URL(`${BASE_URL}/company/${company_id}`);
+        const url = new URL(`${BASE_URL}/company/${company_id}`)
 
-        logger.http(`Requesting ${url.href}`);
+        logger.http(`Requesting ${url.href}`)
         await page.goto(url.href, {
             waitUntil: 'domcontentloaded',
-        });
+        })
 
-        const response = await page.content();
-        await page.close();
+        const response = await page.content()
+        await page.close()
 
-        const $ = load(response);
-        const companyName = parseCompanyName($);
-        const posts = parseCompanyPosts($);
+        const $ = load(response)
+        const companyName = parseCompanyName($)
+        const posts = parseCompanyPosts($)
 
-        await browser.close();
+        await browser.close()
 
         return {
             title: `LinkedIn - ${companyName}'s Posts`,
@@ -62,6 +62,6 @@ export const route: Route = {
                 pubDate: post.date,
                 updated: post.date,
             })),
-        };
+        }
     },
-};
+}

@@ -1,20 +1,20 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type PriceInfo = {
-    finalPrice?: number;
-    regPrice?: number;
-    salePrice?: number;
-};
+    finalPrice?: number
+    regPrice?: number
+    salePrice?: number
+}
 
 type DescriptionData = {
-    availability?: string | string[];
-    releaseDateDisplay?: string;
-    price?: PriceInfo;
-    genres?: string[];
-    softwareDeveloper?: string;
-    softwarePublisher?: string;
-    description?: string;
-};
+    availability?: string | string[]
+    releaseDateDisplay?: string
+    price?: PriceInfo
+    genres?: string[]
+    softwareDeveloper?: string
+    softwarePublisher?: string
+    description?: string
+}
 
 export const renderEshopUsDescription = (data: DescriptionData) =>
     renderToString(
@@ -59,5 +59,5 @@ export const renderEshopUsDescription = (data: DescriptionData) =>
                 ) : null}
             </p>
             <p>{data.description}</p>
-        </>
-    );
+        </>,
+    )

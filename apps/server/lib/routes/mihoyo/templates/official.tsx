@@ -1,9 +1,9 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type CoverItem = {
-    url?: string;
-};
+    url?: string
+}
 
 export const renderOfficialDescription = (hasCover: boolean, coverList: CoverItem[], content: string) =>
     renderToString(
@@ -17,5 +17,5 @@ export const renderOfficialDescription = (hasCover: boolean, coverList: CoverIte
                   ))
                 : null}
             {content ? <>{raw(content)}</> : null}
-        </>
-    );
+        </>,
+    )

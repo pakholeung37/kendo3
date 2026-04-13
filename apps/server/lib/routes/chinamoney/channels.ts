@@ -50,6 +50,6 @@ const channels = {
         title: 'LPR市场公告 - 贷款市场报价利率 - 本币市场',
         urlPath: '/chinese/bklpr/',
     },
-};
+}
 
-export { channels };
+export { channels }

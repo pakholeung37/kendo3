@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: 'New Papers',
@@ -18,4 +18,4 @@ export const route: Route = {
     handler,
     url: 'nber.org/papers',
     description: 'Papers that are published in this week.',
-};
+}

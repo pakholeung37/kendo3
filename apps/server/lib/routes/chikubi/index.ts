@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { getPosts } from './utils';
+import { getPosts } from './utils'
 
 export const route: Route = {
     path: '/',
@@ -55,14 +55,14 @@ export const route: Route = {
             target: '/cg',
         },
     ],
-};
+}
 
 async function handler(): Promise<Data> {
-    const items = await getPosts();
+    const items = await getPosts()
 
     return {
         title: '最新記事 - chikubi.jp',
         link: 'https://chikubi.jp',
         item: items,
-    };
+    }
 }

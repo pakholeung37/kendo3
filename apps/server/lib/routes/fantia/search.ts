@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/search/:type?/:caty?/:period?/:order?/:rating?/:keyword?',
@@ -141,29 +141,29 @@ export const route: Route = {
 | すべて | 一般のみ | R18 のみ |
 | ------ | -------- | -------- |
 | all    | general  | adult    |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'posts';
-    const caty = ctx.req.param('caty') || '';
-    const order = ctx.req.param('order') || 'updater';
-    const rating = ctx.req.param('rating') || 'all';
-    const keyword = ctx.req.param('keyword') || '';
-    const period = ctx.req.param('period') || '';
+    const type = ctx.req.param('type') || 'posts'
+    const caty = ctx.req.param('caty') || ''
+    const order = ctx.req.param('order') || 'updater'
+    const rating = ctx.req.param('rating') || 'all'
+    const keyword = ctx.req.param('keyword') || ''
+    const period = ctx.req.param('period') || ''
 
-    const rootUrl = 'https://fantia.jp';
+    const rootUrl = 'https://fantia.jp'
     const apiUrl = `${rootUrl}/api/v1/search/${type}?keyword=${keyword}&peroid=${period}&brand_type=0&category=${caty === 'all' ? '' : caty}&order=${order}${
         rating === 'all' ? '' : rating === 'general' ? '&rating=general' : '&adult=1'
-    }&per_page=30`;
+    }&per_page=30`
     const response = await got({
         method: 'get',
         url: apiUrl,
         headers: {
             Cookie: config.fantia.cookies ?? '',
         },
-    });
+    })
 
-    let items: DataItem[];
+    let items: DataItem[]
 
     switch (type) {
         case 'fanclubs':
@@ -171,8 +171,8 @@ async function handler(ctx) {
                 title: item.fanclub_name_with_creator_name,
                 link: `${rootUrl}/fanclubs/${item.id}`,
                 description: `${item.icon ? `<img src="${item.icon.main}">` : ''}"><p>${item.title}</p>`,
-            }));
-            break;
+            }))
+            break
 
         case 'posts':
             items = response.data.posts.map((item) => ({
@@ -181,8 +181,8 @@ async function handler(ctx) {
                 pubDate: parseDate(item.posted_at),
                 author: item.fanclub.fanclub_name_with_creator_name,
                 description: `${item.comment ? `<p>${item.comment}</p>` : ''}<img src="${item.thumb ? item.thumb.main : item.thumb_micro}">`,
-            }));
-            break;
+            }))
+            break
 
         case 'products':
             items = response.data.products.map((item) => ({
@@ -190,8 +190,8 @@ async function handler(ctx) {
                 link: `${rootUrl}/products/${item.id}`,
                 author: item.fanclub.fanclub_name_with_creator_name,
                 description: `${item.buyable_lowest_plan.description ? `<p>${item.buyable_lowest_plan.description}</p>` : ''}<img src="${item.thumb ? item.thumb.main : item.thumb_micro}">`,
-            }));
-            break;
+            }))
+            break
 
         case 'commissions':
             items = response.data.commissions.map((item) => ({
@@ -199,16 +199,16 @@ async function handler(ctx) {
                 link: `${rootUrl}/commissions/${item.id}`,
                 author: item.fanclub.fanclub_name_with_creator_name,
                 description: `${item.buyable_lowest_plan.description ? `<p>${item.buyable_lowest_plan.description}</p>` : ''}<img src="${item.thumb ? item.thumb.main : item.thumb_micro}">`,
-            }));
-            break;
+            }))
+            break
 
         default:
-            throw new Error(`Unknown type: ${type}`);
+            throw new Error(`Unknown type: ${type}`)
     }
 
     return {
         title: `Fantia - Search ${type}`,
         link: apiUrl.replace('api/v1/search/', ''),
         item: items,
-    };
+    }
 }

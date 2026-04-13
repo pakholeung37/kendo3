@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/:section?',
@@ -83,44 +83,44 @@ export const route: Route = {
     name: '公告',
     maintainers: ['lxl66566'],
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const baseUrl = 'https://www.okx.com';
-    let { section = 'latest-announcements' } = ctx.req.param();
-    section = section.replace(/^announcements-/, '');
+    const baseUrl = 'https://www.okx.com'
+    let { section = 'latest-announcements' } = ctx.req.param()
+    section = section.replace(/^announcements-/, '')
 
-    const data = await ofetch(`${baseUrl}/zh-hans/help/section/announcements-${section}`);
-    const $ = load(data);
+    const data = await ofetch(`${baseUrl}/zh-hans/help/section/announcements-${section}`)
+    const $ = load(data)
 
-    const ssrData = JSON.parse($('script[data-id="__app_data_for_ssr__"]').text());
+    const ssrData = JSON.parse($('script[data-id="__app_data_for_ssr__"]').text())
     const itemsTemp: Array<{ title: string; link: string; pubDate: Date }> =
         ssrData?.appContext?.initialProps?.sectionData?.articleList?.items?.map((item: { title: string; slug: string; publishTime: string }) => ({
             title: item.title,
             link: `${baseUrl}/zh-hans/help/${item.slug}`,
             pubDate: new Date(item.publishTime),
-        })) || [];
+        })) || []
 
     const items = await Promise.all(
         itemsTemp.map((item) =>
             cache.tryGet(item.link, async () => {
                 const content = await got(item.link).then((response) => {
-                    const $ = load(response.data);
-                    return $('div[class^="index_richTextContent"]').html();
-                });
+                    const $ = load(response.data)
+                    return $('div[class^="index_richTextContent"]').html()
+                })
 
                 return {
                     ...item,
                     description: content || '内容获取失败',
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: ssrData?.appContext?.serverSideProps?.sectionOutline?.title || 'Unknown',
         link: `${baseUrl}/zh-hans/help/section/announcements-${section}`,
         item: items as DataItem[],
         allowEmpty: true,
-    };
+    }
 }

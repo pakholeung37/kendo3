@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { fetchFullArticles, rootUrl } from './utils';
+import { fetchFullArticles, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/carousel',
@@ -28,23 +28,23 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'yicai.com/',
-};
+}
 
 async function handler() {
-    const res = await ofetch(rootUrl);
-    const $ = load(res);
+    const res = await ofetch(rootUrl)
+    const $ = load(res)
     const items = await Promise.all(
         fetchFullArticles(
             $('#breaknews a')
                 .toArray()
                 .map((e) => ({ link: new URL($(e).attr('href'), rootUrl).href, title: $(e).text() })),
-            cache.tryGet
-        )
-    );
+            cache.tryGet,
+        ),
+    )
 
     return {
         title: '第一财经 - 轮播',
         link: rootUrl,
         item: items,
-    };
+    }
 }

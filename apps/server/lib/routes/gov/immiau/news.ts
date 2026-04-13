@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const url = 'https://immi.homeaffairs.gov.au/_layouts/15/api/Data.aspx/GetNews';
+const url = 'https://immi.homeaffairs.gov.au/_layouts/15/api/Data.aspx/GetNews'
 
 const reqBodyByYear = (year) => ({
     siteUrl: 'https://www.homeaffairs.gov.au',
@@ -15,9 +15,9 @@ const reqBodyByYear = (year) => ({
         CurrentSite: 'Immi',
         Year: year + '',
     },
-});
+})
 
-const getItemUrl = (id) => `https://immi.homeaffairs.gov.au/news-media/archive/article?itemId=${id}`;
+const getItemUrl = (id) => `https://immi.homeaffairs.gov.au/news-media/archive/article?itemId=${id}`
 
 export const route: Route = {
     path: '/immiau/news',
@@ -35,14 +35,14 @@ export const route: Route = {
     name: 'Immigration and Citizenship - News',
     maintainers: ['liu233w'],
     handler,
-};
+}
 
 async function handler() {
     const { data: res } = await got({
         method: 'post',
         url,
         json: reqBodyByYear(new Date().getFullYear()),
-    });
+    })
 
     const list = res.d.data.map((item) => ({
         title: item.Title,
@@ -51,12 +51,12 @@ async function handler() {
         description: item.Content,
         pubDate: parseDate(item.Date),
         link: getItemUrl(item.Id),
-    }));
+    }))
 
     return {
         title: 'News - Immigration and Citizenship',
         link: 'https://immi.homeaffairs.gov.au/news-media/archive',
         description: 'Australia Government, Department of Home Affairs',
         item: list,
-    };
+    }
 }

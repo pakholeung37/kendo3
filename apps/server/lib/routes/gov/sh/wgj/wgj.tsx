@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/sh/wgj/:page?', '/shanghai/wgj/:page?'],
@@ -29,50 +29,50 @@ export const route: Route = {
     maintainers: ['gideonsenku'],
     handler,
     url: 'wsbs.wgj.sh.gov.cn/',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'http://wsbs.wgj.sh.gov.cn';
-    const currentUrl = `${baseUrl}/shwgj_ywtb/core/web/welcome/index!toResultNotice.action`;
-    const page = ctx.req.param('page') ?? 1;
+    const baseUrl = 'http://wsbs.wgj.sh.gov.cn'
+    const currentUrl = `${baseUrl}/shwgj_ywtb/core/web/welcome/index!toResultNotice.action`
+    const page = ctx.req.param('page') ?? 1
     const searchParams = {
         flag: 1,
         'pageDoc.pageNo': page,
-    };
+    }
     const response = await got({
         method: 'post',
         url: currentUrl,
         searchParams,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const list = $('#div_md > table > tbody > tr > td:nth-child(1) > a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.prop('innerText').replaceAll(/\s/g, ''),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const detailResponse = await got({
                     method: 'get',
                     url: baseUrl + item.link,
-                });
-                const $ = load(detailResponse.data);
-                const dateElement = $('div[align="right"][style*="padding: 10px"]').last();
-                const dateText = dateElement.text().trim();
-                const hostingUnit = $('td:contains("举办单位：")').next().text().trim();
-                const licenseNumber = $('td:contains("许可证号：")').next().text().trim();
-                const performanceName = $('td:contains("演出名称:")').next().text().trim();
-                const performanceDate = $('td:contains("演出日期：")').next().text().trim();
-                const performanceVenue = $('td:contains("演出场所：")').next().text().trim();
-                const mainActors = $('td:contains("主要演员：")').next().text().trim();
-                const actorCount = $('td:contains("演员人数：")').next().text().trim();
-                const showCount = $('td:contains("场次：")').next().text().trim();
+                })
+                const $ = load(detailResponse.data)
+                const dateElement = $('div[align="right"][style*="padding: 10px"]').last()
+                const dateText = dateElement.text().trim()
+                const hostingUnit = $('td:contains("举办单位：")').next().text().trim()
+                const licenseNumber = $('td:contains("许可证号：")').next().text().trim()
+                const performanceName = $('td:contains("演出名称:")').next().text().trim()
+                const performanceDate = $('td:contains("演出日期：")').next().text().trim()
+                const performanceVenue = $('td:contains("演出场所：")').next().text().trim()
+                const mainActors = $('td:contains("主要演员：")').next().text().trim()
+                const actorCount = $('td:contains("演员人数：")').next().text().trim()
+                const showCount = $('td:contains("场次：")').next().text().trim()
 
                 item.description = renderToString(
                     <>
@@ -91,18 +91,18 @@ async function handler(ctx) {
                         <text>演员人数：{actorCount} </text>
                         <br />
                         <text>场次：{showCount} </text>
-                    </>
-                );
-                item.pubDate = parseDate(dateText);
+                    </>,
+                )
+                item.pubDate = parseDate(dateText)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

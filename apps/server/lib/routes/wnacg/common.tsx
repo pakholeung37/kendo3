@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const categories = {
     1: '同人誌 漢化',
@@ -26,26 +26,26 @@ const categories = {
     20: '韓漫 漢化',
     21: '韓漫 生肉',
     22: '同人誌 3D漫畫',
-};
+}
 
-const baseUrl = 'https://www.wnacg.com';
+const baseUrl = 'https://www.wnacg.com'
 
 export async function handler(ctx) {
-    const { cid, tag } = ctx.req.param();
+    const { cid, tag } = ctx.req.param()
     if (cid && !Object.keys(categories).includes(cid)) {
-        throw new InvalidParameterError('此分类不存在');
+        throw new InvalidParameterError('此分类不存在')
     }
 
-    const url = `${baseUrl}/albums${cid ? `-index-cate-${cid}` : ''}${tag ? `-index-tag-${tag}` : ''}.html`;
-    const { data } = await got(url);
-    const $ = load(data);
+    const url = `${baseUrl}/albums${cid ? `-index-cate-${cid}` : ''}${tag ? `-index-tag-${tag}` : ''}.html`
+    const { data } = await got(url)
+    const $ = load(data)
 
     const list = $('.gallary_item')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const href = item.find('a').attr('href');
-            const aid = href.match(/^\/photos-index-aid-(\d+)\.html$/)[1];
+            item = $(item)
+            const href = item.find('a').attr('href')
+            const aid = href.match(/^\/photos-index-aid-(\d+)\.html$/)[1]
             return {
                 title: item.find('a').attr('title'),
                 link: `${baseUrl}${href}`,
@@ -54,11 +54,11 @@ export async function handler(ctx) {
                         .find('.info_col')
                         .text()
                         .replace(/\d+張照片，\n創建於/, ''),
-                    'YYYY-MM-DD'
+                    'YYYY-MM-DD',
                 ),
                 aid,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -67,46 +67,46 @@ export async function handler(ctx) {
                     headers: {
                         referer: encodeURI(url),
                     },
-                });
-                let $ = load(descRes);
-                const author = $('.uwuinfo p').first().text();
+                })
+                let $ = load(descRes)
+                const author = $('.uwuinfo p').first().text()
                 const category = $('.tagshow')
                     .toArray()
-                    .map((item) => $(item).text());
-                $('.addtags').remove();
-                const description = $('.uwconn').html();
+                    .map((item) => $(item).text())
+                $('.addtags').remove()
+                const description = $('.uwconn').html()
 
                 const { data } = await got(`${baseUrl}/photos-gallery-aid-${item.aid}.html`, {
                     headers: {
                         referer: `${baseUrl}/photos-slide-aid-${item.aid}.html`,
                     },
-                });
-                $ = load(data);
+                })
+                $ = load(data)
 
                 const imgListMatch = $('script')
                     .text()
-                    .match(/var imglist = (\[.*]);"\);/)[1];
+                    .match(/var imglist = (\[.*]);"\);/)[1]
 
-                const imgList = JSON.parse(imgListMatch.replaceAll('url:', '"url":').replaceAll('caption:', '"caption":').replaceAll('fast_img_host+\\', '').replaceAll('\\', ''));
+                const imgList = JSON.parse(imgListMatch.replaceAll('url:', '"url":').replaceAll('caption:', '"caption":').replaceAll('fast_img_host+\\', '').replaceAll('\\', ''))
 
-                item.author = author;
-                item.category = category;
+                item.author = author
+                item.category = category
                 item.description = renderToString(
                     <>
                         {description ? raw(description) : null}
                         <br />
                         {imgList ? imgList.map((img) => <img src={`https:${img.url}`} alt={img.caption} />) : null}
-                    </>
-                );
+                    </>,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         link: url,
         item: items,
-    };
+    }
 }

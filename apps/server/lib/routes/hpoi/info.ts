@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseRelativeDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseRelativeDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/info/:type?/:catType?',
@@ -47,12 +47,12 @@ export const route: Route = {
 | ------ | ------- | ------- | ------- | ------- | ------ |
 | hobby  |  model  |  real   | moppet  |  doll   | gkdiy  |`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'all', catType = 'all' } = ctx.req.param();
-    const baseUrl = 'https://www.hpoi.net';
-    const reqUrl = `${baseUrl}/user/home/ajax`;
+    const { type = 'all', catType = 'all' } = ctx.req.param()
+    const baseUrl = 'https://www.hpoi.net'
+    const reqUrl = `${baseUrl}/user/home/ajax`
 
     const classMap = {
         all: '全部',
@@ -62,37 +62,37 @@ async function handler(ctx) {
         moppet: '毛绒布偶',
         doll: 'doll娃娃',
         gkdiy: 'GK/其他',
-    };
+    }
 
-    const filterArr = catType.split('|').toSorted();
+    const filterArr = catType.split('|').toSorted()
 
-    const filterSet = new Set(filterArr.map((e: string) => classMap[e]));
+    const filterSet = new Set(filterArr.map((e: string) => classMap[e]))
     if (catType.includes('all')) {
-        filterSet.clear();
+        filterSet.clear()
     }
 
-    let finalType = type;
+    let finalType = type
     if (['hobby', 'model'].includes(type)) {
-        finalType = 'all';
+        finalType = 'all'
     }
 
-    const url = `${reqUrl}?page=1&type=info&subType=${finalType}`;
-    const response = await got.post(url);
+    const url = `${reqUrl}?page=1&type=info&subType=${finalType}`
+    const response = await got.post(url)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.home-info')
         .toArray()
         .map((ele) => {
-            const $item = load(ele);
-            const leftNode = $item('.overlay-container');
-            const relativeLink = leftNode.find('a').first().attr('href');
-            const typeName = leftNode.find('.type-name').first().text().trim();
-            const imgUrl = leftNode.find('img').first().attr('src');
-            const rightNode = $item('.home-info-content');
-            const infoType = rightNode.find('.user-name').contents()[0].data.trim();
-            const infoTitle = rightNode.find('.user-content').text();
-            const infoTime = rightNode.find('.type-time').text();
+            const $item = load(ele)
+            const leftNode = $item('.overlay-container')
+            const relativeLink = leftNode.find('a').first().attr('href')
+            const typeName = leftNode.find('.type-name').first().text().trim()
+            const imgUrl = leftNode.find('img').first().attr('src')
+            const rightNode = $item('.home-info-content')
+            const infoType = rightNode.find('.user-name').contents()[0].data.trim()
+            const infoTitle = rightNode.find('.user-content').text()
+            const infoTime = rightNode.find('.type-time').text()
             return {
                 title: infoTitle,
                 pubDate: parseRelativeDate(infoTime),
@@ -100,10 +100,10 @@ async function handler(ctx) {
                 category: infoType,
                 typeName,
                 description: [`类型:${typeName}`, infoTitle, `更新内容: ${infoType}`, `<img src="${imgUrl}"/>`].join('<br/>'),
-            };
-        });
+            }
+        })
 
-    const items2 = filterSet.size > 0 ? items.filter((e) => filterSet.has(e.typeName)) : items;
+    const items2 = filterSet.size > 0 ? items.filter((e) => filterSet.has(e.typeName)) : items
 
     const typeToLabel = {
         all: '全部',
@@ -113,14 +113,14 @@ async function handler(ctx) {
         delay: '延期',
         release: '出荷',
         reorder: '再版',
-    };
-    const title = `手办维基 - 情报 - ${typeToLabel[finalType]}`;
-    const catTypeName = filterSet.size > 0 ? filterArr.join('|') : 'all';
+    }
+    const title = `手办维基 - 情报 - ${typeToLabel[finalType]}`
+    const catTypeName = filterSet.size > 0 ? filterArr.join('|') : 'all'
     return {
         title,
         link: `${baseUrl}/user/home?type=info&subType=${type}&catType=${catTypeName}`,
         description: title,
         item: items2,
         allowEmpty: true,
-    };
+    }
 }

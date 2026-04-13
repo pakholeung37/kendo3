@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { processFeed } from './utils';
+import { processFeed } from './utils'
 
-const handler = (ctx) => processFeed('channel', ctx);
+const handler = (ctx) => processFeed('channel', ctx)
 
 export const route: Route = {
     path: '/channel/:type?/:language?',
@@ -49,4 +49,4 @@ export const route: Route = {
 :::tip
 设置环境变量 \`INITIUM_MEMBER_COOKIE\` 可获取付费文章全文。
 :::`,
-};
+}

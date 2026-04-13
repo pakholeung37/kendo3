@@ -1,16 +1,16 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type BookDescriptionProps = {
-    description?: string;
-    chapterId?: string;
-    chapterName?: string;
-    chapterIntro?: string;
-    chapterUrl?: string;
-    chapterWords?: string;
-    chapterClicks?: string;
-    chapterUpdatedTime?: string;
-};
+    description?: string
+    chapterId?: string
+    chapterName?: string
+    chapterIntro?: string
+    chapterUrl?: string
+    chapterWords?: string
+    chapterClicks?: string
+    chapterUpdatedTime?: string
+}
 
 export const renderBookDescription = ({ description, chapterId, chapterName, chapterIntro, chapterUrl, chapterWords, chapterClicks, chapterUpdatedTime }: BookDescriptionProps): string =>
     renderToString(
@@ -63,5 +63,5 @@ export const renderBookDescription = ({ description, chapterId, chapterName, cha
                     ) : null}
                 </tbody>
             </table>
-        )
-    );
+        ),
+    )

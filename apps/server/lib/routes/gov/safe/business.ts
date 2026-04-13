@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { processZxfkItems } from './util';
+import { processZxfkItems } from './util'
 
 export const route: Route = {
     path: '/safe/business/:site?',
@@ -18,11 +18,11 @@ export const route: Route = {
     name: '业务咨询',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { site = 'beijing' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 3;
+    const { site = 'beijing' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 3
 
-    return await processZxfkItems(site, 'ywzx', limit);
+    return await processZxfkItems(site, 'ywzx', limit)
 }

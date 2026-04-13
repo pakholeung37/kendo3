@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const renderDescription = (links, changelog) =>
     renderToString(
@@ -33,8 +33,8 @@ const renderDescription = (links, changelog) =>
                     {raw(changelog)}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/:id',
@@ -52,22 +52,22 @@ export const route: Route = {
     name: 'Software Update',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
+    const id = ctx.req.param('id') ?? ''
 
-    const rootUrl = 'https://www.fosshub.com';
-    const currentUrl = `${rootUrl}/${id}.html`;
+    const rootUrl = 'https://www.fosshub.com'
+    const currentUrl = `${rootUrl}/${id}.html`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const version = $('dd[itemprop="softwareVersion"]').first().text();
+    const version = $('dd[itemprop="softwareVersion"]').first().text()
 
     const items = [
         {
@@ -83,17 +83,17 @@ async function handler(ctx) {
                             .map((w) => ({
                                 dt: $(w).find('dt').text(),
                                 dd: $(w).find('dd').html(),
-                            }))
+                            })),
                     ),
-                $('div[itemprop="releaseNotes"]').html()
+                $('div[itemprop="releaseNotes"]').html(),
             ),
             pubDate: parseDate($('.ma__upd .v').text(), 'MMM DD, YYYY'),
         },
-    ];
+    ]
 
     return {
         title: `${$('#fh-ssd__hl').text()} - FossHub`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

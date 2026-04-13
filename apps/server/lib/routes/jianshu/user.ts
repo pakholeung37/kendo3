@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import util from './utils';
+import util from './utils'
 
 export const route: Route = {
     path: '/user/:id',
@@ -29,10 +29,10 @@ export const route: Route = {
     name: '作者',
     maintainers: ['DIYgod', 'HenryQW', 'JimenezLi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await got({
         method: 'get',
@@ -40,19 +40,19 @@ async function handler(ctx) {
         headers: {
             Referer: `https://www.jianshu.com/u/${id}`,
         },
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
-    const list = $('.note-list li').toArray();
+    const $ = load(data)
+    const list = $('.note-list li').toArray()
 
-    const result = await util.ProcessFeed(list, cache);
+    const result = await util.ProcessFeed(list, cache)
 
     return {
         title: $('title').text(),
         link: `https://www.jianshu.com/u/${id}`,
         description: $('meta[name="description"]').attr('content') || $('title').text(),
         item: result,
-    };
+    }
 }

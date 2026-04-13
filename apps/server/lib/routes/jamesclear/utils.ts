@@ -1,13 +1,13 @@
-import type { DataItem } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-export const rootUrl = 'https://jamesclear.com';
-export const apiUrl = `${rootUrl}/wp-json/wp/v2`;
+export const rootUrl = 'https://jamesclear.com'
+export const apiUrl = `${rootUrl}/wp-json/wp/v2`
 
 export async function fetchContent(endpoint: string) {
-    const response = await ofetch(`${apiUrl}/${endpoint}`);
-    return response;
+    const response = await ofetch(`${apiUrl}/${endpoint}`)
+    return response
 }
 
 export function processItem(item: any): DataItem {
@@ -18,5 +18,5 @@ export function processItem(item: any): DataItem {
         pubDate: parseDate(item.date_gmt),
         author: 'James Clear',
         guid: item.guid.rendered,
-    };
+    }
 }

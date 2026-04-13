@@ -1,33 +1,33 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '18', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '18', 10)
 
-    const baseUrl = 'https://www.dgtle.com';
-    const targetUrl: string = new URL('video', baseUrl).href;
-    const apiUrl: string = new URL('video/list/1', baseUrl).href;
+    const baseUrl = 'https://www.dgtle.com'
+    const targetUrl: string = new URL('video', baseUrl).href
+    const apiUrl: string = new URL('video/list/1', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
-    const response = await ofetch(apiUrl);
+    const response = await ofetch(apiUrl)
 
     let items: DataItem[] = response.data.list.slice(0, limit).map((item): DataItem => {
-        const title: string = item.title;
-        const image: string | undefined = item.cover?.split(/\?/)?.[0];
+        const title: string = item.title
+        const image: string | undefined = item.cover?.split(/\?/)?.[0]
         const description: string | undefined = renderDescription({
             images: image
                 ? [
@@ -38,16 +38,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                   ]
                 : undefined,
             intro: item.description,
-        });
-        const linkUrl: string | undefined = item.url;
+        })
+        const linkUrl: string | undefined = item.url
         const authors: DataItem['author'] = [
             {
                 name: item.author.username,
                 url: undefined,
                 avatar: item.author.avatar_path?.split(/\?/)?.[0],
             },
-        ];
-        const guid = `dgtle-${item.id}`;
+        ]
+        const guid = `dgtle-${item.id}`
 
         const processedItem: DataItem = {
             title,
@@ -64,27 +64,27 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             language,
             enclosure_length: item.duration,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1.video-title').text();
+                const title: string = $$('h1.video-title').text()
 
-                const $$enclosureEl: Cheerio<Element> = $$('div.video-play video source').first();
-                const enclosureUrl: string | undefined = $$enclosureEl.attr('src');
+                const $$enclosureEl: Cheerio<Element> = $$('div.video-play video source').first()
+                const enclosureUrl: string | undefined = $$enclosureEl.attr('src')
 
-                const image: string | undefined = $$('div.video-play').attr('data-url');
+                const image: string | undefined = $$('div.video-play').attr('data-url')
                 const description: string | undefined = renderDescription({
                     videos: enclosureUrl
                         ? [
@@ -96,23 +96,23 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           ]
                         : undefined,
                     intro: $$('h3.video-summary').text(),
-                });
-                const pubDateStr: string | undefined = $$('p.video-time').text()?.split(/\s/)?.[0];
-                const linkUrl: string | undefined = $$('.title').attr('href');
-                const categoryEls: Element[] = $$('.category').toArray();
-                const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))];
-                const authorEls: Element[] = $$('.author').toArray();
+                })
+                const pubDateStr: string | undefined = $$('p.video-time').text()?.split(/\s/)?.[0]
+                const linkUrl: string | undefined = $$('.title').attr('href')
+                const categoryEls: Element[] = $$('.category').toArray()
+                const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))]
+                const authorEls: Element[] = $$('.author').toArray()
                 const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                    const $$authorEl: Cheerio<Element> = $$(authorEl);
+                    const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                     return {
                         name: $$authorEl.text(),
                         url: $$authorEl.attr('href'),
                         avatar: $$authorEl.find('img').attr('src'),
-                    };
-                });
-                const guid: string = $$('.id').text();
-                const upDatedStr: string | undefined = pubDateStr;
+                    }
+                })
+                const guid: string = $$('.id').text()
+                const upDatedStr: string | undefined = pubDateStr
 
                 let processedItem: DataItem = {
                     title,
@@ -132,10 +132,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? timezone(parseRelativeDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 if (enclosureUrl) {
-                    const enclosureType: string = $$enclosureEl.attr('type') || 'video/mp4';
+                    const enclosureType: string = $$enclosureEl.attr('type') || 'video/mp4'
 
                     processedItem = {
                         ...processedItem,
@@ -145,18 +145,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         enclosure_length: item.enclosure_length,
                         itunes_duration: item.enclosure_length,
                         itunes_item_image: image,
-                    };
+                    }
                 }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const author: string | undefined = $('meta[name="keywords"]').attr('content')?.split(/,/)[0] ?? undefined;
+    const author: string | undefined = $('meta[name="keywords"]').attr('content')?.split(/,/)[0] ?? undefined
 
     return {
         title: $('title').text().trim().split(/\s/)[0],
@@ -169,8 +169,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         itunes_author: author,
         itunes_category: 'Technology',
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/video',
@@ -198,4 +198,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

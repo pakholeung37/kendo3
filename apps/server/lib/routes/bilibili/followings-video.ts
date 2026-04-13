@@ -1,11 +1,11 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import logger from '@/utils/logger';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import logger from '@/utils/logger'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/followings/video/:uid/:embed?',
@@ -35,16 +35,16 @@ export const route: Route = {
     description: `::: warning
   用户动态需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const uid = String(ctx.req.param('uid'));
-    const embed = !ctx.req.param('embed');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = String(ctx.req.param('uid'))
+    const embed = !ctx.req.param('embed')
+    const name = await cache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await got({
@@ -54,19 +54,19 @@ async function handler(ctx) {
             Referer: `https://space.bilibili.com/${uid}/`,
             Cookie: cookie,
         },
-    });
-    const data = response.data;
+    })
+    const data = response.data
     if (data.code) {
-        logger.error(JSON.stringify(data));
+        logger.error(JSON.stringify(data))
         if (data.code === -6 || data.code === 4_100_000) {
-            throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户的 Cookie 已过期');
+            throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户的 Cookie 已过期')
         }
-        throw new Error(`Got error code ${data.code} while fetching: ${data.message}`);
+        throw new Error(`Got error code ${data.code} while fetching: ${data.message}`)
     }
-    const cards = data.data.cards;
+    const cards = data.data.cards
 
     const out = cards.map((card) => {
-        const card_data = JSON.parse(card.card);
+        const card_data = JSON.parse(card.card)
 
         return {
             title: card_data.title,
@@ -74,12 +74,12 @@ async function handler(ctx) {
             pubDate: new Date(card_data.pubdate * 1000).toUTCString(),
             link: card_data.pubdate > utils.bvidTime && card.desc.bvid ? `https://www.bilibili.com/video/${card.desc.bvid}` : `https://www.bilibili.com/video/av${card_data.aid}`,
             author: card.desc.user_profile.info.uname,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} 关注视频动态`,
         link: `https://t.bilibili.com/?tab=8`,
         item: out,
-    };
+    }
 }

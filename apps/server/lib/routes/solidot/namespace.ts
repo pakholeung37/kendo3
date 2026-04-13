@@ -1,7 +1,7 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Solidot',
     url: 'www.solidot.org',
     lang: 'zh-CN',
-};
+}

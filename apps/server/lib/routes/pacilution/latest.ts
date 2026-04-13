@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const BASE_URL = 'http://www.pacilution.com/';
+const BASE_URL = 'http://www.pacilution.com/'
 
 const handler: Route['handler'] = async () => {
     // Fetch the target page
@@ -14,24 +14,24 @@ const handler: Route['handler'] = async () => {
         method: 'get',
         url: BASE_URL,
         responseType: 'buffer',
-    });
-    const $ = load(iconv.decode(response.data, 'gb2312'));
+    })
+    const $ = load(iconv.decode(response.data, 'gb2312'))
 
     // Select all list items containing target information
-    const ITEM_SELECTOR = 'ul[class*="ullbxwnew"] > li';
-    const listItems = $(ITEM_SELECTOR);
+    const ITEM_SELECTOR = 'ul[class*="ullbxwnew"] > li'
+    const listItems = $(ITEM_SELECTOR)
 
     // Map through each list item to extract details
     const contentLinkList = listItems.toArray().map((element) => {
-        const title = $(element).find('a').text();
-        const relativeHref = $(element).find('a').attr('href') || '';
-        const link = `${BASE_URL}${relativeHref}`;
+        const title = $(element).find('a').text()
+        const relativeHref = $(element).find('a').attr('href') || ''
+        const link = `${BASE_URL}${relativeHref}`
 
         return {
             title,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title: '普世社会科学研究网最新文章',
@@ -43,16 +43,16 @@ const handler: Route['handler'] = async () => {
                 contentLinkList.map((item) =>
                     cache.tryGet(item.link, async () => {
                         try {
-                            const CONTENT_SELECTOR = '#MyContent';
-                            const DATE_SELECTOR = 'td[class*="con_info"] > span';
+                            const CONTENT_SELECTOR = '#MyContent'
+                            const DATE_SELECTOR = 'td[class*="con_info"] > span'
                             const response = await got({
                                 method: 'get',
                                 url: item.link,
                                 responseType: 'buffer',
-                            });
-                            const targetPage = load(iconv.decode(response.data, 'gb2312'));
-                            const content = targetPage(CONTENT_SELECTOR).html() || '';
-                            const date = parseDate(targetPage(DATE_SELECTOR).text().trim().replaceAll('日', '')).toISOString();
+                            })
+                            const targetPage = load(iconv.decode(response.data, 'gb2312'))
+                            const content = targetPage(CONTENT_SELECTOR).html() || ''
+                            const date = parseDate(targetPage(DATE_SELECTOR).text().trim().replaceAll('日', '')).toISOString()
                             return {
                                 title: item.title,
                                 pubDate: date,
@@ -65,20 +65,20 @@ const handler: Route['handler'] = async () => {
                                 content,
                                 updated: date,
                                 language: 'zh-cn',
-                            };
+                            }
                         } catch {
-                            return null as unknown as DataItem;
+                            return null as unknown as DataItem
                         }
-                    })
-                )
+                    }),
+                ),
             )
         ).filter((item) => item !== null) as DataItem[],
         allowEmpty: true,
         language: 'zh-cn',
         feedLink: 'https://rsshub.app/pacilution/latest',
         id: 'https://rsshub.app/pacilution/latest',
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/latest',
@@ -100,4 +100,4 @@ export const route: Route = {
             source: ['www.pacilution.com'],
         },
     ],
-};
+}

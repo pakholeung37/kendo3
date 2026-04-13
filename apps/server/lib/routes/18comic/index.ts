@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { defaultDomain, getRootUrl, ProcessItems } from './utils';
+import { defaultDomain, getRootUrl, ProcessItems } from './utils'
 
 export const route: Route = {
     path: '/:category?/:time?/:order?/:keyword?',
@@ -47,17 +47,17 @@ export const route: Route = {
 
 | YAOI | 女性向 | NTR | 非 H | 3D | 獵奇 |
 | ---- | ------ | --- | ---- | -- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'all';
-    const keyword = ctx.req.param('keyword') ?? '';
-    const time = ctx.req.param('time') ?? 'a';
-    const order = ctx.req.param('order') ?? 'mr';
-    const { domain = defaultDomain } = ctx.req.query();
-    const rootUrl = getRootUrl(domain);
+    const category = ctx.req.param('category') ?? 'all'
+    const keyword = ctx.req.param('keyword') ?? ''
+    const time = ctx.req.param('time') ?? 'a'
+    const order = ctx.req.param('order') ?? 'mr'
+    const { domain = defaultDomain } = ctx.req.query()
+    const rootUrl = getRootUrl(domain)
 
-    const currentUrl = `${rootUrl}/albums${category === 'all' ? '' : `/${category}`}${keyword ? `?screen=${keyword}` : '?'}${time === 'a' ? '' : `&t=${time}`}${order === 'mr' ? '' : `&o=${order}`}`;
+    const currentUrl = `${rootUrl}/albums${category === 'all' ? '' : `/${category}`}${keyword ? `?screen=${keyword}` : '?'}${time === 'a' ? '' : `&t=${time}`}${order === 'mr' ? '' : `&o=${order}`}`
 
-    return await ProcessItems(ctx, currentUrl, rootUrl);
+    return await ProcessItems(ctx, currentUrl, rootUrl)
 }

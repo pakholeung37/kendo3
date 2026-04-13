@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.iguoguo.net';
+const rootUrl = 'https://www.iguoguo.net'
 
 const getCategoryIdFromSlug = (slug) =>
     cache.tryGet(`iguoguo:category:${slug}`, async () => {
@@ -15,9 +15,9 @@ const getCategoryIdFromSlug = (slug) =>
             query: {
                 slug,
             },
-        });
-        return response[0].id;
-    });
+        })
+        return response[0].id
+    })
 
 const getPostsByCategory = (categoryId, limit) =>
     cache.tryGet(
@@ -28,12 +28,12 @@ const getPostsByCategory = (categoryId, limit) =>
                     categories: categoryId,
                     per_page: limit,
                 },
-            });
-            return response;
+            })
+            return response
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
 export const route: Route = {
     path: '/html5',
@@ -51,30 +51,30 @@ export const route: Route = {
     name: '最新 H5',
     maintainers: ['yuxinliu-alex'],
     handler,
-};
+}
 
 async function handler(ctx: Context) {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '10');
-    const currentUrl = `${rootUrl}/html5`;
-    const categorySlug = 'h5';
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '10')
+    const currentUrl = `${rootUrl}/html5`
+    const categorySlug = 'h5'
 
-    const categoryId = await getCategoryIdFromSlug(categorySlug);
-    const posts = await getPostsByCategory(categoryId, limit);
+    const categoryId = await getCategoryIdFromSlug(categorySlug)
+    const posts = await getPostsByCategory(categoryId, limit)
 
     const mime = {
         jpg: 'jpeg',
         png: 'png',
-    };
+    }
 
     const items = posts.map((item) => {
-        const $ = load(item.content.rendered);
-        const cover = $('p > img').first().attr('src');
-        $('p > img').first().remove();
+        const $ = load(item.content.rendered)
+        const cover = $('p > img').first().attr('src')
+        $('p > img').first().remove()
         $('h4').each((_, el) => {
             if ($(el).text().includes('扫码欣赏')) {
-                $(el).remove();
+                $(el).remove()
             }
-        });
+        })
         return {
             title: item.title.rendered,
             description: $.html(),
@@ -87,13 +87,13 @@ async function handler(ctx: Context) {
                     type: `image/${mime[cover.split('.').pop()]}`,
                 },
             },
-        };
-    });
+        }
+    })
     return {
         title: '爱果果',
         link: currentUrl,
         description: '爱果果iguoguo是一个优秀酷站、h5、UI素材资源的发布分享平台，是设计师的灵感聚合地和素材下载源。',
         language: 'zh-cn',
         item: items,
-    };
+    }
 }

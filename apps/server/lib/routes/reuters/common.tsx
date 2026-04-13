@@ -1,51 +1,51 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import type { JSX } from 'hono/jsx/jsx-runtime';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import type { JSX } from 'hono/jsx/jsx-runtime'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 type ReutersContent = {
     result: {
-        summary?: Array<{ description?: string }>;
+        summary?: Array<{ description?: string }>
         related_content?: {
             galleries?: Array<{
                 content_elements?: Array<{
-                    type?: string;
-                    renditions?: { original?: Record<string, string> };
-                    alt_text?: string;
-                    caption?: string;
-                    thumbnail?: { url?: string };
-                    source?: { mp4?: string };
-                    description?: string;
-                }>;
-            }>;
+                    type?: string
+                    renditions?: { original?: Record<string, string> }
+                    alt_text?: string
+                    caption?: string
+                    thumbnail?: { url?: string }
+                    source?: { mp4?: string }
+                    description?: string
+                }>
+            }>
             images?: Array<{
-                type?: string;
-                renditions?: { original?: Record<string, string> };
-                alt_text?: string;
-                caption?: string;
-            }>;
-        };
+                type?: string
+                renditions?: { original?: Record<string, string> }
+                alt_text?: string
+                caption?: string
+            }>
+        }
         content_elements?: Array<{
-            type?: string;
-            content?: string;
-            level?: number;
-        }>;
-        sign_off?: string;
-        title?: string;
-        display_time?: string;
-        authors?: Array<{ name: string }>;
-        taxonomy?: { keywords?: string[] };
-    };
-};
+            type?: string
+            content?: string
+            level?: number
+        }>
+        sign_off?: string
+        title?: string
+        display_time?: string
+        authors?: Array<{ name: string }>
+        taxonomy?: { keywords?: string[] }
+    }
+}
 
 const renderDescription = ({ result }: ReutersContent): string => {
-    const contentElements = result.content_elements ?? [];
+    const contentElements = result.content_elements ?? []
 
     const description = (
         <>
@@ -68,8 +68,8 @@ const renderDescription = ({ result }: ReutersContent): string => {
                                     <img src={element.renditions?.original?.['1920w']} alt={element.alt_text} />
                                     <figcaption>{element.caption}</figcaption>
                                 </figure>
-                            ) : null
-                        )
+                            ) : null,
+                        ),
                     )}
                     {result.related_content.images?.map((image, index) =>
                         image.type === 'image' ? (
@@ -77,7 +77,7 @@ const renderDescription = ({ result }: ReutersContent): string => {
                                 <img src={image.renditions?.original?.['1920w']} alt={image.alt_text} />
                                 <figcaption>{image.caption}</figcaption>
                             </figure>
-                        ) : null
+                        ) : null,
                     )}
                     {result.related_content.galleries?.flatMap((gallery, galleryIndex) =>
                         (gallery.content_elements ?? []).map((element, elementIndex) =>
@@ -88,29 +88,29 @@ const renderDescription = ({ result }: ReutersContent): string => {
                                     </video>
                                     {element.description}
                                 </figure>
-                            ) : null
-                        )
+                            ) : null,
+                        ),
                     )}
                 </>
             ) : null}
             {contentElements.map((element, index) => {
                 if (element.type === 'paragraph') {
-                    return <p key={`paragraph-${index}`}>{element.content ? raw(element.content) : null}</p>;
+                    return <p key={`paragraph-${index}`}>{element.content ? raw(element.content) : null}</p>
                 }
 
                 if (element.type === 'header') {
-                    const HeaderTag = `h${element.level ?? 1}` as keyof JSX.IntrinsicElements;
-                    return <HeaderTag key={`header-${index}`}>{element.content ? raw(element.content) : null}</HeaderTag>;
+                    const HeaderTag = `h${element.level ?? 1}` as keyof JSX.IntrinsicElements
+                    return <HeaderTag key={`header-${index}`}>{element.content ? raw(element.content) : null}</HeaderTag>
                 }
 
-                return null;
+                return null
             })}
             {result.sign_off ? <span>{result.sign_off}</span> : null}
         </>
-    );
+    )
 
-    return renderToString(description);
-};
+    return renderToString(description)
+}
 
 export const route: Route = {
     path: '/:category/:topic?',
@@ -181,29 +181,29 @@ export const route: Route = {
       | reuters | jonathan-landay | their name in URL |
 
   More could be found in the URL of the category/topic page.`,
-};
+}
 
 async function handler(ctx) {
-    const MUST_FETCH_BY_TOPICS = new Set(['authors', 'tags']);
-    const CAN_USE_SOPHI = ['world'];
+    const MUST_FETCH_BY_TOPICS = new Set(['authors', 'tags'])
+    const CAN_USE_SOPHI = ['world']
 
-    const category = ctx.req.param('category');
-    const topic = ctx.req.param('topic') ?? (category === 'authors' ? 'reuters' : '');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20;
-    const useSophi = ctx.req.query('sophi') === 'true' && topic !== '' && CAN_USE_SOPHI.includes(category);
+    const category = ctx.req.param('category')
+    const topic = ctx.req.param('topic') ?? (category === 'authors' ? 'reuters' : '')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20
+    const useSophi = ctx.req.query('sophi') === 'true' && topic !== '' && CAN_USE_SOPHI.includes(category)
 
-    const section_id = `/${category}/${topic ? `${topic}/` : ''}`;
+    const section_id = `/${category}/${topic ? `${topic}/` : ''}`
 
     const browserHeaders = {
         Accept: 'application/json, text/plain, */*',
         'Accept-Language': 'en-US,en;q=0.9',
         Referer: 'https://www.reuters.com/',
-    };
+    }
 
     try {
         const { title, description, rootUrl, response } = await (async () => {
             if (MUST_FETCH_BY_TOPICS.has(category)) {
-                const rootUrl = 'https://www.reuters.com/pf/api/v3/content/fetch/articles-by-topic-v1';
+                const rootUrl = 'https://www.reuters.com/pf/api/v3/content/fetch/articles-by-topic-v1'
                 const response = await ofetch(rootUrl, {
                     query: {
                         query: JSON.stringify({
@@ -214,16 +214,16 @@ async function handler(ctx) {
                         }),
                     },
                     headers: browserHeaders,
-                });
+                })
 
                 return {
                     title: `${response.result.topics[0].name} | Reuters`,
                     description: response.result.topics[0].entity_id,
                     rootUrl,
                     response,
-                };
+                }
             } else {
-                const rootUrl = 'https://www.reuters.com/pf/api/v3/content/fetch/articles-by-section-alias-or-id-v1';
+                const rootUrl = 'https://www.reuters.com/pf/api/v3/content/fetch/articles-by-section-alias-or-id-v1'
                 const response = await ofetch(rootUrl, {
                     query: {
                         query: JSON.stringify({
@@ -241,15 +241,15 @@ async function handler(ctx) {
                         }),
                     },
                     headers: browserHeaders,
-                });
+                })
                 return {
                     title: response.result.section.title,
                     description: response.result.section.section_about,
                     rootUrl,
                     response,
-                };
+                }
             }
-        })();
+        })()
 
         let items = response.result.articles.map((e) => ({
             title: e.title,
@@ -260,9 +260,9 @@ async function handler(ctx) {
             author: e.authors?.map((e) => e.name).join(', '),
             category: e.kicker.names,
             description: e.description,
-        }));
+        }))
 
-        items = items.filter((e, i) => items.findIndex((f) => e.guid === f.guid) === i);
+        items = items.filter((e, i) => items.findIndex((f) => e.guid === f.guid) === i)
 
         const results = await Promise.allSettled(
             items.map((item) =>
@@ -270,57 +270,57 @@ async function handler(ctx) {
                     ? cache.tryGet(item.link, async () => {
                           const detailResponse = await ofetch(item.link, {
                               headers: browserHeaders,
-                          });
-                          const content = load(detailResponse.data);
+                          })
+                          const content = load(detailResponse.data)
 
                           if (detailResponse.url.startsWith('https://www.reuters.com/investigates/')) {
-                              const ldJson = JSON.parse(content('script[type="application/ld+json"]').text());
-                              content('.special-report-article-container .container, #slide-dek, #slide-end, .share-in-article-container').remove();
+                              const ldJson = JSON.parse(content('script[type="application/ld+json"]').text())
+                              content('.special-report-article-container .container, #slide-dek, #slide-end, .share-in-article-container').remove()
 
-                              item.title = ldJson.headline;
-                              item.pubDate = parseDate(ldJson.dateCreated);
-                              item.author = ldJson.creator;
-                              item.category = ldJson.keywords;
-                              item.description = content('.special-report-article-container').html();
+                              item.title = ldJson.headline
+                              item.pubDate = parseDate(ldJson.dateCreated)
+                              item.author = ldJson.creator
+                              item.category = ldJson.keywords
+                              item.description = content('.special-report-article-container').html()
 
-                              return item;
+                              return item
                           }
 
                           const matches = content('script#fusion-metadata')
                               .text()
-                              .match(/Fusion.globalContent=({[\S\s]*?});/);
+                              .match(/Fusion.globalContent=({[\S\s]*?});/)
 
                           if (matches) {
-                              const data = JSON.parse(matches[1]);
+                              const data = JSON.parse(matches[1])
 
-                              item.title = data.result.title || item.title;
+                              item.title = data.result.title || item.title
                               item.description = renderDescription({
                                   result: data.result,
-                              });
-                              item.pubDate = parseDate(data.result.display_time);
-                              item.author = data.result.authors.map((author) => author.name).join(', ');
-                              item.category = data.result.taxonomy.keywords;
+                              })
+                              item.pubDate = parseDate(data.result.display_time)
+                              item.author = data.result.authors.map((author) => author.name).join(', ')
+                              item.category = data.result.taxonomy.keywords
 
-                              return item;
+                              return item
                           }
 
-                          content('.title').remove();
-                          content('.article-metadata').remove();
+                          content('.title').remove()
+                          content('.article-metadata').remove()
 
-                          item.title = content('meta[property="og:title"]').attr('content');
-                          item.pubDate = parseDate(detailResponse.data.match(/"datePublished":"(.*?)","dateModified/)[1]);
+                          item.title = content('meta[property="og:title"]').attr('content')
+                          item.pubDate = parseDate(detailResponse.data.match(/"datePublished":"(.*?)","dateModified/)[1])
                           item.author = detailResponse.data
                               .match(/{"@type":"Person","name":"(.*?)"}/g)
                               .map((p) => p.match(/"name":"(.*?)"/)[1])
-                              .join(', ');
-                          item.description = content('article').html();
+                              .join(', ')
+                          item.description = content('article').html()
 
-                          return item;
+                          return item
                       })
-                    : item
-            )
-        );
-        items = results.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+                    : item,
+            ),
+        )
+        items = results.filter((r) => r.status === 'fulfilled').map((r) => r.value)
 
         return {
             title,
@@ -328,23 +328,23 @@ async function handler(ctx) {
             image: 'https://www.reuters.com/pf/resources/images/reuters/logo-vertical-default-512x512.png?d=116',
             link: `https://www.reuters.com${section_id}`,
             item: items,
-        };
+        }
     } catch (error: any) {
         if (error?.name !== 'FetchError') {
-            throw error;
+            throw error
         }
         // Fallback to arc outboundfeeds if API fails
-        const arcUrl = topic ? `https://www.reuters.com/arc/outboundfeeds/v4/mobile/section${section_id}?outputType=json` : `https://www.reuters.com/arc/outboundfeeds/v4/mobile/section/${category}/?outputType=json`;
+        const arcUrl = topic ? `https://www.reuters.com/arc/outboundfeeds/v4/mobile/section${section_id}?outputType=json` : `https://www.reuters.com/arc/outboundfeeds/v4/mobile/section/${category}/?outputType=json`
 
         const arcResponse = await ofetch(arcUrl, {
             headers: browserHeaders,
-        });
+        })
         if (arcResponse.wireitems?.length) {
             const items = arcResponse.wireitems
                 .map((item) => {
-                    const story = item.templates.find((t) => t.template === 'story_with_image')?.story;
+                    const story = item.templates.find((t) => t.template === 'story_with_image')?.story
                     if (!story) {
-                        return null;
+                        return null
                     }
 
                     return {
@@ -356,9 +356,9 @@ async function handler(ctx) {
                         description: story.lede,
                         author: story.authors?.map((author) => author.name).join(', '),
                         category: [arcResponse.analytics?.topic_channel, arcResponse.analytics?.topic_sub_channel].filter(Boolean),
-                    };
+                    }
                 })
-                .filter(Boolean);
+                .filter(Boolean)
 
             return {
                 title: arcResponse.analytics?.title || `${arcResponse.wire_name} | Reuters`,
@@ -367,7 +367,7 @@ async function handler(ctx) {
                 link: arcResponse.canonical_action?.url || `https://www.reuters.com${section_id}`,
                 category: [arcResponse.analytics?.topic_channel, arcResponse.analytics?.topic_sub_channel].filter(Boolean),
                 item: items.slice(0, limit),
-            };
+            }
         }
     }
 }

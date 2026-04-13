@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type LiveData = {
-    images: string[];
-    texts: string[];
-};
+    images: string[]
+    texts: string[]
+}
 
 export const renderLive = ({ images, texts }: LiveData): string =>
     renderToString(
@@ -15,5 +15,5 @@ export const renderLive = ({ images, texts }: LiveData): string =>
             {texts.map((text) => (
                 <>{raw(text)}</>
             ))}
-        </>
-    );
+        </>,
+    )

@@ -1,52 +1,52 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { language = '' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { language = '' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://musify.club';
-    const targetUrl: string = new URL(language, baseUrl).href;
+    const baseUrl = 'https://musify.club'
+    const targetUrl: string = new URL(language, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
 
     const items: DataItem[] = $('div.playlist__item')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const artist: string | undefined = $el.attr('data-artist');
-            const name: string | undefined = $el.attr('data-name');
+            const artist: string | undefined = $el.attr('data-artist')
+            const name: string | undefined = $el.attr('data-name')
 
-            const title: string = [artist, name].filter(Boolean).join(' - ');
-            const linkUrl: string | undefined = $el.find('a.strong').attr('href');
-            const authorEls: Element[] = $el.find('div.playlist__heading a').toArray();
+            const title: string = [artist, name].filter(Boolean).join(' - ')
+            const linkUrl: string | undefined = $el.find('a.strong').attr('href')
+            const authorEls: Element[] = $el.find('div.playlist__heading a').toArray()
             const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                const $authorEl: Cheerio<Element> = $(authorEl);
+                const $authorEl: Cheerio<Element> = $(authorEl)
 
                 return {
                     name: $authorEl.text(),
                     url: $authorEl.attr('href') ? new URL($authorEl.attr('href') as string, baseUrl).href : undefined,
                     avatar: undefined,
-                };
-            });
+                }
+            })
 
             let processedItem: DataItem = {
                 title,
                 link: linkUrl ? new URL(linkUrl, baseUrl).href : undefined,
                 author: authors,
-            };
+            }
 
-            const $enclosureEl: Cheerio<Element> = $el.find('div.playlist__control');
-            const enclosureUrl: string | undefined = $enclosureEl.attr('data-play-url');
+            const $enclosureEl: Cheerio<Element> = $el.find('div.playlist__control')
+            const enclosureUrl: string | undefined = $enclosureEl.attr('data-play-url')
 
             if (enclosureUrl) {
                 processedItem = {
@@ -57,11 +57,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     enclosure_length: undefined,
                     itunes_duration: undefined,
                     itunes_item_image: undefined,
-                };
+                }
             }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -72,8 +72,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         image: $('meta[property="og:image"]').attr('content'),
         author: $('meta[property="og:site_name"]').attr('content'),
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:language?',
@@ -127,4 +127,4 @@ To subscribe to [Latest](https://musify.club/en), where the source URL is \`http
         },
     ],
     view: ViewType.Articles,
-};
+}

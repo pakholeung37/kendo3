@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -39,68 +39,68 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://news.hrbust.edu.cn/';
-    const { category = 'lgyw' } = ctx.req.param();
-    const columnUrl = `${rootUrl}${category}.htm`;
-    const response = await ofetch(columnUrl);
-    const $ = load(response);
+    const rootUrl = 'https://news.hrbust.edu.cn/'
+    const { category = 'lgyw' } = ctx.req.param()
+    const columnUrl = `${rootUrl}${category}.htm`
+    const response = await ofetch(columnUrl)
+    const $ = load(response)
 
-    const bigTitle = $('title').text().split('-')[0].trim();
+    const bigTitle = $('title').text().split('-')[0].trim()
 
     const list = $('li[id^=line_u10]')
         .toArray()
         .map((item) => {
-            const element = $(item);
-            const link = new URL(element.find('a').attr('href'), rootUrl).href;
-            const pubDateText = element.find('span').text().trim();
-            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null;
+            const element = $(item)
+            const link = new URL(element.find('a').attr('href'), rootUrl).href
+            const pubDateText = element.find('span').text().trim()
+            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null
             return {
                 title: element.find('a').text().trim(),
                 pubDate,
                 link,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.startsWith(rootUrl)) {
-                    item.description = '本文需跳转，请点击原文链接后阅读';
-                    return item;
+                    item.description = '本文需跳转，请点击原文链接后阅读'
+                    return item
                 }
 
-                const detailResponse = await ofetch(item.link);
-                const content = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const content = load(detailResponse)
 
-                const dateText = content('p.xinxi span:contains("日期时间：")').text().replace('日期时间：', '').trim();
-                const pubTime = dateText ? timezone(parseDate(dateText), +8) : null;
+                const dateText = content('p.xinxi span:contains("日期时间：")').text().replace('日期时间：', '').trim()
+                const pubTime = dateText ? timezone(parseDate(dateText), +8) : null
                 if (pubTime) {
-                    item.pubDate = pubTime;
+                    item.pubDate = pubTime
                 }
 
-                const author = content('p.xinxi span:contains("作者：")').text().replace('作者：', '').trim();
-                item.author = author || null;
+                const author = content('p.xinxi span:contains("作者：")').text().replace('作者：', '').trim()
+                item.author = author || null
 
-                const newsContent = content('div.v_news_content') || '解析正文失败';
-                const listAttachments = content('ul[style="list-style-type:none;"] a');
-                let listAttachmentsHtml = '';
+                const newsContent = content('div.v_news_content') || '解析正文失败'
+                const listAttachments = content('ul[style="list-style-type:none;"] a')
+                let listAttachmentsHtml = ''
                 listAttachments.each((_, a_element) => {
-                    listAttachmentsHtml += '<br />' + content(a_element).prop('outerHTML');
-                });
+                    listAttachmentsHtml += '<br />' + content(a_element).prop('outerHTML')
+                })
 
-                item.description = newsContent + listAttachmentsHtml;
-                return item;
-            })
-        )
-    );
+                item.description = newsContent + listAttachmentsHtml
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${bigTitle} - 哈尔滨理工大学新闻网`,
         link: columnUrl,
         language: 'zh-CN',
         item: items,
-    };
+    }
 }

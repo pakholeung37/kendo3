@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://news.google.com';
+const baseUrl = 'https://news.google.com'
 
 export const route: Route = {
     path: '/news/:category/:locale',
@@ -24,51 +24,51 @@ export const route: Route = {
     name: 'News',
     maintainers: ['zoenglinghou', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const locale = ctx.req.param('locale');
+    const category = ctx.req.param('category')
+    const locale = ctx.req.param('locale')
 
     const categoryUrls = await cache.tryGet(`google:news:${locale}`, async () => {
-        const front_data = await ofetch(`${baseUrl}/?${locale}`);
+        const front_data = await ofetch(`${baseUrl}/?${locale}`)
 
-        const $ = load(front_data);
+        const $ = load(front_data)
         return [
             ...$('a.brSCsc')
                 .toArray()
                 .slice(3) // skip Home, For you and Following
                 .map((item) => {
-                    item = $(item);
+                    item = $(item)
                     return {
                         category: item.text(),
                         url: new URL(item.attr('href'), baseUrl).href,
-                    };
+                    }
                 }),
             ...$('a.aqvwYd') // Home
                 .toArray()
                 .map((item) => {
-                    item = $(item);
+                    item = $(item)
                     return {
                         category: item.text(),
                         url: new URL(item.attr('href'), baseUrl).href,
-                    };
+                    }
                 }),
-        ];
-    });
-    const categoryUrl = categoryUrls.find((item) => item.category === category).url;
+        ]
+    })
+    const categoryUrl = categoryUrls.find((item) => item.category === category).url
 
-    const data = await ofetch(categoryUrl);
-    const $ = load(data);
+    const data = await ofetch(categoryUrl)
+    const $ = load(data)
 
-    const list = [...$('.UwIKyb'), ...$('.IBr9hb'), ...$('.IFHyqb')]; // 3 rows of news, 3-rows-wide news, single row news
+    const list = [...$('.UwIKyb'), ...$('.IBr9hb'), ...$('.IFHyqb')] // 3 rows of news, 3-rows-wide news, single row news
 
     const items = list.map((item) => {
-        item = $(item);
+        item = $(item)
 
-        const title = item.find('.gPFEn').text();
+        const title = item.find('.gPFEn').text()
 
-        const authorText = item.find('.bInasb span').text();
+        const authorText = item.find('.bInasb span').text()
         const authors = authorText
             ? authorText
                   .replace(/^By\s+/i, '') // Handle 'By' case-insensitively
@@ -78,13 +78,13 @@ async function handler(ctx) {
                   .filter((author) => {
                       // Filter out empty strings and common suffixes
                       if (!author) {
-                          return false;
+                          return false
                       }
-                      const suffixes = ['et al', 'et al.'];
-                      return !suffixes.some((suffix) => author.toLowerCase().endsWith(suffix));
+                      const suffixes = ['et al', 'et al.']
+                      return !suffixes.some((suffix) => author.toLowerCase().endsWith(suffix))
                   })
                   .map((author) => ({ name: author }))
-            : [];
+            : []
 
         return {
             title,
@@ -92,14 +92,14 @@ async function handler(ctx) {
             pubDate: parseDate(item.find('time').attr('datetime')),
             author: authors,
             link: new URL(item.find('a.WwrzSb').first().attr('href'), baseUrl).href,
-        };
-    });
+        }
+    })
 
     return {
         title: $('title').text(),
         link: categoryUrl,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (img: string | undefined, brief: string): string =>
@@ -112,5 +112,5 @@ const renderDescription = (img: string | undefined, brief: string): string =>
                 </>
             ) : null}
             {brief}
-        </>
-    );
+        </>,
+    )

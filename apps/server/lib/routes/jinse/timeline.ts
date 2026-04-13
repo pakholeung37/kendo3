@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/timeline/:category?',
@@ -50,16 +50,16 @@ export const route: Route = {
 | ------ | ---- | ------- | ---------- | ---- |
 | 政策   | AI   | Web 3.0 | 以太坊 2.0 | DeFi |
 | Layer2 | NFT  | DAO     | 百科       |      |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '头条' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { category = '头条' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.jinse.com.cn';
-    const rootApiUrl = 'https://api.jinse.com.cn';
-    const apiUrl = new URL('noah/v3/timelines', rootApiUrl).href;
-    const currentUrl = rootUrl;
+    const rootUrl = 'https://www.jinse.com.cn'
+    const rootApiUrl = 'https://api.jinse.com.cn'
+    const apiUrl = new URL('noah/v3/timelines', rootApiUrl).href
+    const currentUrl = rootUrl
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -68,14 +68,14 @@ async function handler(ctx) {
             information_id: 0,
             flag: 'up',
         },
-    });
+    })
 
     let items = response.data.list.slice(0, limit).map((item) => {
-        item = item.object_1 ?? item.object_2;
+        item = item.object_1 ?? item.object_2
 
         // Reason: API returns mixed domains (jinse.com, m.jinse.com.cn, jinse.com.cn),
         // normalize all to www.jinse.com.cn since old domains are dead
-        const link = item.jump_url.replace(/\/\/(www\.|m\.)?jinse\.com(?!\.cn)/, '//www.jinse.com.cn').replace('//m.jinse.com.cn', '//www.jinse.com.cn');
+        const link = item.jump_url.replace(/\/\/(www\.|m\.)?jinse\.com(?!\.cn)/, '//www.jinse.com.cn').replace('//m.jinse.com.cn', '//www.jinse.com.cn')
 
         return {
             title: item.title,
@@ -98,39 +98,39 @@ async function handler(ctx) {
             upvotes: item.up_counts ?? 0,
             downvotes: item.down_counts ?? 0,
             comments: item.comment_count ?? 0,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (/\/lives\//.test(item.link)) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
                 item.description += renderDescription({
                     description: content('section.js-article-content').html() || content('div.js-article').html(),
-                });
+                })
                 item.category = content('section.js-article-tag_state_1 a span')
                     .toArray()
-                    .map((c) => content(c).text());
+                    .map((c) => content(c).text())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = $('meta[name="author"]').prop('content');
-    const image = $('a.js-logoBox img').prop('src');
-    const icon = new URL($('link[rel="favicon"]').prop('href'), rootUrl).href;
+    const author = $('meta[name="author"]').prop('content')
+    const image = $('a.js-logoBox img').prop('src')
+    const icon = new URL($('link[rel="favicon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -144,5 +144,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author,
         allowEmpty: true,
-    };
+    }
 }

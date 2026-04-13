@@ -1,10 +1,10 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getDetails, getSimple, getTorrents } from './util';
+import { getDetails, getSimple, getTorrents } from './util'
 
-const supportedKeys = new Set(['parody', 'character', 'tag', 'artist', 'group', 'language', 'category']);
+const supportedKeys = new Set(['parody', 'character', 'tag', 'artist', 'group', 'language', 'category'])
 
 export const route: Route = {
     path: '/index/:key/:keyword/:mode?',
@@ -29,25 +29,25 @@ export const route: Route = {
     name: 'Filter',
     maintainers: ['MegrezZhu', 'hoilc', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { key, keyword, mode } = ctx.req.param();
+    const { key, keyword, mode } = ctx.req.param()
 
     if (!supportedKeys.has(key)) {
-        throw new InvalidParameterError('Unsupported key');
+        throw new InvalidParameterError('Unsupported key')
     }
 
-    const url = `https://nhentai.net/${key}/${keyword.toLowerCase().replace(' ', '-')}/`;
+    const url = `https://nhentai.net/${key}/${keyword.toLowerCase().replace(' ', '-')}/`
 
-    const simples = await getSimple(url);
+    const simples = await getSimple(url)
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5;
-    let items = simples;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5
+    let items = simples
     if (mode === 'detail') {
-        items = await getDetails(cache, simples, limit);
+        items = await getDetails(cache, simples, limit)
     } else if (mode === 'torrent') {
-        items = await getTorrents(cache, simples, limit);
+        items = await getTorrents(cache, simples, limit)
     }
 
     return {
@@ -55,5 +55,5 @@ async function handler(ctx) {
         link: url,
         description: 'hentai',
         item: items,
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/ndrc/fggz/:category{.+}?',
@@ -190,9 +190,9 @@ export const route: Route = {
             title: '发展改革工作',
             source: ['ndrc.gov.cn/fggz/:category*'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/gov/ndrc/fggz/${category ? `/${category.endsWith('/') ? category : `${category}/`}` : '/'}`;
+                return `/gov/ndrc/fggz/${category ? `/${category.endsWith('/') ? category : `${category}/`}` : '/'}`
             },
         },
         {
@@ -646,53 +646,53 @@ export const route: Route = {
             target: '/ndrc/fggz/fgjh/jsxy',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25;
+    const category = ctx.req.param('category')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25
 
-    const rootUrl = 'https://www.ndrc.gov.cn';
-    const currentUrl = new URL(`fggz${category ? `/${category.endsWith('/') ? category : `${category}/`}` : '/'}`, rootUrl).href;
+    const rootUrl = 'https://www.ndrc.gov.cn'
+    const currentUrl = new URL(`fggz${category ? `/${category.endsWith('/') ? category : `${category}/`}` : '/'}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('ul.u-list li a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.prop('title') || item.text(),
                 link: new URL(item.prop('href'), currentUrl).href,
                 pubDate: parseDate(item.next().text(), 'YYYY/MM/DD'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = content('meta[name="ArticleTitle"]').prop('content');
-                item.description = content('div.TRS_Editor').html();
-                item.author = content('meta[name="ContentSource"]').prop('content');
+                item.title = content('meta[name="ArticleTitle"]').prop('content')
+                item.description = content('div.TRS_Editor').html()
+                item.author = content('meta[name="ContentSource"]').prop('content')
                 item.category = [...new Set([content('meta[name="ColumnName"]').prop('content'), content('meta[name="ColumnType"]').prop('content'), ...(content('meta[name="Keywords"]').prop('content').split(/,|;/) ?? [])])].filter(
-                    Boolean
-                );
-                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8);
+                    Boolean,
+                )
+                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = $('div.logo a img').prop('src');
+    const image = $('div.logo a img').prop('src')
 
     return {
         item: items,
@@ -703,5 +703,5 @@ async function handler(ctx) {
         image,
         subtitle: $('meta[name="ColumnName"]').prop('content'),
         author: $('meta[name="SiteName"]').prop('content'),
-    };
+    }
 }

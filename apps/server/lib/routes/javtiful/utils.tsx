@@ -1,6 +1,6 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { parseRelativeDate } from '@/utils/parse-date';
+import { parseRelativeDate } from '@/utils/parse-date'
 
 const renderDescription = (data): string =>
     renderToString(
@@ -12,8 +12,8 @@ const renderDescription = (data): string =>
             ) : data.poster ? (
                 <img src={data.poster} />
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const parseItems = (e) => ({
     title: e.find('a > img').attr('alt')!,
@@ -23,4 +23,4 @@ export const parseItems = (e) => ({
         previewVideo: e.find('a > span').data('trailer'),
     }),
     pubDate: parseRelativeDate(e.find('.video-addtime').text()),
-});
+})

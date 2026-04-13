@@ -1,24 +1,24 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
 
-import { Job } from './models';
+import { Job } from './models'
 
 /**
  * Constants
  */
-const BASE_URL = 'https://www.linkedin.com';
+const BASE_URL = 'https://www.linkedin.com'
 
-const KEYWORDS_QUERY_KEY = 'keywords';
+const KEYWORDS_QUERY_KEY = 'keywords'
 
-const JOB_TYPES_QUERY_KEY = 'f_JT';
+const JOB_TYPES_QUERY_KEY = 'f_JT'
 
 const JOB_TYPES = {
     F: 'full-time',
     P: 'part-time',
     C: 'contract',
-};
+}
 
-const EXP_LEVELS_QUERY_KEY = 'f_E';
+const EXP_LEVELS_QUERY_KEY = 'f_E'
 
 const EXP_LEVELS = {
     1: 'internship',
@@ -26,7 +26,7 @@ const EXP_LEVELS = {
     3: 'associate',
     4: 'mid-senior',
     5: 'director',
-};
+}
 
 /**
  * Params parsing
@@ -45,11 +45,11 @@ const EXP_LEVELS = {
  */
 function parseParamsToSearchParams(params, map) {
     if (!params) {
-        return '';
+        return ''
     } // Handle undefined params
 
-    const validParamValues = params.split('-').filter((v) => v in map);
-    return validParamValues.join(',');
+    const validParamValues = params.split('-').filter((v) => v in map)
+    return validParamValues.join(',')
 }
 
 /**
@@ -63,14 +63,14 @@ function parseParamsToSearchParams(params, map) {
  */
 function parseParamsToString(params, map) {
     if (!params) {
-        return '';
+        return ''
     } // Handle undefined params
 
     const validParamValues = params
         .split('-')
         .filter((v) => v in map)
-        .map((v) => map[v]);
-    return validParamValues.join(',');
+        .map((v) => map[v])
+    return validParamValues.join(',')
 }
 
 /**
@@ -85,22 +85,22 @@ function parseParamsToString(params, map) {
  * @returns {Job[]} Array of jobs with data filled
  */
 function parseJobSearch(data) {
-    const $ = load(data);
+    const $ = load(data)
 
     // Parse data
     const jobs = $('li')
         .toArray()
         .map((elem) => {
-            const elemHtml = $(elem);
-            const link = elemHtml.find('a.base-card__full-link, a.base-card--link')?.attr('href')?.split('?')[0];
-            const title = elemHtml.find('h3.base-search-card__title')?.text()?.trim();
-            const company = elemHtml.find('h4.base-search-card__subtitle')?.text()?.trim();
-            const location = elemHtml.find('span.job-search-card__location')?.text()?.trim();
-            const pubDate = elemHtml.find('time')?.attr('datetime');
+            const elemHtml = $(elem)
+            const link = elemHtml.find('a.base-card__full-link, a.base-card--link')?.attr('href')?.split('?')[0]
+            const title = elemHtml.find('h3.base-search-card__title')?.text()?.trim()
+            const company = elemHtml.find('h4.base-search-card__subtitle')?.text()?.trim()
+            const location = elemHtml.find('span.job-search-card__location')?.text()?.trim()
+            const pubDate = elemHtml.find('time')?.attr('datetime')
 
-            return new Job(title, link, company, location, pubDate);
-        });
-    return jobs;
+            return new Job(title, link, company, location, pubDate)
+        })
+    return jobs
 }
 
 /**
@@ -111,21 +111,21 @@ function parseJobSearch(data) {
  * @returns {Job} Job details
  */
 function parseJobDetail(data) {
-    const job = new Job();
-    const $ = load(data);
+    const job = new Job()
+    const $ = load(data)
 
-    job.recruiter = $('a.message-the-recruiter__cta').attr(`href`);
-    job.description = $('div.description__text description__text--rich').text();
+    job.recruiter = $('a.message-the-recruiter__cta').attr(`href`)
+    job.description = $('div.description__text description__text--rich').text()
 
-    return job;
+    return job
 }
 
 const parseRouteParam = (searchParam: string | null): string => {
     if (!searchParam || typeof searchParam !== 'string') {
-        return 'all';
+        return 'all'
     }
-    return encodeURIComponent(searchParam.split(',').join('-'));
-};
+    return encodeURIComponent(searchParam.split(',').join('-'))
+}
 
 /**
  * Parse company profile page for posts
@@ -138,24 +138,24 @@ function parseCompanyPosts($) {
     const posts = $('ul.updates__list > li')
         .toArray() // Convert the Cheerio object to a plain array
         .map((elem) => {
-            const elemHtml = $(elem);
-            let link = elemHtml.find('a.main-feed-card__overlay-link').attr('href');
+            const elemHtml = $(elem)
+            let link = elemHtml.find('a.main-feed-card__overlay-link').attr('href')
 
             // Reposts don't have an overlay link — construct URL from the activity URN
             if (!link) {
-                const activityUrn = elemHtml.find('article[data-activity-urn]').attr('data-activity-urn');
+                const activityUrn = elemHtml.find('article[data-activity-urn]').attr('data-activity-urn')
                 if (activityUrn) {
-                    link = `https://www.linkedin.com/feed/update/${activityUrn}`;
+                    link = `https://www.linkedin.com/feed/update/${activityUrn}`
                 }
             }
 
-            const text = elemHtml.find('p.attributed-text-segment-list__content').text().trim();
-            const date = parseRelativeShorthandDate(elemHtml.find('time').text().trim());
+            const text = elemHtml.find('p.attributed-text-segment-list__content').text().trim()
+            const date = parseRelativeShorthandDate(elemHtml.find('time').text().trim())
 
-            return { link, text, date };
-        });
+            return { link, text, date }
+        })
 
-    return posts;
+    return posts
 }
 
 /**
@@ -166,7 +166,7 @@ function parseCompanyPosts($) {
  * @returns {String} Company name
  */
 function parseCompanyName($) {
-    return $('h1.top-card-layout__title').text().trim();
+    return $('h1.top-card-layout__title').text().trim()
 }
 
 /**
@@ -176,21 +176,21 @@ function parseCompanyName($) {
  * @returns {Date|null} The parsed date or null if the format is invalid
  */
 function parseRelativeShorthandDate(shorthand) {
-    const match = shorthand.match(/^(\d+)([wdmyh])$/);
+    const match = shorthand.match(/^(\d+)([wdmyh])$/)
     if (!match) {
-        return null;
+        return null
     }
 
-    const [, amount, unit] = match;
+    const [, amount, unit] = match
     const unitMap = {
         w: 'week',
         d: 'day',
         m: 'month',
         y: 'year',
         h: 'hour',
-    };
+    }
 
-    return dayjs().subtract(Number.parseInt(amount), unitMap[unit]);
+    return dayjs().subtract(Number.parseInt(amount), unitMap[unit])
 }
 
 export {
@@ -207,4 +207,4 @@ export {
     parseParamsToSearchParams,
     parseParamsToString,
     parseRouteParam,
-};
+}

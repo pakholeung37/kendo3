@@ -1,45 +1,45 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-import { stringifyQuery } from 'ufo';
+import { stringifyQuery } from 'ufo'
 
 export const getRouteNameFromPath = (path: string) => {
-    const p = path.split('/').filter(Boolean);
+    const p = path.split('/').filter(Boolean)
     if (p.length > 0) {
-        return p[0];
+        return p[0]
     }
-    return null;
-};
+    return null
+}
 
 export const getPath = (request: Request): string => {
     // Optimized: RegExp is faster than indexOf() + slice()
-    const match = request.url.match(/^https?:\/\/[^/]+(\/[^?]*)/);
-    return match ? match[1] : '';
-};
+    const match = request.url.match(/^https?:\/\/[^/]+(\/[^?]*)/)
+    return match ? match[1] : ''
+}
 
 const humanize = (times: string[]) => {
-    const [delimiter, separator] = [',', '.'];
-    const orderTimes = times.map((v) => v.replaceAll(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + delimiter));
-    return orderTimes.join(separator);
-};
+    const [delimiter, separator] = [',', '.']
+    const orderTimes = times.map((v) => v.replaceAll(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + delimiter))
+    return orderTimes.join(separator)
+}
 
 export const time = (start: number) => {
-    const delta = Date.now() - start;
-    return humanize([delta < 1000 ? delta + 'ms' : Math.round(delta / 1000) + 's']);
-};
+    const delta = Date.now() - start
+    return humanize([delta < 1000 ? delta + 'ms' : Math.round(delta / 1000) + 's'])
+}
 
 export const getCurrentPath = (metaUrl: string) => {
-    const __filename = path.join(fileURLToPath(metaUrl));
-    return path.dirname(__filename);
-};
+    const __filename = path.join(fileURLToPath(metaUrl))
+    return path.dirname(__filename)
+}
 
 function isPureObject(o: any) {
-    return Object.prototype.toString.call(o) === '[object Object]';
+    return Object.prototype.toString.call(o) === '[object Object]'
 }
 
 export function getSearchParamsString(searchParams: any) {
-    const searchParamsString = isPureObject(searchParams) ? stringifyQuery(searchParams) : null;
-    return searchParamsString ?? new URLSearchParams(searchParams).toString();
+    const searchParamsString = isPureObject(searchParams) ? stringifyQuery(searchParams) : null
+    return searchParamsString ?? new URLSearchParams(searchParams).toString()
 }
 
 /**
@@ -49,17 +49,17 @@ export function getSearchParamsString(searchParams: any) {
  */
 export function parseDuration(timeStr: string | undefined | null): number | undefined {
     if (!timeStr) {
-        return;
+        return
     }
-    const clean = timeStr.trim().replaceAll(/[^\d:]/g, '');
+    const clean = timeStr.trim().replaceAll(/[^\d:]/g, '')
     return clean
         .split(':')
         .toReversed()
         .reduce((total, part, idx) => {
-            const n = Number(part);
+            const n = Number(part)
             if (Number.isNaN(n)) {
-                throw new TypeError(`Invalid segment: ${part}`);
+                throw new TypeError(`Invalid segment: ${part}`)
             }
-            return total + n * Math.pow(60, idx);
-        }, 0);
+            return total + n * Math.pow(60, idx)
+        }, 0)
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog',
@@ -16,13 +16,13 @@ export const route: Route = {
     name: 'Blog',
     maintainers: ['gavrilov'],
     handler,
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://ollama.com';
+    const baseUrl = 'https://ollama.com'
 
-    const response = await ofetch(`${baseUrl}/blog`);
-    const $ = load(response);
+    const response = await ofetch(`${baseUrl}/blog`)
+    const $ = load(response)
 
     const items = $('a.group.border-b.py-10')
         .toArray()
@@ -31,10 +31,10 @@ async function handler() {
             link: baseUrl + $(item).attr('href'),
             pubDate: parseDate($(item).children('h3').first().text()),
             description: $(item).children('p').first().text(),
-        }));
+        }))
     return {
         title: 'ollama blog',
         link: 'https://ollama.com/blog',
         item: items,
-    };
+    }
 }

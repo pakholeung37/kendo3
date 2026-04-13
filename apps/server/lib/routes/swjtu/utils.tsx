@@ -1,8 +1,8 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const renderDetail = (jobs) =>
     renderToString(
@@ -26,8 +26,8 @@ const renderDetail = (jobs) =>
                     </tr>
                 ))}
             </table>
-        </div>
-    );
+        </div>,
+    )
 const renderDesc = (intro) =>
     renderToString(
         <div id="description_box">
@@ -44,23 +44,23 @@ const renderDesc = (intro) =>
             </div>
             {raw(renderDetail(intro.zwxxList))}
             <div id="company_introduction">{raw(intro.zpxxEditor)}</div>
-        </div>
-    );
+        </div>,
+    )
 
 const descpPage = (link, cache) =>
     cache.tryGet(link, async () => {
         const data = await got({
             method: 'post',
             url: link,
-        });
-        const intro = data.data.data;
+        })
+        const intro = data.data.data
 
         return {
             title: `${intro.dwmc}（${intro.xzyjmc}）`,
             pubDate: parseDate(String(intro.fbrq)),
             description: renderDesc(intro),
             link: String(link.replace('data', 'view')),
-        };
-    });
+        }
+    })
 
-export default { descpPage, renderDetail, renderDesc };
+export default { descpPage, renderDetail, renderDesc }

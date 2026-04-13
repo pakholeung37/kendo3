@@ -1,38 +1,38 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filter } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { filter } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const apiSlug = 'wp-json/wp/v2';
+    const apiSlug = 'wp-json/wp/v2'
 
-    const baseUrl = 'https://jbma.net';
-    const apiUrl = new URL(`${apiSlug}/report`, baseUrl).href;
-    let targetUrl: string = new URL('report/', baseUrl).href;
+    const baseUrl = 'https://jbma.net'
+    const apiUrl = new URL(`${apiSlug}/report`, baseUrl).href
+    let targetUrl: string = new URL('report/', baseUrl).href
 
-    const [taxonomy, keyword] = filter ? (filter.includes('/') ? filter.split('/') : [undefined, filter]) : [undefined, undefined];
+    const [taxonomy, keyword] = filter ? (filter.includes('/') ? filter.split('/') : [undefined, filter]) : [undefined, undefined]
 
-    let searchId: number | undefined = undefined;
+    let searchId: number | undefined = undefined
 
     if (taxonomy && keyword) {
-        const apiSearchUrl = new URL(`${apiSlug}/${taxonomy}`, baseUrl).href;
+        const apiSearchUrl = new URL(`${apiSlug}/${taxonomy}`, baseUrl).href
 
         const searchResponse = await ofetch(apiSearchUrl, {
             query: {
                 search: keyword,
             },
-        });
+        })
 
-        const searchObj = searchResponse.find((c) => c.slug === keyword || c.name === keyword);
-        searchId = searchObj?.id ?? undefined;
-        targetUrl = searchObj?.link ?? targetUrl;
+        const searchObj = searchResponse.find((c) => c.slug === keyword || c.name === keyword)
+        searchId = searchObj?.id ?? undefined
+        targetUrl = searchObj?.link ?? targetUrl
     }
 
     const response = await ofetch(apiUrl, {
@@ -47,89 +47,89 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       search: keyword,
                   }),
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'ja';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'ja'
 
-    const postIds: number[] = [];
-    const regExp = new RegExp(String.raw`^${baseUrl.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)}/?(?:[a-zA-Z0-9-]+/)*\?p=\d+$`);
+    const postIds: number[] = []
+    const regExp = new RegExp(String.raw`^${baseUrl.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)}/?(?:[a-zA-Z0-9-]+/)*\?p=\d+$`)
 
     for (const item of response.slice(0, limit)) {
-        const linkUrl: string | undefined = item.link;
+        const linkUrl: string | undefined = item.link
         if (linkUrl && regExp.test(linkUrl)) {
-            postIds.push(item.id);
+            postIds.push(item.id)
         }
     }
 
-    const mediaMap = new Map<number, any>();
+    const mediaMap = new Map<number, any>()
     if (postIds.length > 0) {
-        const mediaApiUrl = new URL(`${apiSlug}/media`, baseUrl).href;
+        const mediaApiUrl = new URL(`${apiSlug}/media`, baseUrl).href
         const mediaResponse = await ofetch(mediaApiUrl, {
             query: {
                 parent: postIds.join(','),
                 per_page: 100,
             },
-        });
+        })
 
         for (const media of mediaResponse) {
             if (media.parent) {
-                const existing = mediaMap.get(media.parent);
+                const existing = mediaMap.get(media.parent)
                 if (existing) {
-                    existing.push(media);
+                    existing.push(media)
                 } else {
-                    mediaMap.set(media.parent, [media]);
+                    mediaMap.set(media.parent, [media])
                 }
             }
         }
     }
 
     const items = response.slice(0, limit).map((item) => {
-        const title = item.title?.rendered ?? item.title;
-        const description = item.content?.rendered ?? undefined;
-        const pubDate = item.date_gmt;
+        const title = item.title?.rendered ?? item.title
+        const description = item.content?.rendered ?? undefined
+        const pubDate = item.date_gmt
 
-        const terminologies = item._embedded?.['wp:term'];
+        const terminologies = item._embedded?.['wp:term']
 
-        const categories = terminologies?.flat().map((c) => c.name) ?? [];
+        const categories = terminologies?.flat().map((c) => c.name) ?? []
         const authors =
             item._embedded?.author?.map((author) => ({
                 name: author.name,
                 url: author.link,
                 avatar: author.avatar_urls?.['96'] ?? author.avatar_urls?.['48'] ?? author.avatar_urls?.['24'] ?? undefined,
-            })) ?? [];
-        const guid = item.guid?.rendered ?? item.guid;
-        const updated = item.modified_gmt ?? pubDate;
+            })) ?? []
+        const guid = item.guid?.rendered ?? item.guid
+        const updated = item.modified_gmt ?? pubDate
 
-        let image = item._embedded?.['wp:featuredmedia']?.[0].source_url ?? undefined;
-        let enclosureUrl: string | undefined;
-        let enclosureType: string | undefined;
-        let enclosureTitle: string | undefined;
-        let enclosureLength: number | undefined;
+        let image = item._embedded?.['wp:featuredmedia']?.[0].source_url ?? undefined
+        let enclosureUrl: string | undefined
+        let enclosureType: string | undefined
+        let enclosureTitle: string | undefined
+        let enclosureLength: number | undefined
 
-        let linkUrl = item.link;
+        let linkUrl = item.link
 
         if (linkUrl && regExp.test(linkUrl)) {
-            const mediaItems = mediaMap.get(item.id);
+            const mediaItems = mediaMap.get(item.id)
 
             if (mediaItems && mediaItems.length > 0) {
-                const media = mediaItems[0];
+                const media = mediaItems[0]
                 if (media.source_url) {
-                    enclosureUrl = media.source_url;
-                    enclosureType = media.mime_type;
-                    enclosureTitle = media.title?.rendered ?? media.title;
-                    enclosureLength = Number(media.media_details?.filesize);
-                    linkUrl = enclosureUrl;
+                    enclosureUrl = media.source_url
+                    enclosureType = media.mime_type
+                    enclosureTitle = media.title?.rendered ?? media.title
+                    enclosureLength = Number(media.media_details?.filesize)
+                    linkUrl = enclosureUrl
                 }
                 if (!image && media.media_details?.sizes?.full?.source_url) {
-                    image = media.media_details.sizes.full.source_url;
+                    image = media.media_details.sizes.full.source_url
                 }
             }
         }
 
         if (!linkUrl || regExp.test(linkUrl)) {
-            linkUrl = new URL(`report/${item.slug}`, baseUrl).href;
+            linkUrl = new URL(`report/${item.slug}`, baseUrl).href
         }
 
         let processedItem = {
@@ -149,7 +149,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
         if (enclosureUrl) {
             processedItem = {
@@ -158,11 +158,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 enclosure_type: enclosureType,
                 enclosure_title: enclosureTitle || title,
                 enclosure_length: enclosureLength,
-            };
+            }
         }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     return {
         title: $('title').text(),
@@ -174,8 +174,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 const options = [
     {
@@ -262,7 +262,7 @@ const options = [
         label: 'レポート',
         value: 'tag_report/report',
     },
-];
+]
 
 const filterTable = `
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -287,7 +287,7 @@ const filterTable = `
 | [OANDA 証券](https://jbma.net/tag_report/oanda/)                                              | [tag_report/oanda](https://rsshub.app/jbma/report/tag_report/oanda)                                                 |
 | [レポート](https://jbma.net/tag_report/report/)                                               | [tag_report/report](https://rsshub.app/jbma/report/tag_report/report)                                               |
 
-`;
+`
 
 export const route: Route = {
     path: '/report/:filter{.+}?',
@@ -329,14 +329,14 @@ To subscribe to [Metals Forcus](https://jbma.net/cat_report/metals-forcus/), whe
         {
             source: ['jbma.net/:type/:name?'],
             target: (params) => {
-                const type: string = params.type;
-                const name: string = params.name;
+                const type: string = params.type
+                const name: string = params.name
 
                 if (type === 'report' || type === 'cat_report' || type === 'tag_report') {
-                    return `/${type}${name ? `/${name}` : ''}`;
+                    return `/${type}${name ? `/${name}` : ''}`
                 }
 
-                return `/${type}`;
+                return `/${type}`
             },
         },
         {
@@ -469,4 +469,4 @@ To subscribe to [Metals Forcus](https://jbma.net/cat_report/metals-forcus/), whe
 </details>
 `,
     },
-};
+}

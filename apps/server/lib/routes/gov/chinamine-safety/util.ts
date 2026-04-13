@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.chinamine-safety.gov.cn';
+const rootUrl = 'https://www.chinamine-safety.gov.cn'
 
 /**
  * Process the item list and return the resulting array.
@@ -18,16 +18,16 @@ const processItems = async (items, tryGet) =>
         items.map((item) =>
             tryGet(item.link, async () => {
                 if (!item.link.endsWith('html')) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = item.title || content('title').text();
-                item.description = content('div.TRS_Editor, div.TRS_UEDITOR, div.content').html();
-                item.author = content('meta[name="ContentSource"]').prop('content');
+                item.title = item.title || content('title').text()
+                item.description = content('div.TRS_Editor, div.TRS_UEDITOR, div.content').html()
+                item.author = content('meta[name="ContentSource"]').prop('content')
                 item.category = [
                     ...new Set(
                         [
@@ -35,15 +35,15 @@ const processItems = async (items, tryGet) =>
                             content('meta[name="ColumnName"]').prop('content'),
                             ...(content('meta[name="ColumnKeywords"]').prop('content')?.split(/,/) ?? []),
                             content('meta[name="ColumnType"]').prop('content'),
-                        ].filter(Boolean)
+                        ].filter(Boolean),
                     ),
-                ];
-                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8);
+                ]
+                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
 /**
  * Fetch data from the specified URL.
@@ -54,8 +54,8 @@ const processItems = async (items, tryGet) =>
  *                            to be added into `ctx.state.data`.
  */
 const fetchData = ($, currentUrl) => {
-    const image = new URL('zfxxgk/images/P020210105557462473306.png', rootUrl).href;
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), currentUrl).href;
+    const image = new URL('zfxxgk/images/P020210105557462473306.png', rootUrl).href
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), currentUrl).href
 
     return {
         title: $('title').text(),
@@ -67,7 +67,7 @@ const fetchData = ($, currentUrl) => {
         logo: icon,
         subtitle: $('meta[name="ColumnName"]').prop('content'),
         author: $('meta[name="SiteName"]').prop('content'),
-    };
-};
+    }
+}
 
-export { fetchData, processItems, rootUrl };
+export { fetchData, processItems, rootUrl }

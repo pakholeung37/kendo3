@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionItem = {
-    title: string;
-    authors: string;
-    doi: string;
-    volume?: string | number;
-    abstract: string;
-};
+    title: string
+    authors: string
+    doi: string
+    volume?: string | number
+    abstract: string
+}
 
 export const renderDescription = (item: DescriptionItem): string =>
     renderToString(
@@ -43,5 +43,5 @@ export const renderDescription = (item: DescriptionItem): string =>
                 <span>{item.abstract}</span>
                 <br />
             </p>
-        </>
-    );
+        </>,
+    )

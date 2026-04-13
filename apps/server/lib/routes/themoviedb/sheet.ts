@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import apiKey from './api-key';
-import { MEDIA_TYPE_TO_ITEM_HANDLE } from './utils';
+import apiKey from './api-key'
+import { MEDIA_TYPE_TO_ITEM_HANDLE } from './utils'
 
 const API_PATH = {
     movie: {
@@ -15,7 +15,7 @@ const API_PATH = {
         'on-the-air': 'tv/on_the_air',
         'top-rated': 'tv/top_rated',
     },
-};
+}
 
 const TITLE = {
     movie: {
@@ -28,7 +28,7 @@ const TITLE = {
         'on-the-air': 'Currently Airing TV Shows',
         'top-rated': 'Top Rated TV Shows',
     },
-};
+}
 
 export const route: Route = {
     path: '/:mediaType/:sheet/:lang?',
@@ -57,20 +57,20 @@ export const route: Route = {
 | Now Playing | Upcoming | Top Rated |
 | ----------- | -------- | --------- |
 | now-playing | upcoming | top-rated |`,
-};
+}
 
 async function handler(ctx) {
-    const { mediaType, sheet, lang } = ctx.req.param();
+    const { mediaType, sheet, lang } = ctx.req.param()
     const { data } = await got(`https://api.themoviedb.org/3/${API_PATH[mediaType][sheet]}`, {
         searchParams: {
             language: lang,
             api_key: apiKey(),
         },
-    });
+    })
 
     return {
         title: `${TITLE[mediaType][sheet]} — TMDB`,
         link: `https://www.themoviedb.org/${mediaType}/${sheet}`,
         item: data.results.map((item) => MEDIA_TYPE_TO_ITEM_HANDLE[mediaType](item, lang)),
-    };
+    }
 }

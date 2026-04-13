@@ -27,7 +27,7 @@ export const periodToOrder = {
     [RankingPeriod.QUARTER]: 'quarterpoint',
     [RankingPeriod.YEARLY]: 'yearlypoint',
     [RankingPeriod.TOTAL]: 'hyoka',
-} as const;
+} as const
 
 export const periodToPointField = {
     [RankingPeriod.DAILY]: 'pt',
@@ -36,7 +36,7 @@ export const periodToPointField = {
     [RankingPeriod.QUARTER]: 'quarter_point',
     [RankingPeriod.YEARLY]: 'yearly_point',
     [RankingPeriod.TOTAL]: 'global_point',
-} as const;
+} as const
 
 export const periodToJapanese = {
     [RankingPeriod.DAILY]: '日間',
@@ -45,14 +45,14 @@ export const periodToJapanese = {
     [RankingPeriod.QUARTER]: '四半期',
     [RankingPeriod.YEARLY]: '年間',
     [RankingPeriod.TOTAL]: '累計',
-} as const;
+} as const
 
 export const novelTypeToJapanese = {
     [NovelType.TOTAL]: 'すべて',
     [NovelType.SHORT]: '短編',
     [NovelType.ONGOING]: '連載中',
     [NovelType.COMPLETE]: '完結済',
-} as const;
+} as const
 
 export enum IsekaiCategory {
     RENAI = '1',
@@ -64,4 +64,4 @@ export const isekaiCategoryToJapanese = {
     [IsekaiCategory.RENAI]: '〔恋愛〕',
     [IsekaiCategory.FANTASY]: '〔ファンタジー〕',
     [IsekaiCategory.OTHER]: '〔文芸・SF・その他〕',
-} as const;
+} as const

@@ -1,4 +1,4 @@
-import got from '@/utils/got';
+import got from '@/utils/got'
 
 const categoryMap = {
     所有: '',
@@ -19,12 +19,12 @@ const categoryMap = {
     数码: 'd6163d8c837611e98ac352540025c377',
     动画: '67498b10837711e99f0652540025c377',
     其他: 'b1643af4328011e8b5b152540025c377',
-};
+}
 
 const typeToLabel = {
     rec: '推荐',
     hot: '人气',
-};
+}
 
 export const route: Route = {
     path: '/explore/:type/:category?',
@@ -45,20 +45,20 @@ export const route: Route = {
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ------ | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | 所有 | 绘画 | 视频 | 写作 | 游戏 | 音乐 | 播客 | 摄影 | 技术 | Vtuber | 舞蹈 | 体育 | 旅游 | 美食 | 时尚 | 数码 | 动画 | 其他 |`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'rec', category = '所有' } = ctx.req.param();
-    const baseUrl = 'https://afdian.com';
-    const link = `${baseUrl}/api/creator/list`;
+    const { type = 'rec', category = '所有' } = ctx.req.param()
+    const baseUrl = 'https://afdian.com'
+    const link = `${baseUrl}/api/creator/list`
     const res = await got(link, {
         searchParams: {
             type,
             category_id: categoryMap[category],
         },
-    });
+    })
     const list = res.data.data.list.map((item) => {
-        const { doing, monthly_fans, detail } = item.creator;
+        const { doing, monthly_fans, detail } = item.creator
         return {
             title: item.name,
             description: `正在创作 ${doing}<br/>
@@ -67,12 +67,12 @@ async function handler(ctx) {
             ${detail}<br/>
             `,
             link: `${baseUrl}/@${item.url_slug}`,
-        };
-    });
+        }
+    })
     return {
         title: `爱发电-创作者 (按 ${category}/${typeToLabel[type]})`,
         description: `爱发电-发现创作者 (按 ${category}/${typeToLabel[type]})`,
         link: `${baseUrl}/explore`,
         item: list,
-    };
+    }
 }

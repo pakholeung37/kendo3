@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/gov/:pphId',
@@ -19,11 +19,11 @@ export const route: Route = {
     name: '政务号',
     maintainers: ['occam-7'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { pphId } = ctx.req.param();
-    const pageSize = Number.parseInt(ctx.req.query('limit') ?? '10', 10);
+    const { pphId } = ctx.req.param()
+    const pageSize = Number.parseInt(ctx.req.query('limit') ?? '10', 10)
 
     const response = await ofetch('https://api.thepaper.cn/contentapi/cont/pph/gov', {
         method: 'POST',
@@ -32,11 +32,11 @@ async function handler(ctx) {
             pageSize,
             pphId,
         },
-    });
+    })
 
-    const list = response.data?.list ?? [];
-    const authorName = list[0]?.authorInfo?.sname ?? `政务号 ${pphId}`;
-    const items = await Promise.all(list.map((item) => utils.ProcessItem(item, ctx)));
+    const list = response.data?.list ?? []
+    const authorName = list[0]?.authorInfo?.sname ?? `政务号 ${pphId}`
+    const items = await Promise.all(list.map((item) => utils.ProcessItem(item, ctx)))
 
     return {
         title: `澎湃新闻政务号 - ${authorName}`,
@@ -44,5 +44,5 @@ async function handler(ctx) {
         item: items,
         itunes_author: authorName,
         image: list[0]?.authorInfo?.pic || list[0]?.pic,
-    };
+    }
 }

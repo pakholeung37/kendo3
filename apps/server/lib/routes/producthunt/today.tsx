@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/today',
@@ -28,24 +28,24 @@ export const route: Route = {
     maintainers: ['miaoyafeng', 'Fatpandac'],
     handler,
     url: 'www.producthunt.com/',
-};
+}
 
 async function handler() {
     const response = await ofetch('https://www.producthunt.com/', {
         headers: {
             'User-Agent': config.trueUA,
         },
-    });
+    })
 
-    const $ = load(response);
+    const $ = load(response)
     const match = $('script:contains("ApolloSSRDataTransport")')
         .text()
         .match(/"events":(\[.+\])\}\)/)?.[1]
         ?.trim()
-        .replaceAll('undefined', 'null');
+        .replaceAll('undefined', 'null')
 
-    const data = JSON.parse(match);
-    const todayList = data.find((event) => event.type === 'next' && event.value.data.homefeed).value.data.homefeed.edges.find((edge) => edge.node.id === 'FEATURED-0').node;
+    const data = JSON.parse(match)
+    const todayList = data.find((event) => event.type === 'next' && event.value.data.homefeed).value.data.homefeed.edges.find((edge) => edge.node.id === 'FEATURED-0').node
     // 0: Top Products Launching Today
     // 1: Yesterday's Top Products
     // 2: Last Week's Top Products
@@ -61,7 +61,7 @@ async function handler() {
             pubDate: parseDate(item.createdAt),
             image: `https://ph-files.imgix.net/${item.thumbnailImageUuid}`,
             categories: item.topics.edges.map((topic) => topic.node.name),
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -83,42 +83,42 @@ async function handler() {
                             },
                         },
                     },
-                });
-                const post = response.data.post;
+                })
+                const post = response.data.post
 
-                item.author = post.user.name;
+                item.author = post.user.name
                 item.description = renderDescription({
                     tagline: post.tagline,
                     description: post.description,
                     media: post.media,
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Product Hunt Today Popular',
         link: 'https://www.producthunt.com/',
         item: items,
-    };
+    }
 }
 
 type MediaItem = {
-    mediaType?: string;
-    imageUuid?: string;
+    mediaType?: string
+    imageUuid?: string
     metadata?: {
-        platform?: string;
-        videoId?: string;
-    };
-};
+        platform?: string
+        videoId?: string
+    }
+}
 
 type DescriptionProps = {
-    tagline?: string;
-    description?: string;
-    media?: MediaItem[];
-};
+    tagline?: string
+    description?: string
+    media?: MediaItem[]
+}
 
 const renderDescription = ({ tagline, description, media }: DescriptionProps): string =>
     renderToString(
@@ -132,7 +132,7 @@ const renderDescription = ({ tagline, description, media }: DescriptionProps): s
                             <img src={`https://ph-files.imgix.net/${item.imageUuid}`} />
                             <br />
                         </>
-                    );
+                    )
                 }
 
                 if (item.mediaType === 'video' && item.metadata?.platform === 'youtube' && item.metadata.videoId) {
@@ -147,10 +147,10 @@ const renderDescription = ({ tagline, description, media }: DescriptionProps): s
                             allowfullscreen
                             referrerpolicy="strict-origin-when-cross-origin"
                         ></iframe>
-                    );
+                    )
                 }
 
-                return null;
+                return null
             })}
-        </>
-    );
+        </>,
+    )

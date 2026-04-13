@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getDetails, getSimple, getTorrents } from './util';
+import { getDetails, getSimple, getTorrents } from './util'
 
 export const route: Route = {
     path: '/search/:keyword/:mode?',
@@ -25,26 +25,26 @@ export const route: Route = {
     name: 'Advanced Search',
     maintainers: ['MegrezZhu', 'hoilc', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { keyword, mode } = ctx.req.param();
+    const { keyword, mode } = ctx.req.param()
 
-    const url = `https://nhentai.net/search/?q=${keyword}`;
+    const url = `https://nhentai.net/search/?q=${keyword}`
 
-    const simples = await getSimple(url);
+    const simples = await getSimple(url)
 
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5;
-    let items = simples;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 5
+    let items = simples
     if (mode === 'detail') {
-        items = await getDetails(cache, simples, limit);
+        items = await getDetails(cache, simples, limit)
     } else if (mode === 'torrent') {
-        items = await getTorrents(cache, simples, limit);
+        items = await getTorrents(cache, simples, limit)
     }
 
     return {
         title: `nhentai - search - ${keyword}`,
         link: url,
         item: items,
-    };
+    }
 }

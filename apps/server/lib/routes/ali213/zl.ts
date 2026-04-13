@@ -1,46 +1,46 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '1', 10);
+    const { category } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '1', 10)
 
-    const rootUrl = 'https://www.ali213.net';
-    const apiRootUrl = 'https://mp.ali213.net';
-    const targetUrl: string = new URL(`/news/zl/${category ? (category.endsWith('/') ? category : `${category}/`) : ''}`, rootUrl).href;
-    const apiUrl: string = new URL('ajax/newslist', apiRootUrl).href;
+    const rootUrl = 'https://www.ali213.net'
+    const apiRootUrl = 'https://mp.ali213.net'
+    const targetUrl: string = new URL(`/news/zl/${category ? (category.endsWith('/') ? category : `${category}/`) : ''}`, rootUrl).href
+    const apiUrl: string = new URL('ajax/newslist', apiRootUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
             type: 'new',
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language: string = $('html').prop('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language: string = $('html').prop('lang') ?? 'zh'
 
     let items: DataItem[] = JSON.parse(response.replace(/^\((.*)\)$/, '$1'))
         .data.slice(0, limit)
         .map((item): DataItem => {
-            const title: string = item.Title;
+            const title: string = item.Title
             const description: string = renderDescription({
                 intro: item.GuideRead ?? '',
-            });
-            const guid = `ali213-zl-${item.ID}`;
-            const image: string | undefined = item.PicPath ? `https:${item.PicPath}` : undefined;
+            })
+            const guid = `ali213-zl-${item.ID}`
+            const image: string | undefined = item.PicPath ? `https:${item.PicPath}` : undefined
 
-            const author: DataItem['author'] = item.xiaobian;
+            const author: DataItem['author'] = item.xiaobian
 
             return {
                 title,
@@ -57,62 +57,62 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link && typeof item.link !== 'string') {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('h1.newstit').text();
+                    const title: string = $$('h1.newstit').text()
 
-                    let description: string = $$('div#Content').html() ?? '';
+                    let description: string = $$('div#Content').html() ?? ''
 
-                    const pageLinks: string[] = [];
+                    const pageLinks: string[] = []
                     $$('a.currpage')
                         .parent()
                         .find('a:not(.currpage)')
                         .each((_, el) => {
-                            const href = $$(el).attr('href');
+                            const href = $$(el).attr('href')
                             if (href) {
-                                pageLinks.push(href);
+                                pageLinks.push(href)
                             }
-                        });
+                        })
 
                     const pageContents = await Promise.all(
                         pageLinks.map(async (link) => {
-                            const response = await ofetch(new URL(link, item.link).href);
-                            const $$$: CheerioAPI = load(response);
+                            const response = await ofetch(new URL(link, item.link).href)
+                            const $$$: CheerioAPI = load(response)
 
-                            return $$$('div#Content').html() ?? '';
-                        })
-                    );
+                            return $$$('div#Content').html() ?? ''
+                        }),
+                    )
 
-                    description += pageContents.join('');
+                    description += pageContents.join('')
 
                     description = renderDescription({
                         description,
-                    });
+                    })
 
                     const extraLinks = $$('div.extend_read a')
                         .toArray()
                         .map((el) => {
-                            const $$el: Cheerio<Element> = $$(el);
+                            const $$el: Cheerio<Element> = $$(el)
 
                             return {
                                 url: $$el.prop('href'),
                                 type: 'related',
                                 content_html: $$el.text(),
-                            };
+                            }
                         })
-                        .filter((_): _ is { url: string; type: string; content_html: string } => true);
+                        .filter((_): _ is { url: string; type: string; content_html: string } => true)
 
                     return {
                         title,
@@ -135,14 +135,14 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         _extra: {
                             links: extraLinks.length > 0 ? extraLinks : undefined,
                         },
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const title: string = $('title').text();
-    const feedImage: string = new URL('news/images/dxhlogo.png', rootUrl).href;
+    const title: string = $('title').text()
+    const feedImage: string = new URL('news/images/dxhlogo.png', rootUrl).href
 
     return {
         title,
@@ -154,8 +154,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/_/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/zl/:category?',
@@ -189,9 +189,9 @@ export const route: Route = {
         {
             source: ['www.ali213.net/news/zl/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/ali213/zl${category ? `/${category}` : ''}`;
+                return `/ali213/zl${category ? `/${category}` : ''}`
             },
         },
         {
@@ -221,4 +221,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

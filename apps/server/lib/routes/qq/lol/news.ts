@@ -1,24 +1,24 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import iconv from 'iconv-lite';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import iconv from 'iconv-lite'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 23 } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = 23 } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://lol.qq.com';
-    const apiBaseUrl = 'https://apps.game.qq.com';
-    const targetUrl: string = new URL('news/index.shtml', baseUrl).href;
-    const apiListUrl: string = new URL('cmc/zmMcnTargetContentList', apiBaseUrl).href;
-    const apiInfoUrl: string = new URL('cmc/zmMcnContentInfo', apiBaseUrl).href;
+    const baseUrl = 'https://lol.qq.com'
+    const apiBaseUrl = 'https://apps.game.qq.com'
+    const targetUrl: string = new URL('news/index.shtml', baseUrl).href
+    const apiListUrl: string = new URL('cmc/zmMcnTargetContentList', apiBaseUrl).href
+    const apiInfoUrl: string = new URL('cmc/zmMcnContentInfo', apiBaseUrl).href
 
     const response = await ofetch(apiListUrl, {
         query: {
@@ -26,18 +26,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
             num: limit,
             target: category,
         },
-    });
+    })
     const targetResponse = await ofetch(targetUrl, {
         responseType: 'arrayBuffer',
-    });
+    })
 
-    const $: CheerioAPI = load(iconv.decode(Buffer.from(targetResponse), 'gbk'));
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const $: CheerioAPI = load(iconv.decode(Buffer.from(targetResponse), 'gbk'))
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     let items: DataItem[] = response.data.result.slice(0, limit).map((item): DataItem => {
-        const title: string = item.sTitle;
-        const pubDate: number | string = item.sCreated;
-        const linkUrl: string | undefined = item.iDocID ? `${item.iVideoId ? 'v/v2' : 'news'}/detail.shtml?docid=${item.iDocID}` : undefined;
+        const title: string = item.sTitle
+        const pubDate: number | string = item.sCreated
+        const linkUrl: string | undefined = item.iDocID ? `${item.iVideoId ? 'v/v2' : 'news'}/detail.shtml?docid=${item.iDocID}` : undefined
         const authors: DataItem['author'] = item.sAuthor
             ? [
                   {
@@ -45,10 +45,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: item.sCreaterHeader,
                   },
               ]
-            : undefined;
-        const guid: string = item.iDocID;
-        const image: string | undefined = item.sIMG ? (item.sIMG.startsWith('http') ? item.sIMG : `https:${item.sIMG}`) : undefined;
-        const updated: number | string = item.updated ?? pubDate;
+            : undefined
+        const guid: string = item.iDocID
+        const image: string | undefined = item.sIMG ? (item.sIMG.startsWith('http') ? item.sIMG : `https:${item.sIMG}`) : undefined
+        const updated: number | string = item.updated ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -61,16 +61,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? timezone(parseDate(updated), +8) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
@@ -79,18 +79,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             type: 0,
                             docid: item.guid,
                         },
-                    });
+                    })
 
-                    const result = detailResponse?.data?.result ?? undefined;
+                    const result = detailResponse?.data?.result ?? undefined
 
                     if (!result) {
-                        return item;
+                        return item
                     }
 
-                    const title: string = result.sTitle;
-                    const description: string = result.sContent;
-                    const pubDate: number | string = result.sCreated;
-                    const linkUrl: string | undefined = result.iDocID ? `${result.iVideoId ? 'v/v2' : 'news'}/detail.shtml?docid=${result.iDocID}` : undefined;
+                    const title: string = result.sTitle
+                    const description: string = result.sContent
+                    const pubDate: number | string = result.sCreated
+                    const linkUrl: string | undefined = result.iDocID ? `${result.iVideoId ? 'v/v2' : 'news'}/detail.shtml?docid=${result.iDocID}` : undefined
                     const authors: DataItem['author'] = result.sAuthor
                         ? [
                               {
@@ -98,10 +98,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                                   avatar: result.sCreaterHeader,
                               },
                           ]
-                        : undefined;
-                    const guid = `qq-lol-${result.iDocID}`;
-                    const image: string | undefined = result.sIMG ? (result.sIMG.startsWith('http') ? result.sIMG : `https:${result.sIMG}`) : undefined;
-                    const updated: number | string = result.sIdxTime ?? pubDate;
+                        : undefined
+                    const guid = `qq-lol-${result.iDocID}`
+                    const image: string | undefined = result.sIMG ? (result.sIMG.startsWith('http') ? result.sIMG : `https:${result.sIMG}`) : undefined
+                    const updated: number | string = result.sIdxTime ?? pubDate
 
                     const processedItem: DataItem = {
                         title,
@@ -119,16 +119,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: updated ? timezone(parseDate(updated), +8) : undefined,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: `${$('div.website-path a')
@@ -143,8 +143,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="author"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/lol/news/:category?',
@@ -202,4 +202,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

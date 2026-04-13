@@ -1,6 +1,6 @@
-import type { DataItem, Route } from '@/types';
+import type { DataItem, Route } from '@/types'
 
-import { handleCommentSection, handleForumSection, handleTopSection } from './utils';
+import { handleCommentSection, handleForumSection, handleTopSection } from './utils'
 
 export const route: Route = {
     path: '/:category/:type?',
@@ -71,32 +71,32 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx): Promise<{
-    title: string;
-    link: string;
-    item: DataItem[];
+    title: string
+    link: string
+    item: DataItem[]
 }> {
-    let category = ctx.req.param('category') ?? 'top';
-    category = category.replace(/#.*$/, '');
+    let category = ctx.req.param('category') ?? 'top'
+    category = category.replace(/#.*$/, '')
 
-    const type = ctx.req.param('type') ?? '4hr';
-    const rootUrl = 'http://i.jandan.net';
-    const currentUrl = `${rootUrl}/${category}`;
+    const type = ctx.req.param('type') ?? '4hr'
+    const rootUrl = 'http://i.jandan.net'
+    const currentUrl = `${rootUrl}/${category}`
 
-    let result: { title: string; items: DataItem[] };
+    let result: { title: string; items: DataItem[] }
 
     try {
         if (category === 'top') {
-            result = await handleTopSection(rootUrl, type);
+            result = await handleTopSection(rootUrl, type)
         } else if (category === 'bbs') {
-            result = await handleForumSection(rootUrl);
+            result = await handleForumSection(rootUrl)
         } else {
-            result = await handleCommentSection(rootUrl, category);
+            result = await handleCommentSection(rootUrl, category)
         }
     } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error)
         result = {
             title: `煎蛋 - ${category}`,
             items: [
@@ -107,12 +107,12 @@ async function handler(ctx): Promise<{
                     pubDate: new Date(),
                 },
             ],
-        };
+        }
     }
 
     return {
         title: result.title,
         link: currentUrl,
         item: result.items,
-    };
+    }
 }

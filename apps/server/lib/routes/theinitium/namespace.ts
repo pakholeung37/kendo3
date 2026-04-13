@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'The Initium',
@@ -17,4 +17,4 @@ Old environment variables \`INITIUM_USERNAME\`, \`INITIUM_PASSWORD\`, and \`INIT
 旧的环境变量 \`INITIUM_USERNAME\`、\`INITIUM_PASSWORD\` 和 \`INITIUM_BEARER_TOKEN\` 已不再使用（网站已迁移至 Ghost CMS）。
 :::`,
     },
-};
+}

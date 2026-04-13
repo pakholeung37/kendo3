@@ -1,56 +1,56 @@
-import dayjs from 'dayjs';
-import { renderToString } from 'hono/jsx/dom/server';
-import Parser from 'rss-parser';
+import dayjs from 'dayjs'
+import { renderToString } from 'hono/jsx/dom/server'
+import Parser from 'rss-parser'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-const titleRegex = /(.+)\s+is\s+([A-Z]+)\s+\((.+)\)/;
+const titleRegex = /(.+)\s+is\s+([A-Z]+)\s+\((.+)\)/
 
 const formatTime = (s) => {
-    const duration = dayjs.duration(s - 0, 'seconds');
-    const days = duration.days();
-    const hours = duration.hours();
-    const minutes = duration.minutes();
-    const seconds = duration.seconds();
+    const duration = dayjs.duration(s - 0, 'seconds')
+    const days = duration.days()
+    const hours = duration.hours()
+    const minutes = duration.minutes()
+    const seconds = duration.seconds()
 
     if (days > 0) {
-        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`
     } else if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
+        return `${hours}h ${minutes}m ${seconds}s`
     } else if (minutes > 0) {
-        return `${minutes}m ${seconds}s`;
+        return `${minutes}m ${seconds}s`
     } else {
-        return `${seconds}s`;
-    }
-};
-
-class Monitor {
-    constructor(name, uptime = 0, downtime = 0) {
-        this.name = name;
-        this.uptime = uptime;
-        this.downtime = downtime;
-    }
-
-    uptimeRatio() {
-        return this.uptime / (this.uptime + this.downtime);
-    }
-
-    downtimeRatio() {
-        return this.downtime / (this.uptime + this.downtime);
-    }
-
-    up(time) {
-        this.uptime += time - 0;
-    }
-
-    down(time) {
-        this.downtime += time - 0;
+        return `${seconds}s`
     }
 }
 
-const rootURL = 'https://rss.uptimerobot.com';
+class Monitor {
+    constructor(name, uptime = 0, downtime = 0) {
+        this.name = name
+        this.uptime = uptime
+        this.downtime = downtime
+    }
+
+    uptimeRatio() {
+        return this.uptime / (this.uptime + this.downtime)
+    }
+
+    downtimeRatio() {
+        return this.downtime / (this.uptime + this.downtime)
+    }
+
+    up(time) {
+        this.uptime += time - 0
+    }
+
+    down(time) {
+        this.downtime += time - 0
+    }
+}
+
+const rootURL = 'https://rss.uptimerobot.com'
 
 export const route: Route = {
     path: '/rss/:id/:routeParams?',
@@ -80,50 +80,50 @@ export const route: Route = {
     description: `| Key    | Description                                                              | Accepts        | Defaults to |
 | ------ | ------------------------------------------------------------------------ | -------------- | ----------- |
 | showID | Show monitor ID (disabling it will also disable link for each RSS entry) | 0/1/true/false | true        |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')));
-    const showID = fallback(undefined, queryToBoolean(routeParams.showID), true);
+    const id = ctx.req.param('id')
+    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')))
+    const showID = fallback(undefined, queryToBoolean(routeParams.showID), true)
 
-    const rssUrl = `${rootURL}/${id}`;
+    const rssUrl = `${rootURL}/${id}`
     const rss = await new Parser({
         customFields: {
             item: ['details:duration'],
         },
-    }).parseURL(rssUrl);
+    }).parseURL(rssUrl)
 
-    const monitors = {};
+    const monitors = {}
 
     const items = rss.items.toReversed().map((item) => {
-        const titleMatch = item.title.match(titleRegex);
+        const titleMatch = item.title.match(titleRegex)
         if (!titleMatch) {
-            throw new InvalidParameterError('Unexpected title, please open an issue.');
+            throw new InvalidParameterError('Unexpected title, please open an issue.')
         }
-        const [monitorName, status, id] = titleMatch.slice(1);
+        const [monitorName, status, id] = titleMatch.slice(1)
 
         if (id !== item.link) {
-            throw new InvalidParameterError('Monitor ID mismatch, please open an issue.');
+            throw new InvalidParameterError('Monitor ID mismatch, please open an issue.')
         }
 
         // id could be a URL, a domain, an IP address, or a hex string. fix it
-        let link;
+        let link
         try {
-            link = !id.startsWith('http') && id.includes('.') ? new URL(`http://${id}`).href : new URL(id).href;
+            link = !id.startsWith('http') && id.includes('.') ? new URL(`http://${id}`).href : new URL(id).href
         } catch {
             // ignore
         }
 
-        const duration = item['details:duration'];
-        const monitor = (monitors[monitorName] = monitors[monitorName] || new Monitor(monitorName));
+        const duration = item['details:duration']
+        const monitor = (monitors[monitorName] = monitors[monitorName] || new Monitor(monitorName))
 
         if (status === 'UP') {
-            monitor.up(duration);
+            monitor.up(duration)
         } else if (status === 'DOWN') {
-            monitor.down(duration);
+            monitor.down(duration)
         } else {
-            throw new InvalidParameterError('Unexpected status, please open an issue.');
+            throw new InvalidParameterError('Unexpected status, please open an issue.')
         }
 
         const desc = renderToString(
@@ -161,16 +161,16 @@ async function handler(ctx) {
                         {item.content}
                     </>
                 ) : null}
-            </>
-        );
+            </>,
+        )
 
         return {
             ...item,
             title: `[${status}] ${monitorName}`,
             description: desc,
             link: showID ? link : null,
-        };
-    });
+        }
+    })
 
     return {
         title: 'Uptime Robot - RSS (enhanced)',
@@ -178,5 +178,5 @@ async function handler(ctx) {
         link: rssUrl,
         item: items,
         image: 'https://uptimerobot.com/favicon.ico',
-    };
+    }
 }

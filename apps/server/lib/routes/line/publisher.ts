@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, parseItems, parseList } from './utils';
+import { baseUrl, parseItems, parseList } from './utils'
 
 export const route: Route = {
     path: '/today/:edition/publisher/:id',
@@ -16,10 +16,10 @@ export const route: Route = {
     name: 'TODAY - Channel',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { edition, id } = ctx.req.param();
+    const { edition, id } = ctx.req.param()
 
     const publisherInfo = await ofetch(`${baseUrl}/webapi/portal/page/setting`, {
         query: {
@@ -27,9 +27,9 @@ async function handler(ctx) {
             country: edition,
             pageType: 'CP',
         },
-    });
+    })
 
-    let thaiData;
+    let thaiData
     if (edition === 'th') {
         thaiData = await ofetch(`${baseUrl}/webapi/portal/embedded/page/cplatest`, {
             query: {
@@ -37,12 +37,12 @@ async function handler(ctx) {
                 pageType: 'CP',
                 country: edition,
             },
-        });
+        })
     }
 
-    const modules = edition === 'th' ? thaiData.modules : publisherInfo.modules;
-    const mod = modules.find((item) => item.source === 'CP_LATEST');
-    const listing = mod.listings[0];
+    const modules = edition === 'th' ? thaiData.modules : publisherInfo.modules
+    const mod = modules.find((item) => item.source === 'CP_LATEST')
+    const listing = mod.listings[0]
 
     const listResponse = await ofetch(`${baseUrl}/webapi/trending/cp/latest/listings/${mod.id}`, {
         query: {
@@ -53,11 +53,11 @@ async function handler(ctx) {
             cps: listing.params?.cps,
             publishedWithin: listing.params?.publishedWithin,
         },
-    });
+    })
 
-    const list = parseList(listResponse.items);
+    const list = parseList(listResponse.items)
 
-    const items = await parseItems(list);
+    const items = await parseItems(list)
 
     return {
         title: `${publisherInfo.data.name} - Line Today`,
@@ -65,5 +65,5 @@ async function handler(ctx) {
         image: publisherInfo.data.icon ? `https://obs.line-scdn.net/${publisherInfo.data.icon.hash}` : undefined,
         link: `${baseUrl}/${edition}/v2/publisher/${id}`,
         item: items,
-    };
+    }
 }

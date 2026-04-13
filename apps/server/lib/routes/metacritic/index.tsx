@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { sorts, types } from './util';
+import { sorts, types } from './util'
 
 const renderDescription = (image, description, score) =>
     renderToString(
@@ -22,69 +22,69 @@ const renderDescription = (image, description, score) =>
                     {score}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/:type?/:sort?/:filter?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'game', sort = 'new', filter } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { type = 'game', sort = 'new', filter } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.metacritic.com';
-    const rootApiUrl = 'https://backend.metacritic.com';
-    const apiUrl = new URL('finder/metacritic/web', rootApiUrl).href;
+    const rootUrl = 'https://www.metacritic.com'
+    const rootApiUrl = 'https://backend.metacritic.com'
+    const apiUrl = new URL('finder/metacritic/web', rootApiUrl).href
 
-    const currentUrlObject = new URL(`/browse/${type}/all/all/all-time/${sort}/${filter ? `?${filter}` : ''}`, rootUrl);
-    const currentUrlParams = currentUrlObject.searchParams;
-    const currentUrl = currentUrlObject.href;
+    const currentUrlObject = new URL(`/browse/${type}/all/all/all-time/${sort}/${filter ? `?${filter}` : ''}`, rootUrl)
+    const currentUrlParams = currentUrlObject.searchParams
+    const currentUrl = currentUrlObject.href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const apiKey = currentResponse.match(/apiKey=(.*?)&/)[1];
+    const apiKey = currentResponse.match(/apiKey=(.*?)&/)[1]
 
     const searchParams = {
         sortBy: `-${sorts[sort].id}`,
         productType: types[type].id,
         limit,
         apiKey,
-    };
+    }
 
-    const genres = currentUrlParams.getAll('genre').join(',').toLowerCase();
-    const releaseTypes = currentUrlParams.getAll('releaseType').join(',');
-    const releaseYearMin = currentUrlParams.get('releaseYearMin');
-    const releaseYearMax = currentUrlParams.get('releaseYearMax');
+    const genres = currentUrlParams.getAll('genre').join(',').toLowerCase()
+    const releaseTypes = currentUrlParams.getAll('releaseType').join(',')
+    const releaseYearMin = currentUrlParams.get('releaseYearMin')
+    const releaseYearMax = currentUrlParams.get('releaseYearMax')
 
     if (genres) {
-        searchParams.genres = genres;
+        searchParams.genres = genres
     }
 
     if (releaseTypes) {
-        searchParams.releaseType = releaseTypes;
+        searchParams.releaseType = releaseTypes
     }
 
     if (releaseYearMin) {
-        searchParams.releaseYearMin = releaseYearMin;
+        searchParams.releaseYearMin = releaseYearMin
     }
 
     if (releaseYearMax) {
-        searchParams.releaseYearMax = releaseYearMax;
+        searchParams.releaseYearMax = releaseYearMax
     }
 
-    const platforms = currentUrlParams.getAll('platform');
-    const networks = currentUrlParams.getAll('network');
+    const platforms = currentUrlParams.getAll('platform')
+    const networks = currentUrlParams.getAll('network')
 
     if (platforms.length || networks.length) {
-        const labels = {};
-        const labelPattern = String.raw`{label:"([^"]+)",value:(\d+),href:a,meta:{mcDisplayWeight`;
+        const labels = {}
+        const labelPattern = String.raw`{label:"([^"]+)",value:(\d+),href:a,meta:{mcDisplayWeight`
 
         for (const m of currentResponse.match(new RegExp(labelPattern, 'g'))) {
-            const matches = m.match(new RegExp(labelPattern));
+            const matches = m.match(new RegExp(labelPattern))
 
             labels[
                 matches[1]
@@ -94,27 +94,27 @@ async function handler(ctx) {
                     .replaceAll(/\s\/\s/g, '-or-')
                     .replaceAll('+', '-plus')
                     .replaceAll(/\s/g, '-')
-            ] = matches[2];
+            ] = matches[2]
         }
 
         if (platforms.length) {
             searchParams.gamePlatformIds = platforms
                 .map((p) => (Object.hasOwn(labels, p) ? labels[p] : undefined))
                 .filter(Boolean)
-                .join(',');
+                .join(',')
         }
 
         if (networks.length) {
             searchParams.streamingNetworkIds = networks
                 .map((p) => (Object.hasOwn(labels, p) ? labels[p] : undefined))
                 .filter(Boolean)
-                .join(',');
+                .join(',')
         }
     }
 
     const { data: response } = await got(apiUrl, {
         searchParams,
-    });
+    })
 
     const items = response.data.items.slice(0, limit).map((item) => ({
         title: item.title,
@@ -127,7 +127,7 @@ async function handler(ctx) {
                   }
                 : undefined,
             item.description,
-            item.criticScoreSummary?.score ?? undefined
+            item.criticScoreSummary?.score ?? undefined,
         ),
         category: item.genres?.map((c) => c.name),
         guid: `metacritic-${item.id}`,
@@ -135,11 +135,11 @@ async function handler(ctx) {
         upvotes: item.criticScoreSummary?.positiveCount ? Number.parseInt(item.criticScoreSummary?.positiveCount, 10) : 0,
         downvotes: item.criticScoreSummary?.negativeCount ? Number.parseInt(item.criticScoreSummary?.negativeCount, 10) : 0,
         comments: item.criticScoreSummary?.reviewCount ? Number.parseInt(item.criticScoreSummary?.reviewCount, 10) : 0,
-    }));
+    }))
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const icon = new URL($('meta[data-hid="msapplication-task-metacritic"]').prop('content').split('icon-uri=').pop(), rootUrl).href;
+    const icon = new URL($('meta[data-hid="msapplication-task-metacritic"]').prop('content').split('icon-uri=').pop(), rootUrl).href
 
     return {
         item: items,
@@ -153,5 +153,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="msapplication-tooltip"]').prop('content'),
         author: $('meta[name="twitter:site"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

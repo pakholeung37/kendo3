@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseArticle } from './utils';
+import { parseArticle } from './utils'
 
 const hostMap = {
     'en-us': 'https://www.wsj.com',
     'zh-cn': 'https://cn.wsj.com/zh-hans',
     'zh-tw': 'https://cn.wsj.com/zh-hant',
-};
+}
 export const route: Route = {
     path: '/:lang/:category?',
     categories: ['traditional-media'],
@@ -40,45 +40,45 @@ export const route: Route = {
 | world | china | markets  | economy | business | technology | life-arts | opinion    |
 
   Provide full article RSS for WSJ topics.`,
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang');
-    const category = ctx.req.param('category') || '';
-    const host = hostMap[lang];
-    let subTitle = ` - ${lang.toUpperCase()}`;
-    let url = host;
+    const lang = ctx.req.param('lang')
+    const category = ctx.req.param('category') || ''
+    const host = hostMap[lang]
+    let subTitle = ` - ${lang.toUpperCase()}`
+    let url = host
     if (category.length > 0) {
-        url = `${host}/news/${category}`;
-        subTitle = `${subTitle} - ${category}`;
+        url = `${host}/news/${category}`
+        subTitle = `${subTitle} - ${category}`
     }
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
-    const $ = load(response.data);
-    const contents = $('script:contains("window.__STATE__")').text();
-    const data = JSON.parse(contents.match(/{.*}/)[0]).data;
+    const $ = load(response.data)
+    const contents = $('script:contains("window.__STATE__")').text()
+    const data = JSON.parse(contents.match(/{.*}/)[0]).data
     const filteredKeys = Object.entries(data)
         .filter(([key, value]) => {
             if (!key.startsWith('article')) {
-                return false;
+                return false
             }
-            const link = value.data.data.url;
-            return link.includes('wsj.com/articles/');
+            const link = value.data.data.url
+            return link.includes('wsj.com/articles/')
         })
-        .map(([key]) => key);
+        .map(([key]) => key)
     const list = filteredKeys.map((key) => {
-        const item = { title: data[key].data.data.headline, link: data[key].data.data.url, test: key };
-        return item;
-    });
-    const items = await pMap(list, (item) => parseArticle(item), { concurrency: 10 });
+        const item = { title: data[key].data.data.headline, link: data[key].data.data.url, test: key }
+        return item
+    })
+    const items = await pMap(list, (item) => parseArticle(item), { concurrency: 10 })
 
     return {
         title: `WSJ${subTitle}`,
         link: url,
         description: `WSJ${subTitle}`,
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -23,12 +23,12 @@ export const route: Route = {
     name: '标签',
     maintainers: ['FuryMartin'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
-    const link = encodeURI(`https://www.qbitai.com/tag/${tag}/feed`);
-    const feed = await parser.parseURL(link);
+    const tag = ctx.req.param('tag')
+    const link = encodeURI(`https://www.qbitai.com/tag/${tag}/feed`)
+    const feed = await parser.parseURL(link)
 
     const items = feed.items.map((item) => ({
         title: item.title,
@@ -37,7 +37,7 @@ async function handler(ctx) {
         author: '量子位',
         category: item.categories,
         description: item['content:encoded'],
-    }));
+    }))
 
     return {
         // 源标题
@@ -46,5 +46,5 @@ async function handler(ctx) {
         link: `https://www.qbitai.com/tag/${tag}`,
         // 源文章
         item: items,
-    };
+    }
 }

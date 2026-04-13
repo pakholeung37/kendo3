@@ -1,8 +1,8 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { commonHandler } from './category';
+import { commonHandler } from './category'
 
 export const route: Route = {
     path: '/tag/:topic',
@@ -50,14 +50,14 @@ export const route: Route = {
 | Technology               | technology               |
 | Regulatory Bodies        | regulatory-bodies        |
 :::`,
-};
+}
 
 async function handler(ctx: Context) {
-    const { topic } = ctx.req.param();
+    const { topic } = ctx.req.param()
     const extra = {
         description: (topic: string) => `Everything that Insider has to offer about ${topic} for you to read and learn.`,
         date: true,
         selector: `div.card`,
-    };
-    return await commonHandler('https://insider.finology.in', `/tag/${topic}`, extra);
+    }
+    return await commonHandler('https://insider.finology.in', `/tag/${topic}`, extra)
 }

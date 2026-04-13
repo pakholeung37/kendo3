@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/search/:query/:mode?/:routeParams?',
@@ -38,13 +38,13 @@ export const route: Route = {
 | pattern         | Query match pattern  | extended  | all, any, extended                                             |
 | type            | Category of artworks | all       | art, flash, photo, music, story, poetry                        |
 `,
-};
+}
 
 async function handler(ctx) {
-    const { query, mode = 'sfw', routeParams = 'order_by=relevancy' } = ctx.req.param();
-    let url = `https://faexport.spangle.org.uk/search.json?sfw=1&full=1&q=${query}&${routeParams}`;
+    const { query, mode = 'sfw', routeParams = 'order_by=relevancy' } = ctx.req.param()
+    let url = `https://faexport.spangle.org.uk/search.json?sfw=1&full=1&q=${query}&${routeParams}`
     if (mode === 'nsfw') {
-        url = `https://faexport.spangle.org.uk/search.json?full=1&q=${query}&${routeParams}`;
+        url = `https://faexport.spangle.org.uk/search.json?full=1&q=${query}&${routeParams}`
     }
 
     const data = await ofetch(url, {
@@ -52,7 +52,7 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
     const items = data.map((item) => ({
         title: item.title,
@@ -61,7 +61,7 @@ async function handler(ctx) {
         description: `<img src="${item.thumbnail}">`,
         // 由于源API未提供日期，故无pubDate
         author: item.name,
-    }));
+    }))
 
     return {
         allowEmpty: true,
@@ -69,5 +69,5 @@ async function handler(ctx) {
         link: `https://www.furaffinity.net/Search/?q=${query}`,
         description: `Fur Affinity Search`,
         item: items,
-    };
+    }
 }

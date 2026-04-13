@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/military',
@@ -26,19 +26,19 @@ export const route: Route = {
     maintainers: ['jiaaoMario'],
     handler,
     url: 'military.china.com/news',
-};
+}
 
 async function handler() {
-    const websiteUrl = 'https://military.china.com/news/';
-    const response = await got(websiteUrl);
-    const data = response.data;
-    const $ = load(data);
-    const commonList = $('.item_list li');
+    const websiteUrl = 'https://military.china.com/news/'
+    const response = await got(websiteUrl)
+    const data = response.data
+    const $ = load(data)
+    const commonList = $('.item_list li')
     return {
         title: '中华网-军事新闻',
         link: 'https://military.china.com/news/',
         item: commonList.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h3.item_title').text(),
                 author: '中华网军事',
@@ -46,7 +46,7 @@ async function handler() {
                 pubDate: parseDate(item.find('em.item_time').text()),
                 description: item.find('.item_source').text(),
                 link: item.find('h3.item_title a').attr('href'),
-            };
+            }
         }),
-    };
+    }
 }

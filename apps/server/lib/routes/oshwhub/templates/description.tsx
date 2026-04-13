@@ -1,74 +1,74 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 type DocumentItem = {
-    title?: string;
-    description?: string;
-    thumb?: string;
-};
+    title?: string
+    description?: string
+    thumb?: string
+}
 
 type AttachmentItem = {
-    src?: string;
-    name?: string;
-    size?: string | number;
-};
+    src?: string
+    name?: string
+    size?: string | number
+}
 
 type DescriptionData = {
-    images?: DescriptionImage[];
-    title?: string;
-    origin?: string;
-    tags?: string[];
-    license?: string;
-    pubDate?: string;
-    upDated?: string;
-    intro?: string;
-    description?: string;
-    documents?: DocumentItem[];
-    boms?: unknown[];
-    attachments?: AttachmentItem[];
-};
+    images?: DescriptionImage[]
+    title?: string
+    origin?: string
+    tags?: string[]
+    license?: string
+    pubDate?: string
+    upDated?: string
+    intro?: string
+    description?: string
+    documents?: DocumentItem[]
+    boms?: unknown[]
+    attachments?: AttachmentItem[]
+}
 
 const escapeHTML = (input: unknown) => {
     if (input === undefined) {
-        return '';
+        return ''
     }
-    const str = String(input);
+    const str = String(input)
     const escapeMap: Record<string, string> = {
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-    };
-    return str.replaceAll(/[&<>"']/g, (char) => escapeMap[char] || char);
-};
+    }
+    return str.replaceAll(/[&<>"']/g, (char) => escapeMap[char] || char)
+}
 
 const formatObject = (obj: unknown) => {
     if (typeof obj !== 'object' || obj === null) {
-        return escapeHTML(obj);
+        return escapeHTML(obj)
     }
 
-    let result = '';
+    let result = ''
     for (const key in obj as Record<string, unknown>) {
         if (Object.hasOwn(obj, key)) {
-            const value = (obj as Record<string, unknown>)[key];
+            const value = (obj as Record<string, unknown>)[key]
             if (value !== null && value !== '') {
-                result += `<div><strong>${escapeHTML(key)}:</strong> ${escapeHTML(value)}</div>`;
+                result += `<div><strong>${escapeHTML(key)}:</strong> ${escapeHTML(value)}</div>`
             }
         }
     }
 
-    return result || '<em>无数据</em>';
-};
+    return result || '<em>无数据</em>'
+}
 
 const OshwhubDescription = ({ images, title, origin, tags, license, pubDate, upDated, intro, description, documents, boms, attachments }: DescriptionData) => {
-    const headers = Array.isArray(boms) ? (boms[0] as unknown[] | undefined) : undefined;
-    const rows = Array.isArray(boms) ? boms.slice(1) : [];
+    const headers = Array.isArray(boms) ? (boms[0] as unknown[] | undefined) : undefined
+    const rows = Array.isArray(boms) ? boms.slice(1) : []
 
     return (
         <>
@@ -77,7 +77,7 @@ const OshwhubDescription = ({ images, title, origin, tags, license, pubDate, upD
                     <figure>
                         <img src={image.src} alt={image.alt} />
                     </figure>
-                ) : null
+                ) : null,
             )}
             {title || origin || tags || license || pubDate || upDated || intro ? (
                 <table>
@@ -194,7 +194,7 @@ const OshwhubDescription = ({ images, title, origin, tags, license, pubDate, upD
                 </>
             ) : null}
         </>
-    );
-};
+    )
+}
 
-export const renderDescription = (data: DescriptionData) => renderToString(<OshwhubDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<OshwhubDescription {...data} />)

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/journal-comments/:id',
@@ -25,26 +25,26 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id } = ctx.req.param();
-    const urlJournal = `https://faexport.spangle.org.uk/journal/${id}.json`;
-    const urlComments = `https://faexport.spangle.org.uk/journal/${id}/comments.json`;
+    const { id } = ctx.req.param()
+    const urlJournal = `https://faexport.spangle.org.uk/journal/${id}.json`
+    const urlComments = `https://faexport.spangle.org.uk/journal/${id}/comments.json`
 
     const dataJournal = await ofetch(urlJournal, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
     const dataComments = await ofetch(urlComments, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
     const items = dataComments.map((item) => ({
         title: item.text,
@@ -53,7 +53,7 @@ async function handler(ctx) {
         description: `<img src="${item.avatar}"> <br> ${item.name}: ${item.text}`,
         pubDate: new Date(item.posted_at).toUTCString(),
         author: item.name,
-    }));
+    }))
 
     return {
         allowEmpty: true,
@@ -61,5 +61,5 @@ async function handler(ctx) {
         link: `https://www.furaffinity.net/journal/${id}`,
         description: `Fur Affinity | ${dataJournal.title} by ${dataJournal.name} - Journal Comments`,
         item: items,
-    };
+    }
 }

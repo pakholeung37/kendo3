@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getTag, parseList, ProcessFeed } from './utils';
+import { getTag, parseList, ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/tag/:tag',
@@ -24,14 +24,14 @@ export const route: Route = {
     name: '标签',
     maintainers: ['isheng5'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
+    const tag = ctx.req.param('tag')
 
-    const idResponse = await getTag(tag);
+    const idResponse = await getTag(tag)
 
-    const id = idResponse.tag_id;
+    const id = idResponse.tag_id
 
     const response = await ofetch('https://api.juejin.cn/recommend_api/v1/article/recommend_tag_feed', {
         method: 'POST',
@@ -41,10 +41,10 @@ async function handler(ctx) {
             tag_ids: [id],
             sort_type: 300,
         },
-    });
+    })
 
-    const originalData = parseList(response.data);
-    const resultItems = await ProcessFeed(originalData);
+    const originalData = parseList(response.data)
+    const resultItems = await ProcessFeed(originalData)
 
     return {
         title: `掘金 ${tag}`,
@@ -52,5 +52,5 @@ async function handler(ctx) {
         description: `掘金 ${tag}`,
         image: idResponse.tag.icon,
         item: resultItems,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/daily-papers/:cycle?/:voteFliter?',
@@ -27,46 +27,46 @@ export const route: Route = {
     maintainers: ['zeyugao', 'ovo-tim'],
     handler,
     url: 'huggingface.co/papers',
-};
+}
 
 interface Paper {
-    id: string;
-    summary: string;
-    upvotes: number;
-    authors: Array<{ name: string }>;
+    id: string
+    summary: string
+    upvotes: number
+    authors: Array<{ name: string }>
 }
 
 interface DailyPaperItem {
-    title: string;
-    paper: Paper;
-    publishedAt: string;
+    title: string
+    paper: Paper
+    publishedAt: string
 }
 
 interface PapersData {
-    dailyPapers: DailyPaperItem[];
+    dailyPapers: DailyPaperItem[]
 }
 
 async function handler(ctx) {
-    const { cycle = 'date', voteFliter = '0' } = ctx.req.param();
-    let url: string;
+    const { cycle = 'date', voteFliter = '0' } = ctx.req.param()
+    let url: string
     switch (cycle) {
         case 'date':
-            url = 'https://huggingface.co/papers';
-            break;
+            url = 'https://huggingface.co/papers'
+            break
         case 'week':
             // We don't actually need to get the week number, because huggingface.co/papers/week/YYYY-W52 will redirect to the latest week
-            url = `https://huggingface.co/papers/week/${new Date().getFullYear()}-W52`;
-            break;
+            url = `https://huggingface.co/papers/week/${new Date().getFullYear()}-W52`
+            break
         case 'month':
-            url = `https://huggingface.co/papers/month/${new Date().toISOString().slice(0, 7)}`;
-            break;
+            url = `https://huggingface.co/papers/month/${new Date().toISOString().slice(0, 7)}`
+            break
         default:
-            throw new Error(`Invalid cycle: ${cycle}`);
+            throw new Error(`Invalid cycle: ${cycle}`)
     }
 
-    const { body: response } = await got(url);
-    const $ = load(response);
-    const papers = $('div[data-target="DailyPapers"]').data('props') as PapersData;
+    const { body: response } = await got(url)
+    const $ = load(response)
+    const papers = $('div[data-target="DailyPapers"]').data('props') as PapersData
 
     const items = papers.dailyPapers
         .filter((item) => item.paper.upvotes >= voteFliter)
@@ -78,12 +78,12 @@ async function handler(ctx) {
             author: item.paper.authors.map((author) => author.name).join(', '),
             upvotes: item.paper.upvotes,
         }))
-        .toSorted((a, b) => b.upvotes - a.upvotes);
+        .toSorted((a, b) => b.upvotes - a.upvotes)
 
     return {
         allowEmpty: true,
         title: 'Huggingface Daily Papers',
         link: 'https://huggingface.co/papers',
         item: items,
-    };
+    }
 }

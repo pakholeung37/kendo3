@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { JSDOM } from 'jsdom';
+import { load } from 'cheerio'
+import { JSDOM } from 'jsdom'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/tag/:name?/:type?',
@@ -39,21 +39,21 @@ export const route: Route = {
 | new  | date | week | month | total |
 | ---- | ---- | ---- | ----- | ----- |
 | 最新 | 日榜 | 周榜 | 月榜  | 总榜  |`,
-};
+}
 
 async function handler(ctx) {
-    const name = ctx.req.param('name') ?? '摄影';
-    const type = ctx.req.param('type') ?? 'new';
-    const pageSize = 20;
-    const startingIndex = 0;
+    const name = ctx.req.param('name') ?? '摄影'
+    const type = ctx.req.param('type') ?? 'new'
+    const pageSize = 20
+    const startingIndex = 0
 
-    const rootUrl = 'https://www.lofter.com';
-    const linkUrl = `${rootUrl}/tag/${name}/${type}`;
-    const apiUrl = `${rootUrl}/dwr/call/plaincall/TagBean.search.dwr`;
+    const rootUrl = 'https://www.lofter.com'
+    const linkUrl = `${rootUrl}/tag/${name}/${type}`
+    const apiUrl = `${rootUrl}/dwr/call/plaincall/TagBean.search.dwr`
 
-    const cookie = config.lofter.cookies;
+    const cookie = config.lofter.cookies
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('Lofter 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('Lofter 用户登录后的 Cookie 值')
     }
 
     const response = await got({
@@ -81,7 +81,7 @@ async function handler(ctx) {
             Referer: `https://www.lofter.com/tag/${encodeURI(name)}`,
             Cookie: cookie,
         },
-    });
+    })
 
     const dom = new JSDOM(
         `<script>if (dwr == null) var dwr = {};
@@ -92,9 +92,9 @@ async function handler(ctx) {
         ${response.data}</script>`,
         {
             runScripts: 'dangerously',
-        }
-    );
-    const data = dom.window.dwr.engine.data[2];
+        },
+    )
+    const data = dom.window.dwr.engine.data[2]
 
     const title =
         {
@@ -103,25 +103,25 @@ async function handler(ctx) {
             week: '周榜',
             month: '月榜',
             total: '最热',
-        }[type] ?? '';
+        }[type] ?? ''
 
     const items = data.map((entry) => {
-        const post = entry.post;
+        const post = entry.post
 
-        let videos = '';
+        let videos = ''
         if (post.embed) {
-            const embed = JSON.parse(post.embed);
+            const embed = JSON.parse(post.embed)
             if (embed.h256Url || embed.video_down_url) {
-                videos = `<video src="${embed.h256Url ?? embed.video_down_url}" poster="${embed.video_img_url ?? ''}" controls="controls"></video>`;
+                videos = `<video src="${embed.h256Url ?? embed.video_down_url}" poster="${embed.video_img_url ?? ''}" controls="controls"></video>`
             }
         }
 
         const images = post.photoLinks
             ? JSON.parse(post.photoLinks).reduce((accumulator, currentValue) => accumulator + `<img src="${currentValue.orign}"/>`, '') // small | middle | orign
-            : '';
+            : ''
 
-        const digest = load(post.digest);
-        const description = digest.text();
+        const digest = load(post.digest)
+        const description = digest.text()
 
         return {
             author: post.blogInfo.blogNickName,
@@ -130,12 +130,12 @@ async function handler(ctx) {
             pubDate: parseDate(post.publishTime),
             description: videos + images + digest.html(),
             category: post.tagList,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} - ${title} | LOFTER`,
         link: linkUrl,
         item: items,
-    };
+    }
 }

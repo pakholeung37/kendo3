@@ -1,22 +1,22 @@
-import Parser from 'rss-parser';
-import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import Parser from 'rss-parser'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 
-const parser = new Parser();
+const parser = new Parser()
 
 afterAll(() => {
-    delete process.env.HOTLINK_TEMPLATE;
-    delete process.env.HOTLINK_INCLUDE_PATHS;
-    delete process.env.HOTLINK_EXCLUDE_PATHS;
-    delete process.env.ALLOW_USER_HOTLINK_TEMPLATE;
-});
+    delete process.env.HOTLINK_TEMPLATE
+    delete process.env.HOTLINK_INCLUDE_PATHS
+    delete process.env.HOTLINK_EXCLUDE_PATHS
+    delete process.env.ALLOW_USER_HOTLINK_TEMPLATE
+})
 
 afterEach(() => {
-    delete process.env.HOTLINK_TEMPLATE;
-    delete process.env.HOTLINK_INCLUDE_PATHS;
-    delete process.env.HOTLINK_EXCLUDE_PATHS;
-    delete process.env.ALLOW_USER_HOTLINK_TEMPLATE;
-    vi.resetModules();
-});
+    delete process.env.HOTLINK_TEMPLATE
+    delete process.env.HOTLINK_INCLUDE_PATHS
+    delete process.env.HOTLINK_EXCLUDE_PATHS
+    delete process.env.ALLOW_USER_HOTLINK_TEMPLATE
+    vi.resetModules()
+})
 
 const expects = {
     complicated: {
@@ -258,39 +258,39 @@ const expects = {
             description: '<video src="https://i3.wp.com/mock.com/DIYgod/DIYgod/RSSHub"></video> - Powered by RSSHub',
         },
     },
-};
+}
 
 const testAntiHotlink = async (path, expectObj, query?: string | Record<string, any>) => {
-    const app = (await import('@/app')).default;
+    const app = (await import('@/app')).default
 
-    let queryStr;
+    let queryStr
     if (query) {
         queryStr =
             typeof query === 'string'
                 ? query
                 : Object.entries(query)
                       .map(([key, value]) => `${key}=${value}`)
-                      .join('&');
+                      .join('&')
     }
-    path = path + (queryStr ? `?${queryStr}` : '');
+    path = path + (queryStr ? `?${queryStr}` : '')
 
-    const response = await app.request(path);
-    const parsed = await parser.parseString(await response.text());
+    const response = await app.request(path)
+    const parsed = await parser.parseString(await response.text())
     expect({
         items: parsed.items.slice(0, expectObj.items.length).map((i) => i.content),
         desc: parsed.description,
-    }).toStrictEqual(expectObj);
+    }).toStrictEqual(expectObj)
 
-    return parsed;
-};
+    return parsed
+}
 
 const testAntiHotlinkExtra = async (path, expectObj, query?: string | Record<string, any>) => {
-    const app = (await import('@/app')).default;
+    const app = (await import('@/app')).default
 
-    path += query ? `?${new URLSearchParams(query).toString()}` : '';
+    path += query ? `?${new URLSearchParams(query).toString()}` : ''
 
-    const response = await app.request(path);
-    const parsed = await parser.parseString(await response.text());
+    const response = await app.request(path)
+    const parsed = await parser.parseString(await response.text())
     const obj = {
         description: parsed.description,
         image: parsed.image,
@@ -299,142 +299,142 @@ const testAntiHotlinkExtra = async (path, expectObj, query?: string | Record<str
             enclosure: e.enclosure,
             itunes: e.itunes,
         })),
-    };
-    expect(obj).toEqual(expectObj);
+    }
+    expect(obj).toEqual(expectObj)
 
-    return parsed;
-};
+    return parsed
+}
 
 const expectImgOrigin = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/complicated', expects.complicated.origin, query);
-    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.origin, query);
-};
+    await testAntiHotlink('/test/complicated', expects.complicated.origin, query)
+    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.origin, query)
+}
 const expectImgProcessed = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/complicated', expects.complicated.processed, query);
-    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.processed, query);
-};
+    await testAntiHotlink('/test/complicated', expects.complicated.processed, query)
+    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.processed, query)
+}
 
 const expectImgUrlencoded = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/complicated', expects.complicated.urlencoded, query);
-    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.urlencoded, query);
-};
+    await testAntiHotlink('/test/complicated', expects.complicated.urlencoded, query)
+    await testAntiHotlinkExtra('/test/complicated', expects.extraComplicated.urlencoded, query)
+}
 
 const expectMultimediaOrigin = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/multimedia', expects.multimedia.origin, query);
-    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.origin, query);
-};
+    await testAntiHotlink('/test/multimedia', expects.multimedia.origin, query)
+    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.origin, query)
+}
 
 const expectMultimediaRelayed = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/multimedia', expects.multimedia.relayed, query);
-    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.relayed, query);
-};
+    await testAntiHotlink('/test/multimedia', expects.multimedia.relayed, query)
+    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.relayed, query)
+}
 
 const expectMultimediaPartlyRelayed = async (query?: string | Record<string, any>) => {
-    await testAntiHotlink('/test/multimedia', expects.multimedia.partlyRelayed, query);
-    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.partlyRelayed, query);
-};
+    await testAntiHotlink('/test/multimedia', expects.multimedia.partlyRelayed, query)
+    await testAntiHotlinkExtra('/test/multimedia', expects.extraMultimedia.partlyRelayed, query)
+}
 
 describe('anti-hotlink', () => {
     it('template-legacy', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        await expectImgProcessed();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        await expectImgProcessed()
+    })
 
     it('template-experimental', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true';
-        await expectImgProcessed();
-        await expectMultimediaRelayed({ multimedia_hotlink_template: process.env.HOTLINK_TEMPLATE });
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true'
+        await expectImgProcessed()
+        await expectMultimediaRelayed({ multimedia_hotlink_template: process.env.HOTLINK_TEMPLATE })
+    })
 
     it('url', async () => {
-        process.env.HOTLINK_TEMPLATE = '${protocol}//${host}${pathname}';
-        await expectImgOrigin();
-        await expectMultimediaOrigin({ multimedia_hotlink_template: process.env.HOTLINK_TEMPLATE });
-    });
+        process.env.HOTLINK_TEMPLATE = '${protocol}//${host}${pathname}'
+        await expectImgOrigin()
+        await expectMultimediaOrigin({ multimedia_hotlink_template: process.env.HOTLINK_TEMPLATE })
+    })
 
     it('url-encoded', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://images.weserv.nl?url=${href_ue}';
-        await expectImgUrlencoded();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://images.weserv.nl?url=${href_ue}'
+        await expectImgUrlencoded()
+    })
 
     it('template-priority-legacy', async () => {
-        process.env.HOTLINK_TEMPLATE = '${protocol}//${host}${pathname}';
-        await expectImgOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = '${protocol}//${host}${pathname}'
+        await expectImgOrigin()
+    })
 
     it('template-priority-experimental', async () => {
-        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true';
-        await expectImgOrigin();
-        await expectImgProcessed({ image_hotlink_template: 'https://i3.wp.com/${host}${pathname}' });
-    });
+        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true'
+        await expectImgOrigin()
+        await expectImgProcessed({ image_hotlink_template: 'https://i3.wp.com/${host}${pathname}' })
+    })
 
     it('no-template', async () => {
-        process.env.HOTLINK_TEMPLATE = '';
-        await expectImgOrigin();
-        await expectMultimediaOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = ''
+        await expectImgOrigin()
+        await expectMultimediaOrigin()
+    })
 
     it('multimedia-template-experimental', async () => {
-        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true';
-        await expectMultimediaOrigin({ multimedia_hotlink_template: '${protocol}//${host}${pathname}' });
-        await expectMultimediaPartlyRelayed({ multimedia_hotlink_template: 'https://i3.wp.com/${host}${pathname}' });
-    });
+        process.env.ALLOW_USER_HOTLINK_TEMPLATE = 'true'
+        await expectMultimediaOrigin({ multimedia_hotlink_template: '${protocol}//${host}${pathname}' })
+        await expectMultimediaPartlyRelayed({ multimedia_hotlink_template: 'https://i3.wp.com/${host}${pathname}' })
+    })
 
     it('include-paths-partial-matched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_INCLUDE_PATHS = '/test';
-        await expectImgProcessed();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_INCLUDE_PATHS = '/test'
+        await expectImgProcessed()
+    })
 
     it('include-paths-fully-matched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_INCLUDE_PATHS = '/test/complicated';
-        await expectImgProcessed();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_INCLUDE_PATHS = '/test/complicated'
+        await expectImgProcessed()
+    })
 
     it('include-paths-unmatched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_INCLUDE_PATHS = '/t';
-        await expectImgOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_INCLUDE_PATHS = '/t'
+        await expectImgOrigin()
+    })
 
     it('exclude-paths-partial-matched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_EXCLUDE_PATHS = '/test';
-        await expectImgOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_EXCLUDE_PATHS = '/test'
+        await expectImgOrigin()
+    })
 
     it('exclude-paths-fully-matched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_EXCLUDE_PATHS = '/test/complicated';
-        await expectImgOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_EXCLUDE_PATHS = '/test/complicated'
+        await expectImgOrigin()
+    })
 
     it('exclude-paths-unmatched', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_EXCLUDE_PATHS = '/t';
-        await expectImgProcessed();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_EXCLUDE_PATHS = '/t'
+        await expectImgProcessed()
+    })
 
     it('include-exclude-paths-mixed-filtered-out', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_INCLUDE_PATHS = '/test';
-        process.env.HOTLINK_EXCLUDE_PATHS = '/test/complicated';
-        await expectImgOrigin();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_INCLUDE_PATHS = '/test'
+        process.env.HOTLINK_EXCLUDE_PATHS = '/test/complicated'
+        await expectImgOrigin()
+    })
 
     it('include-exclude-paths-mixed-unfiltered-out', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}';
-        process.env.HOTLINK_INCLUDE_PATHS = '/test';
-        process.env.HOTLINK_EXCLUDE_PATHS = '/test/c';
-        await expectImgProcessed();
-    });
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${host}${pathname}'
+        process.env.HOTLINK_INCLUDE_PATHS = '/test'
+        process.env.HOTLINK_EXCLUDE_PATHS = '/test/c'
+        await expectImgProcessed()
+    })
 
     it('invalid-property', async () => {
-        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${createObjectURL}';
-        const app = (await import('@/app')).default;
-        const response = await app.request('/test/complicated');
-        expect(await response.text()).toContain('Error: Invalid URL property: createObjectURL');
-    });
-});
+        process.env.HOTLINK_TEMPLATE = 'https://i3.wp.com/${createObjectURL}'
+        const app = (await import('@/app')).default
+        const response = await app.request('/test/complicated')
+        expect(await response.text()).toContain('Error: Invalid URL property: createObjectURL')
+    })
+})

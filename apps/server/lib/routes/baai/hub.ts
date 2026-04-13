@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { apiHost, baseUrl, getTagsData, parseEventDetail, parseItem } from './utils';
+import { apiHost, baseUrl, getTagsData, parseEventDetail, parseItem } from './utils'
 
 export const route: Route = {
     path: ['/hub/:tagId?/:sort?/:range?'],
@@ -31,34 +31,34 @@ export const route: Route = {
         {
             source: ['baai.ac.cn/'],
             target: (_params, url) => {
-                const searchParams = new URL(url).searchParams;
-                const tagId = searchParams.get('tag_id');
-                const sort = searchParams.get('sort');
-                const range = searchParams.get('time_range');
-                return `/baai/hub${tagId ? `/${tagId}` : ''}${sort ? `/${sort}` : ''}${range ? `/${range}` : ''}`;
+                const searchParams = new URL(url).searchParams
+                const tagId = searchParams.get('tag_id')
+                const sort = searchParams.get('sort')
+                const range = searchParams.get('time_range')
+                return `/baai/hub${tagId ? `/${tagId}` : ''}${sort ? `/${sort}` : ''}${range ? `/${range}` : ''}`
             },
         },
     ],
     name: '智源社区',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { tagId = '', sort = 'new', range } = ctx.req.param();
+    const { tagId = '', sort = 'new', range } = ctx.req.param()
 
-    let title, description, brief, iconUrl;
+    let title, description, brief, iconUrl
     if (tagId) {
-        const tagsData = await getTagsData();
+        const tagsData = await getTagsData()
 
-        const tag = (tagsData as Array<Record<string, string>>).find((tag) => tag.id === tagId);
+        const tag = (tagsData as Array<Record<string, string>>).find((tag) => tag.id === tagId)
         if (tag) {
-            title = tag.title;
-            description = tag.description;
-            brief = tag.brief;
-            iconUrl = tag.iconUrl;
+            title = tag.title
+            description = tag.description
+            brief = tag.brief
+            iconUrl = tag.iconUrl
         } else {
-            throw new InvalidParameterError('Tag not found');
+            throw new InvalidParameterError('Tag not found')
         }
     }
 
@@ -70,24 +70,24 @@ async function handler(ctx) {
             tag_id: tagId,
             time_range: range,
         },
-    });
+    })
 
-    const list = response.data.map((item) => parseItem(item));
+    const list = response.data.map((item) => parseItem(item))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (item.eventId) {
-                    item.description = await parseEventDetail(item);
+                    item.description = await parseEventDetail(item)
                 } else {
-                    const response = await ofetch(item.link);
-                    const $ = load(response);
-                    item.description = item.is_event ? $('div.box2').html() : $('.post-content').html();
+                    const response = await ofetch(item.link)
+                    const $ = load(response)
+                    item.description = item.is_event ? $('div.box2').html() : $('.post-content').html()
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${title ? `${title} - ` : ''}${description ? `${description} - ` : ''}智源社区`,
@@ -95,5 +95,5 @@ async function handler(ctx) {
         link: `${baseUrl}/?${tagId ? `tag_id=${tagId}&` : ''}sort=${sort}${range ? `&time_range=${range}` : ''}`,
         image: iconUrl,
         item: items,
-    };
+    }
 }

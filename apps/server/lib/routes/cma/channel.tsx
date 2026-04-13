@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/channel/:id?',
@@ -49,41 +49,41 @@ export const route: Route = {
 ::: tip
   订阅更多细分频道，请前往对应上级频道页，使用下拉菜单选择项目后跳转到目标频道页，查看其 URL 找到对应频道 id
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { id = '380' } = ctx.req.param();
+    const { id = '380' } = ctx.req.param()
 
-    const author = '中国气象局·天气预报';
-    const rootUrl = 'https://weather.cma.cn';
-    const apiUrl = new URL('api/channel', rootUrl).href;
-    const currentUrl = new URL(`web/channel-${id}.html`, rootUrl).href;
+    const author = '中国气象局·天气预报'
+    const rootUrl = 'https://weather.cma.cn'
+    const apiUrl = new URL('api/channel', rootUrl).href
+    const currentUrl = new URL(`web/channel-${id}.html`, rootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
             id,
         },
-    });
+    })
 
-    const data = response?.data?.pop() ?? {};
+    const data = response?.data?.pop() ?? {}
 
-    data.image = data.image?.replace(/\?.*$/, '') ?? undefined;
+    data.image = data.image?.replace(/\?.*$/, '') ?? undefined
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
     const title = [
         ...new Set(
             $('ol#breadcrumb li')
                 .slice(1)
                 .toArray()
-                .map((li) => $(li).text())
+                .map((li) => $(li).text()),
         ),
-    ].join(' > ');
-    const descriptionHtml = $('div.xml').html();
-    const image = new URL($('li.active a img').prop('src'), rootUrl).href;
-    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href;
+    ].join(' > ')
+    const descriptionHtml = $('div.xml').html()
+    const image = new URL($('li.active a img').prop('src'), rootUrl).href
+    const icon = new URL($('link[rel="shortcut icon"]').prop('href'), rootUrl).href
 
     const items = data
         ? [
@@ -98,13 +98,13 @@ async function handler(ctx) {
                               </figure>
                           ) : null}
                           {descriptionHtml ? raw(descriptionHtml) : null}
-                      </>
+                      </>,
                   ),
                   author:
                       $(
                           $('div.col-xs-8 span')
                               .toArray()
-                              .findLast((a) => $(a).text().startsWith('来源'))
+                              .findLast((a) => $(a).text().startsWith('来源')),
                       )
                           ?.text()
                           ?.split(/：/)
@@ -115,7 +115,7 @@ async function handler(ctx) {
                   enclosure_type: data.image ? `image/${data.image.split(/\./).pop()}` : undefined,
               },
           ]
-        : [];
+        : []
 
     return {
         item: items,
@@ -129,5 +129,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author,
         allowEmpty: true,
-    };
+    }
 }

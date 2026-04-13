@@ -1,29 +1,29 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ImageData = {
-    src: string;
-    alt?: string;
-    width?: string | number;
-};
+    src: string
+    alt?: string
+    width?: string | number
+}
 
 type VideoData = {
-    src: string;
-    width?: string | number;
-    height?: string | number;
-};
+    src: string
+    width?: string | number
+    height?: string | number
+}
 
 type Attachment = {
-    link: string;
-    title: string;
-};
+    link: string
+    title: string
+}
 
 type DescriptionData = {
-    description?: string;
-    image?: ImageData;
-    video?: VideoData;
-    attachments?: Attachment[];
-};
+    description?: string
+    image?: ImageData
+    video?: VideoData
+    attachments?: Attachment[]
+}
 
 export const renderDescription = ({ description, image, video, attachments }: DescriptionData): string =>
     renderToString(
@@ -51,5 +51,5 @@ export const renderDescription = ({ description, image, video, attachments }: De
                     </ul>
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

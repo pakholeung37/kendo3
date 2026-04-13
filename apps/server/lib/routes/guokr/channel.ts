@@ -1,15 +1,15 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseItem, parseList } from './utils';
+import { parseItem, parseList } from './utils'
 
 const channelMap = {
     calendar: 'pac',
     institute: 'predator',
     foodlab: 'predator',
     pretty: 'beauty',
-};
+}
 
 export const route: Route = {
     path: '/column/:channel',
@@ -28,10 +28,10 @@ export const route: Route = {
     description: `| 物种日历 | 吃货研究所 | 美丽也是技术活 |
 | -------- | ---------- | -------------- |
 | calendar | institute  | beauty         |`,
-};
+}
 
 async function handler(ctx) {
-    const channel = channelMap[ctx.req.param('channel')] ?? ctx.req.param('channel');
+    const channel = channelMap[ctx.req.param('channel')] ?? ctx.req.param('channel')
 
     const { data: response } = await got(`https://www.guokr.com/apis/minisite/article.json`, {
         searchParams: {
@@ -40,21 +40,21 @@ async function handler(ctx) {
             offset: 0,
             limit: 10,
         },
-    });
-    const result = parseList(response.result);
+    })
+    const result = parseList(response.result)
 
     if (result.length === 0) {
-        throw new InvalidParameterError('Unknown channel');
+        throw new InvalidParameterError('Unknown channel')
     }
 
-    const channelName = result[0].channels[0].name;
-    const channelUrl = result[0].channels[0].url;
+    const channelName = result[0].channels[0].name
+    const channelUrl = result[0].channels[0].url
 
-    const items = await Promise.all(result.map((item) => parseItem(item)));
+    const items = await Promise.all(result.map((item) => parseItem(item)))
 
     return {
         title: `果壳网 ${channelName}`,
         link: channelUrl,
         item: items,
-    };
+    }
 }

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.tiktok.com';
+const baseUrl = 'https://www.tiktok.com'
 
 export const route: Route = {
     path: '/live/:user',
@@ -30,41 +30,41 @@ export const route: Route = {
     name: 'Live',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { user } = ctx.req.param();
+    const { user } = ctx.req.param()
 
-    const link = `${baseUrl}/${user}/live`;
+    const link = `${baseUrl}/${user}/live`
 
     const liveRoomUserInfo = await cache.tryGet(
         `tiktok:live:${user}`,
         async () => {
-            const response = await ofetch(link);
-            const $ = load(response);
-            const sigiState = JSON.parse($('script#SIGI_STATE').text());
+            const response = await ofetch(link)
+            const $ = load(response)
+            const sigiState = JSON.parse($('script#SIGI_STATE').text())
 
-            return sigiState.LiveRoom.liveRoomUserInfo;
+            return sigiState.LiveRoom.liveRoomUserInfo
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const { user: userInfo, liveRoom } = liveRoomUserInfo;
+    const { user: userInfo, liveRoom } = liveRoomUserInfo
 
-    const status = liveRoom.status;
-    let title: string;
+    const status = liveRoom.status
+    let title: string
 
     switch (status) {
         case 2:
-            title = liveRoom.title || `${userInfo.nickname}'s going live now!`;
-            break;
+            title = liveRoom.title || `${userInfo.nickname}'s going live now!`
+            break
         case 4:
-            title = `${userInfo.nickname} is not live currently.`;
-            break;
+            title = `${userInfo.nickname} is not live currently.`
+            break
         default:
-            title = `${userInfo.nickname}'s live status is unknown (status ${status}).`;
-            break;
+            title = `${userInfo.nickname}'s live status is unknown (status ${status}).`
+            break
     }
 
     const items = [
@@ -75,7 +75,7 @@ async function handler(ctx) {
             link,
             guid: `${userInfo.roomId}:${liveRoom.streamId}:${liveRoom.status}`,
         },
-    ];
+    ]
 
     return {
         title: `${userInfo.nickname} (@${userInfo.uniqueId})'s Live Stream - TikTok`,
@@ -83,5 +83,5 @@ async function handler(ctx) {
         image: userInfo.avatarLarger || userInfo.avatarMedium || userInfo.avatarThumb,
         link,
         item: items,
-    };
+    }
 }

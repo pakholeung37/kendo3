@@ -1,18 +1,18 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-    width?: string | number;
-    height?: string | number;
-};
+    src?: string
+    alt?: string
+    width?: string | number
+    height?: string | number
+}
 
 type DescriptionData = {
-    images?: DescriptionImage[];
-    intro?: string;
-    description?: string;
-};
+    images?: DescriptionImage[]
+    intro?: string
+    description?: string
+}
 
 const OrnlDescription = ({ images, intro, description }: DescriptionData) => (
     <>
@@ -21,11 +21,11 @@ const OrnlDescription = ({ images, intro, description }: DescriptionData) => (
                 <figure>
                     <img src={image.src} alt={image.alt} width={image.width} height={image.height} />
                 </figure>
-            ) : null
+            ) : null,
         )}
         {intro ? <blockquote>{intro}</blockquote> : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<OrnlDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<OrnlDescription {...data} />)

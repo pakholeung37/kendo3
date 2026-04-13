@@ -1,13 +1,13 @@
 export interface Post {
-    id: number;
+    id: number
     content: {
-        rendered: string;
-    };
-    date_gmt: string;
-    modified_gmt: string;
-    link: string;
-    categories: number[];
+        rendered: string
+    }
+    date_gmt: string
+    modified_gmt: string
+    link: string
+    categories: number[]
     title: {
-        rendered: string;
-    };
+        rendered: string
+    }
 }

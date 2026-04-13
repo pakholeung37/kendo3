@@ -1,14 +1,14 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
     image?: {
-        src: string;
-        alt?: string;
-    };
-    abstracts?: string;
-    description?: string;
-};
+        src: string
+        alt?: string
+    }
+    abstracts?: string
+    description?: string
+}
 
 const DnDescription = ({ image, abstracts, description }: DescriptionData) => (
     <>
@@ -20,6 +20,6 @@ const DnDescription = ({ image, abstracts, description }: DescriptionData) => (
         {abstracts ? <backquote>{raw(abstracts)}</backquote> : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<DnDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<DnDescription {...data} />)

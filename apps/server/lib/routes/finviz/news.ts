@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const categories = {
     news: 0,
     blogs: 1,
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -43,22 +43,22 @@ export const route: Route = {
     description: `| News | Blogs |
 | ---- | ---- |
 | news | blogs |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'News' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 200;
+    const { category = 'News' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 200
 
     if (!Object.hasOwn(categories, category.toLowerCase())) {
-        throw new InvalidParameterError(`No category '${category}'.`);
+        throw new InvalidParameterError(`No category '${category}'.`)
     }
 
-    const rootUrl = 'https://finviz.com';
-    const currentUrl = new URL('news.ashx', rootUrl).href;
+    const rootUrl = 'https://finviz.com'
+    const currentUrl = new URL('news.ashx', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const items = $('table.table-fixed')
         .eq(categories[category.toLowerCase()])
@@ -66,19 +66,19 @@ async function handler(ctx) {
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a.nn-tab-link');
+            const a = item.find('a.nn-tab-link')
 
             const descriptionMatches = a
                 .parent()
                 .prop('data-boxover')
-                ?.match(/<td class='news_tooltip-tab'>(.*?)<\/td>/);
+                ?.match(/<td class='news_tooltip-tab'>(.*?)<\/td>/)
             const authorMatches = item
                 .find('use')
                 .first()
                 .prop('href')
-                ?.match(/#(.*?)-(light|dark)/);
+                ?.match(/#(.*?)-(light|dark)/)
 
             return {
                 title: a.text(),
@@ -86,11 +86,11 @@ async function handler(ctx) {
                 description: descriptionMatches ? descriptionMatches[1] : undefined,
                 author: authorMatches ? authorMatches[1].replaceAll('-', ' ') : 'finviz',
                 pubDate: timezone(parseDate(item.find('td.news_date-cell').text(), ['HH:mmA', 'MMM-DD']), -4),
-            };
+            }
         })
-        .filter((item) => item.title);
+        .filter((item) => item.title)
 
-    const icon = $('link[rel="icon"]').prop('href');
+    const icon = $('link[rel="icon"]').prop('href')
 
     return {
         item: items,
@@ -102,5 +102,5 @@ async function handler(ctx) {
         icon,
         logo: icon,
         subtitle: $('title').text(),
-    };
+    }
 }

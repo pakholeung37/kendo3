@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     name: '头条资讯',
@@ -14,4 +14,4 @@ export const route: Route = {
     maintainers: ['kt286', 'HaitianLiu', 'nczitzk'],
     handler,
     url: 'cnbeta.com.tw',
-};
+}

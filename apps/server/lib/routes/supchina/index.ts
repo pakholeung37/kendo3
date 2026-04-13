@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -17,24 +17,24 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'supchina.com/feed',
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://supchina.com';
-    const currentUrl = `${rootUrl}/feed/`;
+    const rootUrl = 'https://supchina.com'
+    const currentUrl = `${rootUrl}/feed/`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('item')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 guid: item.find('guid').text(),
@@ -51,11 +51,11 @@ async function handler(ctx) {
                         (c) =>
                             $(c)
                                 .html()
-                                .match(/CDATA\[(.*?)]/)[1]
+                                .match(/CDATA\[(.*?)]/)[1],
                     ),
                 pubDate: parseDate(item.find('pubDate').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -63,22 +63,22 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.aspect-spacer, .post-recs, .author-bio').remove();
+                content('.aspect-spacer, .post-recs, .author-bio').remove()
 
-                item.description = content('.post__main').html();
+                item.description = content('.post__main').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').first().text(),
         link: rootUrl,
         item: items,
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: ['/hazyresearch/blog'],
@@ -28,20 +28,20 @@ export const route: Route = {
     maintainers: ['dvorak0'],
     handler,
     url: 'hazyresearch.stanford.edu/blog',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://hazyresearch.stanford.edu';
-    const currentUrl = `${baseUrl}/blog`;
-    const { data: response } = await got(currentUrl);
-    const $ = load(response);
+    const baseUrl = 'https://hazyresearch.stanford.edu'
+    const currentUrl = `${baseUrl}/blog`
+    const { data: response } = await got(currentUrl)
+    const $ = load(response)
 
     // Parse __NEXT_DATA__ for posts
-    const nextDataRaw = $('script#__NEXT_DATA__').text();
-    const nextData = JSON.parse(nextDataRaw);
+    const nextDataRaw = $('script#__NEXT_DATA__').text()
+    const nextData = JSON.parse(nextDataRaw)
 
-    const posts = nextData.props.pageProps.posts || [];
-    const buildId = nextData.buildId;
+    const posts = nextData.props.pageProps.posts || []
+    const buildId = nextData.buildId
 
     const list = posts.map((post) => ({
         title: post.title,
@@ -49,24 +49,24 @@ async function handler() {
         api: `${baseUrl}/_next/data/${buildId}/blog/${post.slug}.json`,
         author: post.author,
         pubDate: timezone(parseDate(post.dateString, 'MMM D, YYYY'), -7),
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 // ✅ For full content, request real HTML page
-                const { data: html } = await got(item.link);
-                const $post = load(html);
+                const { data: html } = await got(item.link)
+                const $post = load(html)
 
                 // Adjust the selector to match your page structure!
-                const content = $post('main [class^="Post_content"]').html();
+                const content = $post('main [class^="Post_content"]').html()
 
-                item.description = content || '';
+                item.description = content || ''
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Hazy Research Blog',
@@ -74,5 +74,5 @@ async function handler() {
         description: 'Research updates from Stanford Hazy Research',
         language: 'en',
         item: items,
-    };
+    }
 }

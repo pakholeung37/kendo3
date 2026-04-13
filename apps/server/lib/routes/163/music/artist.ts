@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { renderPlaylistDescription } from '../templates/music/playlist';
+import { renderPlaylistDescription } from '../templates/music/playlist'
 
 export const route: Route = {
     path: '/music/artist/:id',
@@ -19,18 +19,18 @@ export const route: Route = {
     name: '歌手专辑',
     maintainers: ['metowolf'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await got(`https://music.163.com/api/artist/albums/${id}`, {
         headers: {
             Referer: 'https://music.163.com/',
         },
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
     return {
         title: data.artist.name,
@@ -38,7 +38,7 @@ async function handler(ctx) {
         description: `网易云音乐歌手专辑 - ${data.artist.name}`,
         image: data.artist.img1v1Url || data.artist.picUrl,
         item: data.hotAlbums.map((item) => {
-            const singer = item.artists.length === 1 ? item.artists[0].name : item.artists.reduce((prev, cur) => (prev.name || prev) + '/' + cur.name);
+            const singer = item.artists.length === 1 ? item.artists[0].name : item.artists.reduce((prev, cur) => (prev.name || prev) + '/' + cur.name)
             return {
                 title: `${item.name} - ${singer}`,
                 description: renderPlaylistDescription({
@@ -52,7 +52,7 @@ async function handler(ctx) {
                 published: new Date(item.publishTime),
                 category: item.subType,
                 author: singer,
-            };
+            }
         }),
-    };
+    }
 }

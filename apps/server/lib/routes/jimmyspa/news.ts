@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/news/:language',
@@ -37,27 +37,27 @@ export const route: Route = {
     `,
     maintainers: ['Cedaric'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language');
-    const rootUrl = 'https://www.jimmyspa.com';
+    const language = ctx.req.param('language')
+    const rootUrl = 'https://www.jimmyspa.com'
 
-    const currentUrl = new URL(`/${language}/News/Ajax/changeList?year=&keyword=&categoryId=0&page=1`, rootUrl).href;
+    const currentUrl = new URL(`/${language}/News/Ajax/changeList?year=&keyword=&categoryId=0&page=1`, rootUrl).href
 
-    const responseData = await got(currentUrl);
+    const responseData = await got(currentUrl)
 
-    const $ = load(responseData.data.view);
+    const $ = load(responseData.data.view)
 
     const items = $('ul#appendNews li.card_block')
         .toArray()
         .map((item) => {
-            const $$ = load(item);
-            const title = $$('a.news_card .info_wrap h3').text();
-            const image = $$('a.news_card .card_img img').prop('src') || '';
-            const link = $$('a.news_card').prop('data-route');
-            const itemdate = $$('a.news_card div.date').html() || '';
-            const pubDate = convertHtmlDateToStandardFormat(itemdate.toString());
+            const $$ = load(item)
+            const title = $$('a.news_card .info_wrap h3').text()
+            const image = $$('a.news_card .card_img img').prop('src') || ''
+            const link = $$('a.news_card').prop('data-route')
+            const itemdate = $$('a.news_card div.date').html() || ''
+            const pubDate = convertHtmlDateToStandardFormat(itemdate.toString())
 
             const description = renderDescription({
                 images: image
@@ -69,7 +69,7 @@ async function handler(ctx) {
                       ]
                     : undefined,
                 description: $$('a.news_card .info_wrap p').text(),
-            });
+            })
 
             return {
                 title,
@@ -80,25 +80,25 @@ async function handler(ctx) {
                     html: description,
                     text: title,
                 },
-            };
-        });
+            }
+        })
 
     return {
         title: `幾米 - 最新消息(${language})`,
         link: `${rootUrl}/${language}/News`,
         allowEmpty: true,
         item: items,
-    };
+    }
 }
 
 function convertHtmlDateToStandardFormat(htmlContent: string): Date | undefined {
-    const dateRegex = /<p>(\d{1,2})<\/p>\s*<p>(\d{1,2})\s*\.\s*([A-Za-z]{3})<\/p>/;
-    const match = htmlContent.match(dateRegex);
+    const dateRegex = /<p>(\d{1,2})<\/p>\s*<p>(\d{1,2})\s*\.\s*([A-Za-z]{3})<\/p>/
+    const match = htmlContent.match(dateRegex)
 
     if (match) {
-        const day = Number.parseInt(match[1]) + 1;
-        const year = match[2];
-        const monthAbbreviation = match[3];
+        const day = Number.parseInt(match[1]) + 1
+        const year = match[2]
+        const monthAbbreviation = match[3]
 
         const monthMapping: { [key: string]: string } = {
             Jan: '01',
@@ -113,12 +113,12 @@ function convertHtmlDateToStandardFormat(htmlContent: string): Date | undefined 
             Oct: '10',
             Nov: '11',
             Dec: '12',
-        };
+        }
 
-        const month = monthMapping[monthAbbreviation] || '';
+        const month = monthMapping[monthAbbreviation] || ''
 
-        return parseDate(`20${year}-${month}-${day}`);
+        return parseDate(`20${year}-${month}-${day}`)
     }
 
-    return undefined;
+    return undefined
 }

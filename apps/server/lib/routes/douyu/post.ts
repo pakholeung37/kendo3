@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/post/:id',
@@ -25,34 +25,34 @@ export const route: Route = {
     name: '鱼吧跟帖',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://yuba.douyu.com';
-    const currentUrl = `${rootUrl}/p/${id}`;
-    const detailUrl = `${rootUrl}/wbapi/web/post/detail/${id}`;
+    const rootUrl = 'https://yuba.douyu.com'
+    const currentUrl = `${rootUrl}/p/${id}`
+    const detailUrl = `${rootUrl}/wbapi/web/post/detail/${id}`
 
     const detailResponse = await got({
         method: 'get',
         url: detailUrl,
-    });
+    })
 
-    const data = detailResponse.data.data;
-    let apiUrl = `${rootUrl}/wbapi/web/post/comments/${id}?group_id=${data.group_id}&sink=1&page=1`;
+    const data = detailResponse.data.data
+    let apiUrl = `${rootUrl}/wbapi/web/post/comments/${id}?group_id=${data.group_id}&sink=1&page=1`
 
     let response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    apiUrl = `${rootUrl}/wbapi/web/post/comments/${id}?group_id=${data.group_id}&sink=1&page=${response.data.page_total}`;
+    apiUrl = `${rootUrl}/wbapi/web/post/comments/${id}?group_id=${data.group_id}&sink=1&page=${response.data.page_total}`
 
     response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = response.data.data.map((item) => ({
         title: `${item.nick_name}: ${item.content}`,
@@ -71,12 +71,12 @@ async function handler(ctx) {
                     time: new Date(r.created_ts * 1000).toLocaleString(),
                 })) ?? undefined,
         }),
-    }));
+    }))
 
     return {
         title: `斗鱼鱼吧 - ${data.title}`,
         link: currentUrl,
         item: items,
         description: data.content,
-    };
+    }
 }

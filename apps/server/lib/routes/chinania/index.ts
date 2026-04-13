@@ -1,64 +1,64 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category = 'xiehuidongtai/xiehuitongzhi' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25;
+    const { category = 'xiehuidongtai/xiehuitongzhi' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25
 
-    const rootUrl = 'https://www.chinania.org.cn';
-    const currentUrl = new URL(`html/${category.endsWith('/') ? category : `${category}/`}`, rootUrl).href;
+    const rootUrl = 'https://www.chinania.org.cn'
+    const currentUrl = new URL(`html/${category.endsWith('/') ? category : `${category}/`}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.notice_list_ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('p').first().text(),
                 pubDate: parseDate(item.find('p').last().text()),
                 link: item.find('a').prop('href'),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.article_title p').first().text();
-                const description = $$('div.article_content').html();
+                const title = $$('div.article_title p').first().text()
+                const description = $$('div.article_content').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('div.article_title p').last().text().split('：'));
-                item.author = $$("meta[name='keywords']").prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('div.article_title p').last().text().split('：'))
+                item.author = $$("meta[name='keywords']").prop('content')
                 item.content = {
                     html: description,
                     text: $$('div.article_content').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('img.logo').prop('src'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('img.logo').prop('src'), rootUrl).href
 
     return {
         title,
@@ -69,8 +69,8 @@ export const handler = async (ctx) => {
         image,
         author: $("meta[name='keywords']").prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -146,9 +146,9 @@ export const route: Route = {
         {
             source: ['www.chinania.org.cn/html/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return category ? `/${category}` : '';
+                return category ? `/${category}` : ''
             },
         },
         {
@@ -237,4 +237,4 @@ export const route: Route = {
             target: '/zcfg/zhengcefagui',
         },
     ],
-};
+}

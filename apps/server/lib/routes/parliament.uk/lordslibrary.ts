@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/lordslibrary/type/:topic?',
@@ -20,25 +20,25 @@ export const route: Route = {
     name: 'House of Lords Library',
     maintainers: ['AntiKnot'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { topic } = ctx.req.param();
-    const baseUrl = 'https://lordslibrary.parliament.uk';
-    const url = `${baseUrl}/type/${topic}/`;
-    const browser = await puppeteer();
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
+    const { topic } = ctx.req.param()
+    const baseUrl = 'https://lordslibrary.parliament.uk'
+    const url = `${baseUrl}/type/${topic}/`
+    const browser = await puppeteer()
+    const page = await browser.newPage()
+    await page.setRequestInterception(true)
     page.on('request', (request) => {
-        request.resourceType() === 'document' ? request.continue() : request.abort();
-    });
+        request.resourceType() === 'document' ? request.continue() : request.abort()
+    })
     await page.goto(url, {
         waitUntil: 'domcontentloaded',
-    });
+    })
 
-    const html = await page.evaluate(() => document.documentElement.innerHTML);
-    await page.close();
-    const $ = load(html);
+    const html = await page.evaluate(() => document.documentElement.innerHTML)
+    await page.close()
+    const $ = load(html)
     const items = $('div.l-box.l-box--no-border.card__text')
         .toArray()
         .map((article) => ({
@@ -46,11 +46,11 @@ async function handler(ctx) {
             link: $(article).find('.card__text a').attr('href'),
             description: $(article).find('p').last().text().trim(),
             pubDate: timezone($(article).find('.card__date time').attr('datetime')),
-        }));
-    await browser.close();
+        }))
+    await browser.close()
     return {
         title: `parliament - lordslibrary - ${topic}`,
         link: url,
         item: items,
-    };
+    }
 }

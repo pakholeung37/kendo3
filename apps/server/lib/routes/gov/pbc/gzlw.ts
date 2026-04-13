@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { processItems } from './utils';
+import { processItems } from './utils'
 
-const host = 'http://www.pbc.gov.cn';
+const host = 'http://www.pbc.gov.cn'
 
 export const route: Route = {
     path: '/pbc/gzlw',
@@ -29,26 +29,26 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'pbc.gov.cn/redianzhuanti/118742/4122386/4122692/index.html',
-};
+}
 
 async function handler() {
-    const url = `${host}/redianzhuanti/118742/4122386/4122692/index.html`;
+    const url = `${host}/redianzhuanti/118742/4122386/4122692/index.html`
 
-    const response = await got.post(url);
-    const $ = load(response.data);
+    const response = await got.post(url)
+    const $ = load(response.data)
     const list = $('li.clearfix')
         .toArray()
         .map((item) => ({
             title: $(item).find('a').text(),
             link: new URL($(item).find('a').attr('href'), host).href,
             author: $(item).find('span.fr').text().replaceAll('…', ''),
-        }));
+        }))
 
-    const items = await processItems(list);
+    const items = await processItems(list)
 
     return {
         title: '中国人民银行 工作论文',
         link: url,
         item: items,
-    };
+    }
 }

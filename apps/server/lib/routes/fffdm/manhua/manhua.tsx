@@ -1,23 +1,23 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const domain = 'manhua.fffdm.com';
-const host = `https://${domain}`;
+const domain = 'manhua.fffdm.com'
+const host = `https://${domain}`
 
 const get_pic = async (url) => {
-    const response = await got(url);
-    const data = response.data;
+    const response = await got(url)
+    const data = response.data
     return {
         comicTitle: data.mhinfo.title,
         chapterTitle: data.title,
         pics: data.cont,
         pubDate: parseDate(data.mh.time),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/manhua/:id/:cdn?',
@@ -41,23 +41,23 @@ export const route: Route = {
     name: '在线漫画',
     maintainers: ['zytomorrow'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const count = ctx.req.query('limit') || 99999;
-    const cdnNum = ctx.req.param('cdn') || 5;
-    const cdn = !Number.isNaN(Number.parseInt(cdnNum)) && 1 <= Number.parseInt(cdnNum) && Number.parseInt(cdnNum) <= 5 ? `https://p${cdnNum}.fzacg.com` : `https://p5.fzacg.com`;
+    const id = ctx.req.param('id')
+    const count = ctx.req.query('limit') || 99999
+    const cdnNum = ctx.req.param('cdn') || 5
+    const cdn = !Number.isNaN(Number.parseInt(cdnNum)) && 1 <= Number.parseInt(cdnNum) && Number.parseInt(cdnNum) <= 5 ? `https://p${cdnNum}.fzacg.com` : `https://p5.fzacg.com`
 
     // 获取漫画清单
-    const response = await got(`${host}/api/manhua/${id}`);
-    const data = response.data;
+    const response = await got(`${host}/api/manhua/${id}`)
+    const data = response.data
 
     const chapter_detail = await Promise.all(
         data.mhlist.splice(0, count).map((item) => {
-            const url = `${host}/api/manhua/${id}/${item.url}`;
+            const url = `${host}/api/manhua/${id}/${item.url}`
             return cache.tryGet(url, async () => {
-                const picContent = await get_pic(url);
+                const picContent = await get_pic(url)
                 return {
                     title: picContent.chapterTitle,
                     description: renderToString(
@@ -68,19 +68,19 @@ async function handler(ctx) {
                                     <br />
                                 </>
                             ))}
-                        </div>
+                        </div>,
                     ),
                     link: `${host}/${id}/${item.url}/`,
                     comicTitle: picContent.comicTitle,
                     pubDate: picContent.pubDate,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
     return {
         title: '风之动漫 - ' + chapter_detail[0].comicTitle,
         link: `${host}/${id}`,
         description: '风之动漫',
         item: chapter_detail,
-    };
+    }
 }

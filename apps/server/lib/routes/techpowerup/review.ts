@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, fixImages, headers, parseReviews } from './utils';
+import { baseUrl, fixImages, headers, parseReviews } from './utils'
 
 export const route: Route = {
     path: '/review/:keyword?',
@@ -30,28 +30,28 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.techpowerup.com/review/',
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
+    const keyword = ctx.req.param('keyword')
 
-    const url = new URL(`${baseUrl}/review/${keyword ? 'search/' : ''}`);
+    const url = new URL(`${baseUrl}/review/${keyword ? 'search/' : ''}`)
     if (keyword) {
-        url.searchParams.set('q', keyword);
-        url.searchParams.set('_', Date.now().toString());
+        url.searchParams.set('q', keyword)
+        url.searchParams.set('_', Date.now().toString())
     }
 
     const response = await ofetch(url.href, {
         headers,
-    });
+    })
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $('.reviewlist-bit')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const a = $item.find('.title a');
+            const $item = $(item)
+            const a = $item.find('.title a')
             return {
                 title: a.text(),
                 link: baseUrl + a.attr('href'),
@@ -68,25 +68,25 @@ async function handler(ctx) {
                     .filter((_, c) => c.type === 'text')
                     .text()
                     .trim(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const response = await ofetch(item.link, {
                     headers,
-                });
-                const $ = load(response);
+                })
+                const $ = load(response)
 
-                fixImages($);
+                fixImages($)
 
-                await parseReviews($, item);
+                await parseReviews($, item)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Reviews | TechPowerUp',
@@ -94,5 +94,5 @@ async function handler(ctx) {
         language: 'en',
         image: 'https://tpucdn.com/apple-touch-icon-v1684568903519.png',
         item: items,
-    };
+    }
 }

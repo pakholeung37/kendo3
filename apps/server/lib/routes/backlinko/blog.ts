@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog',
@@ -27,18 +27,18 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'backlinko.com/blog',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://backlinko.com';
-    const { data: response, url: link } = await got(`${baseUrl}/blog`);
+    const baseUrl = 'https://backlinko.com'
+    const { data: response, url: link } = await got(`${baseUrl}/blog`)
 
-    const $ = load(response);
-    const nextData = JSON.parse($('#__NEXT_DATA__').text());
+    const $ = load(response)
+    const nextData = JSON.parse($('#__NEXT_DATA__').text())
     const {
         buildId,
         props: { pageProps },
-    } = nextData;
+    } = nextData
 
     const posts = [...pageProps.posts.nodes, ...pageProps.backlinkoLockedPosts.nodes].map((post) => ({
         title: post.title,
@@ -46,20 +46,20 @@ async function handler() {
         pubDate: parseDate(post.modified),
         author: post.author.node.name,
         apiUrl: `${baseUrl}/_next/data/${buildId}/${post.slug}.json`,
-    }));
+    }))
 
     const items = await Promise.all(
         posts.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(item.apiUrl);
-                const post = data.pageProps.post || data.pageProps.lockedPost;
+                const { data } = await got(item.apiUrl)
+                const post = data.pageProps.post || data.pageProps.lockedPost
 
-                item.description = post.content;
+                item.description = post.content
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: pageProps.page.seo.title,
@@ -67,5 +67,5 @@ async function handler() {
         link,
         language: 'en',
         item: items,
-    };
+    }
 }

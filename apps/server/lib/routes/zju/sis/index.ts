@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const base = 'http://www.sis.zju.edu.cn/sischinese/';
+const base = 'http://www.sis.zju.edu.cn/sischinese/'
 
 /**
  * Map of category types to their corresponding IDs and titles
@@ -26,7 +26,7 @@ const categoryMap = new Map([
     [11, { id: '12542/list.htm', title: '浙江大学外国语学院-学生思政' }],
     [12, { id: 'xyll/list.htm', title: '浙江大学外国语学院-校友联络' }],
     [13, { id: '12609/list.htm', title: '浙江大学外国语学院-对外交流' }],
-]);
+])
 
 /**
  * Fetches and parses news items from a specific category page
@@ -37,26 +37,26 @@ async function fetchNewsItemsByCategory(categoryId: string): Promise<DataItem[]>
     const response = await got({
         method: 'get',
         url: `${base}${categoryId}`,
-    });
+    })
 
-    const $ = load(response.data);
-    const newsItems = $('.news_list').find('li');
+    const $ = load(response.data)
+    const newsItems = $('.news_list').find('li')
 
     return newsItems.toArray().map((item) => {
-        const element = $(item);
-        const href = element.find('a').attr('href');
-        let title = element.find('a').attr('title');
+        const element = $(item)
+        const href = element.find('a').attr('href')
+        let title = element.find('a').attr('title')
         if (!title) {
             // If the title is not found, try to extract it from the link text
-            title = element.find('a').text().trim();
+            title = element.find('a').text().trim()
         }
 
         return {
             title,
             pubDate: parseDate(element.find('.news_meta').text()),
             link: href ? new URL(href, base).href : undefined,
-        };
-    });
+        }
+    })
 }
 
 /**
@@ -68,7 +68,7 @@ async function fetchNewsItemsByCategory(categoryId: string): Promise<DataItem[]>
 async function enrichNewsItemWithDetails(item: DataItem, refererUrl: string): Promise<DataItem> {
     // If the item doesn't have a link, return the item as-is
     if (!item.link) {
-        return item;
+        return item
     }
 
     return await cache.tryGet(item.link, async () => {
@@ -81,31 +81,31 @@ async function enrichNewsItemWithDetails(item: DataItem, refererUrl: string): Pr
                 headers: {
                     Referer: refererUrl,
                 },
-            });
+            })
 
-            const $ = load(response.data);
+            const $ = load(response.data)
 
             // Extract and set the full article content as description
-            const description = $('.wp_articlecontent').html();
+            const description = $('.wp_articlecontent').html()
             if (description) {
-                item.description = description;
+                item.description = description
             }
 
             // Extract and clean the author information
-            let author = $('.arti_metas').find('.arti_publisher').text();
+            let author = $('.arti_metas').find('.arti_publisher').text()
             // Remove the '发布者：' (Publisher:) prefix and trim whitespace
-            author = author.replace('发布者：', '').trim();
+            author = author.replace('发布者：', '').trim()
             if (author) {
-                item.author = author;
+                item.author = author
             }
 
-            return item;
+            return item
         } catch {
             // If there's an error accessing the page (network issues, authentication required, etc.),
             // return the item with only the basic information we already have
-            return item;
+            return item
         }
-    });
+    })
 }
 
 export const route: Route = {
@@ -129,7 +129,7 @@ export const route: Route = {
     maintainers: ['Alex222222222222'],
     handler: handleSisRequest,
     url: 'www.sis.zju.edu.cn',
-};
+}
 
 /**
  * Main handler function for processing SIS (School of International Studies) news requests
@@ -137,26 +137,26 @@ export const route: Route = {
  * @returns Promise with RSS feed data including title, link, and news items
  */
 async function handleSisRequest(ctx: { req: { param: (arg0: string) => string } }) {
-    const requestedType = Number.parseInt(ctx.req.param('type'));
-    const categoryInfo = categoryMap.get(requestedType);
+    const requestedType = Number.parseInt(ctx.req.param('type'))
+    const categoryInfo = categoryMap.get(requestedType)
 
     // Validate the requested category type
     if (!categoryInfo) {
-        const validTypes = [...categoryMap.keys()].join(', ');
-        throw new Error(`Invalid type: ${requestedType}. Valid types are: ${validTypes}`);
+        const validTypes = [...categoryMap.keys()].join(', ')
+        throw new Error(`Invalid type: ${requestedType}. Valid types are: ${validTypes}`)
     }
 
-    const categoryUrl = `${base}${categoryInfo.id}`;
+    const categoryUrl = `${base}${categoryInfo.id}`
 
     // Fetch news items from all relevant categories
-    const allNewsItems = await fetchNewsItemsByCategory(categoryInfo.id);
+    const allNewsItems = await fetchNewsItemsByCategory(categoryInfo.id)
 
     // Enrich each news item with detailed content
-    const enrichedItems = await Promise.all(allNewsItems.map((item) => enrichNewsItemWithDetails(item, categoryUrl)));
+    const enrichedItems = await Promise.all(allNewsItems.map((item) => enrichNewsItemWithDetails(item, categoryUrl)))
 
     return {
         title: categoryInfo.title,
         link: categoryUrl,
         item: enrichedItems,
-    };
+    }
 }

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/watching/:username',
@@ -25,26 +25,26 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { username } = ctx.req.param();
-    const url = `https://faexport.spangle.org.uk/user/${username}/watching.json`;
+    const { username } = ctx.req.param()
+    const url = `https://faexport.spangle.org.uk/user/${username}/watching.json`
     const data = await ofetch(url, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
-    const urlUserInfo = `https://faexport.spangle.org.uk/user/${username}.json`;
+    const urlUserInfo = `https://faexport.spangle.org.uk/user/${username}.json`
     const dataUserInfo = await ofetch(urlUserInfo, {
         method: 'GET',
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
-    const watchingCount = dataUserInfo.watching.count;
+    })
+    const watchingCount = dataUserInfo.watching.count
 
     const items = data.map((item) => ({
         title: item,
@@ -52,12 +52,12 @@ async function handler(ctx) {
         guid: item,
         description: `${username} is watching ${item} <br> Total: ${watchingCount}`,
         author: item,
-    }));
+    }))
 
     return {
         title: `Fur Affinity | Users ${username} is watching`,
         link: `https://www.furaffinity.net/watchlist/by/${username}/`,
         description: `Fur Affinity Users ${username} is watching`,
         item: items,
-    };
+    }
 }

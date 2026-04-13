@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/publications',
@@ -27,28 +27,28 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'disinfo.eu/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.disinfo.eu';
-    const currentUrl = `${rootUrl}/publications`;
+    const rootUrl = 'https://www.disinfo.eu'
+    const currentUrl = `${rootUrl}/publications`
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.elementor-heading-title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -56,28 +56,28 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.wp-block-spacer').remove();
-                content('.elementor-widget-container p').eq(0).remove();
+                content('.wp-block-spacer').remove()
+                content('.elementor-widget-container p').eq(0).remove()
 
                 content('img').each(function () {
-                    content(this).attr('src', content(this).attr('data-lazy-src'));
-                });
+                    content(this).attr('src', content(this).attr('data-lazy-src'))
+                })
 
-                item.description = content('.elementor-widget-theme-post-content').html();
-                item.pubDate = parseDate(content('meta[property="article:modified_time"]').attr('content'));
+                item.description = content('.elementor-widget-theme-post-content').html()
+                item.pubDate = parseDate(content('meta[property="article:modified_time"]').attr('content'))
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

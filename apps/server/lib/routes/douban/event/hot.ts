@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/event/hot/:locationId',
@@ -17,11 +17,11 @@ export const route: Route = {
     name: '热门同城活动',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { locationId = 0 } = ctx.req.param();
-    const referer = 'https://m.douban.com/app_topic/event_hot';
+    const { locationId = 0 } = ctx.req.param()
+    const referer = 'https://m.douban.com/app_topic/event_hot'
 
     const response = await got({
         method: 'get',
@@ -29,7 +29,7 @@ async function handler(ctx) {
         headers: {
             Referer: referer,
         },
-    });
+    })
 
     return {
         title: `豆瓣同城-热门活动-${locationId}`,
@@ -37,13 +37,13 @@ async function handler(ctx) {
         item: response.data.subject_collection_items.map(({ title, url, cover, subtype, info, price_range }) => {
             const description = `<img src="${cover.url}"><br>
               ${info}/${subtype}/${price_range}
-            `;
+            `
 
             return {
                 title,
                 description,
                 link: url,
-            };
+            }
         }),
-    };
+    }
 }

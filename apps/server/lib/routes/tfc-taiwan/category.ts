@@ -1,30 +1,30 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, parseItem, parsePost } from './utils';
+import { baseUrl, parseItem, parsePost } from './utils'
 
 const handler = async (ctx) => {
-    const { category } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : undefined;
-    const isNumericCategory = !Number.isNaN(Number.parseInt(category, 10));
+    const { category } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : undefined
+    const isNumericCategory = !Number.isNaN(Number.parseInt(category, 10))
 
     const categoryResponse = await ofetch(`${baseUrl}/wp-json/wp/v2/categories${isNumericCategory ? `/${category}` : ''}`, {
         query: {
             slug: isNumericCategory ? undefined : category,
         },
-    });
+    })
 
     if (Array.isArray(categoryResponse) && !categoryResponse.length) {
-        throw new InvalidParameterError(`Category "${category}" not found`);
+        throw new InvalidParameterError(`Category "${category}" not found`)
     }
-    const categoryInfo = isNumericCategory ? categoryResponse : categoryResponse[0];
+    const categoryInfo = isNumericCategory ? categoryResponse : categoryResponse[0]
     if (!categoryInfo.id) {
-        throw new InvalidParameterError(`Category "${category}" not found`);
+        throw new InvalidParameterError(`Category "${category}" not found`)
     }
 
-    const postsResponse = await parsePost(limit, categoryInfo.id);
-    const items = parseItem(postsResponse);
+    const postsResponse = await parsePost(limit, categoryInfo.id)
+    const items = parseItem(postsResponse)
 
     return {
         title: categoryInfo.yoast_head_json.title,
@@ -35,8 +35,8 @@ const handler = async (ctx) => {
         link: categoryInfo.link,
         lang: 'zh-TW',
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     name: '分類',
@@ -51,4 +51,4 @@ export const route: Route = {
     description: `| 謠言風向球 | 議題觀察室        | TOP10                 | 名家專欄       | 國際視野             |
 | ---------- | ----------------- | --------------------- | -------------- | -------------------- |
 | rumor-mill | issue-observatory | weekly-top-ten-rumors | expert-columns | research-and-updates |`,
-};
+}

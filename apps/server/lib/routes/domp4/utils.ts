@@ -1,10 +1,10 @@
 /* eslint-disable unicorn/prefer-code-point */
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
 
-const defaultDomain = 'www.xlmp4.com';
+const defaultDomain = 'www.xlmp4.com'
 
-const allowedDomains = new Set(['www.xlmp4.com']);
+const allowedDomains = new Set(['www.xlmp4.com'])
 
 /**
  * trackers from https://www.domp4.cc/Style/2020/js/base.js?v=2
@@ -34,13 +34,13 @@ const magnetTrackers = [
     'udp://ipv4.tracker.harry.lu:80/announce',
     'udp://tracker.sylphix.com:6969/announce',
     'http://95.216.22.207:9001/announce',
-];
+]
 
 /**
  * compose magnet url with trackers
  */
 function composeMagnetUrl(magnet, trackers = magnetTrackers) {
-    return `${magnet}&tr=${trackers.join('&tr=')}`;
+    return `${magnet}&tr=${trackers.join('&tr=')}`
 }
 
 /**
@@ -48,12 +48,12 @@ function composeMagnetUrl(magnet, trackers = magnetTrackers) {
  */
 function getUrlType(url) {
     if (url.startsWith('magnet:')) {
-        return 'magnet';
+        return 'magnet'
     }
     if (url.startsWith('ed2k:')) {
-        return 'ed2k';
+        return 'ed2k'
     }
-    return '';
+    return ''
 }
 
 /**
@@ -62,36 +62,36 @@ function getUrlType(url) {
  */
 function decodeCipherText(p, a, c, k, e, d) {
     e = function (c) {
-        return (c < a ? '' : e(Number.parseInt((c / a).toString()))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
-    };
+        return (c < a ? '' : e(Number.parseInt((c / a).toString()))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36))
+    }
     if (!''.replace(/^/, String)) {
         while (c--) {
-            d[e(c.toString())] = k[c] || e(c.toString());
+            d[e(c.toString())] = k[c] || e(c.toString())
         }
         k = [
             function (e) {
-                return d[e];
+                return d[e]
             },
-        ];
+        ]
         e = function () {
-            return String.raw`\w+`;
-        };
-        c = 1;
+            return String.raw`\w+`
+        }
+        c = 1
     }
     while (c--) {
         if (k[c]) {
-            p = p.replaceAll(new RegExp(String.raw`\b` + e(c.toString()) + String.raw`\b`, 'g'), k[c]);
+            p = p.replaceAll(new RegExp(String.raw`\b` + e(c.toString()) + String.raw`\b`, 'g'), k[c])
         }
     }
-    return p;
+    return p
 }
 
 function ensureDomain(ctx, domain = defaultDomain) {
-    const origin = `https://${domain}`;
+    const origin = `https://${domain}`
     if (!config.feature.allow_user_supply_unsafe_domain && !allowedDomains.has(new URL(origin).hostname)) {
-        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
     }
-    return origin;
+    return origin
 }
 
-export { composeMagnetUrl, decodeCipherText, defaultDomain, ensureDomain, getUrlType, magnetTrackers };
+export { composeMagnetUrl, decodeCipherText, defaultDomain, ensureDomain, getUrlType, magnetTrackers }

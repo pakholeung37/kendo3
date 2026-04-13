@@ -1,15 +1,15 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import MarkdownIt from 'markdown-it';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import MarkdownIt from 'markdown-it'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const originOptions = [
     {
@@ -24,40 +24,40 @@ const originOptions = [
         label: '标准版',
         value: 'std',
     },
-];
+]
 
-const flattenTree = (items: any[]): any[] => items.flatMap((item) => [item, ...flattenTree(item.children || [])]);
+const flattenTree = (items: any[]): any[] => items.flatMap((item) => [item, ...flattenTree(item.children || [])])
 
 const findUuidsByNames = (data: any[], names: string[]): string[] => {
-    const allItems = flattenTree(data);
-    return names.flatMap((name) => allItems.filter((item) => item.name === name || item.uuid === name).map((item) => item.uuid)).filter(Boolean);
-};
+    const allItems = flattenTree(data)
+    return names.flatMap((name) => allItems.filter((item) => item.name === name || item.uuid === name).map((item) => item.uuid)).filter(Boolean)
+}
 
 const findNamesByUuids = (data: any[], uuids: string[]): string[] => {
-    const allItems = flattenTree(data);
-    return uuids.flatMap((uuid) => allItems.filter((item) => item.uuid === uuid || item.name === uuid).map((item) => item.name)).filter(Boolean);
-};
+    const allItems = flattenTree(data)
+    return uuids.flatMap((uuid) => allItems.filter((item) => item.uuid === uuid || item.name === uuid).map((item) => item.name)).filter(Boolean)
+}
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { type = 'new', origin = 'all', projectTag } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10);
+    const { type = 'new', origin = 'all', projectTag } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10)
 
-    const baseUrl = 'https://oshwhub.com';
-    const apiUrl: string = new URL('api/project', baseUrl).href;
-    const apiTagUrl: string = new URL('api/project_tags', baseUrl).href;
-    const targetUrl: string = new URL('explore', baseUrl).href;
+    const baseUrl = 'https://oshwhub.com'
+    const apiUrl: string = new URL('api/project', baseUrl).href
+    const apiTagUrl: string = new URL('api/project_tags', baseUrl).href
+    const targetUrl: string = new URL('explore', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
-    const tagResponse = await ofetch(apiTagUrl);
-    const projectTagsData = tagResponse.result;
+    const tagResponse = await ofetch(apiTagUrl)
+    const projectTagsData = tagResponse.result
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -68,11 +68,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
             projectTag: findUuidsByNames(projectTagsData, projectTag?.split(/,/) ?? []),
             public: true,
         },
-    });
+    })
 
     let items: DataItem[] = response.result.lists.slice(0, limit).map((item): DataItem => {
-        const title: string = item.name;
-        const image: string | undefined = item.thumb?.startsWith('https:') ? item.thumb : `https:${item.thumb}`;
+        const title: string = item.name
+        const image: string | undefined = item.thumb?.startsWith('https:') ? item.thumb : `https:${item.thumb}`
         const description: string | undefined = renderDescription({
             images: image
                 ? [
@@ -83,10 +83,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                   ]
                 : undefined,
             intro: item.introduction,
-        });
-        const pubDate: number | string = item.created_at;
-        const linkUrl: string | undefined = item.path;
-        const categories: string[] = [originOptions.find((opt) => opt.value === item.origin)?.label ?? undefined].filter(Boolean) as string[];
+        })
+        const pubDate: number | string = item.created_at
+        const linkUrl: string | undefined = item.path
+        const categories: string[] = [originOptions.find((opt) => opt.value === item.origin)?.label ?? undefined].filter(Boolean) as string[]
         const authors: DataItem['author'] = item.owner
             ? [
                   {
@@ -95,9 +95,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: item.owner.avatar ? `https:${item.owner.avatar}` : undefined,
                   },
               ]
-            : undefined;
-        const guid: string = item.uuid ? `oshwhub-${item.uuid}` : '';
-        const updated: number | string = item.updated_at ?? pubDate;
+            : undefined
+        const guid: string = item.uuid ? `oshwhub-${item.uuid}` : ''
+        const updated: number | string = item.updated_at ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -117,31 +117,31 @@ export const handler = async (ctx: Context): Promise<Data> => {
             updated: updated ? parseDate(updated) : undefined,
             language,
             uuid: item.uuid,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link || !item.guid) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const projectId = item.guid.replace(/^oshwhub-/, '');
-                const detailUrl = new URL(`api/project/${projectId}`, baseUrl).href;
-                const detailResponse = await ofetch(detailUrl);
+                const projectId = item.guid.replace(/^oshwhub-/, '')
+                const detailUrl = new URL(`api/project/${projectId}`, baseUrl).href
+                const detailResponse = await ofetch(detailUrl)
 
-                const result = detailResponse.result;
-                const title: string = result.name;
-                const pubDateStr: string | undefined = result.oshwhub_publish_at;
-                const linkUrl: string | undefined = result.path;
+                const result = detailResponse.result
+                const title: string = result.name
+                const pubDateStr: string | undefined = result.oshwhub_publish_at
+                const linkUrl: string | undefined = result.path
 
-                const origin: string | undefined = originOptions.find((opt) => opt.value === result.origin)?.label ?? undefined;
-                const tags: string[] = findNamesByUuids(projectTagsData, result.project_tags ?? []);
+                const origin: string | undefined = originOptions.find((opt) => opt.value === result.origin)?.label ?? undefined
+                const tags: string[] = findNamesByUuids(projectTagsData, result.project_tags ?? [])
 
-                const categories: string[] = [...new Set([...(item.category ?? []), origin ?? undefined, ...tags, result.license].filter(Boolean) as string[])];
+                const categories: string[] = [...new Set([...(item.category ?? []), origin ?? undefined, ...tags, result.license].filter(Boolean) as string[])]
                 const authors: DataItem['author'] = [
                     ...new Map(
                         [result.owner, result.creator, ...result.members].map((author) => {
@@ -149,16 +149,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                                 name: author.nickname,
                                 url: new URL(author.username, baseUrl).href,
                                 avatar: author.avatar ? `https:${author.avatar}` : undefined,
-                            };
-                            return [`${item.name}|${item.url}`, item];
-                        })
+                            }
+                            return [`${item.name}|${item.url}`, item]
+                        }),
                     ).values(),
-                ];
-                const guid: string = result.uuid ? `oshwhub-${result.uuid}` : item.guid || '';
-                const image: string | undefined = result.thumb?.startsWith('https:') ? result.thumb : `https:${result.thumb}`;
-                const upDatedStr: string | undefined = result.updated_at || pubDateStr;
+                ]
+                const guid: string = result.uuid ? `oshwhub-${result.uuid}` : item.guid || ''
+                const image: string | undefined = result.thumb?.startsWith('https:') ? result.thumb : `https:${result.thumb}`
+                const upDatedStr: string | undefined = result.updated_at || pubDateStr
 
-                const attachments = result.attachments;
+                const attachments = result.attachments
 
                 const description: string | undefined = renderDescription({
                     images: image
@@ -180,7 +180,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     documents: result.version_documents,
                     boms: result.boms ? JSON.parse(result.boms) : undefined,
                     attachments,
-                });
+                })
 
                 let processedItem: DataItem = {
                     title,
@@ -199,15 +199,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
-                const attachment = attachments?.[0];
+                const attachment = attachments?.[0]
 
                 if (attachment && attachment.src) {
-                    const enclosureUrl: string | undefined = `https://image.lceda.cn${attachment.src}`;
-                    const enclosureType: string = attachment.mime;
-                    const enclosureTitle: string = attachment.name;
-                    const enclosureLength = Number(attachment.size);
+                    const enclosureUrl: string | undefined = `https://image.lceda.cn${attachment.src}`
+                    const enclosureType: string = attachment.mime
+                    const enclosureTitle: string = attachment.name
+                    const enclosureLength = Number(attachment.size)
 
                     processedItem = {
                         ...processedItem,
@@ -215,18 +215,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         enclosure_type: enclosureType,
                         enclosure_title: enclosureTitle || title,
                         enclosure_length: enclosureLength,
-                    };
+                    }
                 }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -238,8 +238,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/-/).pop()?.trim(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/explore/:type?/:origin?/:projectTag{.+}?',
@@ -1146,4 +1146,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

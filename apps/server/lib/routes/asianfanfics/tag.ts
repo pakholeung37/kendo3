@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 // test url http://localhost:1200/asianfanfics/tag/milklove/N
 
@@ -31,9 +31,9 @@ export const route: Route = {
 - OS: One Shots 短篇
 `,
     handler,
-};
+}
 
-type Type = 'L' | 'N' | 'O' | 'C' | 'OS';
+type Type = 'L' | 'N' | 'O' | 'C' | 'OS'
 
 const typeToText = {
     L: '最近更新',
@@ -41,38 +41,38 @@ const typeToText = {
     O: '最早发布',
     C: '已完成',
     OS: '短篇',
-};
+}
 
 async function handler(ctx) {
-    const tag = ctx.req.param('tag');
-    const type = ctx.req.param('type') as Type;
+    const tag = ctx.req.param('tag')
+    const type = ctx.req.param('type') as Type
 
     if (!type || !['L', 'N', 'O', 'C', 'OS'].includes(type)) {
-        throw new Error('无效的排序类型');
+        throw new Error('无效的排序类型')
     }
-    const link = `https://www.asianfanfics.com/browse/tag/${tag}/${type}`;
+    const link = `https://www.asianfanfics.com/browse/tag/${tag}/${type}`
 
     const response = await ofetch(link, {
         headers: {
             'user-agent': config.trueUA,
             Referer: 'https://www.asianfanfics.com/',
         },
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
     const items: DataItem[] = $('.primary-container .excerpt')
         .toArray()
         .filter((element) => {
-            const $element = $(element);
-            return $element.find('.excerpt__title a').length > 0;
+            const $element = $(element)
+            return $element.find('.excerpt__title a').length > 0
         })
         .map((element) => {
-            const $element = $(element);
-            const title = $element.find('.excerpt__title a').text();
-            const link = 'https://www.asianfanfics.com' + $element.find('.excerpt__title a').attr('href');
-            const author = $element.find('.excerpt__meta__name a').text().trim();
-            const pubDate = parseDate($element.find('time').attr('datetime') || '');
-            const description = $element.find('.excerpt__text').html();
+            const $element = $(element)
+            const title = $element.find('.excerpt__title a').text()
+            const link = 'https://www.asianfanfics.com' + $element.find('.excerpt__title a').attr('href')
+            const author = $element.find('.excerpt__meta__name a').text().trim()
+            const pubDate = parseDate($element.find('time').attr('datetime') || '')
+            const description = $element.find('.excerpt__text').html()
 
             return {
                 title,
@@ -80,12 +80,12 @@ async function handler(ctx) {
                 author,
                 pubDate,
                 description,
-            };
-        });
+            }
+        })
 
     return {
         title: `Asianfanfics - 标签：${tag} - ${typeToText[type]}`,
         link,
         item: items,
-    };
+    }
 }

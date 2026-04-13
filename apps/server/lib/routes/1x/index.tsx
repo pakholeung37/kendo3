@@ -1,39 +1,39 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const handler = async (ctx) => {
-    const { category = 'latest/awarded' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'latest/awarded' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://1x.com';
-    const currentUrl = new URL(`gallery/${category}`, rootUrl).href;
+    const rootUrl = 'https://1x.com'
+    const currentUrl = new URL(`gallery/${category}`, rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const language = $('html').prop('lang');
-    const apiUrl = new URL(`backend/lm2.php?style=normal&mode=${$('input#lm_mode').prop('value')}`, rootUrl).href;
+    const language = $('html').prop('lang')
+    const apiUrl = new URL(`backend/lm2.php?style=normal&mode=${$('input#lm_mode').prop('value')}`, rootUrl).href
 
-    const { data: response } = await got(apiUrl);
+    const { data: response } = await got(apiUrl)
 
-    const $$ = load(response);
+    const $$ = load(response)
 
     const items = $$('div.photos-feed-item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('span.photos-feed-data-title').first().text() || 'Untitled';
-            const image = item.find('img').prop('src');
-            const author = item.find('span.photos-feed-data-name').first().text();
+            const title = item.find('span.photos-feed-data-title').first().text() || 'Untitled'
+            const image = item.find('img').prop('src')
+            const author = item.find('span.photos-feed-data-name').first().text()
 
-            const text = `${title} by ${author}`;
+            const text = `${title} by ${author}`
 
             const description = renderToString(
                 <>
@@ -43,11 +43,11 @@ export const handler = async (ctx) => {
                         </figure>
                     ) : null}
                     {text ? <>{raw(text)}</> : null}
-                </>
-            );
+                </>,
+            )
 
-            const id = item.find('img[id]').prop('id').split(/-/).pop();
-            const guid = `1x-${id}`;
+            const id = item.find('img[id]').prop('id').split(/-/).pop()
+            const guid = `1x-${id}`
 
             return {
                 title,
@@ -66,10 +66,10 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: image ? `image/${image.split(/\./).pop()}` : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
-    const image = new URL($('img.themedlogo').prop('src'), rootUrl).href;
+    const image = new URL($('img.themedlogo').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -80,8 +80,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -115,4 +115,4 @@ If you subscribe to [Wildlife Published](https://1x.com/gallery/wildlife/publish
             target: '/1x/:category',
         },
     ],
-};
+}

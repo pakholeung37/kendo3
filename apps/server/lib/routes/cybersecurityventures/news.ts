@@ -1,20 +1,20 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { RawRecord } from './types';
+import type { RawRecord } from './types'
 
 const categories: Record<
     string,
     {
-        label: string;
-        scene: number;
-        view: number;
+        label: string
+        scene: number
+        view: number
     }
 > = {
     today: {
@@ -52,7 +52,7 @@ const categories: Record<
         scene: 11,
         view: 13,
     },
-};
+}
 
 export const route: Route = {
     name: 'News',
@@ -80,37 +80,37 @@ export const route: Route = {
         supportRadar: true,
     },
     view: ViewType.Articles,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const rootUrl = 'https://cybersecurityventures.com/';
-    const apiUrl = 'https://us-east-1-renderer-read.knack.com/v1';
-    const category = ctx.req.param('category') ?? 'today';
-    const limit = ctx.req.query('limit') ?? 20;
+    const rootUrl = 'https://cybersecurityventures.com/'
+    const apiUrl = 'https://us-east-1-renderer-read.knack.com/v1'
+    const category = ctx.req.param('category') ?? 'today'
+    const limit = ctx.req.query('limit') ?? 20
 
     if (!(category in categories)) {
-        throw new InvalidParameterError('Invalid category');
+        throw new InvalidParameterError('Invalid category')
     }
 
-    const { scene, view, label } = categories[category];
+    const { scene, view, label } = categories[category]
 
     const data = await ofetch<{
-        records: RawRecord[];
+        records: RawRecord[]
     }>(`${apiUrl}/scenes/scene_${scene}/views/view_${view}/records?format=raw&page=1&rows_per_page=${limit}&sort_field=field_2&sort_order=desc`, {
         headers: {
             'X-Knack-Application-Id': '6013171b60be8f001cb27363',
             'X-Knack-Rest-Api-Key': 'renderer',
         },
-    });
+    })
 
     return {
         title: `${label} - Cybercrime Magazine`,
         link: `${rootUrl}/${category}`,
         item: data.records.map((item) => {
-            const $ = load(item.field_3, null, false);
-            const link = $('a').attr('href');
-            const source = item.field_4;
-            const description = `<p>${source}</p><br>${$.html()}`;
+            const $ = load(item.field_3, null, false)
+            const link = $('a').attr('href')
+            const source = item.field_4
+            const description = `<p>${source}</p><br>${$.html()}`
 
             return {
                 title: item.field_5,
@@ -118,7 +118,7 @@ async function handler(ctx: Context): Promise<Data> {
                 pubDate: parseDate(item.field_2.iso_timestamp),
                 link,
                 guid: `cybersecurityventures:${item.id}`,
-            } as DataItem;
+            } as DataItem
         }),
-    };
+    }
 }

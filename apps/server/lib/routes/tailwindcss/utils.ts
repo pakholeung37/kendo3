@@ -1,39 +1,39 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { BASE_URL } from './constants';
+import { BASE_URL } from './constants'
 
 /** Fetch the content of a given article. */
 export const fetchArticleContent = async (url: string): Promise<string> => {
-    const data = await ofetch(url, { responseType: 'text' });
-    const $ = load(data);
+    const data = await ofetch(url, { responseType: 'text' })
+    const $ = load(data)
 
-    return $('article.prose').html() ?? '';
-};
+    return $('article.prose').html() ?? ''
+}
 
 /** Fetch the feed object. */
 export const fetchFeed = async (limit: number): Promise<Data> => {
-    const url = new URL('/feeds/atom.xml', BASE_URL).href;
+    const url = new URL('/feeds/atom.xml', BASE_URL).href
 
-    const data = await ofetch(url, { responseType: 'text' });
+    const data = await ofetch(url, { responseType: 'text' })
 
-    const $ = load(data, { xml: true });
+    const $ = load(data, { xml: true })
 
     const items = await Promise.all(
         $('entry')
             .toArray()
             .slice(0, limit)
             .map((entry) => {
-                const title = $(entry).find('title').text();
-                const id = $(entry).find('id').text();
-                const url = $(entry).find('link[href]').attr('href');
-                const imageUrl = $(entry).find('link[rel="enclosure"]').attr('href');
+                const title = $(entry).find('title').text()
+                const id = $(entry).find('id').text()
+                const url = $(entry).find('link[href]').attr('href')
+                const imageUrl = $(entry).find('link[rel="enclosure"]').attr('href')
 
                 if (url === undefined) {
-                    throw new Error(`No article URL found for article with id ${id}`);
+                    throw new Error(`No article URL found for article with id ${id}`)
                 }
 
                 return cache.tryGet(
@@ -53,10 +53,10 @@ export const fetchFeed = async (limit: number): Promise<Data> => {
                                 })),
                             pubDate: $(entry).find('updated').text(),
                             guid: $(entry).find('id').text(),
-                        }) as DataItem
-                );
-            })
-    );
+                        }) as DataItem,
+                )
+            }),
+    )
 
     return {
         title: $('feed > title').text(),
@@ -66,5 +66,5 @@ export const fetchFeed = async (limit: number): Promise<Data> => {
         icon: $('feed > icon').text(),
         description: $('feed > subtitle').text(),
         link: $('feed > link[rel="alternate"]').attr('href'),
-    } as Data;
-};
+    } as Data
+}

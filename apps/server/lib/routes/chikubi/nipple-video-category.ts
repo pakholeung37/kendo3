@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import parser from '@/utils/rss-parser';
+import type { Data, Route } from '@/types'
+import parser from '@/utils/rss-parser'
 
-import { processItems } from './utils';
+import { processItems } from './utils'
 
 export const route: Route = {
     path: '/nipple-video-category/:keyword',
@@ -27,25 +27,25 @@ export const route: Route = {
             target: '/nipple-video-category/:keyword',
         },
     ],
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { keyword } = ctx.req.param();
-    const baseUrl = 'https://chikubi.jp';
-    const url = `/nipple-video-category/${encodeURIComponent(keyword)}`;
+    const { keyword } = ctx.req.param()
+    const baseUrl = 'https://chikubi.jp'
+    const url = `/nipple-video-category/${encodeURIComponent(keyword)}`
 
-    const feed = await parser.parseURL(`${baseUrl}${url}/feed`);
+    const feed = await parser.parseURL(`${baseUrl}${url}/feed`)
 
     const list = feed.items.map((item) => ({
         title: item.title,
         link: item.link,
-    }));
+    }))
 
-    const items = await processItems(list);
+    const items = await processItems(list)
 
     return {
         title: `動画カテゴリー: ${feed.title?.split('-')[0]} - chikubi.jp`,
         link: `${baseUrl}${url}`,
         item: items,
-    };
+    }
 }

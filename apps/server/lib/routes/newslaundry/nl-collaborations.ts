@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchCollection, rootUrl } from './utils';
+import { fetchCollection, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/nl-collaborations',
@@ -25,8 +25,8 @@ export const route: Route = {
     name: 'NL Collaboration',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    return await fetchCollection('nl-collaborations', `${rootUrl}/nl-collaborations`);
+    return await fetchCollection('nl-collaborations', `${rootUrl}/nl-collaborations`)
 }

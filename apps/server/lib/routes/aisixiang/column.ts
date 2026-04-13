@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { ossUrl, ProcessFeed, rootUrl } from './utils';
+import { ossUrl, ProcessFeed, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/column/:id',
@@ -24,35 +24,35 @@ export const route: Route = {
     name: '栏目',
     maintainers: ['HenryQW', 'nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const currentUrl = new URL(`/data/search?column=${id}`, rootUrl).href;
+    const currentUrl = new URL(`/data/search?column=${id}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const title = $('div.article-title a').first().text().replaceAll('[]', '');
+    const title = $('div.article-title a').first().text().replaceAll('[]', '')
 
     const items = $('div.article-title')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a[title]');
+            const a = item.find('a[title]')
 
             return {
                 title: a.text(),
                 link: new URL(a.prop('href'), rootUrl).href,
                 author: a.text().split('：')[0],
                 pubDate: timezone(parseDate(item.find('span').text()), +8),
-            };
-        });
+            }
+        })
 
     return {
         item: await ProcessFeed(limit, cache.tryGet, items),
@@ -62,5 +62,5 @@ async function handler(ctx) {
         language: 'zh-cn',
         image: new URL('images/logo.jpg', ossUrl).href,
         subtitle: title,
-    };
+    }
 }

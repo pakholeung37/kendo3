@@ -1,63 +1,63 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 function loadContent(link) {
     return cache.tryGet(link, async () => {
         // 开始加载页面
-        const response = await got.get(link);
-        const $ = load(response.data);
+        const response = await got.get(link)
+        const $ = load(response.data)
         // 获取标题
-        const title = $('#Content1 > div > ul > li > h1').text();
+        const title = $('#Content1 > div > ul > li > h1').text()
         // 获取正文内容
-        const introduce = $('#ReportIDtext').html();
+        const introduce = $('#ReportIDtext').html()
 
         return {
             title,
             description: introduce,
             link,
-        };
-    });
+        }
+    })
 }
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    const host = `https://${type}.neea.edu.cn${typeDic[type].url}`;
+    const type = ctx.req.param('type')
+    const host = `https://${type}.neea.edu.cn${typeDic[type].url}`
     const response = await got({
         method: 'get',
         url: host,
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
-    const $ = load(data);
-    const list = $(`#ReportIDname > a`).parent().parent().toArray();
+    const $ = load(data)
+    const list = $(`#ReportIDname > a`).parent().parent().toArray()
 
     const process = await Promise.all(
         list.map(async (item) => {
-            const ReportIDname = $(item).find('#ReportIDname > a');
-            const ReportIDIssueTime = $(item).find('#ReportIDIssueTime');
-            const itemUrl = `https://${type}.neea.edu.cn` + $(ReportIDname).attr('href');
-            const time = ReportIDIssueTime.text();
+            const ReportIDname = $(item).find('#ReportIDname > a')
+            const ReportIDIssueTime = $(item).find('#ReportIDIssueTime')
+            const itemUrl = `https://${type}.neea.edu.cn` + $(ReportIDname).attr('href')
+            const time = ReportIDIssueTime.text()
             const single = {
                 title: $(ReportIDname).text(),
                 link: itemUrl,
                 guid: itemUrl,
                 pubDate: timezone(parseDate(time), +8),
-            };
-            const other = await loadContent(String(itemUrl));
-            return { ...single, ...other };
-        })
-    );
+            }
+            const other = await loadContent(String(itemUrl))
+            return { ...single, ...other }
+        }),
+    )
     return {
         title: `${typeDic[String(type)].title}动态`,
         link: host,
         description: `${typeDic[String(type)].title}动态 `,
         item: process,
-    };
+    }
 }
 
 const typeDic = {
@@ -112,7 +112,7 @@ const typeDic = {
         url: '/html1/category/1507/2035-1.htm',
         title: '书画等级考试（CCPT）',
     },
-};
+}
 
 export const route: Route = {
     path: '/local/:type',
@@ -152,4 +152,4 @@ export const route: Route = {
 |              | 全国英语等级考试（PETS）      | pets     |
 |              | 全国外语水平考试（WSK）       | wsk      |
 |              | 书画等级考试（CCPT）          | ccpt     |`,
-};
+}

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/:type?/:category?',
@@ -42,31 +42,31 @@ export const route: Route = {
 | 生物医药及医疗器械   | biomedicine-and-medical-devices-industry-reports                  |
 | 现代服务业           | modern-service-industry-industry-reports                          |
 | 制造业人才           | manufacturing-talent-industry-reports                             |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || '';
-    const category = ctx.req.param('category') || '';
+    const type = ctx.req.param('type') || ''
+    const category = ctx.req.param('category') || ''
 
-    const rootUrl = 'https://www.dx2025.com';
-    const currentUrl = `${rootUrl}${type === '' ? '' : `/archives/${type === 'tag' ? `tag${category === '' ? '' : `/${category}`}` : `category/${type}${category === '' ? '' : `/${category}`}`}`}`;
+    const rootUrl = 'https://www.dx2025.com'
+    const currentUrl = `${rootUrl}${type === '' ? '' : `/archives/${type === 'tag' ? `tag${category === '' ? '' : `/${category}`}` : `category/${type}${category === '' ? '' : `/${category}`}`}`}`
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.entry-title a')
         .slice(0, 10)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text(),
                 link: item.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -74,21 +74,21 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                item.author = content('.entry-author-name').text();
-                item.description = content('.bpp-post-content, .entry-content').html();
-                item.pubDate = new Date(content('.entry-date').attr('datetime')).toUTCString();
+                item.author = content('.entry-author-name').text()
+                item.description = content('.bpp-post-content, .entry-content').html()
+                item.pubDate = new Date(content('.entry-date').attr('datetime')).toUTCString()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/news/:language?/:category?',
@@ -59,7 +59,7 @@ export const route: Route = {
 | ภาษาไทย            | th-th |
 | 日本語             | ja-jp |
 | 繁體中文           | zh-tw |`,
-};
+}
 
 const GAME_MAP = {
     diablo2: {
@@ -137,33 +137,33 @@ const GAME_MAP = {
         value: 'blizzard',
         id: 'blt500c1f8b5470bfdb',
     },
-};
+}
 
 function getSearchParams(category = 'all') {
     return category === 'all'
         ? Object.values(GAME_MAP)
               .map((item) => `feedCxpProductIds[]=${item.id}`)
               .join('&')
-        : `feedCxpProductIds[]=${GAME_MAP[category].id}`;
+        : `feedCxpProductIds[]=${GAME_MAP[category].id}`
 }
 
 async function handler(ctx) {
-    const category = GAME_MAP[ctx.req.param('category')]?.key || 'all';
-    const language = ctx.req.param('language') || 'en-us';
-    const rootUrl = `https://news.blizzard.com/${language}`;
-    const currentUrl = category === 'all' ? rootUrl : `${rootUrl}/?filter=${GAME_MAP[category].value}`;
-    const apiUrl = `${rootUrl}/api/news/blizzard`;
-    let rssTitle = '';
+    const category = GAME_MAP[ctx.req.param('category')]?.key || 'all'
+    const language = ctx.req.param('language') || 'en-us'
+    const rootUrl = `https://news.blizzard.com/${language}`
+    const currentUrl = category === 'all' ? rootUrl : `${rootUrl}/?filter=${GAME_MAP[category].value}`
+    const apiUrl = `${rootUrl}/api/news/blizzard`
+    let rssTitle = ''
 
     const {
         data: {
             feed: { contentItems: response },
         },
-    } = await got(`${apiUrl}?${getSearchParams(category)}`);
+    } = await got(`${apiUrl}?${getSearchParams(category)}`)
 
     const list = response.map((item) => {
-        const content = item.properties;
-        rssTitle = category === 'all' ? 'All News' : content.cxpProduct.title; // 这个是用来填充 RSS 订阅源频道级别 title，没别的地方能拿到了(而且会根据语言切换)
+        const content = item.properties
+        rssTitle = category === 'all' ? 'All News' : content.cxpProduct.title // 这个是用来填充 RSS 订阅源频道级别 title，没别的地方能拿到了(而且会根据语言切换)
         return {
             title: content.title,
             link: content.newsUrl,
@@ -172,27 +172,27 @@ async function handler(ctx) {
             guid: content.newsId,
             description: content.summary,
             pubDate: content.lastUpdated,
-        };
-    });
+        }
+    })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 try {
-                    const { data: response } = await got(item.link);
-                    const $ = load(response);
-                    item.description = $('.Content').html();
-                    return item;
+                    const { data: response } = await got(item.link)
+                    const $ = load(response)
+                    item.description = $('.Content').html()
+                    return item
                 } catch {
-                    return item;
+                    return item
                 }
-            })
-        )
-    );
+            }),
+        ),
+    )
 
     return {
         title: rssTitle,
         link: currentUrl,
         item: items,
-    };
+    }
 }

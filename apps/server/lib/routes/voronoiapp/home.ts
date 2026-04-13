@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { CategoryParam, CommonDataProperties, CommonRouteProperties, getPostItems } from './common';
+import { CategoryParam, CommonDataProperties, CommonRouteProperties, getPostItems } from './common'
 
 export const route: Route = {
     ...CommonRouteProperties,
@@ -18,13 +18,13 @@ export const route: Route = {
         category: CategoryParam,
     },
     handler: async (ctx) => {
-        const { category = '' } = ctx.req.param();
-        const items = await getPostItems({ feed: 'VORONOI', category: category === '' ? undefined : category });
+        const { category = '' } = ctx.req.param()
+        const items = await getPostItems({ feed: 'VORONOI', category: category === '' ? undefined : category })
         return {
             ...CommonDataProperties,
             title: `Voronoi Home Posts${category ? ` - ${category}` : ''}`,
             link: 'https://www.voronoiapp.com',
             item: items,
-        } as Data;
+        } as Data
     },
-};
+}

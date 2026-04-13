@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const rootURL = 'https://www.uber.com';
+const rootURL = 'https://www.uber.com'
 
 export const route: Route = {
     // `compat` is a never used parameter
@@ -36,7 +36,7 @@ export const route: Route = {
     zh: {
         description: 'uber的任何区域站点的英文blog（例如www.uber.com/en-JP/blog）都是相同的内容，正是本路由提供的engineering blog，因此本路由不提供语言选择；本路由不是uber在特定区域站点的公开新闻blog（例如www.uber.com/ja-JP/blog)',
     },
-};
+}
 
 async function handler() {
     const response = await ofetch(`${rootURL}/en-HK/blog/engineering/rss/`, {
@@ -48,8 +48,8 @@ async function handler() {
         },
         // Without this, ofetch will parse the response as a blob instead of text, which cannot be loaded by cheerio
         parseResponse: (txt) => txt,
-    });
-    const $ = load(response, { xmlMode: true });
+    })
+    const $ = load(response, { xmlMode: true })
 
     const result = await Promise.all(
         $('item')
@@ -60,15 +60,15 @@ async function handler() {
                         headers: {
                             accept: 'text/html',
                         },
-                    });
-                    const detail = load(detailResponse);
+                    })
+                    const detail = load(detailResponse)
 
-                    const scriptText = detail('script#__REDUX_STATE__').text().trim();
+                    const scriptText = detail('script#__REDUX_STATE__').text().trim()
                     // The json in the script element is over-encoded
                     // It needs to be decoded this way before it can be parsed by JSON.parse
-                    const jsonText = decodeURIComponent(JSON.parse(`"${scriptText}"`));
+                    const jsonText = decodeURIComponent(JSON.parse(`"${scriptText}"`))
                     // Traverse the JSON to find the content node, which is more robust against format changes.
-                    const contentHtml = findNode(JSON.parse(jsonText), { idKey: 'id', idValue: 'BlogArticleContent', siblingKey: 'props', childKey: 'content' }).replaceAll(String.raw`\n`, '');
+                    const contentHtml = findNode(JSON.parse(jsonText), { idKey: 'id', idValue: 'BlogArticleContent', siblingKey: 'props', childKey: 'content' }).replaceAll(String.raw`\n`, '')
 
                     return {
                         link: $(el).find('link').text(),
@@ -79,49 +79,49 @@ async function handler() {
                             .find('category')
                             .toArray()
                             .map((item) => $(item).text()),
-                    };
-                })
-            )
-    );
+                    }
+                }),
+            ),
+    )
 
     return {
         title: `Uber Engineering Blog`,
         link: rootURL + '/blog/engineering',
         description: 'The technology behind Uber Engineering',
         item: result,
-    };
+    }
 }
 
 function findNode(
     json: any,
     options: {
-        idKey?: string;
-        idValue: string;
-        siblingKey: string;
-        childKey: string;
-    }
+        idKey?: string
+        idValue: string
+        siblingKey: string
+        childKey: string
+    },
 ): any {
-    const { idKey = 'id', idValue, siblingKey, childKey } = options;
+    const { idKey = 'id', idValue, siblingKey, childKey } = options
 
     if (Array.isArray(json)) {
         for (const item of json) {
-            const result = findNode(item, options);
+            const result = findNode(item, options)
             if (result !== undefined) {
-                return result;
+                return result
             }
         }
     } else if (json && typeof json === 'object') {
         if (json[idKey] === idValue) {
-            return json[siblingKey]?.[childKey];
+            return json[siblingKey]?.[childKey]
         }
 
         for (const key in json) {
-            const result = findNode(json[key], options);
+            const result = findNode(json[key], options)
             if (result !== undefined) {
-                return result;
+                return result
             }
         }
     }
 
-    return undefined;
+    return undefined
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/:category?',
@@ -26,27 +26,27 @@ export const route: Route = {
     description: `| 3D PORTRAITS | CHARACTERS |
 | ------------ | ---------- |
 | portraits    | characters |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'portraits' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'portraits' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const author = 'Ian Spriggs';
-    const rootUrl = 'https://ianspriggs.com';
-    const currentUrl = new URL(category, rootUrl).href;
+    const author = 'Ian Spriggs'
+    const rootUrl = 'https://ianspriggs.com'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div.work-item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const image = item.find('img').first();
+            const image = item.find('img').first()
 
             return {
                 title: item.find('div.work-info').text(),
@@ -65,40 +65,40 @@ async function handler(ctx) {
                 pubDate: parseDate(item.find('div.work-info p').last(), 'YYYY'),
                 enclosure_url: image?.prop('src') ?? undefined,
                 enclosure_type: image?.prop('src') ? 'image/jpeg' : undefined,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
                 const images = content('div.work-item img')
                     .toArray()
                     .map((item) => {
-                        item = content(item);
+                        item = content(item)
 
                         return {
                             src: item.prop('src').replace(/-\d+x\d+\./, '.'),
                             alt: item.prop('alt'),
-                        };
-                    });
+                        }
+                    })
 
-                item.title = content('div.project-title').text();
+                item.title = content('div.project-title').text()
                 item.description += renderDescription({
                     images,
                     description: content('div.nectar-fancy-ul').html(),
-                });
-                item.pubDate = parseDate(content('span.subheader').last().text(), 'YYYY');
+                })
+                item.pubDate = parseDate(content('span.subheader').last().text(), 'YYYY')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items,
@@ -110,5 +110,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('a[aria-current="page"] span.menu-title-text').text(),
         author,
-    };
+    }
 }

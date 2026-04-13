@@ -1,41 +1,41 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
+    const { id } = ctx.req.param()
 
-    const baseUrl = 'https://community.chocolatey.org';
-    const targetUrl: string = new URL(`packages/${id}`, baseUrl).href;
+    const baseUrl = 'https://community.chocolatey.org'
+    const targetUrl: string = new URL(`packages/${id}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
-    const title: string = $('meta[property="og:title"]').attr('content');
-    const description: string | undefined = $('div#description').html();
-    const pubDateStr: string | undefined = $('h3.mt-0.mb-3').last().text();
-    const categoryEls: Element[] = $('a[data-package-tag]').toArray();
-    const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-    const authorEls: Element[] = $('img[alt="gravatar"]').toArray();
+    const title: string = $('meta[property="og:title"]').attr('content')
+    const description: string | undefined = $('div#description').html()
+    const pubDateStr: string | undefined = $('h3.mt-0.mb-3').last().text()
+    const categoryEls: Element[] = $('a[data-package-tag]').toArray()
+    const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+    const authorEls: Element[] = $('img[alt="gravatar"]').toArray()
     const authors: DataItem['author'] = authorEls.map((authorEl) => {
-        const $authorEl: Cheerio<Element> = $(authorEl).parent();
+        const $authorEl: Cheerio<Element> = $(authorEl).parent()
 
         return {
             name: $authorEl.find('span').text(),
             url: $authorEl.attr('href') ? new URL($authorEl.attr('href') as string, baseUrl).href : undefined,
             avatar: $authorEl.attr('src'),
-        };
-    });
-    const guid = `chocolatey-${title}`;
-    const image: string | undefined = $('div.package-logo img').attr('src') ? new URL($('div.package-logo img').attr('src') as string, baseUrl).href : undefined;
-    const upDatedStr: string | undefined = pubDateStr;
+        }
+    })
+    const guid = `chocolatey-${title}`
+    const image: string | undefined = $('div.package-logo img').attr('src') ? new URL($('div.package-logo img').attr('src') as string, baseUrl).href : undefined
+    const upDatedStr: string | undefined = pubDateStr
 
     const processedItem: DataItem = {
         title,
@@ -54,9 +54,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
         banner: image,
         updated: upDatedStr ? parseDate(upDatedStr) : undefined,
         language,
-    };
+    }
 
-    const items: DataItem[] = [processedItem];
+    const items: DataItem[] = [processedItem]
 
     return {
         title: $('title').first().text(),
@@ -68,8 +68,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/packages/:id',
@@ -98,9 +98,9 @@ export const route: Route = {
         {
             source: ['community.chocolatey.org/packages'],
             target: (params) => {
-                const id: string = params.id;
+                const id: string = params.id
 
-                return `/chocolatey/package${id ? `/${id}` : ''}`;
+                return `/chocolatey/package${id ? `/${id}` : ''}`
             },
         },
     ],
@@ -120,4 +120,4 @@ export const route: Route = {
         },
         description: undefined,
     },
-};
+}

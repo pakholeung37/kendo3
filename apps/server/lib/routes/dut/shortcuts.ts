@@ -79,4 +79,4 @@ export default {
         zytz: 'index/zytz',
         ywgk: 'index/ywgk',
     },
-};
+}

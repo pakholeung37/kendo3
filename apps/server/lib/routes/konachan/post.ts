@@ -1,8 +1,8 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: [
@@ -45,35 +45,35 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { period = '1d' } = ctx.req.param();
-    const isSfw = ctx.req.path.includes('/sfw');
-    const baseUrl = isSfw ? 'https://konachan.net' : 'https://konachan.com';
+    const { period = '1d' } = ctx.req.param()
+    const isSfw = ctx.req.path.includes('/sfw')
+    const baseUrl = isSfw ? 'https://konachan.net' : 'https://konachan.com'
 
     const response = await got({
         url: `${baseUrl}/post/popular_recent.json`,
         searchParams: queryString.stringify({
             period,
         }),
-    });
+    })
 
-    const posts = response.data;
+    const posts = response.data
 
     const titles = {
         '1d': 'Last 24 hours',
         '1w': 'Last week',
         '1m': 'Last month',
         '1y': 'Last year',
-    };
+    }
 
     const mime: Record<string, string> = {
         jpg: 'jpeg',
         png: 'png',
-    };
+    }
 
-    const title = titles[period];
+    const title = titles[period]
 
     return {
         title: `${title} - ${isSfw ? 'konachan.net' : 'konachan.com'}`,
@@ -91,8 +91,8 @@ async function handler(ctx) {
                     `<p>Rating: ${post.rating}</p><p>Score: ${post.score}</p>`,
                     ...(post.source ? [`<a href="${post.source}">Source</a>`] : []),
                     ...(post.parent_id ? [`<a href="${baseUrl}/post/show/${post.parent_id}">Parent</a>`] : []),
-                ];
-                return result.join('');
+                ]
+                return result.join('')
             })(),
             media: {
                 content: {
@@ -105,5 +105,5 @@ async function handler(ctx) {
             },
             category: post.tags.split(/\s+/),
         })),
-    };
+    }
 }

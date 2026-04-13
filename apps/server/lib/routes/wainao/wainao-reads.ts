@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/wainao-reads',
@@ -24,14 +24,14 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler() {
-    const apiUrl = 'https://www.wainao.me/pf/api/v3/content/fetch/content-api-collections?query={"content_alias":"wainao-hero"}&d=81&_website=wainao';
-    const baseUrl = 'https://www.wainao.me';
+    const apiUrl = 'https://www.wainao.me/pf/api/v3/content/fetch/content-api-collections?query={"content_alias":"wainao-hero"}&d=81&_website=wainao'
+    const baseUrl = 'https://www.wainao.me'
 
-    const response = await got(apiUrl);
-    const data = JSON.parse(response.body);
+    const response = await got(apiUrl)
+    const data = JSON.parse(response.body)
 
     const items = data.content_elements.map((item) => ({
         title: item.headlines.basic,
@@ -39,11 +39,11 @@ async function handler() {
         link: baseUrl + item.canonical_url,
         pubDate: parseDate(item.publish_date),
         image: item.promo_items?.basic?.url || '',
-    }));
+    }))
 
     return {
         title: '歪脑读 - 歪脑',
         link: baseUrl,
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { processItems } from './utils';
+import { processItems } from './utils'
 
 export const route: Route = {
     path: '/news/:lang?/:id?',
@@ -36,49 +36,49 @@ For the site https://www.dw.com/de/deutschland/s-12321 the language code would b
             target: '/news/:lang/:id',
         },
     ],
-};
+}
 
-const defaultUrl = `https://www.dw.com/graph-api/en/content/navigation/9097`;
-const typenames = new Set(['Article', 'Liveblog', 'Video']);
+const defaultUrl = `https://www.dw.com/graph-api/en/content/navigation/9097`
+const typenames = new Set(['Article', 'Liveblog', 'Video'])
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang') ?? 'en';
-    let id = ctx.req.param('id');
+    const lang = ctx.req.param('lang') ?? 'en'
+    let id = ctx.req.param('id')
 
     if (/^s-\d+$/.test(id)) {
-        id = id.match(/^s-(\d+)$/i)[1]; // convert s-1234 id to 1234
+        id = id.match(/^s-(\d+)$/i)[1] // convert s-1234 id to 1234
     } else if (id === undefined) {
         // Look up the id of the Top Stories Page of the selected language if id is not specified in the URL.
         const navigation = await cache.tryGet(
             'dw:navigation',
             async () => {
-                const res = await got(defaultUrl);
-                return res.data.data.content.topStoriesNavigations;
+                const res = await got(defaultUrl)
+                return res.data.data.content.topStoriesNavigations
             },
             config.cache.routeExpire,
-            false
-        );
+            false,
+        )
         id = navigation
             .map((item) => item.namedUrl.split('/'))
             .find((item) => item[1] === lang)[3]
-            .match(/^s-(\d+)$/i)[1];
+            .match(/^s-(\d+)$/i)[1]
     }
 
-    const response = await got(`https://www.dw.com/graph-api/${lang}/content/navigation/${id}`);
-    const feed = response.data.data.content;
-    cache.set('dw:navigation', feed.topStoriesNavigations, config.cache.routeExpire);
+    const response = await got(`https://www.dw.com/graph-api/${lang}/content/navigation/${id}`)
+    const feed = response.data.data.content
+    cache.set('dw:navigation', feed.topStoriesNavigations, config.cache.routeExpire)
 
-    const list = feed.contentComposition.informationSpaces.flatMap((section) => Object.values(section).flatMap((component) => component[0]?.contents || [])).filter((item) => typenames.has(item.__typename) && item.id);
+    const list = feed.contentComposition.informationSpaces.flatMap((section) => Object.values(section).flatMap((component) => component[0]?.contents || [])).filter((item) => typenames.has(item.__typename) && item.id)
     const items = await processItems(
         list.map((item) => {
-            item.link = new URL(item.namedUrl, 'https://www.dw.com').href;
-            item.pubDate = item.contentDate;
-            item.description = item.teaser;
-            item.language = lang;
-            item.type = item.__typename.toLowerCase();
-            return item;
-        })
-    );
+            item.link = new URL(item.namedUrl, 'https://www.dw.com').href
+            item.pubDate = item.contentDate
+            item.description = item.teaser
+            item.language = lang
+            item.type = item.__typename.toLowerCase()
+            return item
+        }),
+    )
 
     return {
         title: `DW | ${feed.title}`,
@@ -86,5 +86,5 @@ async function handler(ctx) {
         description: feed.metaDescription,
         language: feed.topStoriesNavigations.find((item) => item.namedUrl.startsWith(`/${lang}/`))?.localeLang ?? lang,
         item: items,
-    };
+    }
 }

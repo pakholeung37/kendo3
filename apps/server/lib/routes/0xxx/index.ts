@@ -1,39 +1,39 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filter } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const { filter } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const baseUrl = 'https://0xxx.ws';
-    const targetUrl: string = new URL(filter ? `?${filter}` : '', baseUrl).href;
+    const baseUrl = 'https://0xxx.ws'
+    const targetUrl: string = new URL(filter ? `?${filter}` : '', baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'en';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'en'
 
     let items: DataItem[] = $('table#home-table tr:not(.gore)')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const $categoryEl: Cheerio<Element> = $el.find('td.category');
-            const $catalogueEl: Cheerio<Element> = $el.find('td.catalogue');
-            const $dateEl: Cheerio<Element> = $el.find('td.date');
+            const $categoryEl: Cheerio<Element> = $el.find('td.category')
+            const $catalogueEl: Cheerio<Element> = $el.find('td.catalogue')
+            const $dateEl: Cheerio<Element> = $el.find('td.date')
 
-            const title: string = $el.find('td.title').text();
-            const image: string | undefined = $el.find('a.screenshot').attr('rel');
+            const title: string = $el.find('td.title').text()
+            const image: string | undefined = $el.find('a.screenshot').attr('rel')
 
             const description: string | undefined = renderDescription({
                 images: image
@@ -49,11 +49,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 title,
                 size: $el.find('td.size').text(),
                 date: $dateEl.html(),
-            });
-            const pubDateStr: string | undefined = $dateEl.text();
-            const linkUrl: string | undefined = $el.find('td.title a').attr('href');
-            const categories: string[] = [...new Set([$categoryEl.text()?.trim(), $catalogueEl.text()?.trim(), $dateEl.text()])].filter((c): c is string => Boolean(c && c !== '-'));
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = $dateEl.text()
+            const linkUrl: string | undefined = $el.find('td.title a').attr('href')
+            const categories: string[] = [...new Set([$categoryEl.text()?.trim(), $catalogueEl.text()?.trim(), $dateEl.text()])].filter((c): c is string => Boolean(c && c !== '-'))
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -69,45 +69,45 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr, 'DD.MM.YYYY') : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
                 const description: string | undefined =
                     renderDescription({
                         images: $$('div.thumbs img')
                             .toArray()
                             .map((i) => {
-                                const $i: Cheerio<Element> = $$(i);
+                                const $i: Cheerio<Element> = $$(i)
 
                                 return {
                                     src: $i.attr('src'),
                                     alt: $i.attr('alt') ?? item.title,
-                                };
+                                }
                             }),
-                    }) + (item.description ?? '');
+                    }) + (item.description ?? '')
 
                 return {
                     ...item,
 
                     description,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const title: string | undefined = $('title').text()?.split(/\|/).pop();
+    const title: string | undefined = $('title').text()?.split(/\|/).pop()
 
     return {
         title: title ? `${title} - ${filter}` : filter,
@@ -119,8 +119,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:filter?',
@@ -153,16 +153,16 @@ To subscribe to [Movie HD 1080p](https://0xxx.ws?category=Movie-HD-1080p), where
         {
             source: ['0xxx.ws'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const params = urlObj.searchParams;
+                const urlObj: URL = new URL(url)
+                const params = urlObj.searchParams
 
-                params.delete('next');
+                params.delete('next')
 
-                const filter: string = urlObj.searchParams.toString();
+                const filter: string = urlObj.searchParams.toString()
 
-                return `/0xxx${filter ? `/${filter}` : ''}`;
+                return `/0xxx${filter ? `/${filter}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

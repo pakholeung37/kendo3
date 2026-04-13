@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/epaper/:id?',
@@ -31,61 +31,61 @@ export const route: Route = {
     description: `| 厦门日报 | 厦门晚报 | 海西晨报 | 城市捷报 |
 | -------- | -------- | -------- | -------- |
 | xmrb     | xmwb     | hxcb     | csjb     |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'xmrb';
+    const id = ctx.req.param('id') ?? 'xmrb'
 
-    const rootUrl = 'https://epaper.xmnn.cn';
-    let currentUrl = `${rootUrl}/${id === 'hxcb' ? '/hxcb/epaper/paperindex.htm' : `${id}/`}`;
+    const rootUrl = 'https://epaper.xmnn.cn'
+    let currentUrl = `${rootUrl}/${id === 'hxcb' ? '/hxcb/epaper/paperindex.htm' : `${id}/`}`
 
     let response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    let $ = load(response.data);
+    let $ = load(response.data)
 
-    const title = id === 'hxcb' ? '海西晨报电子版_厦门网' : $('title').text();
+    const title = id === 'hxcb' ? '海西晨报电子版_厦门网' : $('title').text()
 
-    let matches = response.data.match(/window\.location\.href = "(.*?)";/);
+    let matches = response.data.match(/window\.location\.href = "(.*?)";/)
 
     if (!matches) {
-        matches = response.data.match(/setTimeout\("javascript:location\.href='(.*?)'", 3000\);/);
+        matches = response.data.match(/setTimeout\("javascript:location\.href='(.*?)'", 3000\);/)
 
         if (!matches) {
-            matches = response.data.match(/<meta http-equiv="refresh".*?content=".*?url=(.*?)">/i);
+            matches = response.data.match(/<meta http-equiv="refresh".*?content=".*?url=(.*?)">/i)
         }
     }
 
-    currentUrl = new URL(matches[1], currentUrl).href;
+    currentUrl = new URL(matches[1], currentUrl).href
 
     response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    $ = load(response.data);
+    $ = load(response.data)
 
-    $('#pdfsrc').remove();
-    $('.bigImg, .smallImg').remove();
+    $('#pdfsrc').remove()
+    $('.bigImg, .smallImg').remove()
 
     $('a img').each(function () {
-        $(this).parent().remove();
-    });
+        $(this).parent().remove()
+    })
 
     let items = $('.br1, .br2, .titss')
         .find('a')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 80)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: new URL(item.attr('href'), currentUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -93,23 +93,23 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('#qw').remove();
+                content('#qw').remove()
 
-                item.description = content('.cont-b, content').html();
-                item.pubDate = timezone(parseDate(content('.time').text() || content('.today').text().split()[0], ['YYYY-MM-DD HH:mm', 'YYYY年MM月DD日']), +8);
+                item.description = content('.cont-b, content').html()
+                item.pubDate = timezone(parseDate(content('.time').text() || content('.today').text().split()[0], ['YYYY-MM-DD HH:mm', 'YYYY年MM月DD日']), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title,
         link: currentUrl,
         item: items,
-    };
+    }
 }

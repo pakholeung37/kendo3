@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import type { Article, AuthorUserInfo } from './types';
-import { parseList, ProcessFeed } from './utils';
+import type { Article, AuthorUserInfo } from './types'
+import { parseList, ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/posts/:id',
@@ -25,16 +25,16 @@ export const route: Route = {
     name: '用户文章',
     maintainers: ['Maecenas'],
     handler,
-};
+}
 
 const getUserInfo = (data: AuthorUserInfo) => ({
     username: data.user_name,
     description: data.description,
     avatar: data.avatar_large,
-});
+})
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const response = await ofetch('https://api.juejin.cn/content_api/v1/article/query_list', {
         method: 'POST',
@@ -42,11 +42,11 @@ async function handler(ctx) {
             user_id: id,
             sort_type: 2,
         },
-    });
-    const data = response.data as Article[];
-    const list = parseList(data);
-    const authorInfo = getUserInfo(data[0].author_user_info);
-    const resultItems = await ProcessFeed(list);
+    })
+    const data = response.data as Article[]
+    const list = parseList(data)
+    const authorInfo = getUserInfo(data[0].author_user_info)
+    const resultItems = await ProcessFeed(list)
 
     return {
         title: `掘金专栏-${authorInfo.username}`,
@@ -54,5 +54,5 @@ async function handler(ctx) {
         description: authorInfo.description,
         image: authorInfo.avatar,
         item: resultItems,
-    };
+    }
 }

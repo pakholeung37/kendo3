@@ -1,13 +1,13 @@
-import { JSDOM, VirtualConsole } from 'jsdom';
-import queryString from 'query-string';
+import { JSDOM, VirtualConsole } from 'jsdom'
+import queryString from 'query-string'
 
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import { maskHeader } from '../../constants';
-import got from '../../pixiv-got';
-import type { NovelContent, NSFWNovelDetail } from './types';
-import { parseNovelContent } from './utils';
+import { maskHeader } from '../../constants'
+import got from '../../pixiv-got'
+import type { NovelContent, NSFWNovelDetail } from './types'
+import { parseNovelContent } from './utils'
 
 export async function getNSFWNovelContent(novelId: string, token: string): Promise<NovelContent> {
     return (await cache.tryGet(`https://app-api.pixiv.net/webview/v2/novel:${novelId}`, async () => {
@@ -20,30 +20,30 @@ export async function getNSFWNovelContent(novelId: string, token: string): Promi
                 id: novelId,
                 viewer_version: '20221031_ai',
             }),
-        });
+        })
 
-        const virtualConsole = new VirtualConsole().on('error', () => void 0);
+        const virtualConsole = new VirtualConsole().on('error', () => void 0)
 
         const { window } = new JSDOM(response.data, {
             runScripts: 'dangerously',
             virtualConsole,
-        });
+        })
 
-        const novelDetail = window.pixiv?.novel as NSFWNovelDetail;
+        const novelDetail = window.pixiv?.novel as NSFWNovelDetail
 
-        window.close();
+        window.close()
 
         if (!novelDetail) {
-            throw new Error('No novel data found');
+            throw new Error('No novel data found')
         }
 
         const images = Object.fromEntries(
             Object.entries(novelDetail.images)
                 .filter(([, image]) => image?.urls?.original)
-                .map(([id, image]) => [id, image.urls.original])
-        );
+                .map(([id, image]) => [id, image.urls.original]),
+        )
 
-        const parsedContent = await parseNovelContent(novelDetail.text, images, token);
+        const parsedContent = await parseNovelContent(novelDetail.text, images, token)
 
         return {
             id: novelDetail.id,
@@ -70,6 +70,6 @@ export async function getNSFWNovelContent(novelId: string, token: string): Promi
 
             seriesId: novelDetail.seriesId || null,
             seriesTitle: novelDetail.seriesTitle || null,
-        };
-    })) as NovelContent;
+        }
+    })) as NovelContent
 }

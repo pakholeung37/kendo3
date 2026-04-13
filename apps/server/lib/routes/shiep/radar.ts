@@ -314,4 +314,4 @@ export const radar = [
         source: ['zzb.shiep.edu.cn/:id/list.htm'],
         target: '/zzb/:id',
     },
-];
+]

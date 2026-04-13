@@ -1,22 +1,22 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import timezone from '@/utils/timezone'
 
-import { getHeaders } from './utils';
+import { getHeaders } from './utils'
 
 const getTrueHour = (rank_type, rank_id, hour) => {
-    const rank_two_hour = ['11', '17', '28', '29'];
-    const rank_four_hour = ['12', '13', '14', '15', '17', '74', '75', '71', '25'];
-    const flag = ['pinlei', 'dianshang'].includes(rank_type) && [...rank_two_hour, ...rank_four_hour].includes(rank_id) && hour === '3';
+    const rank_two_hour = ['11', '17', '28', '29']
+    const rank_four_hour = ['12', '13', '14', '15', '17', '74', '75', '71', '25']
+    const flag = ['pinlei', 'dianshang'].includes(rank_type) && [...rank_two_hour, ...rank_four_hour].includes(rank_id) && hour === '3'
     if (flag) {
-        return rank_two_hour.includes(rank_id) ? '2' : '4';
+        return rank_two_hour.includes(rank_id) ? '2' : '4'
     } else {
-        return hour;
+        return hour
     }
-};
+}
 
 const typeOptions = [
     {
@@ -39,7 +39,7 @@ const typeOptions = [
         value: 'haowu',
         label: '好物排行榜',
     },
-];
+]
 const idOptions = [
     {
         label: '好价品类榜-全部',
@@ -169,7 +169,7 @@ const idOptions = [
         label: '好物排行榜-好物榜单',
         value: 'hw',
     },
-];
+]
 
 export const route: Route = {
     path: '/ranking/:rank_type/:rank_id/:hour',
@@ -219,17 +219,17 @@ export const route: Route = {
     name: '排行榜',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.smzdm.cookie) {
-        throw new ConfigNotFoundError('什么值得买排行榜 is disabled due to the lack of SMZDM_COOKIE');
+        throw new ConfigNotFoundError('什么值得买排行榜 is disabled due to the lack of SMZDM_COOKIE')
     }
 
-    const { rank_type, rank_id, hour } = ctx.req.param();
+    const { rank_type, rank_id, hour } = ctx.req.param()
 
     // When the hour is 3, some special rank_id require a special hour num
-    const true_hour = getTrueHour(rank_type, rank_id, hour);
+    const true_hour = getTrueHour(rank_type, rank_id, hour)
 
     const response = await got(`https://www.smzdm.com/top/json_more`, {
         headers: {
@@ -241,20 +241,20 @@ async function handler(ctx) {
             rank_id,
             hour: true_hour,
         },
-    });
+    })
 
-    const data = response.data.data.list;
-    const list1 = [];
-    const list2 = [];
+    const data = response.data.data.list
+    const list1 = []
+    const list2 = []
     for (let i = 0; i < Math.min(6, data.length); i++) {
         if (data[i][0].length !== 0) {
-            list1.push(data[i][0]);
+            list1.push(data[i][0])
         }
         if (data[i][1].length !== 0) {
-            list2.push(data[i][1]);
+            list2.push(data[i][1])
         }
     }
-    const list = [...list1, ...list2];
+    const list = [...list1, ...list2]
 
     return {
         title: `什么值得买${typeOptions.find((item) => item.value === rank_type)?.label}-${idOptions.find((item) => item.value === rank_id)?.label}-${hour}小时`,
@@ -266,5 +266,5 @@ async function handler(ctx) {
             pubDate: timezone(item.article_pubdate, +8),
             link: item.article_url,
         })),
-    };
+    }
 }

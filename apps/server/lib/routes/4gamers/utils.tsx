@@ -1,19 +1,19 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const getCategories = (tryGet) =>
     tryGet('4gamers:categories', async () => {
-        const { data: response } = await got('https://www.4gamers.com.tw/site/api/news/category');
+        const { data: response } = await got('https://www.4gamers.com.tw/site/api/news/category')
 
         return response.data.map((category) => ({
             id: category.id,
             name: category.name,
-        }));
-    });
+        }))
+    })
 
 const parseList = (results) =>
     results.map((item) => ({
@@ -24,14 +24,14 @@ const parseList = (results) =>
         link: item.canonicalUrl,
         category: [...new Set([item.category.name, ...item.tags])],
         articleId: item.id,
-    }));
+    }))
 
 const parseItem = async (item) => {
     const { data: response } = await got('https://www.4gamers.com.tw/site/api/news/find-section', {
         searchParams: {
             sub: item.articleId,
         },
-    });
+    })
 
     item.description = renderDescription(
         item.intro,
@@ -41,20 +41,20 @@ const parseItem = async (item) => {
                     case 'ContentAdsSection':
                     case 'ScrollerAdsSection':
                     case 'textScrollerAdsSection':
-                        return '';
+                        return ''
                     case 'RawHtmlSection':
-                        return section.html;
+                        return section.html
                     case 'ImageGroupSection':
-                        return renderImages(section.items);
+                        return renderImages(section.items)
                     default:
-                        throw new InvalidParameterError(`Unhandled section type: ${section['@type']} on ${item.link}`);
+                        throw new InvalidParameterError(`Unhandled section type: ${section['@type']} on ${item.link}`)
                 }
             })
-            .join('')
-    );
+            .join(''),
+    )
 
-    return item;
-};
+    return item
+}
 
 const renderDescription = (intro, content) =>
     renderToString(
@@ -62,8 +62,8 @@ const renderDescription = (intro, content) =>
             <blockquote>{intro}</blockquote>
             <br />
             {raw(content)}
-        </>
-    );
+        </>,
+    )
 const renderImages = (images) =>
     renderToString(
         <>
@@ -73,7 +73,7 @@ const renderImages = (images) =>
                     <br />
                 </>
             ))}
-        </>
-    );
+        </>,
+    )
 
-export { getCategories, parseItem, parseList, renderDescription, renderImages };
+export { getCategories, parseItem, parseList, renderDescription, renderImages }

@@ -1,12 +1,12 @@
-import * as cheerio from 'cheerio';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import type { ChartTitleSearchConnection } from './types';
+import type { ChartTitleSearchConnection } from './types'
 
 const render = ({ primaryImage, originalTitleText, certificate, ratingsSummary, plot }) =>
     renderToString(
@@ -27,8 +27,8 @@ const render = ({ primaryImage, originalTitleText, certificate, ratingsSummary, 
             <br />
             <br />
             {plot?.plotText?.plainText}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/chart/:chart?',
@@ -59,17 +59,17 @@ export const route: Route = {
     description: `| Top 250 Movies | Most Popular Movies | Top 250 TV Shows | Most Popular TV Shows |
 | -------------- | ------------------- | ---------------- | --------------------- |
 | top            | moviemeter          | toptv            | tvmeter               |`,
-};
+}
 
 async function handler(ctx: Context) {
-    const { chart = 'top' } = ctx.req.param();
-    const baseUrl = 'https://www.imdb.com';
-    const link = `${baseUrl}/chart/${chart}/`;
+    const { chart = 'top' } = ctx.req.param()
+    const baseUrl = 'https://www.imdb.com'
+    const link = `${baseUrl}/chart/${chart}/`
 
-    const response = await ofetch(link);
-    const $ = cheerio.load(response);
-    const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-    const chartTitles = nextData.props.pageProps.pageData.chartTitles as ChartTitleSearchConnection;
+    const response = await ofetch(link)
+    const $ = cheerio.load(response)
+    const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+    const chartTitles = nextData.props.pageProps.pageData.chartTitles as ChartTitleSearchConnection
 
     const items = chartTitles.edges.map(({ currentRank, node }) => ({
         title: `${currentRank}. ${node.titleText.text} (${node.releaseYear.year}${node.releaseYear.endYear ? `-${node.releaseYear.endYear}` : ''})`,
@@ -82,12 +82,12 @@ async function handler(ctx: Context) {
         }),
         link: `${baseUrl}/title/${node.id}`,
         category: node.titleGenres.genres.map((g) => chartTitles.genres.find((genre) => genre.filterId === g.genre.text)?.text),
-    }));
+    }))
 
     return {
         title: $('head title').text(),
         description: $('head meta[name="description"]').attr('content'),
         link,
         item: items,
-    };
+    }
 }

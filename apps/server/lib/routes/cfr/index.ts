@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import pMap from 'p-map'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getDataItem } from './utils';
+import { getDataItem } from './utils'
 
 export const route: Route = {
     path: '/:category/:subCategory?',
@@ -27,35 +27,35 @@ export const route: Route = {
     features: {
         antiCrawler: true,
     },
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { category, subCategory } = ctx.req.param();
+    const { category, subCategory } = ctx.req.param()
 
-    const origin = 'https://www.cfr.org';
-    let link = `${origin}/${category}`;
+    const origin = 'https://www.cfr.org'
+    let link = `${origin}/${category}`
     if (subCategory) {
-        link += `/${subCategory}`;
+        link += `/${subCategory}`
     }
-    const res = await ofetch(link);
+    const res = await ofetch(link)
 
-    const $ = load(res);
+    const $ = load(res)
 
     const selectorMap: {
-        [key: string]: string;
+        [key: string]: string
     } = {
         podcasts: '.episode-content__title a',
         blog: '.card-series__content-link',
         'books-reports': '.card-article__link',
-    };
+    }
 
-    const listSelector = selectorMap[category] ?? '.card-article-large__link';
+    const listSelector = selectorMap[category] ?? '.card-article-large__link'
 
-    const items = await pMap($(listSelector).toArray(), (item) => getDataItem($(item).attr('href')!), { concurrency: 5 });
+    const items = await pMap($(listSelector).toArray(), (item) => getDataItem($(item).attr('href')!), { concurrency: 5 })
 
     return {
         title: $('head title').text().replace(' | Council on Foreign Relations', ''),
         link,
         item: items,
-    };
+    }
 }

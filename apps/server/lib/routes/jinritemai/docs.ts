@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const typeMap = {
     '5': '全部公告',
@@ -9,7 +9,7 @@ const typeMap = {
     '21': '规则变更',
     '20': '维护公告',
     '22': '其他公告',
-};
+}
 
 /**
  *
@@ -38,12 +38,12 @@ export const route: Route = {
 | 规则变更    | 21   |
 | 维护公告    | 20   |
 | 其他公告    | 22   |`,
-};
+}
 
 async function handler(ctx) {
-    const dirId = ctx.req.param('dirId') || '5';
-    const url = `https://op.jinritemai.com/doc/external/open/queryDocArticleList?pageIndex=0&pageSize=10&status=1&dirId=${dirId}&orderType=3`;
-    const response = await got({ method: 'get', url });
+    const dirId = ctx.req.param('dirId') || '5'
+    const url = `https://op.jinritemai.com/doc/external/open/queryDocArticleList?pageIndex=0&pageSize=10&status=1&dirId=${dirId}&orderType=3`
+    const response = await got({ method: 'get', url })
 
     const list = response.data.data.articles.map((item) => ({
         title: item.title,
@@ -51,7 +51,7 @@ async function handler(ctx) {
         dirName: item.dirName,
         link: `https://op.jinritemai.com/docs/notice-docs/${dirId}/${item.id}`,
         pubDate: parseDate(item.updateTime * 1000),
-    }));
+    }))
 
     const result = await Promise.all(
         list.map((item) =>
@@ -59,16 +59,16 @@ async function handler(ctx) {
                 const itemResponse = await got({
                     method: 'get',
                     url: `https://op.jinritemai.com/doc/external/open/queryDocArticleDetail?articleId=${item.id}&onlyView=false`,
-                });
-                item.description = itemResponse.data.data.article.content;
-                return item;
-            })
-        )
-    );
+                })
+                item.description = itemResponse.data.data.article.content
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `抖店开放平台 - ${typeMap[dirId] ?? '平台公告'}`,
         link: `https://op.jinritemai.com/docs/notice-docs/${dirId}`,
         item: result,
-    };
+    }
 }

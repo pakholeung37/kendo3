@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import apiKey from './api-key';
-import { handleDescription } from './utils';
+import apiKey from './api-key'
+import { handleDescription } from './utils'
 
 export const route: Route = {
     path: '/tv/:id/seasons/:seasonNumber/episodes/:lang?',
@@ -21,16 +21,16 @@ export const route: Route = {
     name: 'TV Show Episodes',
     maintainers: ['x2cf'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id, seasonNumber, lang } = ctx.req.param();
+    const { id, seasonNumber, lang } = ctx.req.param()
     const searchParams = {
         language: lang,
         api_key: apiKey(),
-    };
-    const { data: tvShowDetails } = await got(`https://api.themoviedb.org/3/tv/${id}`, { searchParams });
-    const { data: seasonDetails } = await got(`https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}`, { searchParams });
+    }
+    const { data: tvShowDetails } = await got(`https://api.themoviedb.org/3/tv/${id}`, { searchParams })
+    const { data: seasonDetails } = await got(`https://api.themoviedb.org/3/tv/${id}/season/${seasonNumber}`, { searchParams })
 
     return {
         title: `${tvShowDetails.name} ${seasonDetails.name} — TMDB`,
@@ -43,5 +43,5 @@ async function handler(ctx) {
             description: handleDescription(item),
             pubDate: item.air_date ? parseDate(item.air_date) : undefined,
         })),
-    };
+    }
 }

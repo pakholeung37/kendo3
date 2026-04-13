@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { renderDescription } from './utils';
+import { renderDescription } from './utils'
 
 export const route: Route = {
     path: '/charts/:category?/:country?/:embed?',
@@ -56,7 +56,7 @@ export const route: Route = {
 | Uruguay | Zimbabwe |
 | ------- | -------- |
 | uy      | zw       |`,
-};
+}
 
 async function handler(ctx) {
     const contentMap = {
@@ -80,10 +80,10 @@ async function handler(ctx) {
             viewKey: 'videoViews',
             title: 'Trending',
         },
-    };
+    }
 
-    const { category = 'TopVideos', country } = ctx.req.param();
-    const embed = !ctx.req.param('embed');
+    const { category = 'TopVideos', country } = ctx.req.param()
+    const embed = !ctx.req.param('embed')
 
     const { content } = await cache.tryGet(
         `youtube:charts:${country ?? 'global'}`,
@@ -113,14 +113,14 @@ async function handler(ctx) {
                     },
                     query: `chart_params_type=WEEK&perspective=CHART&flags=viral_video_chart&selected_chart=TRACKS&chart_params_id=weekly:0:0${country ? `:${country}` : ''}`,
                 },
-            });
-            return data.contents.sectionListRenderer.contents[0].musicAnalyticsSectionRenderer;
+            })
+            return data.contents.sectionListRenderer.contents[0].musicAnalyticsSectionRenderer
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    const { entityId } = content.perspectiveMetadata;
+    const { entityId } = content.perspectiveMetadata
 
     const items =
         category === 'TopArtists'
@@ -130,23 +130,23 @@ async function handler(ctx) {
                   guid: `youtube:charts:${category}:${entityId}:${item.id}`,
               }))
             : content[contentMap[category].contentKey][category === 'TrendingVideos' ? 1 : 0][contentMap[category].viewKey].map((item) => {
-                  const videoId = category === 'TopSongs' ? item.encryptedVideoId : item.id;
+                  const videoId = category === 'TopSongs' ? item.encryptedVideoId : item.id
                   const author = item.artists
                       .filter((a) => a.name)
                       .map((artist) => artist.name)
-                      .join(', ');
+                      .join(', ')
                   return {
                       title: `${item.title ?? item.name} - ${author}`,
                       description: renderDescription(embed, videoId, item.thumbnail?.thumbnails.pop().url, ''),
                       link: `https://www.youtube.com/watch?v=${videoId}`,
                       guid: `youtube:charts:${category}:${entityId}:${item.id}`,
                       author,
-                  };
-              });
+                  }
+              })
 
     return {
         title: `YouTube Music Charts - ${contentMap[category].title}`,
         link: `https://charts.youtube.com/charts/${category}/${country ?? 'global'}`,
         item: items,
-    };
+    }
 }

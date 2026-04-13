@@ -1,81 +1,81 @@
-import Honeybadger from '@honeybadger-io/js';
-import * as Sentry from '@sentry/node';
-import type { ErrorHandler, NotFoundHandler } from 'hono';
-import { routePath } from 'hono/route';
+import Honeybadger from '@honeybadger-io/js'
+import * as Sentry from '@sentry/node'
+import type { ErrorHandler, NotFoundHandler } from 'hono'
+import { routePath } from 'hono/route'
 
-import { config } from '@/config';
-import { getDebugInfo, setDebugInfo } from '@/utils/debug-info';
-import logger from '@/utils/logger';
-import { requestMetric } from '@/utils/otel';
-import Error from '@/views/error';
+import { config } from '@/config'
+import { getDebugInfo, setDebugInfo } from '@/utils/debug-info'
+import logger from '@/utils/logger'
+import { requestMetric } from '@/utils/otel'
+import Error from '@/views/error'
 
-import NotFoundError from './types/not-found';
+import NotFoundError from './types/not-found'
 
 export const errorHandler: ErrorHandler = (error, ctx) => {
-    const requestPath = ctx.req.path;
-    const matchedRoute = routePath(ctx);
-    const hasMatchedRoute = matchedRoute !== '/*';
+    const requestPath = ctx.req.path
+    const matchedRoute = routePath(ctx)
+    const hasMatchedRoute = matchedRoute !== '/*'
 
-    const debug = getDebugInfo();
+    const debug = getDebugInfo()
     try {
         if (ctx.res.headers.get('RSSHub-Cache-Status')) {
-            debug.hitCache++;
+            debug.hitCache++
         }
     } catch {
         // ignore
     }
-    debug.error++;
+    debug.error++
 
     if (!debug.errorPaths[requestPath]) {
-        debug.errorPaths[requestPath] = 0;
+        debug.errorPaths[requestPath] = 0
     }
-    debug.errorPaths[requestPath]++;
+    debug.errorPaths[requestPath]++
 
     if (!debug.errorRoutes[matchedRoute] && hasMatchedRoute) {
-        debug.errorRoutes[matchedRoute] = 0;
+        debug.errorRoutes[matchedRoute] = 0
     }
-    hasMatchedRoute && debug.errorRoutes[matchedRoute]++;
-    setDebugInfo(debug);
+    hasMatchedRoute && debug.errorRoutes[matchedRoute]++
+    setDebugInfo(debug)
 
     if (config.honeybadger.apiKey) {
         Honeybadger.notify(error, {
             context: { name: requestPath.split('/')[1] },
-        });
+        })
     }
 
     if (config.sentry.dsn) {
         Sentry.withScope((scope) => {
-            scope.setTag('name', requestPath.split('/')[1]);
-            Sentry.captureException(error);
-        });
+            scope.setTag('name', requestPath.split('/')[1])
+            Sentry.captureException(error)
+        })
     }
 
-    let errorMessage = process.env.NODE_ENV === 'production' ? error.message : error.stack || error.message;
+    let errorMessage = process.env.NODE_ENV === 'production' ? error.message : error.stack || error.message
     switch (error.constructor.name) {
         case 'HTTPError':
         case 'RequestError':
         case 'FetchError':
-            ctx.status(503);
-            break;
+            ctx.status(503)
+            break
         case 'RequestInProgressError':
-            ctx.header('Cache-Control', `public, max-age=${config.requestTimeout / 1000}`);
-            ctx.status(503);
-            break;
+            ctx.header('Cache-Control', `public, max-age=${config.requestTimeout / 1000}`)
+            ctx.status(503)
+            break
         case 'RejectError':
-            ctx.status(403);
-            break;
+            ctx.status(403)
+            break
         case 'NotFoundError':
-            ctx.status(404);
-            errorMessage += 'The route does not exist or has been deleted.';
-            break;
+            ctx.status(404)
+            errorMessage += 'The route does not exist or has been deleted.'
+            break
         default:
-            ctx.status(503);
-            break;
+            ctx.status(503)
+            break
     }
-    const message = `${error.name}: ${errorMessage}`;
+    const message = `${error.name}: ${errorMessage}`
 
-    logger.error(`Error in ${requestPath}: ${message}`);
-    requestMetric.error({ path: matchedRoute, method: ctx.req.method, status: ctx.res.status });
+    logger.error(`Error in ${requestPath}: ${message}`)
+    requestMetric.error({ path: matchedRoute, method: ctx.req.method, status: ctx.res.status })
 
     return config.isPackage || ctx.req.query('format') === 'json'
         ? ctx.json({
@@ -83,7 +83,7 @@ export const errorHandler: ErrorHandler = (error, ctx) => {
                   message: error.message ?? error,
               },
           })
-        : ctx.html(<Error requestPath={requestPath} message={message} errorRoute={hasMatchedRoute ? matchedRoute : requestPath} nodeVersion={process.version} />);
-};
+        : ctx.html(<Error requestPath={requestPath} message={message} errorRoute={hasMatchedRoute ? matchedRoute : requestPath} nodeVersion={process.version} />)
+}
 
-export const notFoundHandler: NotFoundHandler = (ctx) => errorHandler(new NotFoundError(), ctx);
+export const notFoundHandler: NotFoundHandler = (ctx) => errorHandler(new NotFoundError(), ctx)

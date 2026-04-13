@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/',
@@ -18,17 +18,17 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'techflowpost.com/',
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://www.techflowpost.com';
+    const rootUrl = 'https://www.techflowpost.com'
 
     const { data: response } = await got.post('https://www.techflowpost.com/ashx/index.ashx', {
         form: {
             pageindex: 1,
             pagesize: ctx.req.query('limit') ?? 50,
         },
-    });
+    })
 
     const items = response.content.map((item) => ({
         title: item.stitle,
@@ -38,11 +38,11 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(item.dcreate_time), +8),
         updated: timezone(parseDate(item.dmodi_time), +8),
         description: item.scontent,
-    }));
+    }))
 
     return {
         title: '深潮TechFlow',
         link: rootUrl,
         item: items,
-    };
+    }
 }

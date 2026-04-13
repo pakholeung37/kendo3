@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/hr/:category?',
@@ -32,31 +32,31 @@ export const route: Route = {
 
   如 [北京大学人事处 - 人才招聘 - 教师 - 教学科研人员](https://hr.pku.edu.cn/rczp/js/jxkyry/index.htm) 的网址为 \`https://hr.pku.edu.cn/rczp/js/jxkyry/index.htm\` 其中介于 **\`http://hr.pku.edu.cn/\`** 和 **\`/index.ht\`** 中间的一段为 \`rczp/js/jxkyry\`。随后，并将其中的 \`/\` 修改为 \`-\`，可以得到 \`rczp-js-jxkyry\`。所以最终我们的路由为 [\`/pku/hr/rczp-js-jxkyry\`](https://rsshub.app/pku/hr/rczp-js-jxkyry)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category')?.replaceAll('-', '/') ?? 'zxgg';
+    const category = ctx.req.param('category')?.replaceAll('-', '/') ?? 'zxgg'
 
-    const rootUrl = 'https://hr.pku.edu.cn/';
-    const currentUrl = `${rootUrl}/${category}/index.htm`;
+    const rootUrl = 'https://hr.pku.edu.cn/'
+    const currentUrl = `${rootUrl}/${category}/index.htm`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.item-list li a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text().replace(/\d+、/, ''),
                 link: `${rootUrl}/${category}/${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -64,23 +64,23 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.title').remove();
+                content('.title').remove()
 
-                item.description = content('.article').html();
-                item.pubDate = parseDate(content('#date').text());
+                item.description = content('.article').html()
+                item.pubDate = parseDate(content('#date').text())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('h2').text()} - ${$('title').text()}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

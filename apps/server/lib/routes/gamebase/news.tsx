@@ -1,21 +1,21 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const types = {
     newslist: 'newsList',
     r18list: 'newsPornList',
-};
+}
 
 const renderDescription = ({ images, intro, description }) =>
     renderToString(
@@ -26,27 +26,27 @@ const renderDescription = ({ images, intro, description }) =>
                           <figure key={image.src}>
                               <img src={image.src} alt={image.alt} />
                           </figure>
-                      ) : null
+                      ) : null,
                   )
                 : null}
             {intro ? <blockquote>{intro}</blockquote> : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { type = 'newslist', category = 'all' } = ctx.req.param();
+    const { type = 'newslist', category = 'all' } = ctx.req.param()
 
     if (!types.hasOwnProperty(type)) {
-        throw new InvalidParameterError(`Invalid type: ${type}`);
+        throw new InvalidParameterError(`Invalid type: ${type}`)
     }
 
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://news.gamebase.com.tw';
-    const targetUrl: string = new URL(`news${category === 'all' ? '' : `/newslist?type=${category}`}`, baseUrl).href;
-    const apiBaseUrl = 'https://api.gamebase.com.tw';
-    const apiUrl: string = new URL('api/news/getNewsList', apiBaseUrl).href;
+    const baseUrl = 'https://news.gamebase.com.tw'
+    const targetUrl: string = new URL(`news${category === 'all' ? '' : `/newslist?type=${category}`}`, baseUrl).href
+    const apiBaseUrl = 'https://api.gamebase.com.tw'
+    const apiUrl: string = new URL('api/news/getNewsList', apiBaseUrl).href
 
     const response = await ofetch(apiUrl, {
         method: 'post',
@@ -55,30 +55,30 @@ export const handler = async (ctx: Context): Promise<Data> => {
             category,
             page: 1,
         },
-    });
+    })
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-TW';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-TW'
 
     const items: DataItem[] = await Promise.all(
         response.return_msg?.list?.slice(0, limit).map((item) =>
             cache.tryGet(`gamebase-news-${item.news_no}`, async (): Promise<DataItem> => {
-                const title: string = item.news_title;
-                const pubDate: number | string = item.post_time;
-                const linkUrl: string | undefined = item.news_no ? `news/detail/${item.news_no}` : undefined;
-                const categories: string[] = [item.system];
-                const authors: DataItem['author'] = item.nickname;
-                const guid = `gamebase-news-${item.news_no}`;
-                const image: string | undefined = item.news_img;
-                const updated: number | string = item.updated ?? pubDate;
+                const title: string = item.news_title
+                const pubDate: number | string = item.post_time
+                const linkUrl: string | undefined = item.news_no ? `news/detail/${item.news_no}` : undefined
+                const categories: string[] = [item.system]
+                const authors: DataItem['author'] = item.nickname
+                const guid = `gamebase-news-${item.news_no}`
+                const image: string | undefined = item.news_img
+                const updated: number | string = item.updated ?? pubDate
 
-                let metaDesc = item.news_meta?.meta_des;
+                let metaDesc = item.news_meta?.meta_des
 
                 if (!metaDesc) {
-                    const detailResponse = await ofetch(item.link);
+                    const detailResponse = await ofetch(item.link)
 
-                    metaDesc = (detailResponse.match(/(\\u003C.*?)","/)?.[1] ?? '').replaceAll(String.raw`\"`, '"').replaceAll(/\\u([\da-f]{4})/gi, (match, hex) => String.fromCodePoint(Number.parseInt(hex, 16)));
+                    metaDesc = (detailResponse.match(/(\\u003C.*?)","/)?.[1] ?? '').replaceAll(String.raw`\"`, '"').replaceAll(/\\u([\da-f]{4})/gi, (match, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
                 }
 
                 const description: string = renderDescription({
@@ -93,7 +93,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             : undefined,
                     intro: item.news_short_desc,
                     description: metaDesc,
-                });
+                })
 
                 const processedItem: DataItem = {
                     title,
@@ -112,12 +112,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: updated ? timezone(parseDate(updated), +8) : undefined,
                     language,
-                };
+                }
 
-                return processedItem;
-            })
-        ) ?? []
-    );
+                return processedItem
+            }),
+        ) ?? [],
+    )
 
     return {
         title: $('title').text(),
@@ -129,8 +129,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:title"]').attr('content')?.split(/\|/).pop()?.trim(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:type?/:category?',
@@ -164,11 +164,11 @@ export const route: Route = {
         {
             source: ['news.gamebase.com.tw/news', 'news.gamebase.com.tw/news/:type'],
             target: (params, url) => {
-                const type: string = params.type;
-                const urlObj: URL = new URL(url);
-                const category: string | undefined = urlObj.searchParams.get('type') ?? undefined;
+                const type: string = params.type
+                const urlObj: URL = new URL(url)
+                const category: string | undefined = urlObj.searchParams.get('type') ?? undefined
 
-                return `/gamebase/news${type ? `/${type}${category ? `/${category}` : ''}` : ''}`;
+                return `/gamebase/news${type ? `/${type}${category ? `/${category}` : ''}` : ''}`
             },
         },
     ],
@@ -193,4 +193,4 @@ export const route: Route = {
 | -------- | ------- |
 `,
     },
-};
+}

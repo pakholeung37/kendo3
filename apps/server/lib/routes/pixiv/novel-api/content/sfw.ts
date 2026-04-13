@@ -1,38 +1,38 @@
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import pixivUtils from '../../utils';
-import type { NovelContent, SFWNovelDetail } from './types';
-import { parseNovelContent } from './utils';
+import pixivUtils from '../../utils'
+import type { NovelContent, SFWNovelDetail } from './types'
+import { parseNovelContent } from './utils'
 
-const baseUrl = 'https://www.pixiv.net';
+const baseUrl = 'https://www.pixiv.net'
 
 export async function getSFWNovelContent(novelId: string): Promise<NovelContent> {
-    const url = `${baseUrl}/ajax/novel/${novelId}`;
+    const url = `${baseUrl}/ajax/novel/${novelId}`
     return (await cache.tryGet(url, async () => {
         const response = await got(url, {
             headers: {
                 referer: `${baseUrl}/novel/show.php?id=${novelId}`,
             },
-        });
+        })
 
-        const novelDetail = response.data as SFWNovelDetail;
+        const novelDetail = response.data as SFWNovelDetail
 
         if (!novelDetail) {
-            throw new Error('No novel data found');
+            throw new Error('No novel data found')
         }
 
-        const body = novelDetail.body;
-        const images: Record<string, string> = {};
+        const body = novelDetail.body
+        const images: Record<string, string> = {}
 
         if (novelDetail.body.textEmbeddedImages) {
             for (const [id, image] of Object.entries(novelDetail.body.textEmbeddedImages)) {
-                images[id] = pixivUtils.getProxiedImageUrl(image.urls.original);
+                images[id] = pixivUtils.getProxiedImageUrl(image.urls.original)
             }
         }
 
-        const parsedContent = await parseNovelContent(novelDetail.body.content, images);
+        const parsedContent = await parseNovelContent(novelDetail.body.content, images)
 
         return {
             id: body.id,
@@ -59,6 +59,6 @@ export async function getSFWNovelContent(novelId: string): Promise<NovelContent>
 
             seriesId: body.seriesNavData?.seriesId?.toString() || null,
             seriesTitle: body.seriesNavData?.title || null,
-        };
-    })) as NovelContent;
+        }
+    })) as NovelContent
 }

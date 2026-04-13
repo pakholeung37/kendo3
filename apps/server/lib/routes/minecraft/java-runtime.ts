@@ -1,7 +1,7 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { DataItem, Route } from '@/types';
-import got from '@/utils/got';
+import type { DataItem, Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/java-runtime/:arch?/:javaType?',
@@ -53,11 +53,11 @@ javaType:
     zh: {
         name: 'Java运行时',
     },
-};
+}
 
 interface RuntimeInManifest {
-    manifest: { url: string };
-    version: { name: string; released: string };
+    manifest: { url: string }
+    version: { name: string; released: string }
 }
 
 function generateJava(arch: string, javaType: string, data: RuntimeInManifest): DataItem {
@@ -67,62 +67,62 @@ function generateJava(arch: string, javaType: string, data: RuntimeInManifest): 
         pubDate: new Date(data.version.released).toUTCString(),
         link: data.manifest.url,
         guid: arch + javaType + data.version.name,
-    };
+    }
 }
 
 function generateJavas(arch: string, javaType: string, data: RuntimeInManifest[]): DataItem[] {
-    return data.map((item) => generateJava(arch, javaType, item));
+    return data.map((item) => generateJava(arch, javaType, item))
 }
 
 function generateArch(arch: string, data: any, javaType: string): DataItem[] {
-    let items: DataItem[] = [];
+    let items: DataItem[] = []
 
     if (javaType === 'all') {
         for (const k in data) {
             if (!(k in data)) {
-                continue;
+                continue
             }
-            items = [...items, ...generateJavas(arch, k, data[k])];
+            items = [...items, ...generateJavas(arch, k, data[k])]
         }
     } else {
-        items = [...items, ...generateJavas(arch, javaType, data[javaType])];
+        items = [...items, ...generateJavas(arch, javaType, data[javaType])]
     }
-    return items;
+    return items
 }
 
 async function handler(ctx: Context) {
-    const url = 'https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json';
+    const url = 'https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json'
 
     const response: any = await got({
         method: 'get',
         url,
         responseType: 'json',
-    });
+    })
 
-    const data: any = response.data;
+    const data: any = response.data
 
-    const arch = ctx.req.param('arch') ?? 'all';
-    const javaType = ctx.req.param('javaType') ?? 'all';
+    const arch = ctx.req.param('arch') ?? 'all'
+    const javaType = ctx.req.param('javaType') ?? 'all'
 
-    let items: DataItem[] = [];
+    let items: DataItem[] = []
 
     if (arch === 'all') {
         for (const k in data) {
             if (!(k in data)) {
-                continue;
+                continue
             }
-            items = [...items, ...generateArch(k, data[k], javaType)];
+            items = [...items, ...generateArch(k, data[k], javaType)]
         }
     } else {
-        items = [...items, ...generateArch(arch, data[arch], javaType)];
+        items = [...items, ...generateArch(arch, data[arch], javaType)]
     }
 
-    const title = 'Minecraft Java运行时';
+    const title = 'Minecraft Java运行时'
 
     return {
         title,
         link: 'https://www.minecraft.net/',
         description: title,
         item: items,
-    };
+    }
 }

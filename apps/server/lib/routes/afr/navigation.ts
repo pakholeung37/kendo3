@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { pageByNavigationPathQuery } from './query';
-import { getItem } from './utils';
+import { pageByNavigationPathQuery } from './query'
+import { getItem } from './utils'
 
 export const route: Route = {
     path: '/navigation/:path{.+}',
@@ -32,11 +32,11 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.afr.com',
-};
+}
 
 async function handler(ctx: Context) {
-    const { path } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '10');
+    const { path } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '10')
 
     const response = await ofetch('https://api.afr.com/api/content-audience/afr/graphql', {
         query: {
@@ -48,7 +48,7 @@ async function handler(ctx: Context) {
                 afterStories: '',
             },
         },
-    });
+    })
 
     const list = response.data.pageByNavigationPath.page.latestStoriesConnection.edges.map(({ node }) => ({
         title: node.headlines.headline,
@@ -62,9 +62,9 @@ async function handler(ctx: Context) {
             .join(', '),
         category: [node.tags.primary.displayName, ...node.tags.secondary.map((tag) => tag.displayName)],
         image: node.images && `https://static.ffx.io/images/${node.images.landscape16x9.mediaId}`,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => getItem(item))))
 
     return {
         title: response.data.pageByNavigationPath.page.seo.title,
@@ -72,5 +72,5 @@ async function handler(ctx: Context) {
         image: 'https://www.afr.com/apple-touch-icon-1024x1024.png',
         link: `https://www.afr.com/${path}`,
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const rootUrl = 'http://job.hrbeu.edu.cn';
+const rootUrl = 'http://job.hrbeu.edu.cn'
 
 export const route: Route = {
     path: '/job/calendar',
@@ -35,35 +35,35 @@ export const route: Route = {
 
 
 #### 今日招聘会 {#ha-er-bin-gong-cheng-da-xue-jiu-ye-fu-wu-ping-tai-jin-ri-zhao-pin-hui}`,
-};
+}
 
 async function handler() {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    let strmMonth;
-    month < 10 ? (strmMonth = '0' + month) : (strmMonth = month);
-    const day = date.getDate();
+    const date = new Date()
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    let strmMonth
+    month < 10 ? (strmMonth = '0' + month) : (strmMonth = month)
+    const day = date.getDate()
 
     const response = await ofetch('http://job.hrbeu.edu.cn/HrbeuJY/Web/Employ/QueryCalendar', {
         query: {
             yearMonth: year + '-' + strmMonth,
         },
-    });
+    })
 
-    let link = '';
+    let link = ''
     for (let i = 0, l = response.length; i < l; i++) {
         // if (response[i].day === Number('10')) {
         if (response[i].day === Number(day)) {
-            link = response[i].Items[0].link;
+            link = response[i].Items[0].link
         }
     }
 
     const todayResponse = await ofetch(`${rootUrl}${link}`, {
         parseResponse: (txt) => txt,
-    });
+    })
 
-    const $ = load(todayResponse);
+    const $ = load(todayResponse)
 
     const list = $('li.clearfix')
         .toArray()
@@ -71,12 +71,12 @@ async function handler() {
             title: $(item).find('span.news_tit.news_tit_s').find('a').attr('title'),
             description: '点击标题，登录查看招聘详情',
             link: $(item).find('span.news_tit.news_tit_s').find('a').attr('href'),
-        }));
+        }))
 
     return {
         title: '今日招聘会',
         link: 'http://job.hrbeu.edu.cn/HrbeuJY/web',
         item: list,
         allowEmpty: true,
-    };
+    }
 }

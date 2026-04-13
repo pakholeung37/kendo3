@@ -1,7 +1,7 @@
-import type { Data, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, Route } from '@/types'
+import got from '@/utils/got'
 
-import { mapPostToItem } from './utils';
+import { mapPostToItem } from './utils'
 
 const categories = [
     { value: 'interview', label: 'इंटरव्यू', id: 92820 },
@@ -24,7 +24,7 @@ const categories = [
     { value: 'samaj', label: 'समाज', id: 28 },
     { value: 'ham-bhi-bharat', label: 'हम भी भारत', id: 14383 },
     { value: 'hamare-bare-mein', label: 'हमारे बारे में', id: 29 },
-];
+]
 
 export const route: Route = {
     path: '/category/:category',
@@ -53,20 +53,20 @@ export const route: Route = {
     maintainers: ['Rjnishant530'],
     handler,
     url: 'thewirehindi.com/',
-};
+}
 
 async function handler(ctx) {
-    const { category } = ctx.req.param();
-    const categoryData = categories.find((cat) => cat.value === category);
+    const { category } = ctx.req.param()
+    const categoryData = categories.find((cat) => cat.value === category)
 
     if (!categoryData) {
-        throw new Error(`Category "${category}" not found`);
+        throw new Error(`Category "${category}" not found`)
     }
 
-    const apiUrl = `https://thewirehindi.com/wp-json/wp/v2/posts?categories=${categoryData.id}&_embed`;
-    const { data } = await got(apiUrl);
+    const apiUrl = `https://thewirehindi.com/wp-json/wp/v2/posts?categories=${categoryData.id}&_embed`
+    const { data } = await got(apiUrl)
 
-    const items = data.map((v) => mapPostToItem(v));
+    const items = data.map((v) => mapPostToItem(v))
 
     return {
         title: `The Wire Hindi - ${categoryData.label}`,
@@ -75,5 +75,5 @@ async function handler(ctx) {
         description: `Latest news from The Wire Hindi - ${categoryData.label} category`,
         logo: 'https://thewirehindi.com/wp-content/uploads/2023/05/cropped-The-wire-32x32.jpeg',
         language: 'hi',
-    } as Data;
+    } as Data
 }

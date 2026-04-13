@@ -1,4 +1,4 @@
-import got from '@/utils/got';
+import got from '@/utils/got'
 
 /**
  *
@@ -8,8 +8,8 @@ import got from '@/utils/got';
  * @param {string[]} [modules=[]] localCityNCOVDataList,diseaseh5Shelf,nowConfirmStatis,provinceCompare,FAutoforeignList,FAutoCountryConfirmAdd,WomWorld,WomAboard,VaccineTopData
  */
 const getData = async (modules = []) => {
-    const response = await got('https://api.inews.qq.com/newsqa/v1/query/inner/publish/modules/list?modules=' + modules.join(','));
-    return response.data;
-};
+    const response = await got('https://api.inews.qq.com/newsqa/v1/query/inner/publish/modules/list?modules=' + modules.join(','))
+    return response.data
+}
 
-export { getData };
+export { getData }

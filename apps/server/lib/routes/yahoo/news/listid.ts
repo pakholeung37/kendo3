@@ -1,8 +1,8 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getList, parseItem, parseList } from './utils';
+import { getList, parseItem, parseList } from './utils'
 
 export const route: Route = {
     path: '/news/list/:region/:listId',
@@ -40,26 +40,26 @@ export const route: Route = {
 | 法新社            | \`1cc44280-facb-11e9-ad7c-f3ba971275c8\` |
 | Bloomberg         | \`40023670-facc-11e9-9dde-9175ff306602\` |
 | 香港動物報        | \`6058fa9c-d74d-487a-8b49-aa99a2a2978e\` |`,
-};
+}
 
 async function handler(ctx) {
-    const { region, listId } = ctx.req.param();
+    const { region, listId } = ctx.req.param()
     if (!['hk', 'tw'].includes(region)) {
-        throw new InvalidParameterError(`Unsupported region: ${region}`);
+        throw new InvalidParameterError(`Unsupported region: ${region}`)
     }
 
-    const response = await getList(region, listId);
+    const response = await getList(region, listId)
 
     // console.log('Response:', response.stream_items);
     // console.log('Type of response:', typeof response.stream_items);
     // console.log('Is response an array?', Array.isArray(response.stream_items));
-    const list = parseList(region, response.stream_items);
+    const list = parseList(region, response.stream_items)
 
-    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)));
+    const items = await Promise.all(list.map((item) => parseItem(item, cache.tryGet)))
 
-    const author = items[0].author;
-    const atIndex = author.indexOf('@'); // fing '@'
-    const source = atIndex === -1 ? author : author.slice(atIndex + 1).trim();
+    const author = items[0].author
+    const atIndex = author.indexOf('@') // fing '@'
+    const source = atIndex === -1 ? author : author.slice(atIndex + 1).trim()
     // console.log(source);
 
     return {
@@ -67,5 +67,5 @@ async function handler(ctx) {
         link: `https://${region}.news.yahoo.com`,
         image: 'https://s.yimg.com/cv/apiv2/social/images/yahoo_default_logo-1200x1200.png',
         item: items,
-    };
+    }
 }

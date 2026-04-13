@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/partion/:tid/:embed?',
@@ -132,11 +132,11 @@ export const route: Route = {
 | 全部 | 国产剧 | 海外剧 |
 | ---- | ------ | ------ |
 | 11   | 185    | 187    |`,
-};
+}
 
 async function handler(ctx) {
-    const tid = ctx.req.param('tid');
-    const embed = !ctx.req.param('embed');
+    const tid = ctx.req.param('tid')
+    const embed = !ctx.req.param('embed')
 
     const response = await got({
         method: 'get',
@@ -144,12 +144,12 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://www.bilibili.com/',
         },
-    });
+    })
 
-    const list = response.data.data.archives;
-    let name = '未知';
+    const list = response.data.data.archives
+    let name = '未知'
     if (list && list[0] && list[0].tname) {
-        name = list[0].tname;
+        name = list[0].tname
     }
 
     return {
@@ -165,5 +165,5 @@ async function handler(ctx) {
                 link: item.pubdate > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
                 author: item.owner.name,
             })),
-    };
+    }
 }

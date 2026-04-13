@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:ticker',
@@ -20,39 +20,39 @@ export const route: Route = {
     name: 'US Stock News',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const link = `https://finviz.com/quote.ashx?t=${ctx.req.param('ticker')}`;
-    const response = await got(link);
+    const link = `https://finviz.com/quote.ashx?t=${ctx.req.param('ticker')}`
+    const response = await got(link)
 
-    const $ = load(response.body);
-    const data = $('table.fullview-news-outer tr');
+    const $ = load(response.body)
+    const data = $('table.fullview-news-outer tr')
 
-    let dateRow = '';
+    let dateRow = ''
     const item = await Promise.all(
         data.toArray().map((e) => {
-            let date = $(e).find('td').first().text().trim();
+            let date = $(e).find('td').first().text().trim()
             if (date.includes('-')) {
-                dateRow = date.split(' ')[0];
+                dateRow = date.split(' ')[0]
             } else {
-                date = `${dateRow} ${date}`;
+                date = `${dateRow} ${date}`
             }
             return {
                 title: $(e).find('a').text(),
                 pubDate: parseDate(date, 'MMM-DD-YY HH:mmA'),
                 author: $(e).find('span').text(),
                 link: $(e).find('a').attr('href'),
-            };
-        })
-    );
+            }
+        }),
+    )
 
-    const name = $('.fullview-title b').text();
+    const name = $('.fullview-title b').text()
 
     return {
         title: `${ctx.req.param('ticker')} ${name} News by Finviz`,
         link,
         description: `A collection of ${name} news aggregated by Finviz.`,
         item,
-    };
+    }
 }

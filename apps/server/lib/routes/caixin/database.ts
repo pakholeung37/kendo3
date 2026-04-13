@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderArticle } from './templates/article';
+import { renderArticle } from './templates/article'
 
 export const route: Route = {
     path: '/database',
@@ -30,46 +30,46 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'k.caixin.com/web',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://database.caixin.com';
-    const currentUrl = `${rootUrl}/news/`;
-    const response = await got(currentUrl);
+    const rootUrl = 'https://database.caixin.com'
+    const currentUrl = `${rootUrl}/news/`
+    const response = await got(currentUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('h4 a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.text(),
                 link: item.attr('href').replace('http://', 'https://'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await got(item.link);
-                const content = load(detailResponse.data);
+                const detailResponse = await got(item.link)
+                const content = load(detailResponse.data)
 
-                item.pubDate = timezone(parseDate(content('#pubtime_baidu').text()), +8);
+                item.pubDate = timezone(parseDate(content('#pubtime_baidu').text()), +8)
                 item.description = renderArticle({
                     item,
                     $: content,
-                });
-                item.author = content('.top-author').text();
+                })
+                item.author = content('.top-author').text()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '财新数据通 - 专享资讯',
         link: currentUrl,
         item: items,
-    };
+    }
 }

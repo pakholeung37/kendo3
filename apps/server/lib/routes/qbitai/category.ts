@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/category/:category',
@@ -30,13 +30,13 @@ export const route: Route = {
     description: `| 资讯 | 数码     | 智能车 | 智库  | 活动    |
 | ---- | -------- | ------ | ----- | ------- |
 | 资讯 | ebandeng | auto   | zhiku | huodong |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const url = encodeURI(`https://www.qbitai.com/category/${category}/feed`);
+    const category = ctx.req.param('category')
+    const url = encodeURI(`https://www.qbitai.com/category/${category}/feed`)
 
-    const feed = await parser.parseURL(url);
+    const feed = await parser.parseURL(url)
     const entries = feed.items.map((item) => ({
         title: item.title,
         pubDate: parseDate(item.pubDate),
@@ -44,26 +44,26 @@ async function handler(ctx) {
         author: '量子位',
         category: item.categories,
         description: '', // Initialize description field
-    }));
+    }))
 
     const resolvedEntries = await Promise.all(
         entries.map((entry) =>
             cache.tryGet(entry.link, async () => {
                 try {
-                    const response = await ofetch(entry.link);
-                    const $ = load(response);
-                    entry.description = $('.article').html() || 'No content found';
+                    const response = await ofetch(entry.link)
+                    const $ = load(response)
+                    entry.description = $('.article').html() || 'No content found'
                 } catch {
-                    entry.description = 'Failed to fetch content';
+                    entry.description = 'Failed to fetch content'
                 }
-                return entry;
-            })
-        )
-    );
+                return entry
+            }),
+        ),
+    )
 
     return {
         title: `量子位 - ${category}`,
         link: `https://www.qbitai.com/category/${category}`,
         item: resolvedEntries,
-    };
+    }
 }

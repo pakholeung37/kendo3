@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { renderPlaylistDescription } from '../templates/music/playlist';
+import { renderPlaylistDescription } from '../templates/music/playlist'
 
 export const route: Route = {
     path: '/music/artist/songs/:id',
@@ -19,10 +19,10 @@ export const route: Route = {
     name: '歌手歌曲',
     maintainers: ['ZhongMingKun'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     const { data } = await got(`https://music.163.com/api/v1/artist/songs`, {
         headers: {
@@ -36,9 +36,9 @@ async function handler(ctx) {
             offset: 0,
             limit: 100,
         },
-    });
+    })
 
-    const artist = data.songs.find(({ ar }) => ar[0].id === Number.parseInt(id)).ar[0];
+    const artist = data.songs.find(({ ar }) => ar[0].id === Number.parseInt(id)).ar[0]
     const items = data.songs.map((song) => ({
         title: `${song.name} - ${song.ar.map(({ name }) => name).join(' / ')}`,
         description: renderPlaylistDescription({
@@ -47,12 +47,12 @@ async function handler(ctx) {
             picUrl: song.al.picUrl,
         }),
         link: `https://music.163.com/#/song?id=${song.id}`,
-    }));
+    }))
 
     return {
         title: `${artist.name} - 歌手歌曲`,
         link: `https://music.163.com/#/artist?id=${id}`,
         description: `网易云音乐 - 歌手歌曲 - ${artist.name}`,
         item: items,
-    };
+    }
 }

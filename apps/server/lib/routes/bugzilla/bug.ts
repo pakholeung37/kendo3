@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const INSTANCES = new Map([
     ['apache', 'bz.apache.org/bugzilla'],
@@ -13,31 +13,31 @@ const INSTANCES = new Map([
     ['kernel', 'bugzilla.kernel.org'],
     ['mozilla', 'bugzilla.mozilla.org'],
     ['webkit', 'bugs.webkit.org'],
-]);
+])
 
 async function handler(ctx: Context): Promise<Data> {
-    const { site, bugId } = ctx.req.param();
+    const { site, bugId } = ctx.req.param()
     if (!INSTANCES.has(site)) {
-        throw new InvalidParameterError(`unknown site: ${site}`);
+        throw new InvalidParameterError(`unknown site: ${site}`)
     }
-    const link = `https://${INSTANCES.get(site)}/show_bug.cgi?id=${bugId}`;
-    const xml = await ofetch(`${link}&ctype=xml`);
-    const $ = load(xml);
+    const link = `https://${INSTANCES.get(site)}/show_bug.cgi?id=${bugId}`
+    const xml = await ofetch(`${link}&ctype=xml`)
+    const $ = load(xml)
     const items = $('long_desc').map((index, rawItem) => {
-        const $ = load(rawItem, null, false);
+        const $ = load(rawItem, null, false)
         return {
             title: `comment #${$('commentid').text()}`,
             link: `${link}#c${index}`,
             description: $('thetext').text(),
             pubDate: parseDate($('bug_when').text()),
             author: $('who').attr('name'),
-        } as DataItem;
-    });
-    return { title: $('short_desc').text(), link, item: items.toArray() };
+        } as DataItem
+    })
+    return { title: $('short_desc').text(), link, item: items.toArray() }
 }
 
 function markdownFrom(instances: Map<string, string>, separator: string = ', '): string {
-    return [...instances.entries()].map(([k, v]) => `[\`${k}\`](https://${v})`).join(separator);
+    return [...instances.entries()].map(([k, v]) => `[\`${k}\`](https://${v})`).join(separator)
 }
 
 export const route: Route = {
@@ -58,4 +58,4 @@ export const route: Route = {
         name: 'bugs',
         description: `支持的站点标识符：${markdownFrom(INSTANCES, '、')}。`,
     },
-};
+}

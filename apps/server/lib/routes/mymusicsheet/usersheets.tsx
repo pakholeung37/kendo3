@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/user/sheets/:username/:iso?/:freeOnly?',
@@ -32,13 +32,13 @@ export const route: Route = {
     maintainers: ['Freddd13'],
     handler,
     description: `Please refer to [Wikipedia](https://en.wikipedia.org/wiki/ISO_4217#Active_codes) for ISO 4217.`,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.mymusicfive.com';
-    const graphqlUrl = 'https://mms.pd.mapia.io/mms/graphql';
-    const exchangeRateUrl = 'https://payport.pd.mapia.io/v2/currency';
-    const { username, iso = 'USD', freeOnly } = ctx.req.param();
+    const baseUrl = 'https://www.mymusicfive.com'
+    const graphqlUrl = 'https://mms.pd.mapia.io/mms/graphql'
+    const exchangeRateUrl = 'https://payport.pd.mapia.io/v2/currency'
+    const { username, iso = 'USD', freeOnly } = ctx.req.param()
 
     const rates = (await cache.tryGet('mymusicfive:exchangeRate', () =>
         ofetch(exchangeRateUrl, {
@@ -48,8 +48,8 @@ async function handler(ctx) {
                 'no-cache': Date.now(),
                 skipHeaders: true,
             },
-        })
-    )) as Record<string, string>;
+        }),
+    )) as Record<string, string>
 
     const artistDetail = await cache.tryGet(`mymusicfive:artistInfo:${username}`, () =>
         ofetch(graphqlUrl, {
@@ -105,9 +105,9 @@ async function handler(ctx) {
                     artistUrl: username,
                 },
             },
-        })
-    );
-    const artistInfo = artistDetail.data.user;
+        }),
+    )
+    const artistInfo = artistDetail.data.user
 
     const response = await ofetch(graphqlUrl, {
         method: 'POST',
@@ -165,22 +165,22 @@ async function handler(ctx) {
                 },
             },
         },
-    });
+    })
 
     const items = response.data.sheetSearch.list.map((item) => {
-        let finalPrice = 'Unknown';
-        const price = Number.parseFloat(item.price);
+        let finalPrice = 'Unknown'
+        const price = Number.parseFloat(item.price)
 
         if (item.price === 0) {
-            finalPrice = 'Free';
+            finalPrice = 'Free'
         } else if (!Number.isNaN(price) && Number.isFinite(price)) {
-            const rate = Number.parseFloat(rates[iso]);
+            const rate = Number.parseFloat(rates[iso])
             if (rate) {
-                finalPrice = `${(price * rate).toFixed(2)} ${iso}`;
+                finalPrice = `${(price * rate).toFixed(2)} ${iso}`
             }
         }
 
-        const youtubeId = item.youtubeId;
+        const youtubeId = item.youtubeId
         const content = {
             musicName: item.metaSong,
             musicMemo: item.metaMemo,
@@ -188,7 +188,7 @@ async function handler(ctx) {
             instruments: item.instruments,
             status: item.status,
             price: finalPrice,
-        };
+        }
 
         return {
             title: `${item.title} | ${finalPrice}`,
@@ -198,8 +198,8 @@ async function handler(ctx) {
             description: renderToString(<MymusicSheetDescription youtubeId={youtubeId} content={content} />),
             author: item.author.name,
             pubDate: parseDate(item.createdAt),
-        };
-    });
+        }
+    })
 
     return {
         title: artistInfo.seoInfo.title || `${artistInfo.name}'s Music Sheets`,
@@ -207,22 +207,22 @@ async function handler(ctx) {
         image: artistInfo.profileUrl,
         link: `https://www.mymusicfive.com/${username}?viewType=sheet&orderBy=createdAt`,
         item: items,
-    };
+    }
 }
 
 const MymusicSheetDescription = ({
     youtubeId,
     content,
 }: {
-    youtubeId?: string;
+    youtubeId?: string
     content: {
-        musicName?: string;
-        musicMemo?: string;
-        musicianName?: string;
-        instruments?: string[];
-        status?: string;
-        price?: string;
-    };
+        musicName?: string
+        musicMemo?: string
+        musicianName?: string
+        instruments?: string[]
+        status?: string
+        price?: string
+    }
 }) => (
     <div class="item-description">
         {youtubeId ? (
@@ -249,4 +249,4 @@ const MymusicSheetDescription = ({
         {content.status ? <p>Status: {content.status}</p> : null}
         {content.price ? <p>Price: {content.price}</p> : null}
     </div>
-);
+)

@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import parser from '@/utils/rss-parser';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/code/blog',
@@ -31,22 +31,22 @@ export const route: Route = {
     handler,
     description: 'Provides a better reading experience (full articles) over the official ones.',
     view: ViewType.Notifications,
-};
+}
 
 async function handler() {
-    const feed = await parser.parseURL('https://code.visualstudio.com/feed.xml');
+    const feed = await parser.parseURL('https://code.visualstudio.com/feed.xml')
 
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link as string, async () => {
-                const data = await ofetch(item.link as string);
-                const $ = load(data);
+                const data = await ofetch(item.link as string)
+                const $ = load(data)
 
                 // remove title and time
-                $('main h1').first().remove();
-                $('main p').first().remove();
+                $('main h1').first().remove()
+                $('main p').first().remove()
 
-                item.content = $('main').html() as string;
+                item.content = $('main').html() as string
 
                 return {
                     title: item.title,
@@ -54,10 +54,10 @@ async function handler() {
                     description: item.content,
                     pubDate: item.pubDate,
                     author: item.creator,
-                } as DataItem;
-            })
-        )
-    );
+                } as DataItem
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -65,5 +65,5 @@ async function handler() {
         description: feed.description,
         item: items,
         language: 'en',
-    } as Data;
+    } as Data
 }

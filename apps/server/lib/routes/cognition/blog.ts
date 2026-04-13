@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog/:category?',
@@ -32,81 +32,81 @@ export const route: Route = {
     parameters: {
         category: 'Category name, e.g., Research, Tutorials',
     },
-};
+}
 
 const splitAuthors = (text: string | undefined): DataItem['author'] => {
     if (!text) {
-        return undefined;
+        return undefined
     }
 
     const names = text
         .split(',')
         .map((name) => name.trim())
-        .filter(Boolean);
+        .filter(Boolean)
 
     if (names.length === 0) {
-        return undefined;
+        return undefined
     }
 
     return names.map((name) => ({
         name,
-    }));
-};
+    }))
+}
 
 export async function handler(ctx) {
-    const baseUrl = 'https://cognition.ai';
-    const { category } = ctx.req.param();
-    const listPath = category ? `/blog/${category}/1` : '/blog/1';
-    const targetUrl = new URL(listPath, baseUrl).href;
-    const html = await ofetch(targetUrl);
-    const $ = load(html);
+    const baseUrl = 'https://cognition.ai'
+    const { category } = ctx.req.param()
+    const listPath = category ? `/blog/${category}/1` : '/blog/1'
+    const targetUrl = new URL(listPath, baseUrl).href
+    const html = await ofetch(targetUrl)
+    const $ = load(html)
 
     const items = $('#blog-post-list__list li.blog-post-list__list-item')
         .toArray()
         .map((el) => {
-            const element = $(el);
-            const linkElement = element.find('a.o-blog-preview').first();
+            const element = $(el)
+            const linkElement = element.find('a.o-blog-preview').first()
 
-            const href = linkElement.attr('href');
-            const link = href ? new URL(href, baseUrl).href : undefined;
+            const href = linkElement.attr('href')
+            const link = href ? new URL(href, baseUrl).href : undefined
 
             if (!link) {
-                return;
+                return
             }
 
-            const title = linkElement.find('h3.o-blog-preview__title').text().trim();
+            const title = linkElement.find('h3.o-blog-preview__title').text().trim()
             if (!title) {
-                return;
+                return
             }
 
-            const summary = linkElement.find('p.o-blog-preview__intro').text().trim();
+            const summary = linkElement.find('p.o-blog-preview__intro').text().trim()
 
-            const dateNode = linkElement.find('.o-blog-preview__meta-date').clone();
-            dateNode.find('.o-blog-preview__meta').remove();
-            const dateText = dateNode.text().trim();
-            const authorText = linkElement.find('.o-blog-preview__meta-author').text().trim();
+            const dateNode = linkElement.find('.o-blog-preview__meta-date').clone()
+            dateNode.find('.o-blog-preview__meta').remove()
+            const dateText = dateNode.text().trim()
+            const authorText = linkElement.find('.o-blog-preview__meta-author').text().trim()
 
             const dataItem: DataItem = {
                 title,
                 link,
                 pubDate: parseDate(dateText),
-            };
+            }
 
             if (summary) {
-                dataItem.description = summary;
+                dataItem.description = summary
             }
 
-            const authors = splitAuthors(authorText);
+            const authors = splitAuthors(authorText)
             if (authors) {
-                dataItem.author = authors;
+                dataItem.author = authors
             }
 
-            return dataItem;
+            return dataItem
         })
-        .filter((item): item is DataItem => item !== undefined);
+        .filter((item): item is DataItem => item !== undefined)
 
-    const imageAttr = $('meta[property="og:image"]').attr('content');
-    const image = imageAttr ? new URL(imageAttr, baseUrl).href : undefined;
+    const imageAttr = $('meta[property="og:image"]').attr('content')
+    const image = imageAttr ? new URL(imageAttr, baseUrl).href : undefined
 
     return {
         title: $('title').text(),
@@ -115,5 +115,5 @@ export async function handler(ctx) {
         allowEmpty: true,
         item: items,
         image,
-    };
+    }
 }

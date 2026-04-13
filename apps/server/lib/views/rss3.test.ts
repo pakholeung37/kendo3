@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest'
 
-import rss3 from './rss3';
+import rss3 from './rss3'
 
-const NETWORK = 'rsshub';
-const TAG = 'RSS';
-const TYPE = 'feed';
-const PLATFORM = 'RSSHub';
+const NETWORK = 'rsshub'
+const TAG = 'RSS'
+const TYPE = 'feed'
+const PLATFORM = 'RSSHub'
 
 describe('rss3', () => {
     it('should return UMS Result', () => {
@@ -30,9 +30,9 @@ describe('rss3', () => {
                     updated: '2024-01-02T00:00:00Z',
                 },
             ],
-        };
+        }
 
-        const result = rss3(data);
+        const result = rss3(data)
 
         const expected = {
             data: [
@@ -95,9 +95,9 @@ describe('rss3', () => {
                     timestamp: 1_704_153_600,
                 },
             ],
-        };
-        expect(result).toStrictEqual(expected);
-    });
+        }
+        expect(result).toStrictEqual(expected)
+    })
 
     it('falls back to raw link when URL parsing fails', () => {
         const data = {
@@ -112,11 +112,11 @@ describe('rss3', () => {
                     updated: '2024-01-02T00:00:00Z',
                 },
             ],
-        };
+        }
 
-        const result = rss3(data);
-        expect(result.data[0].owner).toBe('not-a-url');
-        expect(result.data[0].from).toBe('not-a-url');
-        expect(result.data[0].to).toBe('not-a-url');
-    });
-});
+        const result = rss3(data)
+        expect(result.data[0].owner).toBe('not-a-url')
+        expect(result.data[0].from).toBe('not-a-url')
+        expect(result.data[0].to).toBe('not-a-url')
+    })
+})

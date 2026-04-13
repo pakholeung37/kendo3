@@ -1,36 +1,36 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'https://www.1lou.me';
+const rootUrl = 'https://www.1lou.me'
 
 export const handler = async (ctx) => {
-    const { params } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { params } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
     const queryString = Object.entries(ctx.req.query())
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-        .join('&');
+        .join('&')
 
-    const currentUrl = new URL(`${params && params.endsWith('.htm') ? params : `${params}.htm`}${queryString ? `?${queryString}` : ''}`, rootUrl).href;
+    const currentUrl = new URL(`${params && params.endsWith('.htm') ? params : `${params}.htm`}${queryString ? `?${queryString}` : ''}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('li.media.thread.tap:not(li.hidden-sm)')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const subjectEl = item.find('div.subject').children('a').first();
+            const subjectEl = item.find('div.subject').children('a').first()
 
             return {
                 title: subjectEl.text(),
@@ -45,54 +45,54 @@ export const handler = async (ctx) => {
                 ].filter(Boolean),
                 author: item.find('a.username').text(),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h4.break-all').contents().last().text();
+                const title = $$('h4.break-all').contents().last().text()
 
                 if (title) {
-                    const description = $$('div.message.break-all').html();
-                    const image = new URL($$('img').first().prop('src'), rootUrl).href;
+                    const description = $$('div.message.break-all').html()
+                    const image = new URL($$('img').first().prop('src'), rootUrl).href
 
-                    item.title = title;
-                    item.description = description;
-                    item.pubDate = timezone(parseDate($$('span.date').text()), +8);
+                    item.title = title
+                    item.description = description
+                    item.pubDate = timezone(parseDate($$('span.date').text()), +8)
                     item.category = $$('a.badge')
                         .toArray()
-                        .map((c) => $$(c).text());
+                        .map((c) => $$(c).text())
                     item.content = {
                         html: description,
                         text: $$('div.message.break-all').text(),
-                    };
-                    item.image = image;
-                    item.banner = image;
-                    item.language = language;
+                    }
+                    item.image = image
+                    item.banner = image
+                    item.language = language
 
-                    const torrents = $$('ul.attachlist li a');
+                    const torrents = $$('ul.attachlist li a')
 
                     if (torrents.length > 0) {
-                        const torrent = torrents.first();
+                        const torrent = torrents.first()
 
-                        item.enclosure_url = new URL(torrent.prop('href'), rootUrl).href;
-                        item.enclosure_type = 'application/x-bittorrent';
-                        item.enclosure_title = torrent.text();
+                        item.enclosure_url = new URL(torrent.prop('href'), rootUrl).href
+                        item.enclosure_type = 'application/x-bittorrent'
+                        item.enclosure_title = torrent.text()
                     }
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = 'BT 之家 1LOU 站';
-    const image = new URL($('img.logo-2').prop('src'), rootUrl).href;
+    const author = 'BT 之家 1LOU 站'
+    const image = new URL($('img.logo-2').prop('src'), rootUrl).href
 
     return {
         title: `${$('title').text().split(/-/)[0]} - ${author}`,
@@ -103,8 +103,8 @@ export const handler = async (ctx) => {
         image,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:params{.+}?',
@@ -138,10 +138,10 @@ export const route: Route = {
         {
             source: ['1lou.me/:params'],
             target: (_, url) => {
-                url = new URL(url);
+                url = new URL(url)
 
-                return `/1lou${url.href.replace(rootUrl, '')}`;
+                return `/1lou${url.href.replace(rootUrl, '')}`
             },
         },
     ],
-};
+}

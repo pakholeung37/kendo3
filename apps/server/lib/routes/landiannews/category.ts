@@ -1,25 +1,25 @@
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchCategory, fetchNewsItems } from './utils';
+import { fetchCategory, fetchNewsItems } from './utils'
 
 export const handler = async (ctx): Promise<Data> => {
-    const slug = ctx.req.param('slug');
+    const slug = ctx.req.param('slug')
 
-    const { id, name } = await fetchCategory(slug);
+    const { id, name } = await fetchCategory(slug)
 
-    const rootUrl = 'https://www.landiannews.com/';
-    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed=author,wp:term&categories=${id}`;
+    const rootUrl = 'https://www.landiannews.com/'
+    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed=author,wp:term&categories=${id}`
 
-    const items: DataItem[] = await fetchNewsItems(postApiUrl);
+    const items: DataItem[] = await fetchNewsItems(postApiUrl)
 
     return {
         title: `${name} - 蓝点网`,
         description: '给你感兴趣的内容!',
         link: `${rootUrl}${slug}`,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/category/:slug',
@@ -47,4 +47,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

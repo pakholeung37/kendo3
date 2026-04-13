@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 const workshopFileTypes = {
     0: 'Community',
@@ -20,7 +20,7 @@ const workshopFileTypes = {
     13: 'SteamworksAccessInvite',
     14: 'SteamVideo',
     15: 'GameManagedItem',
-};
+}
 
 export const route: Route = {
     path: '/appcommunityfeed/:appid/:routeParams?',
@@ -65,11 +65,11 @@ It can also access community hub contents that require a logged-in account.
     maintainers: ['NyaaaDoge'],
 
     handler: async (ctx) => {
-        const { appid = 730, routeParams } = ctx.req.param();
+        const { appid = 730, routeParams } = ctx.req.param()
 
-        const baseUrl = 'https://steamcommunity.com';
-        const apiUrl = `${baseUrl}/library/appcommunityfeed/${appid}${routeParams ? `?${routeParams}` : ''}`;
-        const response = await ofetch(apiUrl);
+        const baseUrl = 'https://steamcommunity.com'
+        const apiUrl = `${baseUrl}/library/appcommunityfeed/${appid}${routeParams ? `?${routeParams}` : ''}`
+        const response = await ofetch(apiUrl)
 
         return {
             title: `${appid} Steam Community Hub`,
@@ -81,13 +81,13 @@ It can also access community hub contents that require a logged-in account.
                 author: item.creator.name,
                 category: workshopFileTypes[item.type],
             })),
-        };
+        }
     },
-};
+}
 
 const SteamAppCommunityDescription = ({ image, description }: { image?: string; description?: string }) => (
     <>
         {image ? <img src={image} /> : null}
         <p>{description}</p>
     </>
-);
+)

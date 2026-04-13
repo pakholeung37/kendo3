@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { rootUrl } from './utils';
+import { rootUrl } from './utils'
 
 export const route: Route = {
     path: '/detail/:id',
@@ -26,32 +26,32 @@ export const route: Route = {
     name: '番剧详情',
     maintainers: ['s2marine'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const response = await got(`${rootUrl}/detail/${ctx.req.param('id')}`);
-    const $ = load(response.data);
+    const response = await got(`${rootUrl}/detail/${ctx.req.param('id')}`)
+    const $ = load(response.data)
 
-    const ldJson = JSON.parse($('script[type="application/ld+json"]').text());
+    const ldJson = JSON.parse($('script[type="application/ld+json"]').text())
 
     const items = $('.video_detail_episode')
         .first()
         .find('li')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            item = $(item)
+            const a = item.find('a')
             return {
                 title: a.text(),
                 link: a.attr('href').replace('http://', 'https://'),
-            };
+            }
         })
-        .toReversed();
+        .toReversed()
 
     return {
         title: `AGE动漫 - ${ldJson.name}`,
         link: `${rootUrl}/detail/${ctx.req.param('id')}`,
         description: ldJson.description,
         item: items,
-    };
+    }
 }

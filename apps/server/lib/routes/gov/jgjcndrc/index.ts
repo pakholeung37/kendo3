@@ -1,34 +1,34 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { columnId = '1832739866673426433', subColumnId } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { columnId = '1832739866673426433', subColumnId } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.jgjcndrc.org.cn';
-    const currentUrl = new URL(`list?clmId=${columnId}${subColumnId ? `&sclmId=${subColumnId}` : ''}`, rootUrl).href;
-    const apiColumnUrl = new URL(`prod-api/portal/artPageByColumn/${subColumnId ?? columnId}`, rootUrl).href;
+    const rootUrl = 'https://www.jgjcndrc.org.cn'
+    const currentUrl = new URL(`list?clmId=${columnId}${subColumnId ? `&sclmId=${subColumnId}` : ''}`, rootUrl).href
+    const apiColumnUrl = new URL(`prod-api/portal/artPageByColumn/${subColumnId ?? columnId}`, rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     const { data: response } = await got(apiColumnUrl, {
         searchParams: {
             pageNum: 1,
             pageSize: limit,
         },
-    });
+    })
 
     let items = response.data.slice(0, limit).map((item) => {
-        const guid = `jgjcndrc-${item.articleId}`;
+        const guid = `jgjcndrc-${item.articleId}`
 
         return {
             title: item.articleTitle,
@@ -37,39 +37,39 @@ export const handler = async (ctx) => {
             guid,
             id: guid,
             language,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const data = detailResponse.data;
+                const data = detailResponse.data
 
-                const title = data.articleTitle;
-                const description = data.articleContent;
-                const guid = `jgjcndrc-${data.articleId}`;
+                const title = data.articleTitle
+                const description = data.articleContent
+                const guid = `jgjcndrc-${data.articleId}`
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate(data.pubDate), +8);
-                item.link = data.linkUrl || new URL(data.articleUrl, rootUrl).href;
-                item.category = data.parentColumns.map((c) => c.columnName);
-                item.guid = guid;
-                item.id = guid;
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate(data.pubDate), +8)
+                item.link = data.linkUrl || new URL(data.articleUrl, rootUrl).href
+                item.category = data.parentColumns.map((c) => c.columnName)
+                item.guid = guid
+                item.id = guid
                 item.content = {
                     html: description,
                     text: description,
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('header img').last().prop('src'), rootUrl).href;
+    const image = new URL($('header img').last().prop('src'), rootUrl).href
 
     return {
         title: `${$('title').text()}${$('div.tit').text() ? ` - ${$('div.tit').text()}` : ''}`,
@@ -80,8 +80,8 @@ export const handler = async (ctx) => {
         image,
         author: $('header h1').text(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/jgjcndrc/:columnId?/:subColumnId?',
@@ -114,12 +114,12 @@ export const route: Route = {
         {
             source: ['www.jgjcndrc.org.cn/list'],
             target: (_, url) => {
-                url = new URL(url);
-                const columnId = url.searchParams.get('clmId');
-                const subColumnId = url.searchParams.get('sclmId');
+                url = new URL(url)
+                const columnId = url.searchParams.get('clmId')
+                const subColumnId = url.searchParams.get('sclmId')
 
-                return `/jgjcndrc${columnId ? `/${columnId}${subColumnId ? `/${subColumnId}` : ''}` : ''}`;
+                return `/jgjcndrc${columnId ? `/${columnId}${subColumnId ? `/${subColumnId}` : ''}` : ''}`
             },
         },
     ],
-};
+}

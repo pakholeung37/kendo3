@@ -1,70 +1,70 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { bigId = '2', smallId = '11' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { bigId = '2', smallId = '11' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'https://www.cbpanet.com';
-    const currentUrl = new URL(`dzp_news.aspx?bigid=${bigId}&smallid=${smallId}`, rootUrl).href;
+    const rootUrl = 'https://www.cbpanet.com'
+    const currentUrl = new URL(`dzp_news.aspx?bigid=${bigId}&smallid=${smallId}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.divmore ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('div.zxcont1 a');
+            const a = item.find('div.zxcont1 a')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('div.zxtime1').text(), 'YY/MM/DD'),
                 link: new URL(a.prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const description = $$('div.newscont').html();
+                const description = $$('div.newscont').html()
 
-                item.title = $$('div.newstlt').text();
-                item.description = description;
+                item.title = $$('div.newstlt').text()
+                item.description = description
                 item.pubDate = timezone(
                     parseDate(
                         $$('div.newstime')
                             .text()
                             .replace(/发布时间:/, ''),
-                        'YYYY/M/D HH:mm:ss'
+                        'YYYY/M/D HH:mm:ss',
                     ),
-                    +8
-                );
+                    +8,
+                )
                 item.content = {
                     html: description,
                     text: $$('div.newscont').text(),
-                };
-                return item;
-            })
-        )
-    );
+                }
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('div#logo img').prop('src'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('div#logo img').prop('src'), rootUrl).href
 
     return {
         title,
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/)[0],
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/dzp_news/:bigId?/:smallId?',
@@ -159,11 +159,11 @@ export const route: Route = {
         {
             source: ['www.cbpanet.com/dzp_news.aspx'],
             target: (_, url) => {
-                url = new URL(url);
-                const bigId = url.searchParams.get('bigid');
-                const smallId = url.searchParams.get('smallid');
+                url = new URL(url)
+                const bigId = url.searchParams.get('bigid')
+                const smallId = url.searchParams.get('smallid')
 
-                return `/dzp_news${bigId ? `/${bigId}${smallId ? `/${smallId}` : ''}` : ''}`;
+                return `/dzp_news${bigId ? `/${bigId}${smallId ? `/${smallId}` : ''}` : ''}`
             },
         },
         {
@@ -377,4 +377,4 @@ export const route: Route = {
             target: '/dzp_news/7/49',
         },
     ],
-};
+}

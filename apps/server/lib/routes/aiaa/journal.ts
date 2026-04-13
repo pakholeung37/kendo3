@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     name: 'ASR Articles',
@@ -14,38 +14,38 @@ export const route: Route = {
     },
     example: '/aiaa/journal/aiaaj',
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('journalID');
+    const id = ctx.req.param('journalID')
 
-    const baseUrl = 'https://arc.aiaa.org';
-    const rssUrl = `${baseUrl}/action/showFeed?type=etoc&feed=rss&jc=${id}`;
+    const baseUrl = 'https://arc.aiaa.org'
+    const rssUrl = `${baseUrl}/action/showFeed?type=etoc&feed=rss&jc=${id}`
 
-    const pageResponse = await ofetch(rssUrl);
+    const pageResponse = await ofetch(rssUrl)
 
     const $ = load(pageResponse, {
         xml: {
             xmlMode: true,
         },
-    });
+    })
 
-    const channelTitle = $('title').first().text().replace(': Table of Contents', '');
+    const channelTitle = $('title').first().text().replace(': Table of Contents', '')
 
-    const imageUrl = $('image url').text();
+    const imageUrl = $('image url').text()
     const items: DataItem[] = $('item')
         .toArray()
         .map((element) => {
-            const $item = $(element);
-            const title = $item.find(String.raw`dc\:title`).text();
-            const link = $item.find('link').text() || '';
-            const description = $item.find('description').text() || '';
-            const pubDate = parseDate($item.find(String.raw`dc\:date`).text() || '');
+            const $item = $(element)
+            const title = $item.find(String.raw`dc\:title`).text()
+            const link = $item.find('link').text() || ''
+            const description = $item.find('description').text() || ''
+            const pubDate = parseDate($item.find(String.raw`dc\:date`).text() || '')
             const authors = $item
                 .find(String.raw`dc\:creator`)
                 .toArray()
-                .map((authorElement) => $(authorElement).text());
-            const author = authors.join(', ');
+                .map((authorElement) => $(authorElement).text())
+            const author = authors.join(', ')
 
             return {
                 title,
@@ -53,8 +53,8 @@ async function handler(ctx) {
                 description,
                 pubDate,
                 author,
-            } satisfies DataItem;
-        });
+            } satisfies DataItem
+        })
 
     return {
         title: `${channelTitle} | arc.aiaa.org`,
@@ -62,5 +62,5 @@ async function handler(ctx) {
         image: imageUrl,
         link: `${baseUrl}/journal/${id}`,
         item: items,
-    };
+    }
 }

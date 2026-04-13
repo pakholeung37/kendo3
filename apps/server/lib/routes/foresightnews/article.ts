@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { apiRootUrl, icon, image, processItems, rootUrl } from './util';
+import { apiRootUrl, icon, image, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: '/article',
@@ -24,14 +24,14 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'foresightnews.pro/',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const apiUrl = new URL('v1/articles', apiRootUrl).href;
+    const apiUrl = new URL('v1/articles', apiRootUrl).href
 
-    const { items } = await processItems(apiUrl, limit);
+    const { items } = await processItems(apiUrl, limit)
 
     return {
         item: items,
@@ -44,5 +44,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: '文章',
         author: 'Foresight News',
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/group/:id/:sort?',
@@ -30,26 +30,26 @@ export const route: Route = {
     description: `| 回复时间排序 | 发布时间排序 |
 | ------------ | ------------ |
 | 1            | 2            |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const sort = ctx.req.param('sort') ?? '2';
+    const id = ctx.req.param('id')
+    const sort = ctx.req.param('sort') ?? '2'
 
-    const rootUrl = 'https://yuba.douyu.com';
-    const detailUrl = `${rootUrl}/wbapi/web/group/head?group_id=${id}`;
-    const apiUrl = `${rootUrl}/wbapi/web/group/postlist?group_id=${id}&page=1&sort=${sort}`;
-    const currentUrl = `${rootUrl}/group/${sort === '1' ? 'newall' : 'newself'}/${id}`;
+    const rootUrl = 'https://yuba.douyu.com'
+    const detailUrl = `${rootUrl}/wbapi/web/group/head?group_id=${id}`
+    const apiUrl = `${rootUrl}/wbapi/web/group/postlist?group_id=${id}&page=1&sort=${sort}`
+    const currentUrl = `${rootUrl}/group/${sort === '1' ? 'newall' : 'newself'}/${id}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const detailResponse = await got({
         method: 'get',
         url: detailUrl,
-    });
+    })
 
     const items = response.data.data.map((item) => ({
         title: item.title,
@@ -62,12 +62,12 @@ async function handler(ctx) {
                 url: i.url,
             })),
         }),
-    }));
+    }))
 
     return {
         title: `斗鱼鱼吧 - ${detailResponse.data.data.group_name}`,
         link: currentUrl,
         item: items,
         description: detailResponse.data.data.describe,
-    };
+    }
 }

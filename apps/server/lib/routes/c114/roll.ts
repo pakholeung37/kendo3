@@ -1,32 +1,32 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { original = 'false' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { original = 'false' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'https://www.c114.com.cn';
-    const currentUrl = new URL(`news/roll.asp${original === 'true' ? `?o=true` : ''}`, rootUrl).href;
+    const rootUrl = 'https://www.c114.com.cn'
+    const currentUrl = new URL(`news/roll.asp${original === 'true' ? `?o=true` : ''}`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.new_list_c')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('h6 a').text(),
@@ -34,37 +34,37 @@ export const handler = async (ctx) => {
                 link: new URL(item.find('h6 a').prop('href'), rootUrl).href,
                 author: item.find('div.new_list_author').text().trim(),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: detailResponse } = await got(item.link, {
                     responseType: 'buffer',
-                });
+                })
 
-                const $$ = load(iconv.decode(detailResponse, 'gbk'));
+                const $$ = load(iconv.decode(detailResponse, 'gbk'))
 
-                const title = $$('h1').text();
-                const description = $$('div.text').html();
+                const title = $$('h1').text()
+                const description = $$('div.text').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('div.r_time').text(), 'YYYY/M/D HH:mm'), +8);
-                item.author = $$('div.author').first().text().trim();
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('div.r_time').text(), 'YYYY/M/D HH:mm'), +8)
+                item.author = $$('div.author').first().text().trim()
                 item.content = {
                     html: description,
                     text: $$('.text').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.top2-1 a img').prop('src'), rootUrl).href;
+    const image = new URL($('div.top2-1 a img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         image,
         author: $('p.top1-1-1 a').first().text(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/roll/:original?',
@@ -102,11 +102,11 @@ export const route: Route = {
         {
             source: ['c114.com.cn/news/roll.asp'],
             target: (_, url) => {
-                url = new URL(url);
-                const original = url.searchParams.get('o');
+                url = new URL(url)
+                const original = url.searchParams.get('o')
 
-                return `/roll${original ? `/${original}` : ''}`;
+                return `/roll${original ? `/${original}` : ''}`
             },
         },
     ],
-};
+}

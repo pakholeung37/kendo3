@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'http://www.tqyb.com.cn';
+const rootUrl = 'http://www.tqyb.com.cn'
 
 export const route: Route = {
     path: '/guangdong/tqyb/sncsyjxh',
@@ -29,18 +29,18 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'www.tqyb.com.cn/gz/weatherAlarm/otherCity/',
-};
+}
 
 async function handler() {
-    const sncsyjxhJsUrl = `${rootUrl}/data/gzWeather/otherCityAlarm.js`;
+    const sncsyjxhJsUrl = `${rootUrl}/data/gzWeather/otherCityAlarm.js`
 
-    const response = await got.get(sncsyjxhJsUrl);
-    const resData = JSON.parse(String(response.data.match(/Alarm = (.*?);/)[1]));
+    const response = await got.get(sncsyjxhJsUrl)
+    const resData = JSON.parse(String(response.data.match(/Alarm = (.*?);/)[1]))
 
-    const data = [];
+    const data = []
     for (const i in resData) {
         for (const j in resData[i]) {
-            data.push(resData[i][j]);
+            data.push(resData[i][j])
         }
     }
 
@@ -54,15 +54,15 @@ async function handler() {
                 <text>等级： {item.sigtypename} </text>
                 <br />
                 <text>发布时间：{item.datetime}</text>
-            </>
+            </>,
         ),
         pubDate: timezone(parseDate(item.datetime, 'YYYY年MM月DD日 HH:mm'), +8),
         guid: timezone(parseDate(item.datetime, 'YYYY年MM月DD日 HH:mm'), +8) + item.cname + item.sigtypename,
-    }));
+    }))
 
     return {
         title: '广东省内城市预警信号',
         link: `http://www.tqyb.com.cn/gz/weatherAlarm/otherCity/`,
         item: items,
-    };
+    }
 }

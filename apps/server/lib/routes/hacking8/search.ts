@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/search/:keyword?',
@@ -27,27 +27,27 @@ export const route: Route = {
     name: '搜索',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword') ?? '';
+    const keyword = ctx.req.param('keyword') ?? ''
 
-    const rootUrl = 'https://i.hacking8.com';
-    const currentUrl = `${rootUrl}/search/?q=${keyword}`;
+    const rootUrl = 'https://i.hacking8.com'
+    const currentUrl = `${rootUrl}/search/?q=${keyword}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('div.media')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('div.link a');
+            const a = item.find('div.link a')
 
             return {
                 title: a.text(),
@@ -60,8 +60,8 @@ async function handler(ctx) {
                     .find('span.label')
                     .toArray()
                     .map((l) => $(l).text()),
-            };
-        });
+            }
+        })
 
     return {
         title: `Hacking8 安全信息流 - ${$('title')
@@ -70,5 +70,5 @@ async function handler(ctx) {
             .trim()}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

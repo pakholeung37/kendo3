@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const host = 'https://www.nowcoder.com';
+const host = 'https://www.nowcoder.com'
 
 export const route: Route = {
     path: '/discuss/:type/:order',
@@ -27,18 +27,18 @@ export const route: Route = {
     description: `| 最新回复 | 最新发表 | 最新 | 精华 |
 | -------- | -------- | ---- | ---- |
 | 0        | 3        | 1    | 4    |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    const order = ctx.req.param('order');
+    const type = ctx.req.param('type')
+    const order = ctx.req.param('order')
 
-    const link = `https://www.nowcoder.com/discuss?type=${type}&order=${order}`;
-    const response = await got.get(link);
-    const $ = load(response.data);
+    const link = `https://www.nowcoder.com/discuss?type=${type}&order=${order}`
+    const response = await got.get(link)
+    const $ = load(response.data)
 
-    const type_name = $('a.discuss-tab.selected').text();
-    const order_name = $('li.selected a').text();
+    const type_name = $('a.discuss-tab.selected').text()
+    const order_name = $('li.selected a').text()
 
     const list = $('li.clearfix')
         .toArray()
@@ -46,36 +46,36 @@ async function handler(ctx) {
             const info = {
                 title: $(element).find('div.discuss-main.clearfix a:first').text().trim().replaceAll('\n', ' '),
                 link: $(element).find('div.discuss-main.clearfix a[rel]').attr('href'),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const out = await Promise.all(
         list.map((info) => {
-            const title = info.title || 'tzgg';
-            const itemUrl = new URL(info.link, host).href.replace(/^(.*)\?(.*)$/, '$1');
+            const title = info.title || 'tzgg'
+            const itemUrl = new URL(info.link, host).href.replace(/^(.*)\?(.*)$/, '$1')
 
             return cache.tryGet(itemUrl, async () => {
-                const response = await got.get(itemUrl);
-                const $ = load(response.data);
+                const response = await got.get(itemUrl)
+                const $ = load(response.data)
 
-                const date_value = $('span.post-time').text();
+                const date_value = $('span.post-time').text()
 
-                const description = $('.nc-post-content').html();
+                const description = $('.nc-post-content').html()
 
                 return {
                     title,
                     link: itemUrl,
                     description,
                     pubDate: timezone(parseDate(date_value), +8),
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: `${type_name}${order_name}——牛客网讨论区`,
         link,
         item: out,
-    };
+    }
 }

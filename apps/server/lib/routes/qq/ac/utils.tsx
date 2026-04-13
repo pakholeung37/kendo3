@@ -1,31 +1,31 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const rootUrl = 'https://ac.qq.com';
-const mobileRootUrl = 'https://m.ac.qq.com';
+const rootUrl = 'https://ac.qq.com'
+const mobileRootUrl = 'https://m.ac.qq.com'
 const ProcessItems = async (ctx, currentUrl, time, title) => {
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $(`${time ? `.${time}-month-data ` : ''}.text-overflow`)
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 guid: `${rootUrl}${item.attr('href')}`,
                 link: `${mobileRootUrl}${item.attr('href').replace(/Comic\/ComicInfo/, 'comic/index')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -33,15 +33,15 @@ const ProcessItems = async (ctx, currentUrl, time, title) => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.link = item.guid;
+                item.link = item.guid
                 item.author = content('.author-wr')
                     .toArray()
                     .map((a) => $(a).text().trim())
-                    .join(', ');
+                    .join(', ')
                 item.description = renderToString(
                     <QqAcDescription
                         image={content('.head-cover')?.attr('src') ?? ''}
@@ -53,22 +53,22 @@ const ProcessItems = async (ctx, currentUrl, time, title) => {
                                 title: content(chapter).find('.comic-title')?.text() ?? '',
                                 image: content(chapter).find('.cover-image')?.attr('src') ?? '',
                             }))}
-                    />
-                );
+                    />,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${title} - 腾讯动漫`,
         link: currentUrl,
         item: items,
-    };
-};
+    }
+}
 
-export { mobileRootUrl, ProcessItems, rootUrl };
+export { mobileRootUrl, ProcessItems, rootUrl }
 
 const QqAcDescription = ({ image, description, chapters }: { image: string; description: string; chapters: Array<{ link?: string; title?: string; image?: string }> }) => (
     <>
@@ -81,4 +81,4 @@ const QqAcDescription = ({ image, description, chapters }: { image: string; desc
             </div>
         ))}
     </>
-);
+)

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const categories = {
     0: '全部',
@@ -14,7 +14,7 @@ const categories = {
     3: '数据',
     4: 'NFT',
     5: '项目',
-};
+}
 
 export const route: Route = {
     path: '/lives/:category?',
@@ -42,16 +42,16 @@ export const route: Route = {
     description: `| 全部 | 精选 | 政策 | 数据 | NFT | 项目 |
 | ---- | ---- | ---- | ---- | --- | ---- |
 | 0    | 1    | 2    | 3    | 4   | 5    |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '0' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100;
+    const { category = '0' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 100
 
-    const rootUrl = 'https://jinse.com.cn';
-    const rootApiUrl = 'https://api.jinse.com.cn';
-    const apiUrl = new URL('noah/v2/lives', rootApiUrl).href;
-    const currentUrl = new URL('lives', rootUrl).href;
+    const rootUrl = 'https://jinse.com.cn'
+    const rootApiUrl = 'https://api.jinse.com.cn'
+    const apiUrl = new URL('noah/v2/lives', rootApiUrl).href
+    const currentUrl = new URL('lives', rootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -62,7 +62,7 @@ async function handler(ctx) {
             id: 0,
             category,
         },
-    });
+    })
 
     const items =
         response.list
@@ -92,15 +92,15 @@ async function handler(ctx) {
                 upvotes: item.up_counts ?? 0,
                 downvotes: item.down_counts ?? 0,
                 comments: item.comment_count ?? 0,
-            })) ?? [];
+            })) ?? []
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = $('meta[name="author"]').prop('content');
-    const image = $('a.js-logoBox img').prop('src');
-    const icon = new URL($('link[rel="favicon"]').prop('href'), rootUrl).href;
+    const author = $('meta[name="author"]').prop('content')
+    const image = $('a.js-logoBox img').prop('src')
+    const icon = new URL($('link[rel="favicon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -114,5 +114,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author,
         allowEmpty: true,
-    };
+    }
 }

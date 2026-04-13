@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/paper/:id?',
@@ -24,29 +24,29 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     description: `如订阅 **第 A1 版：国内大局**，路由为 [\`/cntheory/paper/国内大局\`](https://rsshub.app/cntheory/paper/国内大局)。`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://paper.cntheory.com';
+    const rootUrl = 'https://paper.cntheory.com'
 
     let response = await got({
         method: 'get',
         url: rootUrl,
-    });
+    })
 
     response = await got({
         method: 'get',
         url: `${rootUrl}/${response.data.match(/URL=(.*)"/)[1]}`,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const matches = response.data.match(/images\/(\d{4}-\d{2}\/\d{2})\/\w+\/\w+_brief/);
-    const link = `${rootUrl}/html/${matches[1]}`;
+    const matches = response.data.match(/images\/(\d{4}-\d{2}\/\d{2})\/\w+\/\w+_brief/)
+    const link = `${rootUrl}/html/${matches[1]}`
 
-    let items = [];
+    let items = []
 
     await Promise.all(
         $('#pageLink')
@@ -57,19 +57,19 @@ async function handler(ctx) {
                 const pageResponse = await got({
                     method: 'get',
                     url: p,
-                });
+                })
 
-                const page = load(pageResponse.data);
+                const page = load(pageResponse.data)
 
                 items.push(
                     ...page('table')
                         .last()
                         .find('a')
                         .toArray()
-                        .map((a) => `${link}/${$(a).attr('href')}`)
-                );
-            })
-    );
+                        .map((a) => `${link}/${$(a).attr('href')}`),
+                )
+            }),
+    )
 
     items = await Promise.all(
         items.map((item) =>
@@ -77,9 +77,9 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
                 return {
                     link: item,
@@ -95,17 +95,17 @@ async function handler(ctx) {
                         <>
                             {content('#reslist').html() ? raw(content('#reslist').html().replaceAll('display:none;', '')) : null}
                             {content('founder-content').html() ? raw(content('founder-content').html()) : null}
-                        </>
+                        </>,
                     ),
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: `学习时报${id ? ` - ${id}` : ''}`,
         link: rootUrl,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

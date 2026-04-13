@@ -1,7 +1,7 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { maskHeader } from '../constants';
-import got from '../pixiv-got';
+import { maskHeader } from '../constants'
+import got from '../pixiv-got'
 
 /**
  * pixiv 用户
@@ -24,5 +24,5 @@ export default function getUserDetail(user_id, token) {
         searchParams: queryString.stringify({
             user_id,
         }),
-    });
+    })
 }

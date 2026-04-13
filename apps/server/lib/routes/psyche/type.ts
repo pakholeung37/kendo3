@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getData } from './utils';
+import { getData } from './utils'
 
 export const route: Route = {
     path: '/type/:type',
@@ -27,29 +27,29 @@ export const route: Route = {
     maintainers: ['emdoe'],
     handler,
     description: `Supported types: Ideas, Guides, and Films.`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+    const type = ctx.req.param('type')
+    const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1)
 
-    const url = `https://psyche.co/${type}`;
-    const response = await ofetch(url);
-    const $ = load(response);
+    const url = `https://psyche.co/${type}`
+    const response = await ofetch(url)
+    const $ = load(response)
 
-    const data = JSON.parse($('script#__NEXT_DATA__').text());
-    const prefix = `https://psyche.co/_next/data/${data.buildId}`;
+    const data = JSON.parse($('script#__NEXT_DATA__').text())
+    const prefix = `https://psyche.co/_next/data/${data.buildId}`
     const list = data.props.pageProps.articles.map((item) => ({
         title: item.title,
         link: `${url}/${item.slug}`,
         json: `${prefix}/${type}/${item.slug}.json`,
-    }));
+    }))
 
-    const items = await getData(list);
+    const items = await getData(list)
 
     return {
         title: `Psyche | ${capitalizedType}`,
         link: url,
         item: items,
-    };
+    }
 }

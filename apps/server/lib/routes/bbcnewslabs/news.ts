@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -26,32 +26,32 @@ export const route: Route = {
     maintainers: ['elxy'],
     handler,
     url: 'bbcnewslabs.co.uk/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://bbcnewslabs.co.uk';
+    const rootUrl = 'https://bbcnewslabs.co.uk'
     const response = await got({
         method: 'get',
         url: `${rootUrl}/news`,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('a[href^="/news/20"]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h3[class^="thumbnail-module--thumbnailTitle--"]').text(),
                 description: item.find('span[class^="thumbnail-module--thumbnailDescription--"]').text(),
                 pubDate: parseDate(item.find('span[class^="thumbnail-module--thumbnailType--"]').text()),
                 link: rootUrl + item.attr('href'),
-            };
-        });
+            }
+        })
 
     return {
         title: 'News - BBC News Labs',
         link: rootUrl,
         item: items,
-    };
+    }
 }

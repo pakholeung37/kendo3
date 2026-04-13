@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'news', id = '10' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { category = 'news', id = '10' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://www.cnljxh.org.cn';
-    const targetUrl: string = new URL(`${category}/?classid=${id}`, baseUrl).href;
+    const baseUrl = 'https://www.cnljxh.org.cn'
+    const targetUrl: string = new URL(`${category}/?classid=${id}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('div.main_left ul li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a')
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('span').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('span').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -38,24 +38,24 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl ? new URL(linkUrl, baseUrl).href : undefined,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('div.content_title h2').text();
-                const description: string | undefined = $$('div.content_div').html() ?? '';
-                const authors: DataItem['author'] = $$('div.content_title p').text().split(/\s/)[0]?.split(/：/).pop();
+                const title: string = $$('div.content_title h2').text()
+                const description: string | undefined = $$('div.content_div').html() ?? ''
+                const authors: DataItem['author'] = $$('div.content_title p').text().split(/\s/)[0]?.split(/：/).pop()
 
                 let processedItem: DataItem = {
                     title,
@@ -66,10 +66,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         text: description,
                     },
                     language,
-                };
+                }
 
-                const $enclosureEl: Cheerio<Element> = $$('div.content_div embed').first();
-                const enclosureUrl: string | undefined = $enclosureEl.attr('src');
+                const $enclosureEl: Cheerio<Element> = $$('div.content_div embed').first()
+                const enclosureUrl: string | undefined = $enclosureEl.attr('src')
 
                 if (enclosureUrl) {
                     processedItem = {
@@ -77,16 +77,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         enclosure_url: new URL(enclosureUrl, targetUrl).href,
                         enclosure_type: `application/${enclosureUrl.split(/\./).pop()}`,
                         enclosure_title: title,
-                    };
+                    }
                 }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: `${$('title').text()}${$('div.mianbao').contents().last().text()}`,
@@ -98,8 +98,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="keywords"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?/:id?',
@@ -357,11 +357,11 @@ export const route: Route = {
         {
             source: ['www.cnljxh.org.cn/:category'],
             target: (params, url) => {
-                const urlObj: URL = new URL(url);
-                const category: string = params.category;
-                const id: string | undefined = urlObj.searchParams.get('classid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const category: string = params.category
+                const id: string | undefined = urlObj.searchParams.get('classid') ?? undefined
 
-                return `/cnljxh${category ? `/${category}${id ? `/${id}` : ''}` : ''}`;
+                return `/cnljxh${category ? `/${category}${id ? `/${id}` : ''}` : ''}`
             },
         },
         {
@@ -531,4 +531,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

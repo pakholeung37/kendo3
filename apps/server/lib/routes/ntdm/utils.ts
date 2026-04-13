@@ -1,3 +1,3 @@
-const rootUrl = 'https://www.ntdm9.com';
+const rootUrl = 'https://www.ntdm9.com'
 
-export { rootUrl };
+export { rootUrl }

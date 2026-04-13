@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/versions',
@@ -25,30 +25,30 @@ export const route: Route = {
     maintainers: ['jasongzy'],
     handler,
     url: 'zotero.org/',
-};
+}
 
 async function handler() {
-    const url = 'https://www.zotero.org/support/changelog';
-    const response = await got(url);
-    const data = response.data;
-    const $ = load(data);
-    const list = $('h2');
+    const url = 'https://www.zotero.org/support/changelog'
+    const response = await got(url)
+    const data = response.data
+    const $ = load(data)
+    const list = $('h2')
 
     return {
         title: 'Zotero - Version History',
         link: url,
         item: list.toArray().map((item) => {
-            item = $(item);
+            item = $(item)
             let date = $(item)
                 .text()
-                .match(/\((.*)\)/);
-            date = Array.isArray(date) ? date[1] : null;
+                .match(/\((.*)\)/)
+            date = Array.isArray(date) ? date[1] : null
             return {
                 title: item.text().trim(),
                 description: $('<div/>').append(item.nextUntil('h2').clone()).html(),
                 pubDate: date,
                 link: url + '#' + item.attr('id'),
-            };
+            }
         }),
-    };
+    }
 }

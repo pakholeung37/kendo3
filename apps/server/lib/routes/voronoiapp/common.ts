@@ -1,58 +1,58 @@
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Post } from './types';
+import type { Post } from './types'
 
 export async function getPostItems(params: {
-    feed?: string;
-    search?: string;
-    swimlane?: string;
-    tab?: string;
-    time_range?: string;
-    category?: string;
-    order?: string;
-    author?: string;
-    limit?: number;
-    offset?: number;
+    feed?: string
+    search?: string
+    swimlane?: string
+    tab?: string
+    time_range?: string
+    category?: string
+    order?: string
+    author?: string
+    limit?: number
+    offset?: number
 }): Promise<DataItem[]> {
-    const baseUrl = 'https://9oyi4rk426.execute-api.ca-central-1.amazonaws.com/production/post';
-    const url = new URL(baseUrl);
+    const baseUrl = 'https://9oyi4rk426.execute-api.ca-central-1.amazonaws.com/production/post'
+    const url = new URL(baseUrl)
     const finalSearchParams = {
         limit: 20,
         offset: 0,
         ...params,
-    };
+    }
     if (finalSearchParams.time_range !== undefined) {
-        finalSearchParams.time_range = finalSearchParams.time_range.toUpperCase();
+        finalSearchParams.time_range = finalSearchParams.time_range.toUpperCase()
         if (!TimeRangeParam.options.some((option) => option.value === finalSearchParams.time_range)) {
-            throw new Error(`Invalid time range: ${finalSearchParams.time_range}`);
+            throw new Error(`Invalid time range: ${finalSearchParams.time_range}`)
         }
         // The Voronoi API doesn't support "ALL"
         if (finalSearchParams.time_range === 'ALL') {
-            finalSearchParams.time_range = undefined;
+            finalSearchParams.time_range = undefined
         }
     }
     if (finalSearchParams.category !== undefined && finalSearchParams.category !== null) {
-        const category = finalSearchParams.category;
-        finalSearchParams.category = CategoryParam.options.find((option) => option.value.toLowerCase() === category.toLowerCase())?.value;
+        const category = finalSearchParams.category
+        finalSearchParams.category = CategoryParam.options.find((option) => option.value.toLowerCase() === category.toLowerCase())?.value
         if (finalSearchParams.category === undefined) {
-            throw new Error(`Invalid category: ${finalSearchParams.category}`);
+            throw new Error(`Invalid category: ${finalSearchParams.category}`)
         }
     }
     if (finalSearchParams.tab !== undefined && finalSearchParams.tab !== null) {
-        finalSearchParams.tab = finalSearchParams.tab.toUpperCase();
+        finalSearchParams.tab = finalSearchParams.tab.toUpperCase()
         if (!Object.values(TabMap).includes(finalSearchParams.tab)) {
-            throw new Error(`Invalid tab: ${finalSearchParams.tab}`);
+            throw new Error(`Invalid tab: ${finalSearchParams.tab}`)
         }
     }
     for (const key in finalSearchParams) {
         if (finalSearchParams[key] !== undefined && finalSearchParams[key] !== null) {
-            url.searchParams.set(key, finalSearchParams[key]);
+            url.searchParams.set(key, finalSearchParams[key])
         }
     }
-    const data = await ofetch<Post[]>(url.toString());
+    const data = await ofetch<Post[]>(url.toString())
     const items: DataItem[] = data.map((post) => ({
         title: post.headline,
         link: `https://www.voronoiapp.com/${post.category.split(' ').join('-').toLowerCase()}/${post.link}`,
@@ -68,9 +68,9 @@ export async function getPostItems(params: {
         enclosure_title: post.dataset,
         upvotes: post.likes,
         comments: post.commented,
-    }));
+    }))
 
-    return items;
+    return items
 }
 
 export const CategoryParam = {
@@ -182,7 +182,7 @@ export const CategoryParam = {
             label: "Diverse Data Visualizations - Explore a variety of data visualizations that don't neatly fit into any single category but offer unique insights.",
         },
     ],
-};
+}
 
 export const TimeRangeParam = {
     description: 'Time range between which the posts are popular.',
@@ -205,13 +205,13 @@ export const TimeRangeParam = {
             label: 'All time',
         },
     ],
-};
+}
 
 export const TabMap = {
     'most-popular': 'POPULAR',
     'most-discussed': 'DISCUSSED',
     'most-viewed': 'VIEWED',
-};
+}
 
 export const TabParam = {
     description: 'The tab to get the popular posts from.',
@@ -230,18 +230,18 @@ export const TabParam = {
             label: 'Most Viewed',
         },
     ],
-};
+}
 
 export const CommonRouteProperties: Pick<Route, 'url' | 'categories' | 'maintainers' | 'view'> = {
     url: 'voronoiapp.com',
     categories: ['picture'],
     view: ViewType.Pictures,
     maintainers: ['Cesaryuan'],
-};
+}
 
 export const CommonDataProperties: Pick<Data, 'allowEmpty' | 'image'> | { logo: string; icon: string } = {
     logo: 'https://about.voronoiapp.com/wp-content/uploads/2023/07/voronoi-icon.png',
     image: 'https://about.voronoiapp.com/wp-content/uploads/2023/07/voronoi-icon.png',
     icon: 'https://about.voronoiapp.com/wp-content/uploads/2023/07/voronoi-icon.png',
     allowEmpty: true,
-};
+}

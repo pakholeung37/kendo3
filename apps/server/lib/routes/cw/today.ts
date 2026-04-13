@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, parsePage } from './utils';
+import { baseUrl, parsePage } from './utils'
 
 export const route: Route = {
     path: '/today',
@@ -25,14 +25,14 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'cw.com.tw/today',
-};
+}
 
 async function handler(ctx) {
-    const browser = await puppeteer();
+    const browser = await puppeteer()
 
-    const { $, items } = await parsePage('today', browser, ctx);
+    const { $, items } = await parsePage('today', browser, ctx)
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: $('head title').text(),
@@ -41,5 +41,5 @@ async function handler(ctx) {
         image: `${baseUrl}/assets_new/img/fbshare.jpg`,
         language: $('meta[property="og:locale"]').attr('content'),
         item: items,
-    };
+    }
 }

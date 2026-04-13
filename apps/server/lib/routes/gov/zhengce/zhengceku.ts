@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
 export const route: Route = {
     path: '/zhengce/zhengceku/:department',
@@ -17,11 +17,11 @@ export const route: Route = {
     name: '国务院政策文件库',
     maintainers: ['zxx-457'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const department = ctx.req.param('department');
-    const link = `http://www.gov.cn/zhengce/zhengceku/${department}/`;
+    const department = ctx.req.param('department')
+    const link = `http://www.gov.cn/zhengce/zhengceku/${department}/`
 
     return await buildData({
         link,
@@ -37,5 +37,5 @@ async function handler(ctx) {
             link: `$('h4 > a').attr('href')`,
             pubDate: `parseDate($('h4 > .date').text().trim())`,
         },
-    });
+    })
 }

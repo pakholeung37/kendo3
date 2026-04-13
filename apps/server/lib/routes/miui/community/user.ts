@@ -1,5 +1,5 @@
-import type { Data, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/community/user/:uid',
@@ -25,28 +25,28 @@ export const route: Route = {
     name: '小米社区用户发帖',
     maintainers: ['abc1763613206'],
     handler,
-};
+}
 
-const userRoot = 'https://web.vip.miui.com/page/info/mio/mio/homePage';
-const apiRoot = 'https://api.vip.miui.com/api/community/user/announce/list';
-const pageRoot = 'https://web.vip.miui.com/page/info/mio/mio/detail';
+const userRoot = 'https://web.vip.miui.com/page/info/mio/mio/homePage'
+const apiRoot = 'https://api.vip.miui.com/api/community/user/announce/list'
+const pageRoot = 'https://web.vip.miui.com/page/info/mio/mio/detail'
 
 async function handler(ctx): Promise<Data> {
-    const uid = ctx.req.param('uid');
-    const apiLink = `${apiRoot}?uid=${uid}&limit=10`;
-    const userLink = `${userRoot}?uid=${uid}`;
+    const uid = ctx.req.param('uid')
+    const apiLink = `${apiRoot}?uid=${uid}&limit=10`
+    const userLink = `${userRoot}?uid=${uid}`
     const { data } = await got({
         method: 'get',
         url: apiLink,
         headers: {
             Referer: userLink,
         },
-    });
+    })
     if (data.code === 200) {
-        let authorName = '';
-        const records = data.entity.records;
+        let authorName = ''
+        const records = data.entity.records
         const items = records.map((item) => {
-            authorName = item.author.name;
+            authorName = item.author.name
             return {
                 title: item.title || `${authorName} 的动态`,
                 description: item.textContent,
@@ -54,16 +54,16 @@ async function handler(ctx): Promise<Data> {
                 author: item.author.name,
                 link: `${pageRoot}?postId=${item.id}`,
                 image: item.pic || item.cover || '',
-            };
-        });
+            }
+        })
         return {
             title: `小米社区 - ${authorName} 的发帖`,
             link: userLink,
             description: `${authorName} 的发帖`,
             item: items,
             language: 'zh-cn',
-        };
+        }
     } else {
-        throw new Error(data.message);
+        throw new Error(data.message)
     }
 }

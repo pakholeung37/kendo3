@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/repos/:user/:type?/:sort?',
@@ -28,18 +28,18 @@ export const route: Route = {
     name: 'User Repo',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
-    const type = ctx.req.param('type') || 'all';
-    const sort = ctx.req.param('sort') || 'created';
-    let headers = {};
+    const user = ctx.req.param('user')
+    const type = ctx.req.param('type') || 'all'
+    const sort = ctx.req.param('sort') || 'created'
+    let headers = {}
     if (config.github && config.github.access_token) {
         headers = {
             ...headers,
             Authorization: `token ${config.github.access_token}`,
-        };
+        }
     }
     const response = await got({
         method: 'get',
@@ -49,34 +49,34 @@ async function handler(ctx) {
             sort,
         },
         headers,
-    });
+    })
     const item = response.data
         .filter((item) => {
             switch (type) {
                 case 'all':
-                    return true;
+                    return true
                 case 'owner':
-                    return item.owner.login === user;
+                    return item.owner.login === user
                 case 'member':
-                    return item.owner.login !== user;
+                    return item.owner.login !== user
                 case 'public':
-                    return item.private === false;
+                    return item.private === false
                 case 'private':
-                    return item.private === true;
+                    return item.private === true
                 case 'forks':
-                    return item.fork === true;
+                    return item.fork === true
                 case 'sources':
-                    return item.fork === false;
+                    return item.fork === false
                 default:
-                    return true;
+                    return true
             }
         })
         .map((item) => {
-            let pubDate = parseDate(item.created_at);
+            let pubDate = parseDate(item.created_at)
             if (sort === 'updated' && item.updated_at) {
-                pubDate = parseDate(item.updated_at);
+                pubDate = parseDate(item.updated_at)
             } else if (sort === 'pushed' && item.pushed_at) {
-                pubDate = parseDate(item.pushed_at);
+                pubDate = parseDate(item.pushed_at)
             }
             return {
                 title: item.name,
@@ -84,12 +84,12 @@ async function handler(ctx) {
                 pubDate,
                 updated: parseDate(item.updated_at),
                 link: item.html_url,
-            };
-        });
+            }
+        })
     return {
         allowEmpty: true,
         title: `${user}'s GitHub repositories`,
         link: `https://github.com/${user}`,
         item,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/onair/:lang?',
@@ -20,23 +20,23 @@ export const route: Route = {
     name: '开播提醒',
     maintainers: ['x2cf'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang');
-    const { data: sites } = await got('https://bgmlist.com/api/v1/bangumi/site');
-    const { data } = await got('https://bgmlist.com/api/v1/bangumi/onair');
+    const lang = ctx.req.param('lang')
+    const { data: sites } = await got('https://bgmlist.com/api/v1/bangumi/site')
+    const { data } = await got('https://bgmlist.com/api/v1/bangumi/onair')
 
     return {
         title: '番组放送 开播提醒',
         link: 'https://bgmlist.com/',
         item: data.items.map((item) => {
-            item.sites.push({ site: 'dmhy', id: item.titleTranslate['zh-Hans']?.[0] ?? item.title });
+            item.sites.push({ site: 'dmhy', id: item.titleTranslate['zh-Hans']?.[0] ?? item.title })
             const mappedSites = item.sites.map((site) => ({
                 title: sites[site.site].title,
                 url: sites[site.site].urlTemplate.replaceAll('{{id}}', site.id),
                 begin: site.begin,
-            }));
+            }))
             return {
                 title: item.titleTranslate[lang]?.[0] ?? item.title,
                 link: item.officialSite,
@@ -49,11 +49,11 @@ async function handler(ctx) {
                                 <br />
                             </>
                         ))}
-                    </>
+                    </>,
                 ),
                 pubDate: parseDate(item.begin),
                 guid: item.id,
-            };
+            }
         }),
-    };
+    }
 }

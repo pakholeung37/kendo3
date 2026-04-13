@@ -1,18 +1,18 @@
-import JSONbig from 'json-bigint';
+import JSONbig from 'json-bigint'
 
-import { config } from '@/config';
-import CaptchaError from '@/errors/types/captcha';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDuration } from '@/utils/helpers';
-import { parseDate } from '@/utils/parse-date';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import CaptchaError from '@/errors/types/captcha'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDuration } from '@/utils/helpers'
+import { parseDate } from '@/utils/parse-date'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import type { BilibiliWebDynamicResponse, Item2, Modules } from './api-interface';
-import cacheIn from './cache';
-import utils, { getLiveUrl, getVideoUrl } from './utils';
+import type { BilibiliWebDynamicResponse, Item2, Modules } from './api-interface'
+import cacheIn from './cache'
+import utils, { getLiveUrl, getVideoUrl } from './utils'
 
 export const route: Route = {
     path: '/user/dynamic/:uid/:routeParams?',
@@ -60,83 +60,83 @@ export const route: Route = {
     name: 'UP 主动态',
     maintainers: ['DIYgod', 'zytomorrow', 'CaoMeiYouRen', 'JimenezLi'],
     handler,
-};
+}
 
 const getTitle = (data: Modules): string => {
-    const major = data.module_dynamic?.major;
+    const major = data.module_dynamic?.major
     if (!major) {
-        return '';
+        return ''
     }
     if (major.none) {
-        return major.none.tips;
+        return major.none.tips
     }
     if (major.courses) {
-        return `${major.courses?.title} - ${major.courses?.sub_title}`;
+        return `${major.courses?.title} - ${major.courses?.sub_title}`
     }
     if (major.live_rcmd?.content) {
         // 正在直播的动态
-        return JSON.parse(major.live_rcmd.content)?.live_play_info?.title;
+        return JSON.parse(major.live_rcmd.content)?.live_play_info?.title
     }
-    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase();
-    return major[type]?.title;
-};
+    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase()
+    return major[type]?.title
+}
 const getDes = (data: Modules): string => {
-    let desc = '';
+    let desc = ''
     if (data.module_dynamic?.desc?.text) {
-        desc += data.module_dynamic.desc.text;
+        desc += data.module_dynamic.desc.text
     }
-    const major = data.module_dynamic?.major;
+    const major = data.module_dynamic?.major
     // 普通转发
     if (!major) {
-        return desc;
+        return desc
     }
     // 普通分享
     if (major?.common?.desc) {
-        desc += desc ? `<br>//转发自: ${major.common.desc}` : major.common.desc;
-        return desc;
+        desc += desc ? `<br>//转发自: ${major.common.desc}` : major.common.desc
+        return desc
     }
     // 转发的直播间
     if (major?.live) {
-        return `${major.live?.desc_first}<br>${major.live?.desc_second}`;
+        return `${major.live?.desc_first}<br>${major.live?.desc_second}`
     }
     // 正在直播的动态
     if (major.live_rcmd?.content) {
-        const live_play_info = JSON.parse(major.live_rcmd.content)?.live_play_info;
-        return `${live_play_info?.area_name}·${live_play_info?.watched_show?.text_large}`;
+        const live_play_info = JSON.parse(major.live_rcmd.content)?.live_play_info
+        return `${live_play_info?.area_name}·${live_play_info?.watched_show?.text_large}`
     }
     // 图文动态
     if (major?.opus) {
-        return major?.opus?.summary?.text;
+        return major?.opus?.summary?.text
     }
-    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase();
-    return major[type]?.desc;
-};
+    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase()
+    return major[type]?.desc
+}
 
-const getOriginTitle = (data?: Modules) => data && getTitle(data);
-const getOriginDes = (data?: Modules) => data && getDes(data);
-const getOriginName = (data?: Modules) => data?.module_author?.name;
+const getOriginTitle = (data?: Modules) => data && getTitle(data)
+const getOriginDes = (data?: Modules) => data && getDes(data)
+const getOriginName = (data?: Modules) => data?.module_author?.name
 const getIframe = (data?: Modules, embed: boolean = true) => {
     if (!embed) {
-        return '';
+        return ''
     }
-    const aid = data?.module_dynamic?.major?.archive?.aid;
-    const bvid = data?.module_dynamic?.major?.archive?.bvid;
+    const aid = data?.module_dynamic?.major?.archive?.aid
+    const bvid = data?.module_dynamic?.major?.archive?.bvid
     if (aid === undefined && bvid === undefined) {
-        return '';
+        return ''
     }
     // 不通过 utils.renderUGCDescription 渲染 img/description 以兼容其他格式的动态
-    return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid);
-};
+    return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid)
+}
 
 const getImgs = (data?: Modules) => {
     const imgUrls: Array<{
-        url: string;
-        width?: number;
-        height?: number;
-    }> = [];
-    const major = data?.module_dynamic?.major;
+        url: string
+        width?: number
+        height?: number
+    }> = []
+    const major = data?.module_dynamic?.major
     if (!major) {
-        return '';
+        return ''
     }
     // 动态图片
     if (major.opus?.pics?.length) {
@@ -145,16 +145,16 @@ const getImgs = (data?: Modules) => {
                 url: e.url,
                 width: e.width,
                 height: e.height,
-            }))
-        );
+            })),
+        )
     }
     // 专栏封面
     if (major.article?.covers?.length) {
         imgUrls.push(
             ...major.article.covers.map((e) => ({
                 url: e,
-            }))
-        );
+            })),
+        )
     }
     // 相簿
     if (major.draw?.items?.length) {
@@ -163,269 +163,269 @@ const getImgs = (data?: Modules) => {
                 url: e.src,
                 width: e.width,
                 height: e.height,
-            }))
-        );
+            })),
+        )
     }
     // 正在直播的动态
     if (major.live_rcmd?.content) {
         imgUrls.push({
             url: JSON.parse(major.live_rcmd.content)?.live_play_info?.cover,
-        });
+        })
     }
-    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase();
+    const type = major.type.replace('MAJOR_TYPE_', '').toLowerCase()
     if (major[type]?.cover) {
         imgUrls.push({
             url: major[type]?.cover,
-        });
+        })
     }
     return imgUrls
         .filter(Boolean)
         .map((img) => `<img src="${img.url}" ${img.width ? `width="${img.width}"` : ''} ${img.height ? `height="${img.height}"` : ''}>`)
-        .join('');
-};
+        .join('')
+}
 
 const getUrl = (item?: Item2, useAvid = false) => {
-    const data = item?.modules;
+    const data = item?.modules
     if (!data) {
-        return null;
+        return null
     }
-    let url = '';
-    let text = '';
-    let videoPageUrl;
-    const major = data.module_dynamic?.major;
+    let url = ''
+    let text = ''
+    let videoPageUrl
+    const major = data.module_dynamic?.major
     if (!major) {
-        return null;
+        return null
     }
     switch (major?.type) {
         case 'MAJOR_TYPE_UGC_SEASON':
-            url = major?.ugc_season?.jump_url || '';
-            text = `合集地址：<a href=${url}>${url}</a>`;
-            break;
+            url = major?.ugc_season?.jump_url || ''
+            text = `合集地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_ARTICLE':
-            url = `https://www.bilibili.com/read/cv${major?.article?.id}`;
-            text = `专栏地址：<a href=${url}>${url}</a>`;
-            break;
+            url = `https://www.bilibili.com/read/cv${major?.article?.id}`
+            text = `专栏地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_ARCHIVE': {
-            const archive = major?.archive;
-            const id = useAvid ? `av${archive?.aid}` : archive?.bvid;
-            url = `https://www.bilibili.com/video/${id}`;
-            text = `视频地址：<a href=${url}>${url}</a>`;
-            videoPageUrl = getVideoUrl(archive?.bvid);
-            break;
+            const archive = major?.archive
+            const id = useAvid ? `av${archive?.aid}` : archive?.bvid
+            url = `https://www.bilibili.com/video/${id}`
+            text = `视频地址：<a href=${url}>${url}</a>`
+            videoPageUrl = getVideoUrl(archive?.bvid)
+            break
         }
         case 'MAJOR_TYPE_COMMON':
-            url = major?.common?.jump_url || '';
-            text = `地址：<a href=${url}>${url}</a>`;
-            break;
+            url = major?.common?.jump_url || ''
+            text = `地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_OPUS':
             if (item?.type === 'DYNAMIC_TYPE_ARTICLE') {
-                url = `https:${major?.opus?.jump_url}`;
-                text = `专栏地址：<a href=${url}>${url}</a>`;
+                url = `https:${major?.opus?.jump_url}`
+                text = `专栏地址：<a href=${url}>${url}</a>`
             } else if (item?.type === 'DYNAMIC_TYPE_DRAW') {
-                url = `https:${major?.opus?.jump_url}`;
-                text = `图文地址：<a href=${url}>${url}</a>`;
+                url = `https:${major?.opus?.jump_url}`
+                text = `图文地址：<a href=${url}>${url}</a>`
             }
-            break;
+            break
         case 'MAJOR_TYPE_PGC': {
-            const pgc = major?.pgc;
-            url = `https://www.bilibili.com/bangumi/play/ep${pgc?.epid}&season_id=${pgc?.season_id}`;
-            text = `剧集地址：<a href=${url}>${url}</a>`;
-            break;
+            const pgc = major?.pgc
+            url = `https://www.bilibili.com/bangumi/play/ep${pgc?.epid}&season_id=${pgc?.season_id}`
+            text = `剧集地址：<a href=${url}>${url}</a>`
+            break
         }
         case 'MAJOR_TYPE_COURSES':
-            url = `https://www.bilibili.com/cheese/play/ss${major?.courses?.id}`;
-            text = `课程地址：<a href=${url}>${url}</a>`;
-            break;
+            url = `https://www.bilibili.com/cheese/play/ss${major?.courses?.id}`
+            text = `课程地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_MUSIC':
-            url = `https://www.bilibili.com/audio/au${major?.music?.id}`;
-            text = `音频地址：<a href=${url}>${url}</a>`;
-            break;
+            url = `https://www.bilibili.com/audio/au${major?.music?.id}`
+            text = `音频地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_LIVE':
-            url = `https://live.bilibili.com/${major?.live?.id}`;
-            text = `直播间地址：<a href=${url}>${url}</a>`;
-            break;
+            url = `https://live.bilibili.com/${major?.live?.id}`
+            text = `直播间地址：<a href=${url}>${url}</a>`
+            break
         case 'MAJOR_TYPE_LIVE_RCMD': {
-            const live_play_info = JSON.parse(major.live_rcmd?.content || '{}')?.live_play_info;
-            url = `https://live.bilibili.com/${live_play_info?.room_id}`;
-            videoPageUrl = getLiveUrl(live_play_info?.room_id);
-            text = `直播间地址：<a href=${url}>${url}</a>`;
-            break;
+            const live_play_info = JSON.parse(major.live_rcmd?.content || '{}')?.live_play_info
+            url = `https://live.bilibili.com/${live_play_info?.room_id}`
+            videoPageUrl = getLiveUrl(live_play_info?.room_id)
+            text = `直播间地址：<a href=${url}>${url}</a>`
+            break
         }
         default:
-            return null;
+            return null
     }
     return {
         url,
         text,
         videoPageUrl,
-    };
-};
+    }
+}
 
 async function handler(ctx) {
-    const isJsonFeed = ctx.req.query('format') === 'json';
-    const uid = ctx.req.param('uid');
-    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')));
-    const showEmoji = fallback(undefined, queryToBoolean(routeParams.showEmoji), false);
-    const embed = fallback(undefined, queryToBoolean(routeParams.embed), false);
-    const displayArticle = ctx.req.query('mode') === 'fulltext';
-    const offset = fallback(undefined, routeParams.offset, '');
-    const useAvid = fallback(undefined, queryToBoolean(routeParams.useAvid), false);
-    const directLink = fallback(undefined, queryToBoolean(routeParams.directLink), false);
-    const hideGoods = fallback(undefined, queryToBoolean(routeParams.hideGoods), false);
+    const isJsonFeed = ctx.req.query('format') === 'json'
+    const uid = ctx.req.param('uid')
+    const routeParams = Object.fromEntries(new URLSearchParams(ctx.req.param('routeParams')))
+    const showEmoji = fallback(undefined, queryToBoolean(routeParams.showEmoji), false)
+    const embed = fallback(undefined, queryToBoolean(routeParams.embed), false)
+    const displayArticle = ctx.req.query('mode') === 'fulltext'
+    const offset = fallback(undefined, routeParams.offset, '')
+    const useAvid = fallback(undefined, queryToBoolean(routeParams.useAvid), false)
+    const directLink = fallback(undefined, queryToBoolean(routeParams.directLink), false)
+    const hideGoods = fallback(undefined, queryToBoolean(routeParams.hideGoods), false)
 
     const getDynamic = async (cookie: string) => {
-        const params = utils.addDmVerifyInfo(`offset=${offset}&host_mid=${uid}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote`, utils.getDmImgList());
+        const params = utils.addDmVerifyInfo(`offset=${offset}&host_mid=${uid}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote`, utils.getDmImgList())
         const response = await got(`https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?${params}`, {
             headers: {
                 Referer: `https://space.bilibili.com/${uid}/`,
                 Cookie: cookie,
             },
-        });
-        const body = JSONbig.parse(response.body);
-        return body;
-    };
+        })
+        const body = JSONbig.parse(response.body)
+        return body
+    }
 
-    let body: BilibiliWebDynamicResponse;
+    let body: BilibiliWebDynamicResponse
 
-    const cookie = (await cacheIn.getCookie()) as string;
-    body = await getDynamic(cookie);
+    const cookie = (await cacheIn.getCookie()) as string
+    body = await getDynamic(cookie)
 
     if (body?.code === -352) {
-        const cookie = (await cacheIn.getCookie(true)) as string;
-        body = await getDynamic(cookie);
+        const cookie = (await cacheIn.getCookie(true)) as string
+        body = await getDynamic(cookie)
 
         if (body?.code === -352) {
-            cache.set('bili-cookie', '');
-            throw new CaptchaError('遇到源站风控校验，请稍后再试');
+            cache.set('bili-cookie', '')
+            throw new CaptchaError('遇到源站风控校验，请稍后再试')
         }
     }
-    const items = (body as BilibiliWebDynamicResponse)?.data?.items;
+    const items = (body as BilibiliWebDynamicResponse)?.data?.items
 
-    let author = items[0]?.modules?.module_author?.name;
-    let face = items[0]?.modules?.module_author?.face;
+    let author = items[0]?.modules?.module_author?.name
+    let face = items[0]?.modules?.module_author?.face
     if (!face || !author) {
-        const usernameAndFace = await cacheIn.getUsernameAndFaceFromUID(uid);
-        author = usernameAndFace[0] || items[0]?.modules?.module_author?.name;
-        face = usernameAndFace[1] || items[0]?.modules?.module_author?.face;
+        const usernameAndFace = await cacheIn.getUsernameAndFaceFromUID(uid)
+        author = usernameAndFace[0] || items[0]?.modules?.module_author?.name
+        face = usernameAndFace[1] || items[0]?.modules?.module_author?.face
     } else {
-        cache.set(`bili-username-from-uid-${uid}`, author);
-        cache.set(`bili-userface-from-uid-${uid}`, face);
+        cache.set(`bili-username-from-uid-${uid}`, author)
+        cache.set(`bili-userface-from-uid-${uid}`, face)
     }
 
     const rssItems = await Promise.all(
         items
             .filter((item) => {
                 if (hideGoods) {
-                    return item.modules.module_dynamic?.additional?.type !== 'ADDITIONAL_TYPE_GOODS';
+                    return item.modules.module_dynamic?.additional?.type !== 'ADDITIONAL_TYPE_GOODS'
                 }
-                return true;
+                return true
             })
             .map(async (item) => {
                 // const parsed = JSONbig.parse(item.card);
 
-                const data = item.modules;
-                const origin = item?.orig?.modules;
-                const bvid = data?.module_dynamic?.major?.archive?.bvid;
+                const data = item.modules
+                const origin = item?.orig?.modules
+                const bvid = data?.module_dynamic?.major?.archive?.bvid
 
                 // link
-                let link = '';
+                let link = ''
                 if (item.id_str) {
-                    link = `https://t.bilibili.com/${item.id_str}`;
+                    link = `https://t.bilibili.com/${item.id_str}`
                 }
 
-                const originalDescription = getDes(data) || '';
-                let description = originalDescription;
-                const title = getTitle(data);
-                const category: string[] = [];
+                const originalDescription = getDes(data) || ''
+                let description = originalDescription
+                const title = getTitle(data)
+                const category: string[] = []
                 // emoji
                 if (data.module_dynamic?.desc?.rich_text_nodes?.length) {
-                    const nodes = data.module_dynamic.desc.rich_text_nodes;
+                    const nodes = data.module_dynamic.desc.rich_text_nodes
                     for (const node of nodes) {
                         // 处理 emoji 的情况
                         if (showEmoji && node?.emoji) {
-                            const emoji = node.emoji;
+                            const emoji = node.emoji
                             description = description.replaceAll(
                                 emoji.text,
-                                `<img alt="${emoji.text}" src="${emoji.icon_url}" style="margin: -1px 1px 0px; display: inline-block; width: 20px; height: 20px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`
-                            );
+                                `<img alt="${emoji.text}" src="${emoji.icon_url}" style="margin: -1px 1px 0px; display: inline-block; width: 20px; height: 20px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`,
+                            )
                         }
                         // 处理转发带图评论的情况
                         if (node?.pics?.length) {
-                            const { pics, text } = node;
+                            const { pics, text } = node
                             description = description.replaceAll(
                                 text,
                                 pics
                                     .map(
                                         (pic) =>
-                                            `<img alt="${text}" src="${pic.src}" style="margin: 0px 0px 0px; display: inline-block; width: ${pic.width}px; height: ${pic.height}px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`
+                                            `<img alt="${text}" src="${pic.src}" style="margin: 0px 0px 0px; display: inline-block; width: ${pic.width}px; height: ${pic.height}px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`,
                                     )
-                                    .join('<br>')
-                            );
+                                    .join('<br>'),
+                            )
                         }
                         if (node?.type === 'RICH_TEXT_NODE_TYPE_TOPIC') {
                             // 将话题作为 category
-                            category.push(node.text.match(/#(\S+)#/)?.[1] || '');
+                            category.push(node.text.match(/#(\S+)#/)?.[1] || '')
                         }
                     }
                 }
 
                 if (data.module_dynamic?.major?.opus?.summary?.rich_text_nodes?.length) {
-                    const nodes = data.module_dynamic.major.opus.summary.rich_text_nodes;
+                    const nodes = data.module_dynamic.major.opus.summary.rich_text_nodes
                     for (const node of nodes) {
                         if (node?.type === 'RICH_TEXT_NODE_TYPE_TOPIC') {
                             // 将话题作为 category
-                            category.push(node.text.match(/#(\S+)#/)?.[1] || '');
+                            category.push(node.text.match(/#(\S+)#/)?.[1] || '')
                         }
                     }
                 }
                 if (data.module_dynamic?.topic?.name) {
                     // 将话题作为 category
-                    category.push(data.module_dynamic.topic.name);
+                    category.push(data.module_dynamic.topic.name)
                 }
 
                 if (item.type === 'DYNAMIC_TYPE_ARTICLE' && displayArticle) {
                     // 抓取专栏全文
-                    const cvid = data.module_dynamic?.major?.opus?.jump_url?.match?.(/cv(\d+)/)?.[0];
+                    const cvid = data.module_dynamic?.major?.opus?.jump_url?.match?.(/cv(\d+)/)?.[0]
                     if (cvid) {
-                        description = (await cacheIn.getArticleDataFromCvid(cvid, uid)).description || '';
+                        description = (await cacheIn.getArticleDataFromCvid(cvid, uid)).description || ''
                     }
                 }
 
-                const urlResult = getUrl(item, useAvid);
-                const urlText = urlResult?.text;
+                const urlResult = getUrl(item, useAvid)
+                const urlText = urlResult?.text
                 if (urlResult && directLink) {
-                    link = urlResult.url;
+                    link = urlResult.url
                 }
 
-                const originUrlResult = getUrl(item?.orig, useAvid);
-                const originUrlText = originUrlResult?.text;
+                const originUrlResult = getUrl(item?.orig, useAvid)
+                const originUrlText = originUrlResult?.text
                 if (originUrlResult && directLink) {
-                    link = originUrlResult.url;
+                    link = originUrlResult.url
                 }
 
-                let originDescription = '';
-                const originName = getOriginName(origin);
-                const originTitle = getOriginTitle(origin);
-                const originDes = getOriginDes(origin);
+                let originDescription = ''
+                const originName = getOriginName(origin)
+                const originTitle = getOriginTitle(origin)
+                const originDes = getOriginDes(origin)
                 if (originName) {
-                    originDescription += `//转发自: @${getOriginName(origin)}: `;
+                    originDescription += `//转发自: @${getOriginName(origin)}: `
                 }
                 if (originTitle) {
-                    originDescription += originTitle;
+                    originDescription += originTitle
                 }
                 if (originDes) {
-                    originDescription += `<br>${originDes}`;
+                    originDescription += `<br>${originDes}`
                 }
 
                 // 换行处理
-                description = description.replaceAll('\r\n', '<br>').replaceAll('\n', '<br>');
-                originDescription = originDescription.replaceAll('\r\n', '<br>').replaceAll('\n', '<br>');
+                description = description.replaceAll('\r\n', '<br>').replaceAll('\n', '<br>')
+                originDescription = originDescription.replaceAll('\r\n', '<br>').replaceAll('\n', '<br>')
                 const descriptions = [title, description, getIframe(data, embed), getImgs(data), urlText, originDescription, getIframe(origin, embed), getImgs(origin), originUrlText]
                     .map((e) => e?.trim())
                     .filter(Boolean)
-                    .join('<br>');
+                    .join('<br>')
 
-                const subtitles = isJsonFeed && !config.bilibili.excludeSubtitles && bvid ? await cacheIn.getVideoSubtitleAttachment(bvid) : [];
+                const subtitles = isJsonFeed && !config.bilibili.excludeSubtitles && bvid ? await cacheIn.getVideoSubtitleAttachment(bvid) : []
 
                 return {
                     title: title || originalDescription,
@@ -445,9 +445,9 @@ async function handler(ctx) {
                                   ...subtitles,
                               ]
                             : undefined,
-                };
-            })
-    );
+                }
+            }),
+    )
 
     return {
         title: `${author} 的 bilibili 动态`,
@@ -457,5 +457,5 @@ async function handler(ctx) {
         logo: face,
         icon: face,
         item: rssItems,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const appFeedUrl = 'https://raw.githubusercontent.com/Squidly271/AppFeed/master/applicationFeed.json';
-const defaultLimit = 20;
+const appFeedUrl = 'https://raw.githubusercontent.com/Squidly271/AppFeed/master/applicationFeed.json'
+const defaultLimit = 20
 
 export const route: Route = {
     path: '/community-apps',
@@ -27,22 +27,22 @@ export const route: Route = {
     maintainers: ['KTachibanaM'],
     handler,
     url: 'unraid.net/community/apps',
-};
+}
 
 async function handler(ctx) {
-    const { data } = await got(appFeedUrl);
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : defaultLimit;
+    const { data } = await got(appFeedUrl)
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : defaultLimit
 
-    let appList = data.applist;
+    let appList = data.applist
     appList = appList.map((app) => {
-        const _pubDate = app.LastUpdate ?? app.FirstSeen ?? 0;
+        const _pubDate = app.LastUpdate ?? app.FirstSeen ?? 0
         return {
             ...app,
             _pubDate,
-        };
-    });
-    appList.sort((a, b) => b._pubDate - a._pubDate);
-    const returnedAppList = appList.slice(0, limit);
+        }
+    })
+    appList.sort((a, b) => b._pubDate - a._pubDate)
+    const returnedAppList = appList.slice(0, limit)
 
     return {
         title: 'Unraid Community Apps',
@@ -56,5 +56,5 @@ async function handler(ctx) {
             category: app.CategoryList,
             upvotes: app.stars,
         })),
-    };
+    }
 }

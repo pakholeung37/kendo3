@@ -1,37 +1,37 @@
-import { load } from 'cheerio';
-import MarkdownIt from 'markdown-it';
+import { load } from 'cheerio'
+import MarkdownIt from 'markdown-it'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 const FetchGoItems = async (ctx, rewriteId) => {
-    const id = rewriteId || (ctx.req.param('id') ?? 'weekly');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const id = rewriteId || (ctx.req.param('id') ?? 'weekly')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
-    const rootUrl = 'https://studygolang.com';
-    const currentUrl = `${rootUrl}/go/${id}`;
+    const rootUrl = 'https://studygolang.com'
+    const currentUrl = `${rootUrl}/go/${id}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.right-info .title')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
@@ -42,8 +42,8 @@ const FetchGoItems = async (ctx, rewriteId) => {
                     .find('.node')
                     .toArray()
                     .map((n) => $(n).text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -51,28 +51,28 @@ const FetchGoItems = async (ctx, rewriteId) => {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.pubDate = timezone(parseDate(content('.timeago').first().attr('title')), +8);
+                item.pubDate = timezone(parseDate(content('.timeago').first().attr('title')), +8)
 
                 try {
-                    item.description = md.render(content('.content').html());
+                    item.description = md.render(content('.content').html())
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `Go语言中文网 - ${$('.title h2').text()}`,
         link: currentUrl,
         item: items,
-    };
-};
+    }
+}
 
-export { FetchGoItems };
+export { FetchGoItems }

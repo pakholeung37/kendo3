@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 const categoryList = {
     'combined-print-and-e-book-nonfiction': 'Combined Print & E-Book Nonfiction',
@@ -16,7 +16,7 @@ const categoryList = {
     'picture-books': 'Picture Books',
     'series-books': 'Series Books',
     'young-adult-hardcover': 'Young Adult Hardcover',
-};
+}
 
 export const route: Route = {
     path: '/book/:category?',
@@ -51,44 +51,44 @@ export const route: Route = {
     maintainers: ['melvinto', 'pseudoyu'],
     handler,
     url: 'nytimes.com/',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'combined-print-and-e-book-nonfiction';
+    const category = ctx.req.param('category') ?? 'combined-print-and-e-book-nonfiction'
 
-    const url = `https://www.nytimes.com/books/best-sellers/${category}`;
+    const url = `https://www.nytimes.com/books/best-sellers/${category}`
 
-    let items = [];
-    let dataTitle = '';
+    let items = []
+    let dataTitle = ''
     if (categoryList[category]) {
         const response = await got({
             method: 'get',
             url,
-        });
-        const data = response.data;
-        const $ = load(data);
-        dataTitle = $('h1').eq(0).text();
+        })
+        const data = response.data
+        const $ = load(data)
+        dataTitle = $('h1').eq(0).text()
 
         items = $('article[itemprop=itemListElement]')
             .toArray()
             .map((elem, index) => {
-                const $item = $(elem);
-                const firstInfo = $item.find('p').eq(0).text();
-                const $name = $item.find('h3[itemprop=name]');
-                const author = $item.find('p[itemprop=author]').text();
-                const publisher = $item.find('p[itemprop=publisher]').text();
-                const description = $item.find('p[itemprop=description]').text();
-                const imageLink = $item.find('img[itemprop=image]').attr('src');
-                const $link = $item.find('ul[aria-label="Links to Book Retailers"]');
-                const links = $link.find('a').toArray();
+                const $item = $(elem)
+                const firstInfo = $item.find('p').eq(0).text()
+                const $name = $item.find('h3[itemprop=name]')
+                const author = $item.find('p[itemprop=author]').text()
+                const publisher = $item.find('p[itemprop=publisher]').text()
+                const description = $item.find('p[itemprop=description]').text()
+                const imageLink = $item.find('img[itemprop=image]').attr('src')
+                const $link = $item.find('ul[aria-label="Links to Book Retailers"]')
+                const links = $link.find('a').toArray()
 
-                let primaryLink = links.length > 0 ? $(links[0]).attr('href') : '';
+                let primaryLink = links.length > 0 ? $(links[0]).attr('href') : ''
 
                 for (const link of links) {
-                    const l = $(link);
+                    const l = $(link)
                     if (l.text() === 'Amazon') {
-                        primaryLink = l.attr('href');
-                        break;
+                        primaryLink = l.attr('href')
+                        break
                     }
                 }
 
@@ -97,13 +97,13 @@ async function handler(ctx) {
                     author,
                     description: `<figure><img src="${imageLink}" alt="test"/><figcaption><span>${description}</span></figcaption></figure><br/>${firstInfo}<br/>Author: ${author}<br/>Publisher: ${publisher}`,
                     link: primaryLink,
-                };
-            });
+                }
+            })
     }
 
     return {
         title: `The New York Times Best Sellers - ${dataTitle}`,
         link: url,
         item: items,
-    };
+    }
 }

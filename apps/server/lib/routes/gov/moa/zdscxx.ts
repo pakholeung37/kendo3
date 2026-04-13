@@ -1,44 +1,44 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5;
+    const { category } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 5
 
-    const domain = 'moa.gov.cn';
-    const rootFrameUrl = `http://www.${domain}`;
-    const rootUrl = `http://zdscxx.${domain}:8080`;
-    const apiUrl = new URL('nyb/getMessages', rootUrl).href;
-    const apiDetailUrl = new URL('nyb/getMessagesById', rootUrl).href;
-    const currentUrl = new URL('nyb/pc/messageList.jsp', rootUrl).href;
-    const frameUrl = new URL('iframe/top_sj/', rootFrameUrl).href;
+    const domain = 'moa.gov.cn'
+    const rootFrameUrl = `http://www.${domain}`
+    const rootUrl = `http://zdscxx.${domain}:8080`
+    const apiUrl = new URL('nyb/getMessages', rootUrl).href
+    const apiDetailUrl = new URL('nyb/getMessagesById', rootUrl).href
+    const currentUrl = new URL('nyb/pc/messageList.jsp', rootUrl).href
+    const frameUrl = new URL('iframe/top_sj/', rootFrameUrl).href
 
-    const filterForm = {};
+    const filterForm = {}
 
     if (category) {
-        const apiFilterUrl = new URL('nyb/getMessageFilters', rootUrl).href;
+        const apiFilterUrl = new URL('nyb/getMessageFilters', rootUrl).href
 
         const { data: filterResponse } = await got.post(apiFilterUrl, {
             form: {
                 type: '',
                 isLatestMessage: false,
             },
-        });
+        })
 
-        const filters: Record<string, string[]> = {};
+        const filters: Record<string, string[]> = {}
         for (const f of filterResponse.result) {
-            filters[f.name.trim()] = f.data.map((d) => d.name.trim());
+            filters[f.name.trim()] = f.data.map((d) => d.name.trim())
         }
 
-        const categories = category.split(/\//);
+        const categories = category.split(/\//)
         for (const c of categories) {
             for (const key of Object.keys(filters)) {
                 if (filters[key].includes(c)) {
-                    filterForm[key] = c;
+                    filterForm[key] = c
                 }
             }
         }
@@ -52,14 +52,14 @@ export const handler = async (ctx) => {
             isLatestMessage: false,
             ...filterForm,
         },
-    });
+    })
 
     let items = response.result.table.slice(0, limit).map((item) => ({
         title: item.title,
         link: item.id,
         guid: `moa-zdscxx-${item.id}`,
         pubDate: parseDate(item.date),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -68,26 +68,26 @@ export const handler = async (ctx) => {
                     form: {
                         id: item.link,
                     },
-                });
+                })
 
-                const data = detailResponse.result;
+                const data = detailResponse.result
 
-                item.title = data.title;
-                item.link = new URL(`nyb/pc/messageView.jsp?id=${item.link}`, rootUrl).href;
-                item.description = data.content;
-                item.author = data.source;
-                item.pubDate = parseDate(data.date);
+                item.title = data.title
+                item.link = new URL(`nyb/pc/messageView.jsp?id=${item.link}`, rootUrl).href
+                item.description = data.content
+                item.author = data.source
+                item.pubDate = parseDate(data.date)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: frameResponse } = await got(frameUrl);
+    const { data: frameResponse } = await got(frameUrl)
 
-    const $ = load(frameResponse);
+    const $ = load(frameResponse)
 
-    const title = $('title').text();
+    const title = $('title').text()
 
     return {
         title: `${title}${category ? ` - ${category}` : ''}`,
@@ -97,8 +97,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image: $('h1.logo a img').prop('src'),
         author: title,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/moa/zdscxx/:category{.+}?',
@@ -160,4 +160,4 @@ export const route: Route = {
             target: '/gov/moa/zdscxx/蔬菜生产',
         },
     ],
-};
+}

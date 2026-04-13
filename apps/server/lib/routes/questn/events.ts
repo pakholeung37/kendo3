@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseFilterStr } from './util';
+import { parseFilterStr } from './util'
 
 export const route: Route = {
     path: '/events/:filter?',
@@ -42,14 +42,12 @@ Filter parameters:
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = 'https://api.questn.com/consumer/explore/list/';
+    const url = 'https://api.questn.com/consumer/explore/list/'
 
-    const parsedFilter: { category?: string; status_filter?: string; community_filter?: string; reward_filter?: string; chain_filter?: string; search?: string; count?: string; page?: string } = parseFilterStr(
-        ctx.req.param('filter')
-    );
+    const parsedFilter: { category?: string; status_filter?: string; community_filter?: string; reward_filter?: string; chain_filter?: string; search?: string; count?: string; page?: string } = parseFilterStr(ctx.req.param('filter'))
 
     const params = {
         category: parsedFilter.category || '200',
@@ -60,16 +58,16 @@ async function handler(ctx) {
         search: parsedFilter.search || '',
         count: parsedFilter.count || ctx.req.query('limit') || '20',
         page: parsedFilter.page || '1',
-    };
+    }
 
     const response = await ofetch(`${url}?${new URLSearchParams(params)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-    });
+    })
 
-    const data = await response.result.data;
+    const data = await response.result.data
 
     const items = data.map((item) => ({
         title: item.title,
@@ -78,7 +76,7 @@ async function handler(ctx) {
         guid: item.id,
         pubDate: parseDate(item.start_time * 1000),
         itunes_duration: item.end_time > 0 ? item.end_time - item.start_time : 0,
-    }));
+    }))
 
     return {
         title: 'QuestN Events',
@@ -97,5 +95,5 @@ async function handler(ctx) {
                           link: 'https://app.questn.com/explore',
                       },
                   ],
-    };
+    }
 }

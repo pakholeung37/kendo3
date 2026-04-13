@@ -1,23 +1,23 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 function load_detail(list, cache) {
     return Promise.all(
         list.map((item) => {
-            const notice_item = load(item);
-            const href = notice_item('a').attr('href');
-            const url = 'http://www.shmeea.edu.cn' + href;
+            const notice_item = load(item)
+            const href = notice_item('a').attr('href')
+            const url = 'http://www.shmeea.edu.cn' + href
             if (href[0] !== '/') {
                 return {
                     title: notice_item('a').attr('title'),
                     description: `<a href="${href}" >附件</a>`,
                     link: href,
-                };
+                }
             }
             return cache.tryGet(url, async () => {
                 const detail_response = await got({
@@ -27,17 +27,17 @@ function load_detail(list, cache) {
                         Referer: 'http://www.shmeea.edu.cn/page/04000/index.html',
                         Host: 'www.shmeea.edu.cn',
                     },
-                });
-                const detail = load(detail_response.data);
+                })
+                const detail = load(detail_response.data)
                 return {
                     title: notice_item('a').attr('title'),
                     description: detail('.Article_content').html(),
                     link: url,
                     pubDate: timezone(parseDate(detail('.PBtime').text(), 'YYYY-MM-DD HH:mm:ss'), +8),
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 }
 
 export const route: Route = {
@@ -62,7 +62,7 @@ export const route: Route = {
     maintainers: ['h2ws'],
     handler,
     url: 'www.shmeea.edu.cn/page/04000/index.html',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -71,18 +71,18 @@ async function handler() {
         headers: {
             Host: 'www.shmeea.edu.cn',
         },
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
-    const list = $('#main > div.container > div > div.span9 > div.page-he  > div  > ul > li').toArray();
+    const $ = load(data)
+    const list = $('#main > div.container > div > div.span9 > div.page-he  > div  > ul > li').toArray()
 
-    const detail = await load_detail(list, cache);
+    const detail = await load_detail(list, cache)
 
     return {
         title: '上海自学考试 - 通知公告',
         link: 'http://www.shmeea.edu.cn/page/04000/index.html',
         item: detail,
-    };
+    }
 }

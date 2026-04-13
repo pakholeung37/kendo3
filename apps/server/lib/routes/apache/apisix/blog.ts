@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 async function getArticles() {
-    const url = 'https://apisix.apache.org/zh/blog/';
-    const { data: res } = await got(url);
-    const $ = load(res);
-    const articles = $('section.sec_gjjg').eq(1).find('article');
+    const url = 'https://apisix.apache.org/zh/blog/'
+    const { data: res } = await got(url)
+    const $ = load(res)
+    const articles = $('section.sec_gjjg').eq(1).find('article')
     return articles.toArray().map((elem) => {
-        const a = $(elem).find('header > a');
+        const a = $(elem).find('header > a')
         return {
             title: a.find('h2').text(),
             description: a.find('p').text(),
@@ -20,8 +20,8 @@ async function getArticles() {
                 .find('header div a')
                 .toArray()
                 .map((elem) => $(elem).text()),
-        };
-    });
+        }
+    })
 }
 
 export const route: Route = {
@@ -40,13 +40,13 @@ export const route: Route = {
     name: 'APISIX 博客',
     maintainers: ['aneasystone'],
     handler,
-};
+}
 
 async function handler() {
-    const articles = await getArticles();
+    const articles = await getArticles()
     return {
         title: 'Blog | Apache APISIX',
         link: 'https://apisix.apache.org/zh/blog/',
         item: articles,
-    };
+    }
 }

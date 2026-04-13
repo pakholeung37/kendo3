@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/ccs/:type?',
@@ -39,7 +39,7 @@ export const route: Route = {
         },
     ],
     handler: async (ctx) => {
-        const { type = 'tzgg' } = ctx.req.param();
+        const { type = 'tzgg' } = ctx.req.param()
         const urlMap = {
             tzgg: {
                 url: 'https://ccs.snnu.edu.cn/tzgg/zhgl1.htm',
@@ -53,50 +53,50 @@ export const route: Route = {
                 url: 'https://ccs.snnu.edu.cn/xssq/xshd.htm',
                 name: '学术活动',
             },
-        };
+        }
 
-        const configTarget = urlMap[type] || urlMap.tzgg;
-        const response = await ofetch(configTarget.url);
-        const $ = load(response);
-        const list = $('.lunwen dl dd').toArray().slice(0, 10);
+        const configTarget = urlMap[type] || urlMap.tzgg
+        const response = await ofetch(configTarget.url)
+        const $ = load(response)
+        const list = $('.lunwen dl dd').toArray().slice(0, 10)
 
         const items = await Promise.all(
             list.map((item) => {
-                const $item = $(item);
-                const $link = $item.find('a').first();
-                const link = new URL($link.attr('href') || '', configTarget.url).href;
+                const $item = $(item)
+                const $link = $item.find('a').first()
+                const link = new URL($link.attr('href') || '', configTarget.url).href
 
-                const pubDate = parseDate($item.find('.spani').text());
-                const title = $link.text();
+                const pubDate = parseDate($item.find('.spani').text())
+                const title = $link.text()
 
                 return cache.tryGet(link, async () => {
                     try {
-                        const detailResponse = await ofetch(link);
-                        const $$ = load(detailResponse);
-                        const description = $$('.v_news_content').html() || $$('#vsb_content').html() || '';
+                        const detailResponse = await ofetch(link)
+                        const $$ = load(detailResponse)
+                        const description = $$('.v_news_content').html() || $$('#vsb_content').html() || ''
 
                         return {
                             title,
                             link,
                             description,
                             pubDate,
-                        };
+                        }
                     } catch {
                         return {
                             title,
                             link,
                             pubDate,
-                        };
+                        }
                     }
-                });
-            })
-        );
+                })
+            }),
+        )
 
         return {
             title: `陕西师范大学 - 计算机科学学院${configTarget.name}`,
             link: configTarget.url,
             image: 'https://ccs.snnu.edu.cn/images/logo.png',
             item: items,
-        };
+        }
     },
-};
+}

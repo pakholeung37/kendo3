@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import type { City, District } from './types';
+import type { City, District } from './types'
 
-export const baseUrl = 'https://www.wellcee.com';
+export const baseUrl = 'https://www.wellcee.com'
 export const getCitys = () =>
     cache.tryGet(
         'wellcee:citys',
@@ -19,13 +19,13 @@ export const getCitys = () =>
                     userId: '',
                     type: '1',
                 }).toString(),
-            });
+            })
 
-            return response.data.citys;
+            return response.data.citys
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<City[]>;
+        false,
+    ) as Promise<City[]>
 
 export const getDistricts = (cityId: string) =>
     cache.tryGet(
@@ -36,10 +36,10 @@ export const getDistricts = (cityId: string) =>
                     cityId,
                     lang: '1',
                 },
-            });
+            })
 
-            return response.data.district;
+            return response.data.district
         },
         config.cache.routeExpire,
-        false
-    ) as Promise<District[]>;
+        false,
+    ) as Promise<District[]>

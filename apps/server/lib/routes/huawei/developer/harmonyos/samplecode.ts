@@ -1,12 +1,12 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/developer/harmonyos/sample-code',
@@ -29,7 +29,7 @@ export const route: Route = {
     name: 'HarmonyOS 示例代码',
     maintainers: ['JiZhi-Error'],
     handler,
-};
+}
 
 async function handler() {
     const response = await ofetch('https://svc-drcn.developer.huawei.com/community/servlet/consumer/partnerCommunityService/v1/servlet/samplecode/getSampleCodes', {
@@ -47,7 +47,7 @@ async function handler() {
             pageIndex: 1,
             pageSize: 100,
         }),
-    });
+    })
 
     const items = response.resultList.map((item) => ({
         title: md.renderInline(item.name),
@@ -58,7 +58,7 @@ async function handler() {
         author: 'HarmonyOS',
         id: item.id,
         image: item.effectPictureUrl,
-    }));
+    }))
 
     return {
         title: 'HarmonyOS 示例代码 - 华为开发者联盟',
@@ -66,5 +66,5 @@ async function handler() {
         description: '华为鸿蒙系统示例代码更新',
         language: 'zh-CN',
         item: items,
-    };
+    }
 }

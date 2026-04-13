@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const host = 'https://www.amazon.com';
+const host = 'https://www.amazon.com'
 export const route: Route = {
     path: '/kindle/software-updates',
     categories: ['program-update'],
@@ -21,21 +21,21 @@ export const route: Route = {
     name: 'Kindle Software Updates',
     maintainers: ['EthanWng97'],
     handler,
-};
+}
 
 async function handler() {
-    const url = host + '/gp/help/customer/display.html';
-    const nodeIdValue = 'GKMQC26VQQMM8XSW';
+    const url = host + '/gp/help/customer/display.html'
+    const nodeIdValue = 'GKMQC26VQQMM8XSW'
     const response = await got({
         method: 'get',
         url,
         searchParams: {
             nodeId: nodeIdValue,
         },
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
-    const $ = load(data);
+    const $ = load(data)
     const list = $('.a-row.cs-help-landing-section.help-display-cond')
         .toArray()
         .map((item) => {
@@ -48,9 +48,9 @@ async function handler() {
                     .find('.a-column.a-span8')
                     .html()
                     .replaceAll(/[\t\n]/g, ''),
-            };
-            return data;
-        });
+            }
+            return data
+        })
     return {
         title: 'Kindle E-Reader Software Updates',
         link: `${url}?nodeId=${nodeIdValue}`,
@@ -64,10 +64,10 @@ async function handler() {
                         <br />
                         <br />
                         <a href={item.website}>Kindle Website</a>
-                    </div>
+                    </div>,
                 ),
             guid: item.title + ' - ' + item.version,
             link: item.link,
         })),
-    };
+    }
 }

@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'GitHub',
@@ -13,4 +13,4 @@ GitHub provides some official RSS feeds:
 -   Wiki history: \`https://github.com/:owner/:repo/wiki.atom\`
 :::`,
     lang: 'en',
-};
+}

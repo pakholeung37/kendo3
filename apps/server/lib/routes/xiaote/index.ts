@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got'; // 自订的 got
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got' // 自订的 got
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news',
@@ -24,7 +24,7 @@ export const route: Route = {
     maintainers: ['wxsimon'],
     handler,
     url: 'xiaote.com/',
-};
+}
 
 async function handler() {
     const { data } = await got.post('https://lcen.xiaote.net//api/graphql/', {
@@ -45,7 +45,7 @@ async function handler() {
               }
             }`,
         },
-    });
+    })
 
     return {
         title: '小特社区',
@@ -53,11 +53,11 @@ async function handler() {
         link: 'https://xiaote.com/',
         // 遍历所有此前获取的数据
         item: data.data.communities.edges.map((node) => {
-            const item = node.node;
-            let description = item.content;
+            const item = node.node
+            let description = item.content
             if (item.imageUrls) {
                 for (const url of item.imageUrls) {
-                    description += `<img src="${url}">`;
+                    description += `<img src="${url}">`
                 }
             }
 
@@ -67,7 +67,7 @@ async function handler() {
                 description,
                 pubDate: parseDate(item.createdAt * 1000),
                 author: item.user.nickname,
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: ['/zh/:type?', '/ff14_zh/:type?'],
@@ -31,20 +31,20 @@ export const route: Route = {
     description: `| 新闻 | 公告     | 活动   | 广告      | 所有 |
 | ---- | -------- | ------ | --------- | ---- |
 | news | announce | events | advertise | all  |`,
-};
+}
 
 async function handler(ctx) {
-    const referer = 'https://ff.sdo.com/web8/index.html';
-    const type = ctx.req.param('type') ?? 'all';
+    const referer = 'https://ff.sdo.com/web8/index.html'
+    const type = ctx.req.param('type') ?? 'all'
 
     const typeNumber: Record<string, string> = {
         news: '5310',
         announce: '5312,8324,8325,8326,8327',
         events: '5311',
         advertise: '5313',
-    };
+    }
 
-    typeNumber.all = `5309,${Object.values(typeNumber).join(',')}`;
+    typeNumber.all = `5309,${Object.values(typeNumber).join(',')}`
 
     const response = await got({
         method: 'get',
@@ -52,9 +52,9 @@ async function handler(ctx) {
         headers: {
             Referer: referer,
         },
-    });
+    })
 
-    const data = response.data.Data;
+    const data = response.data.Data
 
     return {
         title: '最终幻想14（国服）新闻中心',
@@ -69,5 +69,5 @@ async function handler(ctx) {
             }),
             pubDate: timezone(parseDate(PublishDate), +8),
         })),
-    };
+    }
 }

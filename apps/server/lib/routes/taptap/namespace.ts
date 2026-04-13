@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'TapTap',
@@ -8,4 +8,4 @@ export const namespace: Namespace = {
 而对于《TapTap 国际版》则需要部署在具有海外出口的 IP 上才可正常获取 RSS。
 :::`,
     lang: 'zh-CN',
-};
+}

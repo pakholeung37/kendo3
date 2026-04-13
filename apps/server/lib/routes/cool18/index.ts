@@ -1,21 +1,21 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 type PageDataItem = {
-    tid: string;
-    username: string;
-    subject: string;
-    dateline: string;
-    type: string;
-};
+    tid: string
+    username: string
+    subject: string
+    dateline: string
+    type: string
+}
 
-type PostType = 'home' | 'gold' | 'threadsearch' | 'search';
+type PostType = 'home' | 'gold' | 'threadsearch' | 'search'
 
 export const route: Route = {
     path: '/:id?/:type?/:keyword?',
@@ -39,14 +39,14 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 /**
  * 构建请求 URL
  */
 function buildUrl(rootUrl: string, type: PostType, keyword: string | undefined, isGlobal: boolean): string {
     if (isGlobal && (type === 'search' || type === 'threadsearch')) {
-        return `${rootUrl}/search.php?keyword=${encodeURIComponent(keyword || '')}&sa=全成人区搜索`;
+        return `${rootUrl}/search.php?keyword=${encodeURIComponent(keyword || '')}&sa=全成人区搜索`
     }
 
     const params = {
@@ -54,9 +54,9 @@ function buildUrl(rootUrl: string, type: PostType, keyword: string | undefined, 
         gold: '?app=forum&act=gold',
         threadsearch: `?action=search&act=threadsearch&app=forum&keywords=${encodeURIComponent(keyword || '')}&submit=查询`,
         search: `?action=search&act=threadsearch&app=forum&keywords=${encodeURIComponent(keyword || '')}&submit=查询`,
-    };
+    }
 
-    return rootUrl + params[type];
+    return rootUrl + params[type]
 }
 
 /**
@@ -64,14 +64,14 @@ function buildUrl(rootUrl: string, type: PostType, keyword: string | undefined, 
  */
 function extractHomeList($: CheerioAPI, rootUrl: string, limit: number): DataItem[] {
     try {
-        const scriptText = $('script:contains("_PageData")').text();
-        const match = scriptText.match(/const\s+_PageData\s*=\s*(\[[\s\S]*?]);/);
+        const scriptText = $('script:contains("_PageData")').text()
+        const match = scriptText.match(/const\s+_PageData\s*=\s*(\[[\s\S]*?]);/)
 
         if (!match?.[1]) {
-            return [];
+            return []
         }
 
-        const pageData: PageDataItem[] = JSON.parse(match[1]);
+        const pageData: PageDataItem[] = JSON.parse(match[1])
 
         return pageData.slice(0, limit).map((item) => ({
             title: item.subject,
@@ -80,9 +80,9 @@ function extractHomeList($: CheerioAPI, rootUrl: string, limit: number): DataIte
             author: item.username,
             category: item.type ? [item.type] : [],
             description: '',
-        }));
+        }))
     } catch {
-        return [];
+        return []
     }
 }
 
@@ -90,22 +90,22 @@ function extractHomeList($: CheerioAPI, rootUrl: string, limit: number): DataIte
  * 从 HTML 列表中提取数据
  */
 function extractHtmlList($: CheerioAPI, rootUrl: string, limit: number): DataItem[] {
-    const selector = '#d_list ul li, #thread_list li, .t_l .t_subject, .post-list.thread-list li';
-    const elements = $(selector);
+    const selector = '#d_list ul li, #thread_list li, .t_l .t_subject, .post-list.thread-list li'
+    const elements = $(selector)
 
     return elements
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const $link = $item.find('a').first();
-            const href = $link.attr('href') || '';
+            const $item = $(item)
+            const $link = $item.find('a').first()
+            const href = $link.attr('href') || ''
 
-            const categoryText = $link.find('span').first().text().trim();
+            const categoryText = $link.find('span').first().text().trim()
 
-            const authorFromFont = $item.find('font[color="black"]').text().trim();
-            const authorFromLink = $item.find('a').last().text().trim();
-            const author = authorFromFont || authorFromLink;
+            const authorFromFont = $item.find('font[color="black"]').text().trim()
+            const authorFromLink = $item.find('a').last().text().trim()
+            const author = authorFromFont || authorFromLink
 
             return {
                 title: $link.text().trim(),
@@ -114,35 +114,35 @@ function extractHtmlList($: CheerioAPI, rootUrl: string, limit: number): DataIte
                 author,
                 category: categoryText ? [categoryText] : [],
                 description: '',
-            };
+            }
         })
-        .filter((item) => item.link);
+        .filter((item) => item.link)
 }
 
 /**
  * 从全局搜索页面提取数据
  */
 function extractGlobalSearchList($: CheerioAPI, limit: number): DataItem[] {
-    const selector = '.search-content ul li';
-    const elements = $(selector);
+    const selector = '.search-content ul li'
+    const elements = $(selector)
 
     return elements
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const $link = $item.find('a').first();
-            const href = $link.attr('href') || '';
+            const $item = $(item)
+            const $link = $item.find('a').first()
+            const href = $link.attr('href') || ''
 
-            const $pElements = $link.find('p');
+            const $pElements = $link.find('p')
             const category = $pElements
                 .filter('.lf')
                 .first()
                 .text()
                 .trim()
-                .replaceAll(/[【】]/g, '');
-            const title = $pElements.filter('.lf').eq(1).text().trim();
-            const dateText = $pElements.filter('.lr').text().trim();
+                .replaceAll(/[【】]/g, '')
+            const title = $pElements.filter('.lf').eq(1).text().trim()
+            const dateText = $pElements.filter('.lr').text().trim()
 
             return {
                 title: title || $link.text().trim(),
@@ -151,28 +151,28 @@ function extractGlobalSearchList($: CheerioAPI, limit: number): DataItem[] {
                 author: '',
                 category: category ? [category] : [],
                 description: '',
-            };
+            }
         })
-        .filter((item) => item.link && item.title);
+        .filter((item) => item.link && item.title)
 }
 
 /**
  * 从 gold 页面提取精华帖子列表
  */
 function extractGoldList($: CheerioAPI, rootUrl: string, limit: number): DataItem[] {
-    const selector = '.section .post-list .post-item';
-    const elements = $(selector);
+    const selector = '.section .post-list .post-item'
+    const elements = $(selector)
 
     return elements
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const $link = $item.find('a').first();
-            const href = $link.attr('href') || '';
-            const title = $link.text().trim();
+            const $item = $(item)
+            const $link = $item.find('a').first()
+            const href = $link.attr('href') || ''
+            const title = $link.text().trim()
 
-            const cleanTitle = title.replace(/^\.\s+/, '');
+            const cleanTitle = title.replace(/^\.\s+/, '')
 
             return {
                 title: cleanTitle,
@@ -181,9 +181,9 @@ function extractGoldList($: CheerioAPI, rootUrl: string, limit: number): DataIte
                 author: '',
                 category: ['精华'],
                 description: '',
-            };
+            }
         })
-        .filter((item) => item.link && item.title);
+        .filter((item) => item.link && item.title)
 }
 
 /**
@@ -191,69 +191,69 @@ function extractGoldList($: CheerioAPI, rootUrl: string, limit: number): DataIte
  */
 async function fetchArticleDetail(item: DataItem): Promise<DataItem> {
     if (!item.link) {
-        return item;
+        return item
     }
 
     return await cache.tryGet(item.link, async () => {
-        const detailResponse = await ofetch(item.link!);
-        const content = load(detailResponse);
-        const preElement = content('pre');
+        const detailResponse = await ofetch(item.link!)
+        const content = load(detailResponse)
+        const preElement = content('pre')
 
         if (preElement.length > 0) {
-            const htmlContent = preElement.html();
+            const htmlContent = preElement.html()
             if (htmlContent) {
-                item.description = htmlContent.replaceAll('<font color="#E6E6DD">cool18.com</font>', '');
+                item.description = htmlContent.replaceAll('<font color="#E6E6DD">cool18.com</font>', '')
             }
         }
 
-        return item;
-    });
+        return item
+    })
 }
 
 /**
  * 主处理函数
  */
 async function handler(ctx: Context) {
-    const { id = 'bbs4', type = 'home', keyword } = ctx.req.param();
-    const postType = type as PostType;
-    const isGlobal = id === 'global';
+    const { id = 'bbs4', type = 'home', keyword } = ctx.req.param()
+    const postType = type as PostType
+    const isGlobal = id === 'global'
 
-    const rootUrl = isGlobal ? 'https://www.cool18.com' : `https://www.cool18.com/${id}/index.php`;
-    const currentUrl = buildUrl(rootUrl, postType, keyword, isGlobal);
+    const rootUrl = isGlobal ? 'https://www.cool18.com' : `https://www.cool18.com/${id}/index.php`
+    const currentUrl = buildUrl(rootUrl, postType, keyword, isGlobal)
 
-    const response = await ofetch(currentUrl);
-    const $ = load(response);
+    const response = await ofetch(currentUrl)
+    const $ = load(response)
 
-    const limitQuery = ctx.req.query('limit');
-    const limit = limitQuery ? Number.parseInt(limitQuery as string, 10) : 20;
+    const limitQuery = ctx.req.query('limit')
+    const limit = limitQuery ? Number.parseInt(limitQuery as string, 10) : 20
 
-    let list: DataItem[];
+    let list: DataItem[]
 
     if (isGlobal && (postType === 'search' || postType === 'threadsearch')) {
-        list = extractGlobalSearchList($, limit);
+        list = extractGlobalSearchList($, limit)
     } else {
         switch (postType) {
             case 'home':
-                list = extractHomeList($, rootUrl, limit);
-                break;
+                list = extractHomeList($, rootUrl, limit)
+                break
             case 'gold':
-                list = extractGoldList($, rootUrl, limit);
-                break;
+                list = extractGoldList($, rootUrl, limit)
+                break
             case 'threadsearch':
             case 'search':
-                list = extractHtmlList($, rootUrl, limit);
-                break;
+                list = extractHtmlList($, rootUrl, limit)
+                break
             default:
-                list = extractHtmlList($, rootUrl, limit);
-                break;
+                list = extractHtmlList($, rootUrl, limit)
+                break
         }
     }
 
-    const items = await Promise.all(list.map((item) => fetchArticleDetail(item)));
+    const items = await Promise.all(list.map((item) => fetchArticleDetail(item)))
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/new-releases',
@@ -23,11 +23,11 @@ export const route: Route = {
     maintainers: ['EthanWng97'],
     handler,
     url: 'bellroy.com/collection/new-releases',
-};
+}
 
 async function handler() {
-    const host = 'https://bellroy.com';
-    const url = 'https://production.products.boobook-services.com/products';
+    const host = 'https://bellroy.com'
+    const url = 'https://production.products.boobook-services.com/products'
     const response = await got({
         method: 'get',
         url,
@@ -36,8 +36,8 @@ async function handler() {
             price_group: 'bellroy.com',
             'filter[dimensions][web_new_release]': 'new_style',
         },
-    });
-    const data = response.data.products;
+    })
+    const data = response.data.products
 
     return {
         title: 'Bellroy - New Releases',
@@ -47,5 +47,5 @@ async function handler() {
             title: item.attributes.name + ' - ' + item.attributes.dimensions.color,
             link: host + item.attributes.canonical_uri,
         })),
-    };
+    }
 }

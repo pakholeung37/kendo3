@@ -1,45 +1,45 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'newslists', id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = 'newslists', id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://info.10000link.com';
-    const targetUrl: string = new URL(`${category}.aspx${id ? `?chid=${id}` : ''}`, baseUrl).href;
+    const baseUrl = 'https://info.10000link.com'
+    const targetUrl: string = new URL(`${category}.aspx${id ? `?chid=${id}` : ''}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('ul.l_newshot li dl.lhotnew2')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('dd h1 a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('dd h1 a')
 
-            const title: string = $aEl.attr('title') ?? $aEl.text();
+            const title: string = $aEl.attr('title') ?? $aEl.text()
             const description: string | undefined = renderDescription({
                 intro: $el.find('dd.title_l').text(),
-            });
-            const pubDateStr: string | undefined = $el.find('span.ymd_w').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = $el.find('dd.day-lx span a').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const authors: DataItem['author'] = $el.find('dd.day-lx span').first().text();
-            const image: string | undefined = $el.find('dt.img220 a img').attr('src');
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = $el.find('span.ymd_w').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = $el.find('dd.day-lx span a').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const authors: DataItem['author'] = $el.find('dd.day-lx span').first().text()
+            const image: string | undefined = $el.find('dt.img220 a img').attr('src')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -56,32 +56,32 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseRelativeDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.entity_title h1 a').text();
-                    const image: string | undefined = $$('div.entity_thumb img.img-responsive').attr('src');
+                    const title: string = $$('div.entity_title h1 a').text()
+                    const image: string | undefined = $$('div.entity_thumb img.img-responsive').attr('src')
 
                     const description: string | undefined = renderDescription({
                         description: $$('div.entity_content').html(),
-                    });
-                    const pubDateStr: string | undefined = detailResponse.match(/var\stime\s=\s"(.*?)";/)?.[1];
-                    const categoryEls: Element[] = $$('div.entity_tag span a').toArray();
-                    const categories: string[] = [...new Set([...categoryEls.map((el) => $$(el).text()), ...(item.category ?? [])].filter(Boolean))];
-                    const upDatedStr: string | undefined = pubDateStr;
+                    })
+                    const pubDateStr: string | undefined = detailResponse.match(/var\stime\s=\s"(.*?)";/)?.[1]
+                    const categoryEls: Element[] = $$('div.entity_tag span a').toArray()
+                    const categories: string[] = [...new Set([...categoryEls.map((el) => $$(el).text()), ...(item.category ?? [])].filter(Boolean))]
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -96,19 +96,19 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const author = '10000万联网';
-    const title: string = $('h1').contents().first().text();
+    const author = '10000万联网'
+    const title: string = $('h1').contents().first().text()
 
     return {
         title: `${author} - ${title}`,
@@ -120,8 +120,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/info/:category?/:id?',
@@ -230,13 +230,13 @@ export const route: Route = {
         {
             source: ['info.10000link.com/:category'],
             target: (params, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('chid') ?? undefined;
-                const category: string = params.category;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('chid') ?? undefined
+                const category: string = params.category
 
-                return `/10000link/info${category ? `/${category}${id ? `/${id}` : ''}` : ''}`;
+                return `/10000link/info${category ? `/${category}${id ? `/${id}` : ''}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

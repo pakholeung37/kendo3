@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/sxy/:type',
@@ -27,10 +27,10 @@ export const route: Route = {
     description: `| 学院新闻 | 通知公告 | 教学科研 | 党工团学 | 讲座报告 | 学者观点 |
 | -------- | -------- | -------- | -------- | -------- | -------- |
 | xyxw     | tzgg     | jxky     | dgtx     | jzbg     | xzgd     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
     const typeDict = {
         xyxw: ['学院新闻', 'https://www5.zzu.edu.cn/sxy/index/xyxw.htm'],
         tzgg: ['通知公告', 'https://www5.zzu.edu.cn/sxy/index/tzgg.htm'],
@@ -38,19 +38,19 @@ async function handler(ctx) {
         dgtx: ['党工团学', 'https://www5.zzu.edu.cn/sxy/index/dgtx.htm'],
         jzbg: ['讲座报告', 'https://www5.zzu.edu.cn/sxy/index/jzbg.htm'],
         xzgd: ['学者观点', 'https://www5.zzu.edu.cn/sxy/index/xzgd.htm'],
-    };
+    }
 
     // 获取页面内容
-    const response = await got(typeDict[type][1]);
-    const $ = load(response.data);
+    const response = await got(typeDict[type][1])
+    const $ = load(response.data)
 
-    const list = type === 'xyxw' ? parseXyxwList($, typeDict, type) : parseOtherList($, typeDict, type);
+    const list = type === 'xyxw' ? parseXyxwList($, typeDict, type) : parseOtherList($, typeDict, type)
 
     return {
         title: `郑大商学院-${typeDict[type][0]}`,
         link: typeDict[type][1],
         item: list,
-    };
+    }
 }
 
 function parseXyxwList($, typeDict, type) {
@@ -58,23 +58,23 @@ function parseXyxwList($, typeDict, type) {
         .toArray()
         .slice(0, 6)
         .map((element) => {
-            const $element = $(element);
-            const $link = $element.find('a').first();
-            const link = new URL($link.attr('href'), typeDict[type][1]).href;
-            const title = $link.attr('title') || $link.text().trim();
-            const description = $element.find('.right .con p').text().trim();
+            const $element = $(element)
+            const $link = $element.find('a').first()
+            const link = new URL($link.attr('href'), typeDict[type][1]).href
+            const title = $link.attr('title') || $link.text().trim()
+            const description = $element.find('.right .con p').text().trim()
 
-            const monthDay = $element.find('.time_con h3').text().trim();
-            const year = $element.find('.time_con h6').text().trim();
-            const pubDateText = `${year}-${monthDay}`;
+            const monthDay = $element.find('.time_con h3').text().trim()
+            const year = $element.find('.time_con h6').text().trim()
+            const pubDateText = `${year}-${monthDay}`
 
             return {
                 title,
                 link,
                 pubDate: pubDateText,
                 description,
-            };
-        });
+            }
+        })
 }
 
 function parseOtherList($, typeDict, type) {
@@ -82,17 +82,17 @@ function parseOtherList($, typeDict, type) {
         .toArray()
         .slice(0, 16)
         .map((element) => {
-            const $element = $(element);
-            const $link = $element.find('a').first();
-            const link = new URL($link.attr('href'), typeDict[type][1]).href;
-            const title = $link.attr('title');
+            const $element = $(element)
+            const $link = $element.find('a').first()
+            const link = new URL($link.attr('href'), typeDict[type][1]).href
+            const title = $link.attr('title')
 
-            const pubDateText = $element.find('span.span01').text().trim();
+            const pubDateText = $element.find('span.span01').text().trim()
 
             return {
                 title,
                 link,
                 pubDate: pubDateText || null,
-            };
-        });
+            }
+        })
 }

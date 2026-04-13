@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 export const renderSubscriptionImages = (images: Array<string | undefined>) => {
-    const filteredImages = images.filter(Boolean);
+    const filteredImages = images.filter(Boolean)
 
     return renderToString(
         <>
@@ -11,6 +11,6 @@ export const renderSubscriptionImages = (images: Array<string | undefined>) => {
                     <br />
                 </>
             ))}
-        </>
-    );
-};
+        </>,
+    )
+}

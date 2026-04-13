@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/:category?',
@@ -37,15 +37,15 @@ export const route: Route = {
 ::: warning
   由于 mox.moe 对非登录用户屏蔽了部分漫画详情内容的获取，且极易触发反爬机制，导致访问ip被重定向至google.com，因此在未配置\`MOX_COOKIE\`参数的情况下路由只会返回漫画标题和封面，不会对详情内容进行抓取。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
+    const category = ctx.req.param('category') ?? ''
 
-    const rootUrl = 'https://mox.moe';
-    const currentUrl = `${rootUrl}${category ? `/l/${category}` : ''}`;
+    const rootUrl = 'https://mox.moe'
+    const currentUrl = `${rootUrl}${category ? `/l/${category}` : ''}`
 
-    const cookie = config.mox.cookie;
+    const cookie = config.mox.cookie
 
     const response = await got({
         method: 'get',
@@ -53,30 +53,30 @@ async function handler(ctx) {
         headers: {
             cookie,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items: DataItem[] = $('.listbg td')
         .toArray()
         .map((item) => {
-            const lastItem = $(item).find('a').last();
+            const lastItem = $(item).find('a').last()
 
-            const guid = lastItem.attr('href')?.split('/').pop();
+            const guid = lastItem.attr('href')?.split('/').pop()
 
             const cover = $(item)
                 .find('a div div')
                 .attr('style')
-                ?.match(/background:url\((.*?)\)/)?.[1];
+                ?.match(/background:url\((.*?)\)/)?.[1]
 
             return {
                 title: lastItem.text(),
                 description: cover ? `<img src="${cover}">` : undefined,
                 link: lastItem.attr('href'),
                 guid,
-            };
+            }
         })
-        .filter((i) => i.guid);
+        .filter((i) => i.guid)
 
     if (cookie) {
         items = await Promise.all(
@@ -89,30 +89,30 @@ async function handler(ctx) {
                             headers: {
                                 cookie,
                             },
-                        });
+                        })
 
-                        const content = load(detailResponse.data);
+                        const content = load(detailResponse.data)
 
                         item.author = content('.author .text_bglight font a')
                             .toArray()
                             .map((i) => $(i).text())
                             .filter(Boolean)
-                            .join('、');
+                            .join('、')
 
-                        const infoBlock = content('.author .text_bglight').toArray();
+                        const infoBlock = content('.author .text_bglight').toArray()
 
-                        const desc = detailResponse.data?.match(/document\.getElementById\("div_desc_content"\)\.innerHTML = "(.*?)";/s)?.[1] ?? '';
-                        item.description = `<img src="${content('.img_book').attr('src')}"><br>${infoBlock.map((i) => $(i).html()).join('<br>')}<br>${desc}`;
+                        const desc = detailResponse.data?.match(/document\.getElementById\("div_desc_content"\)\.innerHTML = "(.*?)";/s)?.[1] ?? ''
+                        item.description = `<img src="${content('.img_book').attr('src')}"><br>${infoBlock.map((i) => $(i).html()).join('<br>')}<br>${desc}`
 
-                        return item;
-                    }) as unknown as DataItem
-            )
-        );
+                        return item
+                    }) as unknown as DataItem,
+            ),
+        )
     }
 
     return {
         title: 'Mox.moe',
         link: currentUrl,
         item: items,
-    };
+    }
 }

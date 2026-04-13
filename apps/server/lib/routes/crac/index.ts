@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:type?',
@@ -29,28 +29,28 @@ export const route: Route = {
             source: ['www.crac.org.cn/News/*'],
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'http://www.crac.org.cn';
-    const type = ctx.req.param('type');
-    const link = type ? `${baseUrl}/News/List?type=${type}` : `${baseUrl}/News/List`;
+    const baseUrl = 'http://www.crac.org.cn'
+    const type = ctx.req.param('type')
+    const link = type ? `${baseUrl}/News/List?type=${type}` : `${baseUrl}/News/List`
 
     const response = await got({
         method: 'get',
         url: link,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const list = $('div.InCont_r_d_cont > li')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 link: new URL(item.find('a').attr('href'), baseUrl).href,
                 pubDate: parseDate(item.find('span.cont_d').text(), 'YYYY-MM-DD'),
-            };
-        });
+            }
+        })
 
     await Promise.all(
         list.map((item) =>
@@ -58,18 +58,18 @@ async function handler(ctx) {
                 const response = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(response.data);
-                item.title = content('div.r_d_cont_title > h3').text();
-                item.description = content('div.r_d_cont').html().trim().replaceAll('\n', '');
-                return item;
-            })
-        )
-    );
+                })
+                const content = load(response.data)
+                item.title = content('div.r_d_cont_title > h3').text()
+                item.description = content('div.r_d_cont').html().trim().replaceAll('\n', '')
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link,
         item: list,
-    };
+    }
 }

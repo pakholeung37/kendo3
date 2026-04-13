@@ -1,35 +1,35 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'news' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '7', 10);
+    const { category = 'news' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '7', 10)
 
-    const baseUrl = 'http://www.ccg.org.cn';
-    const targetUrl: string = new URL(category, baseUrl).href;
+    const baseUrl = 'http://www.ccg.org.cn'
+    const targetUrl: string = new URL(category, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('ul.huodong-list li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.find('h5').text();
-            const image: string | undefined = $el.find('div.huodong-img img').attr('src');
+            const title: string = $el.find('h5').text()
+            const image: string | undefined = $el.find('div.huodong-img img').attr('src')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -40,10 +40,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       ]
                     : undefined,
                 intro: $el.find('p').html() || undefined,
-            });
-            const pubDateStr: string | undefined = $el.find('span').text();
-            const linkUrl: string | undefined = $el.find('a').attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = $el.find('span').text()
+            const linkUrl: string | undefined = $el.find('a').attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -58,32 +58,32 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr, 'YYYY年M月D日') : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('div.pinpai-page h3').text();
-                const pubDateStr: string | undefined = $$('span.time').text();
+                const title: string = $$('div.pinpai-page h3').text()
+                const pubDateStr: string | undefined = $$('span.time').text()
 
-                $$('div.pinpai-page h3').remove();
-                $$('div.pinpai-page span.time').remove();
+                $$('div.pinpai-page h3').remove()
+                $$('div.pinpai-page span.time').remove()
 
                 const description: string | undefined = renderDescription({
                     description: $$('div.pinpai-page').html() || undefined,
-                });
+                })
 
-                const upDatedStr: string | undefined = pubDateStr;
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -95,17 +95,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? parseDate(upDatedStr, 'YYYY年M月D日') : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const author: string = $('h1.nav-logo').first().text();
+    const author: string = $('h1.nav-logo').first().text()
 
     return {
         title: `${author} - ${$('title').text()}`,
@@ -116,8 +116,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -177,4 +177,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

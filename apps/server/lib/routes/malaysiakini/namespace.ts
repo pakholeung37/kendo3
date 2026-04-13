@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Malaysiakini',
@@ -9,4 +9,4 @@ A subscription is required for fetching full articles.
 Please refer to the deployment config for more information.
 :::`,
     lang: 'en',
-};
+}

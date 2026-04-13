@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'http://www.rodong.rep.kp';
+const host = 'http://www.rodong.rep.kp'
 
 export const route: Route = {
     path: '/news/:language?',
@@ -33,44 +33,44 @@ export const route: Route = {
     description: `| 조선어 | English | 中文 |
 | ------ | ------- | ---- |
 | ko     | en      | cn   |`,
-};
+}
 
 async function handler(ctx) {
-    const { language = 'ko' } = ctx.req.param();
-    const link = `${host}/${language}/index.php?MkBAMkAxQA==`;
-    const { data: response } = await got(link);
+    const { language = 'ko' } = ctx.req.param()
+    const link = `${host}/${language}/index.php?MkBAMkAxQA==`
+    const { data: response } = await got(link)
 
-    const $ = load(response);
+    const $ = load(response)
     const list = $('.date_news_list .row')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.media-body').text(),
                 link: `${host}/${language}/${item.find('.media-body a').attr('href')}`,
                 author: item.find('.col-sm-3').text(),
                 pubDate: parseDate(item.find('.news_date').text(), 'YYYY.M.D.'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
+                const { data: response } = await got(item.link)
+                const $ = load(response)
 
-                $('.news_Title, .NewsDetail, .News_Detail, #moveNews').remove();
-                item.description = $('.col-sm-8').html();
+                $('.news_Title, .NewsDetail, .News_Detail, #moveNews').remove()
+                item.description = $('.col-sm-8').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         description: $('head meta[name="description"]').attr('content'),
         link,
         item: items,
-    };
+    }
 }

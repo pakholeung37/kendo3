@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { decode } from 'iconv-lite';
+import { load } from 'cheerio'
+import { decode } from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/volume/:id',
@@ -21,22 +21,22 @@ export const route: Route = {
     name: '最新卷',
     maintainers: ['huangliangshusheng'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const aid = Number.parseInt(ctx.req.param('id'));
-    const link = `https://www.wenku8.net/novel/${Math.floor(aid / 1000)}/${aid}/index.htm`;
-    const html = await get(link);
-    const $ = load(html);
-    const vid = $('.vcss').last().parent().next().find('a')[0].attribs.href.replace('.htm', '');
-    const volumeUrl = `https://dl.wenku8.com/packtxt.php?aid=${aid}&vid=${vid}&charset=gbk`;
+    const aid = Number.parseInt(ctx.req.param('id'))
+    const link = `https://www.wenku8.net/novel/${Math.floor(aid / 1000)}/${aid}/index.htm`
+    const html = await get(link)
+    const $ = load(html)
+    const vid = $('.vcss').last().parent().next().find('a')[0].attribs.href.replace('.htm', '')
+    const volumeUrl = `https://dl.wenku8.com/packtxt.php?aid=${aid}&vid=${vid}&charset=gbk`
     const lastestChapters = $('.vcss')
         .last()
         .parent()
         .nextAll()
         .find('a')
         .toArray()
-        .map((a) => ({ link: a.attribs.href }));
+        .map((a) => ({ link: a.attribs.href }))
 
     return {
         title: `轻小说文库 ${$('#title').text()} 最新卷`,
@@ -54,9 +54,9 @@ async function handler(ctx) {
                     link: lastestChapters[index]?.link,
                 }))
                 .filter((chapter) => chapter.description)
-                .toReversed()
+                .toReversed(),
         ),
-    };
+    }
 }
 
-const get = async (url: string) => decode(await got(url).buffer(), 'gbk');
+const get = async (url: string) => decode(await got(url).buffer(), 'gbk')

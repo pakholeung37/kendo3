@@ -1,64 +1,64 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { category = 'xwdt' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 16;
+    const { category = 'xwdt' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 16
 
-    const rootUrl = 'https://gs.hust.edu.cn';
-    const currentUrl = new URL(`${category}.htm`, rootUrl).href;
+    const rootUrl = 'https://gs.hust.edu.cn'
+    const currentUrl = new URL(`${category}.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div.btlist ul li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
-            const link = a.prop('href');
+            const a = item.find('a')
+            const link = a.prop('href')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('span.time').text()),
                 link: link.startsWith('http') ? link : new URL(link, rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 try {
-                    const { data: detailResponse } = await got(item.link);
+                    const { data: detailResponse } = await got(item.link)
 
-                    const $$ = load(detailResponse);
+                    const $$ = load(detailResponse)
 
-                    const description = $$('div.v_news_content').html();
+                    const description = $$('div.v_news_content').html()
 
-                    item.title = $$('div.article_title h1, h5').text();
-                    item.description = description;
+                    item.title = $$('div.article_title h1, h5').text()
+                    item.description = description
                     item.content = {
                         html: description,
                         text: $$('div.v_news_content').text(),
-                    };
+                    }
                 } catch {
                     // no-empty
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('meta[name="keywords"]').prop('content')?.replaceAll(',', ' - ') ?? $('title').text();
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const title = $('meta[name="keywords"]').prop('content')?.replaceAll(',', ' - ') ?? $('title').text()
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title,
@@ -67,8 +67,8 @@ export const handler = async (ctx) => {
         item: items,
         allowEmpty: true,
         image,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/gs/:category{.+}?',
@@ -143,9 +143,9 @@ export const route: Route = {
         {
             source: ['gs.hust.edu.cn/:category'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/hust/gs${category ? `/${category}` : ''}`;
+                return `/hust/gs${category ? `/${category}` : ''}`
             },
         },
         {
@@ -279,4 +279,4 @@ export const route: Route = {
             target: '/gs/xwgz/dsdw',
         },
     ],
-};
+}

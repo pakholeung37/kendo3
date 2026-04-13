@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import NotFoundError from '@/errors/types/not-found';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import NotFoundError from '@/errors/types/not-found'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { processEmbedPDF } from '../lib/embed-resource';
+import { processEmbedPDF } from '../lib/embed-resource'
 
-const WEBSITE_LOGO = 'https://www.nwnu.edu.cn/_upload/tpl/02/d9/729/template729/favicon.ico';
-const BASE_URL = 'https://yjsy.nwnu.edu.cn/';
+const WEBSITE_LOGO = 'https://www.nwnu.edu.cn/_upload/tpl/02/d9/729/template729/favicon.ico'
+const BASE_URL = 'https://yjsy.nwnu.edu.cn/'
 
 const COLUMNS: Record<string, { title: string; description: string }> = {
     '2701': {
@@ -40,37 +40,37 @@ const COLUMNS: Record<string, { title: string; description: string }> = {
         title: '学位工作',
         description: '研究生院学位工作栏目信息汇总',
     },
-};
+}
 
 const handler: Route['handler'] = async (ctx) => {
-    const columnParam = ctx.req.param('column');
+    const columnParam = ctx.req.param('column')
     if (COLUMNS[columnParam] === undefined) {
-        throw new NotFoundError(`The column ${columnParam} does not exist`);
+        throw new NotFoundError(`The column ${columnParam} does not exist`)
     }
-    const columnTitle = COLUMNS[columnParam].title;
-    const columnDescription = COLUMNS[columnParam].description;
-    const columnPageUrl = `https://yjsy.nwnu.edu.cn/${columnParam}/list.htm`;
+    const columnTitle = COLUMNS[columnParam].title
+    const columnDescription = COLUMNS[columnParam].description
+    const columnPageUrl = `https://yjsy.nwnu.edu.cn/${columnParam}/list.htm`
 
     // Fetch the list page
-    const { data: listResponse } = await got(columnPageUrl);
-    const $ = load(listResponse);
+    const { data: listResponse } = await got(columnPageUrl)
+    const $ = load(listResponse)
 
     // Select all list items containing academic information
-    const ITEM_SELECTOR = '#AjaxList > ul > li.a-list';
-    const listItems = $(ITEM_SELECTOR);
+    const ITEM_SELECTOR = '#AjaxList > ul > li.a-list'
+    const listItems = $(ITEM_SELECTOR)
 
     // Map through each list item to extract details
     const itemLinks = listItems.toArray().map((element) => {
-        const title = $(element).find('a:nth-child(2)').attr('title')!;
-        const date = parseDate($(element).find('span.pdate').text()!);
-        const relativeLink = $(element).find('a:nth-child(2)').attr('href')!;
-        const link = new URL(relativeLink, BASE_URL).href;
+        const title = $(element).find('a:nth-child(2)').attr('title')!
+        const date = parseDate($(element).find('span.pdate').text()!)
+        const relativeLink = $(element).find('a:nth-child(2)').attr('href')!
+        const link = new URL(relativeLink, BASE_URL).href
         return {
             title,
             date,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title: columnTitle,
@@ -80,10 +80,10 @@ const handler: Route['handler'] = async (ctx) => {
         item: (await Promise.all(
             itemLinks.map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const CONTENT_SELECTOR = 'div.content_div';
-                    const { data: contentResponse } = await got(item.link);
-                    const contentPage = load(contentResponse);
-                    const content = processEmbedPDF(BASE_URL, contentPage(CONTENT_SELECTOR).html() || '');
+                    const CONTENT_SELECTOR = 'div.content_div'
+                    const { data: contentResponse } = await got(item.link)
+                    const contentPage = load(contentResponse)
+                    const content = processEmbedPDF(BASE_URL, contentPage(CONTENT_SELECTOR).html() || '')
                     return {
                         title: item.title,
                         pubDate: item.date,
@@ -96,16 +96,16 @@ const handler: Route['handler'] = async (ctx) => {
                         content,
                         updated: item.date,
                         language: 'zh-CN',
-                    };
-                })
-            )
+                    }
+                }),
+            ),
         )) as DataItem[],
         allowEmpty: true,
         language: 'zh-CN',
         feedLink: `https://rsshub.app/nwnu/department/postgraduate/${columnParam}`,
         id: `https://rsshub.app/nwnu/department/postgraduate/${columnParam}`,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/department/postgraduate/:column',
@@ -138,4 +138,4 @@ export const route: Route = {
 | 2702   | 培养工作                       | 培养工作栏目信息汇总                               |
 | 2703   | 学科建设                       | 研究生院学科建设信息汇总                           |
 | 2704   | 学位工作                       | 研究生院学位工作栏目信息汇总                       |`,
-};
+}

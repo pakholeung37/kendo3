@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import fetch from './fetch-article';
+import fetch from './fetch-article'
 
 export const route: Route = {
     path: '/category/:category',
@@ -26,7 +26,7 @@ export const route: Route = {
     maintainers: ['emdoe'],
     handler,
     url: 'twreporter.org/',
-};
+}
 
 // 发现其实是个开源项目 https://github.com/twreporter/go-api，所以我们能在以下两个文件找到相应的类目 ID，从 https://go-api.twreporter.org/v2/index_page 这里拿的话复杂度比较高而且少了侧栏的几个类目：
 // https://github.com/twreporter/go-api/blob/master/internal/news/category_set.go
@@ -87,30 +87,30 @@ const CATEGORIES = {
         url_name: 'photography',
         category_id: '574d028748fa171000c45d48',
     },
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
-    const url = `https://go-api.twreporter.org/v2/posts?category_id=${CATEGORIES[category].category_id}`;
-    const home = `https://www.twreporter.org/categories/${CATEGORIES[category].url_name}`;
-    const res = await ofetch(url);
-    const list = res.data.records;
+    const category = ctx.req.param('category')
+    const url = `https://go-api.twreporter.org/v2/posts?category_id=${CATEGORIES[category].category_id}`
+    const home = `https://www.twreporter.org/categories/${CATEGORIES[category].url_name}`
+    const res = await ofetch(url)
+    const list = res.data.records
 
     const out = await Promise.all(
         list.map((item) => {
-            const title = item.title;
+            const title = item.title
             // categoryNames = item.category_set[0].category.name;
             return cache.tryGet(item.slug, async () => {
-                const single = await fetch(item.slug);
-                single.title = title;
-                return single;
-            });
-        })
-    );
+                const single = await fetch(item.slug)
+                single.title = title
+                return single
+            })
+        }),
+    )
 
     return {
         title: `報導者 | ${CATEGORIES[category].name}`,
         link: home,
         item: out,
-    };
+    }
 }

@@ -1,15 +1,15 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
 
 export const handler = (ctx: Context): Data | undefined => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    ctx.set('redirect', `/iresearch/report/3${id ? `/${id}` : ''}?limit=${limit}`);
-    return;
-};
+    ctx.set('redirect', `/iresearch/report/3${id ? `/${id}` : ''}?limit=${limit}`)
+    return
+}
 
 export const route: Route = {
     path: '/weekly/:id?',
@@ -75,10 +75,10 @@ export const route: Route = {
         {
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/weekly${id ? `/${id}` : ''}`;
+                return `/iresearch/weekly${id ? `/${id}` : ''}`
             },
         },
         {
@@ -108,4 +108,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

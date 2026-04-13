@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, fixImage, fixVideo } from './utils';
+import { baseUrl, fixImage, fixVideo } from './utils'
 
 export const route: Route = {
     path: '/user/:name',
@@ -28,38 +28,38 @@ export const route: Route = {
     name: 'User',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const name = ctx.req.param('name');
-    const link = `${baseUrl}/${name}`;
+    const name = ctx.req.param('name')
+    const link = `${baseUrl}/${name}`
     const response = await got(link, {
         responseType: 'buffer',
-    });
+    })
 
-    const charset = response.headers['content-type'].match(/charset=([\w-]+)/)[1]; // windows-1251
-    const $ = load(iconv.decode(response.data, charset));
+    const charset = response.headers['content-type'].match(/charset=([\w-]+)/)[1] // windows-1251
+    const $ = load(iconv.decode(response.data, charset))
 
     const items = $('.story__main')
         .not('.story__placeholder')
         .toArray()
         .map((story) => {
-            story = $(story);
+            story = $(story)
 
-            const a = story.find('.story__title a');
-            fixImage(story);
+            const a = story.find('.story__title a')
+            fixImage(story)
             story.find('.player').each((_, elem) => {
-                elem = $(elem);
-                fixVideo(elem);
-            });
+                elem = $(elem)
+                fixVideo(elem)
+            })
             return {
                 title: a.text(),
                 link: a.attr('href'),
                 pubDate: parseDate(story.find('time').attr('datetime')),
                 description: story.find('.story__content-inner').html(),
                 author: story.find('.user__nick').text(),
-            };
-        });
+            }
+        })
 
     return {
         title: $('meta[property="og:title"]').attr('content'),
@@ -68,5 +68,5 @@ async function handler(ctx) {
         language: 'ru-RU',
         link,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
 
-import type { ContentsResponse } from './types';
-import { fetchArticles } from './utils';
+import type { ContentsResponse } from './types'
+import { fetchArticles } from './utils'
 
 export const route: Route = {
     path: '/:id',
@@ -23,27 +23,27 @@ export const route: Route = {
 | 推荐 | 新闻 | 观点 | 文化 | 人物 | 影像 | 专题 | 生活 | 视频 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | 1    | 2    | 3    | 4    | 7    | 8    | 6    | 5    | 131  |`,
-};
+}
 
-export const baseUrl = 'https://www.infzm.com/contents';
+export const baseUrl = 'https://www.infzm.com/contents'
 
 async function handler(ctx): Promise<Data> {
-    const id = ctx.req.param('id');
-    const link = `${baseUrl}?term_id=${id}`;
+    const id = ctx.req.param('id')
+    const link = `${baseUrl}?term_id=${id}`
     const { data } = await got<ContentsResponse>({
         method: 'get',
         url: `${baseUrl}?term_id=${id}&page=1&format=json`,
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const resultItem = await fetchArticles(data.data.contents);
+    const resultItem = await fetchArticles(data.data.contents)
 
     return {
         title: `南方周末-${data.data.current_term.title}`,
         link,
         image: 'https://www.infzm.com/favicon.ico',
         item: resultItem as DataItem[],
-    };
+    }
 }

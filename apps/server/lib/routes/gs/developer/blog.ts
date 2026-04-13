@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/developer/blog',
@@ -28,32 +28,32 @@ export const route: Route = {
     },
     maintainers: ['chesha1'],
     handler: handlerRoute,
-};
+}
 
 async function handlerRoute(): Promise<Data> {
-    const response = await ofetch('https://developer.gs.com/blog/posts');
-    const $ = load(response);
+    const response = await ofetch('https://developer.gs.com/blog/posts')
+    const $ = load(response)
 
     const items = $('div[data-cy="blog-card-grid"] a')
         .toArray()
         .map((item) => {
-            const link = 'https://developer.gs.com' + $(item).attr('href');
-            const title = $(item).find('span').eq(1).text();
-            const author = $(item).find('span').eq(2).text();
-            const description = $(item).find('span').eq(3).text();
-            const pubDate = $(item).find('span').eq(0).text();
+            const link = 'https://developer.gs.com' + $(item).attr('href')
+            const title = $(item).find('span').eq(1).text()
+            const author = $(item).find('span').eq(2).text()
+            const description = $(item).find('span').eq(3).text()
+            const pubDate = $(item).find('span').eq(0).text()
             return {
                 title,
                 link,
                 author,
                 description,
                 pubDate,
-            };
-        });
+            }
+        })
 
     return {
         title: 'Goldman Sachs Developer Blog',
         link: 'https://developer.gs.com/blog/posts',
         item: items,
-    };
+    }
 }

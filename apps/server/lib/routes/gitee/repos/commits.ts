@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
-});
+})
 
 export const route: Route = {
     path: '/commits/:owner/:repo',
@@ -31,12 +31,12 @@ export const route: Route = {
     name: '仓库提交',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { owner, repo } = ctx.req.param();
+    const { owner, repo } = ctx.req.param()
 
-    const apiUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/commits`;
+    const apiUrl = `https://gitee.com/api/v5/repos/${owner}/${repo}/commits`
     const response = await cache.tryGet(
         apiUrl,
         async () =>
@@ -48,8 +48,8 @@ async function handler(ctx) {
                         direction: 'desc',
                     },
                 })
-            ).data
-    );
+            ).data,
+    )
 
     const items = response.map((item) => ({
         title: md.renderInline(item.commit.message),
@@ -58,11 +58,11 @@ async function handler(ctx) {
         pubDate: parseDate(item.commit.author.date),
         guid: item.sha,
         link: item.html_url,
-    }));
+    }))
 
     return {
         title: `${owner}/${repo} - 提交`,
         link: `https://gitee.com/${owner}/${repo}/commits`,
         item: items,
-    };
+    }
 }

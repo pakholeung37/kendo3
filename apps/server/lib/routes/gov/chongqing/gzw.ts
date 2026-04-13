@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/chongqing/gzw/:category{.+}?',
@@ -24,53 +24,53 @@ export const route: Route = {
     description: `| 通知公告  | 国企资讯 | 国企简介 | 国企招聘 |
 | --------- | -------- | -------- | -------- |
 | tzgg_191 | gqdj     | gqjj     | gqzp     |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'tzgg_191' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15;
+    const { category = 'tzgg_191' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 15
 
-    const rootUrl = 'https://gzw.cq.gov.cn';
-    const currentUrl = new URL(category, rootUrl).href;
+    const rootUrl = 'https://gzw.cq.gov.cn'
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('ul.tab-item li.clearfix')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
                 link: new URL(a.prop('href').replace(/^\./, category), rootUrl).href,
                 pubDate: parseDate(item.find('span').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = content('meta[name="ArticleTitle"]').prop('content');
-                item.description = content('div.trs_paper_default').html();
-                item.author = content('meta[name="ContentSource"]').prop('content');
-                item.category = content('meta[name="Keywords"]').prop('content').split(/;/).filter(Boolean);
-                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8);
+                item.title = content('meta[name="ArticleTitle"]').prop('content')
+                item.description = content('div.trs_paper_default').html()
+                item.author = content('meta[name="ContentSource"]').prop('content')
+                item.category = content('meta[name="Keywords"]').prop('content').split(/;/).filter(Boolean)
+                item.pubDate = timezone(parseDate(content('meta[name="PubDate"]').prop('content')), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = new URL('favicon.ico', rootUrl).href;
+    const icon = new URL('favicon.ico', rootUrl).href
 
     return {
         item: items,
@@ -84,5 +84,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="ColumnKeywords"]').prop('content'),
         author: $('meta[name="SiteName"]').prop('content'),
         allowEmpty: true,
-    };
+    }
 }

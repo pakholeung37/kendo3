@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/user/fav/:uid/:embed?',
@@ -27,12 +27,12 @@ export const route: Route = {
     name: 'UP 主默认收藏夹',
     maintainers: ['DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const embed = !ctx.req.param('embed');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const embed = !ctx.req.param('embed')
+    const name = await cache.getUsernameFromUID(uid)
 
     const response = await got({
         method: 'get',
@@ -41,8 +41,8 @@ async function handler(ctx) {
             Referer: `https://space.bilibili.com/${uid}/#/favlist`,
             Cookie: config.bilibili.cookies[uid],
         },
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
     return {
         title: `${name} 的 bilibili 收藏夹`,
@@ -59,5 +59,5 @@ async function handler(ctx) {
                 link: item.fav_at > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
                 author: item.owner.name,
             })),
-    };
+    }
 }

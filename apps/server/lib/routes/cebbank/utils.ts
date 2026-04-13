@@ -63,6 +63,6 @@ const TYPE = {
         name: '韩圆(KRW)',
         id: 88,
     },
-};
+}
 
-export default { TYPE };
+export default { TYPE }

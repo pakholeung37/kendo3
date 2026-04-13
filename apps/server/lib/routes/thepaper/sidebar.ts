@@ -1,14 +1,14 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import utils from './utils';
+import utils from './utils'
 
 const sections = {
     hotNews: '澎湃热榜',
     financialInformationNews: '澎湃快讯',
     morningEveningNews: '早晚报',
     editorHandpicked: '要闻精选',
-};
+}
 
 export const route: Route = {
     path: '/sidebar/:sec?',
@@ -30,19 +30,19 @@ export const route: Route = {
     maintainers: ['bigfei'],
     handler,
     url: 'thepaper.cn/',
-};
+}
 
 async function handler(ctx) {
-    const { sec = 'hotNews' } = ctx.req.param();
+    const { sec = 'hotNews' } = ctx.req.param()
 
-    const sidebarUrl = 'https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar';
-    const sidebarUrlData = await ofetch(sidebarUrl);
-    const list = sidebarUrlData.data[sec];
+    const sidebarUrl = 'https://cache.thepaper.cn/contentapi/wwwIndex/rightSidebar'
+    const sidebarUrlData = await ofetch(sidebarUrl)
+    const list = sidebarUrlData.data[sec]
 
-    const items = await Promise.all(list.filter((item) => item.contId).map((item) => utils.ProcessItem(item, ctx)));
+    const items = await Promise.all(list.filter((item) => item.contId).map((item) => utils.ProcessItem(item, ctx)))
     return {
         title: `澎湃新闻 - ${sections[sec] ?? sec}`,
         item: items,
         link: 'https://www.thepaper.cn',
-    };
+    }
 }

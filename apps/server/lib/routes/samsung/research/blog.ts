@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/research/blog',
@@ -27,11 +27,11 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'research.samsung.com/blog',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://research.samsung.com';
-    const currentUrl = `${rootUrl}/blogMain/list.json`;
+    const rootUrl = 'https://research.samsung.com'
+    const currentUrl = `${rootUrl}/blogMain/list.json`
 
     const response = await got({
         method: 'post',
@@ -41,7 +41,7 @@ async function handler() {
             endIndex: 9,
             startIndex: 0,
         },
-    });
+    })
 
     let items = response.data.value.map((item) => ({
         title: item.title,
@@ -49,7 +49,7 @@ async function handler() {
         link: `${rootUrl}${item.urlLink}`,
         category: [item.catagoryCode, item.hashTag1, item.hashTag2],
         pubDate: parseDate(item.publicationDtsStr.replace(/On /, ''), 'MMMM D, YYYY'),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -57,20 +57,20 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.news-con').html();
+                item.description = content('.news-con').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'BLOG | Samsung Research',
         link: `${rootUrl}/blog`,
         item: items,
-    };
+    }
 }

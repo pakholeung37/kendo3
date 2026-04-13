@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'コラボカフェ',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     description: 'コラボカフェ - アニメ・漫画・ゲームのコラボ情報一覧まとめ',
     lang: 'ja',
     categories: ['anime'],
-};
+}

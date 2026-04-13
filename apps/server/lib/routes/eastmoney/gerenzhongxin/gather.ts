@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { handler as cfhHandler } from './cfh';
-import { handler as gubaHandler } from './guba';
-import { handler as trplHandler } from './trpl';
+import { handler as cfhHandler } from './cfh'
+import { handler as gubaHandler } from './guba'
+import { handler as trplHandler } from './trpl'
 
 export const route: Route = {
     path: '/gerenzhongxin/gather/:uid',
@@ -34,38 +34,38 @@ export const route: Route = {
     name: '个人中心所有活动',
     maintainers: ['AwesomeDog'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
+    const uid = ctx.req.param('uid')
 
     const subCtx = {
         req: {
             param: (key: string) => (key === 'uid' ? uid : ''),
         },
-    };
-    const [cfhResult, gubaResult, trplResult] = await Promise.allSettled([cfhHandler(subCtx), gubaHandler(subCtx), trplHandler(subCtx)]);
+    }
+    const [cfhResult, gubaResult, trplResult] = await Promise.allSettled([cfhHandler(subCtx), gubaHandler(subCtx), trplHandler(subCtx)])
 
-    const allItems: any[] = [];
+    const allItems: any[] = []
 
     if (cfhResult.status === 'fulfilled') {
-        allItems.push(...cfhResult.value.item);
+        allItems.push(...cfhResult.value.item)
     }
     if (gubaResult.status === 'fulfilled') {
-        allItems.push(...gubaResult.value.item);
+        allItems.push(...gubaResult.value.item)
     }
     if (trplResult.status === 'fulfilled') {
-        allItems.push(...trplResult.value.item);
+        allItems.push(...trplResult.value.item)
     }
 
-    allItems.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
+    allItems.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime())
 
-    const nickname = allItems[0]?.author || '用户';
+    const nickname = allItems[0]?.author || '用户'
 
     return {
         title: `${nickname} 的东财所有活动`,
         link: `https://i.eastmoney.com/${uid}`,
         image: `https://avator.eastmoney.com/qface/${uid}/360`,
         item: allItems,
-    };
+    }
 }

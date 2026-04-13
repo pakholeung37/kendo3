@@ -1,8 +1,8 @@
-import type { Data, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { CommonDataProperties, CommonRouteProperties, getPostItems } from './common';
+import { CommonDataProperties, CommonRouteProperties, getPostItems } from './common'
 
 export const route: Route = {
     ...CommonRouteProperties,
@@ -19,24 +19,24 @@ export const route: Route = {
         username: 'The username of the author',
     },
     handler: async (ctx) => {
-        const { username } = ctx.req.param();
-        const uid = await getUidFromUsername(username);
-        const items = await getPostItems({ order: 'DESC', author: uid });
+        const { username } = ctx.req.param()
+        const uid = await getUidFromUsername(username)
+        const items = await getPostItems({ order: 'DESC', author: uid })
         return {
             ...CommonDataProperties,
             title: `Voronoi Posts by ${username}`,
             link: `https://www.voronoiapp.com/author/${username}`,
             item: items,
-        } as Data;
+        } as Data
     },
-};
+}
 async function getUidFromUsername(username: string): Promise<string> {
     return (await cache.tryGet(`voronoiapp-author-${username}`, async () => {
-        const response = await ofetch<'text'>(`https://www.voronoiapp.com/author/${username}`);
-        const match = response.match(/\\"uid\\":\\"([\w-]+)\\"/);
+        const response = await ofetch<'text'>(`https://www.voronoiapp.com/author/${username}`)
+        const match = response.match(/\\"uid\\":\\"([\w-]+)\\"/)
         if (!match) {
-            throw new Error(`No UID found for username: ${username}`);
+            throw new Error(`No UID found for username: ${username}`)
         }
-        return match[1];
-    })) as string;
+        return match[1]
+    })) as string
 }

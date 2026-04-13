@@ -1,31 +1,31 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const rootUrl = 'http://chinacustoms.gmcmonline.com';
-    const magRootUrl = 'http://manager.gmcmonline.com';
+    const rootUrl = 'http://chinacustoms.gmcmonline.com'
+    const magRootUrl = 'http://manager.gmcmonline.com'
 
-    const { data: response } = await got(rootUrl);
+    const { data: response } = await got(rootUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const author = $('p.copyright a').text();
-    const language = $('html').prop('lang');
+    const author = $('p.copyright a').text()
+    const language = $('html').prop('lang')
 
     let items = $('ul.booklist li a')
         .toArray()
         .slice(0, limit)
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('p.txt').text();
-            const image = new URL(item.find('img').prop('src'), rootUrl).href;
+            const title = item.find('p.txt').text()
+            const image = new URL(item.find('img').prop('src'), rootUrl).href
 
             return {
                 title,
@@ -35,35 +35,35 @@ export const handler = async (ctx) => {
                 image,
                 banner: image,
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('ol.breadcrumb li a').first().remove();
+                $$('ol.breadcrumb li a').first().remove()
 
-                const current = $$('ol.breadcrumb li a').first().text();
-                const pubDate = parseDate($$('div.title').text(), 'YYYY年MM月DD日');
-                const image = new URL($$('div.coverline img').prop('src'), rootUrl).href;
+                const current = $$('ol.breadcrumb li a').first().text()
+                const pubDate = parseDate($$('div.title').text(), 'YYYY年MM月DD日')
+                const image = new URL($$('div.coverline img').prop('src'), rootUrl).href
 
                 return $$('a.txt')
                     .toArray()
                     .map((i) => {
-                        i = $(i);
+                        i = $(i)
 
-                        const id = i.prop('href').match(/c\/(\d+)\.shtml/)?.[1] ?? undefined;
+                        const id = i.prop('href').match(/c\/(\d+)\.shtml/)?.[1] ?? undefined
 
                         if (!id) {
-                            return;
+                            return
                         }
 
-                        const title = i.prop('title') || i.text();
-                        const guid = `gmcmonline-chinacustoms-${id}`;
+                        const title = i.prop('title') || i.text()
+                        const guid = `gmcmonline-chinacustoms-${id}`
 
                         return {
                             title,
@@ -79,15 +79,15 @@ export const handler = async (ctx) => {
                             enclosure_url: new URL(`front/article/${id}/pdf?magazineID=2`, magRootUrl).href,
                             enclosure_type: 'application/pdf',
                             enclosure_title: title,
-                        };
+                        }
                     })
-                    .filter(Boolean);
-            })
-        )
-    );
+                    .filter(Boolean)
+            }),
+        ),
+    )
 
-    const title = $('title').text();
-    const image = new URL($('div.img-box img').prop('src'), rootUrl).href;
+    const title = $('title').text()
+    const image = new URL($('div.img-box img').prop('src'), rootUrl).href
 
     return {
         title,
@@ -98,8 +98,8 @@ export const handler = async (ctx) => {
         image,
         author: title,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/chinacustoms',
@@ -127,4 +127,4 @@ export const route: Route = {
             target: '/chinacustoms',
         },
     ],
-};
+}

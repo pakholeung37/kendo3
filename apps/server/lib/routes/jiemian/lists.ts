@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common';
+import { handler } from './common'
 
 export const route: Route = {
     path: '/lists/:id',
@@ -96,4 +96,4 @@ export const route: Route = {
 | 1324kb                                                | 1322kb                                                | 1327kb                                                | 1330kb                                                | 1326kb                                                | 1325kb                                                |
 
 :::`,
-};
+}

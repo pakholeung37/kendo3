@@ -1,16 +1,16 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, parseItem, parsePost } from './utils';
+import { baseUrl, parseItem, parsePost } from './utils'
 
 const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : undefined;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : undefined
 
-    const pageResponse = await ofetch(`${baseUrl}/wp-json/wp/v2/pages/89173`);
-    const postsResponse = await parsePost(limit, undefined);
+    const pageResponse = await ofetch(`${baseUrl}/wp-json/wp/v2/pages/89173`)
+    const postsResponse = await parsePost(limit, undefined)
 
-    const pageInfo = pageResponse.yoast_head_json;
-    const items = parseItem(postsResponse);
+    const pageInfo = pageResponse.yoast_head_json
+    const items = parseItem(postsResponse)
 
     return {
         title: pageInfo.title,
@@ -21,8 +21,8 @@ const handler = async (ctx) => {
         link: pageInfo.canonical,
         lang: 'zh-TW',
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     name: '最新查核報告',
@@ -31,4 +31,4 @@ export const route: Route = {
     path: '/',
     handler,
     url: 'tfc-taiwan.org.tw/latest-news/',
-};
+}

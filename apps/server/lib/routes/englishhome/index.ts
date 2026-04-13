@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -24,13 +24,13 @@ export const route: Route = {
     maintainers: ['johan456789'],
     handler,
     description: '英語之家 - The Home of English 首頁',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://englishhome.org';
-    const apiUrl = `${rootUrl}/wp-json/wp/v2/posts?per_page=20&_embed=author,wp:term`;
+    const rootUrl = 'https://englishhome.org'
+    const apiUrl = `${rootUrl}/wp-json/wp/v2/posts?per_page=20&_embed=author,wp:term`
 
-    const data = await ofetch<any[]>(apiUrl);
+    const data = await ofetch<any[]>(apiUrl)
 
     const items = data.map((post) => ({
         title: post.title?.rendered,
@@ -44,12 +44,12 @@ async function handler() {
                   .map((term: any) => term?.name)
                   .filter(Boolean)
             : undefined,
-    }));
+    }))
 
     return {
         title: '英語之家 - The Home of English',
         link: rootUrl,
         language: 'zh-TW',
         item: items,
-    } as Data;
+    } as Data
 }

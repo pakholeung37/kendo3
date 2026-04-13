@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import loadArticle from './article';
-import { SUB_NAME_PREFIX, SUB_URL } from './const';
-import type { WPPost } from './types';
+import loadArticle from './article'
+import { SUB_NAME_PREFIX, SUB_URL } from './const'
+import type { WPPost } from './types'
 
 export const route: Route = {
     path: '/popular/:period',
@@ -31,7 +31,7 @@ export const route: Route = {
     maintainers: ['AiraNadih'],
     handler,
     url: '4kup.net/',
-};
+}
 
 function getPeriodConfig(period) {
     if (period === '7') {
@@ -39,26 +39,26 @@ function getPeriodConfig(period) {
             url: `${SUB_URL}hot-of-week/`,
             range: 'last7days',
             title: `${SUB_NAME_PREFIX} - Top views in 7 days`,
-        };
+        }
     } else if (period === '30') {
         return {
             url: `${SUB_URL}hot-of-month/`,
             range: 'last30days',
             title: `${SUB_NAME_PREFIX} - Top views in 30 days`,
-        };
+        }
     }
     return {
         url: `${SUB_URL}most-view/`,
         range: `all`,
         title: `${SUB_NAME_PREFIX} - Most views`,
-    };
+    }
 }
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit')) || 20;
-    const period = ctx.req.param('period');
+    const limit = Number.parseInt(ctx.req.query('limit')) || 20
+    const period = ctx.req.param('period')
 
-    const { url, range, title } = getPeriodConfig(period);
+    const { url, range, title } = getPeriodConfig(period)
 
     const { data } = await got.post(`${SUB_URL}wp-json/wordpress-popular-posts/v2/widget`, {
         json: {
@@ -66,19 +66,19 @@ async function handler(ctx) {
             range,
             order_by: 'views',
         },
-    });
+    })
 
-    const $ = load(data.widget);
+    const $ = load(data.widget)
     const links = $('.wpp-list li')
         .toArray()
         .map((post) => $(post).find('.wpp-post-title').attr('href'))
-        .filter((link) => link !== undefined);
-    const slugs = links.map((link) => link.split('/').findLast(Boolean));
-    const { data: posts } = await got(`${SUB_URL}wp-json/wp/v2/posts?slug=${slugs.join(',')}&per_page=${limit}`);
+        .filter((link) => link !== undefined)
+    const slugs = links.map((link) => link.split('/').findLast(Boolean))
+    const { data: posts } = await got(`${SUB_URL}wp-json/wp/v2/posts?slug=${slugs.join(',')}&per_page=${limit}`)
 
     return {
         title,
         link: url,
         item: posts.map((post) => loadArticle(post as WPPost)),
-    };
+    }
 }

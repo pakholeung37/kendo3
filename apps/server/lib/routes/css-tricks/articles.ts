@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { processWithWp } from './utils';
+import { processWithWp } from './utils'
 
 export const route: Route = {
     path: '/articles',
@@ -28,18 +28,18 @@ export const route: Route = {
     name: 'Articles',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler() {
     // const category = ctx.req.param('category') ?? '';
     // const subCategory = ctx.req.param('subCategory') ?? '';
 
-    const rootUrl = 'https://css-tricks.com';
-    const currentUrl = `${rootUrl}/category/articles/`;
-    const response = await ofetch(currentUrl);
-    const $ = load(response);
-    const articleCards = $('article.article-card').toArray();
-    const items = await processWithWp(articleCards);
+    const rootUrl = 'https://css-tricks.com'
+    const currentUrl = `${rootUrl}/category/articles/`
+    const response = await ofetch(currentUrl)
+    const $ = load(response)
+    const articleCards = $('article.article-card').toArray()
+    const items = await processWithWp(articleCards)
     return {
         title: 'Articles - CSS-Tricks',
         description: 'Latest Articles - CSS-Tricks',
@@ -48,5 +48,5 @@ async function handler() {
         language: 'en',
         logo: `${rootUrl}/favicon.ico`,
         icon: `${rootUrl}/favicon.ico`,
-    } as Data;
+    } as Data
 }

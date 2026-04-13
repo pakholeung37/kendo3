@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/community',
@@ -30,7 +30,7 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'community.modelscope.cn/',
-};
+}
 
 const renderDescription = (thumb, quote, content) =>
     renderToString(
@@ -43,15 +43,15 @@ const renderDescription = (thumb, quote, content) =>
             ) : null}
             {quote ? <blockquote>{quote}</blockquote> : null}
             {content ? <>{raw(content)}</> : null}
-        </>
-    );
+        </>,
+    )
 
 async function handler(ctx) {
-    const baseUrl = 'https://community.modelscope.cn';
+    const baseUrl = 'https://community.modelscope.cn'
 
     const { data } = await got.post(`${baseUrl}/v1/namespace_page/article`, {
         json: { id: 142373, notInMediaAidList: [], pageNum: 1, pageSize: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30 },
-    });
+    })
 
     const articles = data.data.content.map((c) => ({
         title: c.content.name,
@@ -61,26 +61,26 @@ async function handler(ctx) {
         pubDate: timezone(parseDate(c.content.createdTime), 8),
         category: c.content.externalData.tags.map((t) => t.name),
         thumb: c.content.thumb,
-    }));
+    }))
 
     const items = await Promise.all(
         articles.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(item.link);
+                const { data } = await got(item.link)
 
-                const $ = load(data);
+                const $ = load(data)
                 const initialData = JSON.parse(
                     $('script')
                         .text()
-                        .match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/)[1]
-                );
+                        .match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/)[1],
+                )
 
-                item.description = renderDescription(item.thumb, item.description, initialData.pageData.detail.ext.content);
+                item.description = renderDescription(item.thumb, item.description, initialData.pageData.detail.ext.content)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'ModelScope魔搭社区-DevPress官方社区',
@@ -88,5 +88,5 @@ async function handler(ctx) {
         image: 'https://g.alicdn.com/sail-web/maas/0.8.10/favicon/128.ico',
         link: baseUrl,
         item: items,
-    };
+    }
 }

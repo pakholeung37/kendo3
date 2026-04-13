@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/database_month',
@@ -26,42 +26,42 @@ export const route: Route = {
     maintainers: ['junbaor'],
     handler,
     url: 'mysql.taobao.org/monthly',
-};
+}
 
 async function handler() {
-    const url = 'http://mysql.taobao.org/monthly/';
-    const response = await got({ method: 'get', url });
-    const $ = load(response.data);
+    const url = 'http://mysql.taobao.org/monthly/'
+    const response = await got({ method: 'get', url })
+    const $ = load(response.data)
 
     const list = $("ul[class='posts'] > li")
         .toArray()
         .map((e) => {
-            const element = $(e);
-            const title = element.find('a').text().trim();
-            const link = `http://mysql.taobao.org${element.find('a').attr('href').trim()}/`;
+            const element = $(e)
+            const title = element.find('a').text().trim()
+            const link = `http://mysql.taobao.org${element.find('a').attr('href').trim()}/`
             return {
                 title,
                 description: '',
                 link,
-            };
-        });
+            }
+        })
 
     const result = await Promise.all(
         list.map((item) => {
-            const link = item.link;
+            const link = item.link
 
             return cache.tryGet(link, async () => {
-                const itemReponse = await got(link);
-                const itemElement = load(itemReponse.data);
-                item.description = itemElement('.content').html();
-                return item;
-            });
-        })
-    );
+                const itemReponse = await got(link)
+                const itemElement = load(itemReponse.data)
+                item.description = itemElement('.content').html()
+                return item
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
         link: url,
         item: result.toReversed(),
-    };
+    }
 }

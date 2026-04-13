@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const render = (mod) =>
     renderToString(
@@ -28,8 +28,8 @@ const render = (mod) =>
                 </>
             ) : null}
             <hr style="height: 2px; background-color: #e7e7e7; border: 0 none;" />
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/:type',
@@ -52,56 +52,56 @@ export const route: Route = {
 | ------ | --- | ---- |
 | random | new | edit |`,
     handler: async (ctx) => {
-        const type = ctx.req.param('type');
-        const $get = ofetch.create({ baseURL: 'https://www.mcmod.cn' });
-        const response = await $get('/');
+        const type = ctx.req.param('type')
+        const $get = ofetch.create({ baseURL: 'https://www.mcmod.cn' })
+        const response = await $get('/')
 
-        const $ = load(response);
-        const typeName = $(`div.left > ul > li[i='${type}']`).attr('title');
+        const $ = load(response)
+        const typeName = $(`div.left > ul > li[i='${type}']`).attr('title')
         const list = $(`#indexNew_${type} > .block`)
             .toArray()
             .map((item): DataItem => {
-                const each = $(item);
-                const time = each.find('div .time');
+                const each = $(item)
+                const time = each.find('div .time')
                 return {
                     title: each.find('div > .name > a').text(),
                     image: each.find('img').attr('src')?.split('@')[0],
                     link: each.children('a').attr('href'),
                     pubDate: time.attr('title') && timezone(parseDate(time.attr('title')!.slice(6), 'YYYY-MM-DD HH:mm:ss'), +8),
-                };
-            });
+                }
+            })
 
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link!, async () => {
-                    const response = await $get(item.link!);
-                    const $ = load(response);
+                    const response = await $get(item.link!)
+                    const $ = load(response)
 
                     item.author = $('.author li')
                         .toArray()
                         .map((item) => {
-                            const each = $(item);
-                            const name = each.find('.name a');
+                            const each = $(item)
+                            const name = each.find('.name a')
                             return {
                                 name: name.text(),
                                 url: 'https://www.mcmod.cn' + name.attr('href'),
                                 avatar: each.find('.avatar img').attr('src')?.split('?')[0],
-                            };
-                        });
+                            }
+                        })
 
-                    const html = $('.common-text[data-id="1"]').html()!;
+                    const html = $('.common-text[data-id="1"]').html()!
                     const support = $('.mcver > ul > ul')
                         .toArray()
                         .map((e) => {
-                            const ul = $(e);
-                            const label = ul.children('li:first-child').text();
+                            const ul = $(e)
+                            const label = ul.children('li:first-child').text()
                             const versions = ul
                                 .children('li:not(:first-child)')
                                 .toArray()
                                 .map((e) => $(e).text())
-                                .join('，');
-                            return { label, versions };
-                        });
+                                .join('，')
+                            return { label, versions }
+                        })
 
                     item.description =
                         render({
@@ -110,17 +110,17 @@ export const route: Route = {
                                 .toArray()
                                 .map((e) => $(e).text()),
                             support,
-                        }) + html.replaceAll(/\ssrc=".+?"/g, '').replaceAll('data-src', 'src');
-                    return item;
-                })
-            )
-        );
+                        }) + html.replaceAll(/\ssrc=".+?"/g, '').replaceAll('data-src', 'src')
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: `${typeName} - MC百科`,
             description: $('meta[name="description"]').attr('content'),
             link: 'https://www.mcmod.cn',
             item: items as DataItem[],
-        };
+        }
     },
-};
+}

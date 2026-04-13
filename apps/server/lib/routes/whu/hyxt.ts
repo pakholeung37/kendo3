@@ -1,50 +1,50 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { domain, getMeta, processItems, processMeta } from './util';
+import { domain, getMeta, processItems, processMeta } from './util'
 
 export const route: Route = {
     path: '/hyxt/:category{.+}?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'tzgg' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'tzgg' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = `https://hyxt.${domain}`;
-    const currentUrl = new URL(`${category}.htm`, rootUrl).href;
+    const rootUrl = `https://hyxt.${domain}`
+    const currentUrl = new URL(`${category}.htm`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('tr.content-title')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('td a');
+            const a = item.find('td a')
 
             return {
                 title: a.text(),
                 link: new URL(a.prop('href'), rootUrl).href,
                 pubDate: parseDate(item.find('td').last().text()),
-            };
-        });
+            }
+        })
 
-    items = await processItems(items, cache.tryGet, rootUrl);
+    items = await processItems(items, cache.tryGet, rootUrl)
 
-    const meta = processMeta(response);
-    const siteName = getMeta(meta, 'SiteName');
-    const columnName = getMeta(meta, 'ColumnName');
+    const meta = processMeta(response)
+    const siteName = getMeta(meta, 'SiteName')
+    const columnName = getMeta(meta, 'ColumnName')
 
     return {
         item: items,
@@ -56,5 +56,5 @@ async function handler(ctx) {
         subtitle: columnName,
         author: siteName,
         allowEmpty: true,
-    };
+    }
 }

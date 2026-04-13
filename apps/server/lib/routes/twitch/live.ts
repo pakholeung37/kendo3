@@ -1,10 +1,10 @@
-import type { DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 // https://github.com/streamlink/streamlink/blob/master/src/streamlink/plugins/twitch.py#L286
-const TWITCH_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+const TWITCH_CLIENT_ID = 'kimne78kx3ncx6brgo4mv6wki5h1ko'
 
 export const route: Route = {
     path: '/live/:login',
@@ -23,10 +23,10 @@ export const route: Route = {
     name: 'Live',
     maintainers: ['hoilc'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const login = ctx.req.param('login');
+    const login = ctx.req.param('login')
 
     const response = await got({
         method: 'post',
@@ -89,22 +89,22 @@ async function handler(ctx) {
                 },
             },
         ],
-    });
+    })
 
-    const channelShellData = response.data[0].data;
-    const streamMetadataData = response.data[1].data;
-    const realtimeStreamTagListData = response.data[2].data;
-    const channelRootAboutPanelData = response.data[3].data;
-    const { userOrError } = channelShellData;
-    const { user } = channelRootAboutPanelData;
+    const channelShellData = response.data[0].data
+    const streamMetadataData = response.data[1].data
+    const realtimeStreamTagListData = response.data[2].data
+    const channelRootAboutPanelData = response.data[3].data
+    const { userOrError } = channelShellData
+    const { user } = channelRootAboutPanelData
 
     if (!userOrError.id) {
-        throw new Error(userOrError.__typename);
+        throw new Error(userOrError.__typename)
     }
 
-    const displayName = userOrError.displayName;
+    const displayName = userOrError.displayName
 
-    const liveItem: DataItem[] = [];
+    const liveItem: DataItem[] = []
 
     if (streamMetadataData.user.stream) {
         liveItem.push({
@@ -115,7 +115,7 @@ async function handler(ctx) {
             pubDate: parseDate(streamMetadataData.user.stream.createdAt),
             guid: streamMetadataData.user.stream.id,
             link: `https://www.twitch.tv/${login}`,
-        });
+        })
     }
 
     return {
@@ -125,5 +125,5 @@ async function handler(ctx) {
         image: user.profileImageURL,
         item: liveItem,
         allowEmpty: true,
-    };
+    }
 }

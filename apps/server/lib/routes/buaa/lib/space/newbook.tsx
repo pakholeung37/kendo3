@@ -1,67 +1,67 @@
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 interface Book {
-    bibId: string;
-    inBooklist: number;
-    thumb: string;
-    holdingTypes: string[];
-    author: string;
-    callno: string[];
-    docType: string;
-    onSelfDate: string;
-    groupId: string;
-    isbn: string;
-    inDate: number;
-    language: string;
-    bibNo: string;
-    abstract: string;
-    docTypeDesc: string;
-    title: string;
-    itemCount: number;
-    tags: string[];
-    circCount: number;
-    pub_year: string;
-    classno: string;
-    publisher: string;
-    holdings: string;
+    bibId: string
+    inBooklist: number
+    thumb: string
+    holdingTypes: string[]
+    author: string
+    callno: string[]
+    docType: string
+    onSelfDate: string
+    groupId: string
+    isbn: string
+    inDate: number
+    language: string
+    bibNo: string
+    abstract: string
+    docTypeDesc: string
+    title: string
+    itemCount: number
+    tags: string[]
+    circCount: number
+    pub_year: string
+    classno: string
+    publisher: string
+    holdings: string
 }
 
 interface Holding {
-    classMethod: string;
-    callNo: string;
-    inDate: number;
-    shelfMark: string;
-    itemsCount: number;
-    barCode: string;
-    tempLocation: string;
-    circStatus: number;
-    itemId: number;
-    vol: string;
-    library: string;
-    itemStatus: string;
-    itemsAvailable: number;
-    location: string;
-    extenStatus: number;
-    donatorId: null;
-    status: string;
-    locationName: string;
+    classMethod: string
+    callNo: string
+    inDate: number
+    shelfMark: string
+    itemsCount: number
+    barCode: string
+    tempLocation: string
+    circStatus: number
+    itemId: number
+    vol: string
+    library: string
+    itemStatus: string
+    itemsAvailable: number
+    location: string
+    extenStatus: number
+    donatorId: null
+    status: string
+    locationName: string
 }
 
 interface Info {
-    _id: string;
-    imageUrl: string | null;
-    authorInfo: string;
-    catalog: string | null;
-    content: string;
-    title: string;
+    _id: string
+    imageUrl: string | null
+    authorInfo: string
+    catalog: string | null
+    content: string
+    title: string
 }
 
 export const route: Route = {
@@ -111,25 +111,25 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const path = ctx.req.param('path');
-    const i = path.indexOf('/');
-    const params = i === -1 ? '' : path.slice(i + 1);
-    const searchParams = new URLSearchParams(params);
-    const dcpCode = searchParams.get('dcpCode'); // Filter by subject (discipline code)
-    const clsNo = searchParams.get('clsNo'); // Filter by class (Chinese Library Classification)
+    const path = ctx.req.param('path')
+    const i = path.indexOf('/')
+    const params = i === -1 ? '' : path.slice(i + 1)
+    const searchParams = new URLSearchParams(params)
+    const dcpCode = searchParams.get('dcpCode') // Filter by subject (discipline code)
+    const clsNo = searchParams.get('clsNo') // Filter by class (Chinese Library Classification)
     if (dcpCode && clsNo) {
-        throw new Error('dcpCode and clsNo cannot be used at the same time');
+        throw new Error('dcpCode and clsNo cannot be used at the same time')
     }
-    searchParams.set('pageSize', '100'); // Max page size. Any larger value will be ignored
-    searchParams.set('page', '1');
-    !dcpCode && !clsNo && searchParams.set('dcpCode', 'nolimit'); // No classification filter
-    const url = `https://space.lib.buaa.edu.cn/meta-local/opac/new/100/${clsNo ? 'byclass' : 'bysubject'}?${searchParams.toString()}`;
-    const { data } = await got(url);
-    const list = (data?.data?.dataList || []) as Book[];
-    const item = await Promise.all(list.map(async (item: Book) => await getItem(item)));
+    searchParams.set('pageSize', '100') // Max page size. Any larger value will be ignored
+    searchParams.set('page', '1')
+    !dcpCode && !clsNo && searchParams.set('dcpCode', 'nolimit') // No classification filter
+    const url = `https://space.lib.buaa.edu.cn/meta-local/opac/new/100/${clsNo ? 'byclass' : 'bysubject'}?${searchParams.toString()}`
+    const { data } = await got(url)
+    const list = (data?.data?.dataList || []) as Book[]
+    const item = await Promise.all(list.map(async (item: Book) => await getItem(item)))
     const res: Data = {
         title: '北航图书馆 - 新书速递',
         item,
@@ -139,15 +139,15 @@ async function handler(ctx: Context): Promise<Data> {
         author: '北京航空航天大学图书馆',
         allowEmpty: true,
         image: 'https://lib.buaa.edu.cn/apple-touch-icon.png',
-    };
-    return res;
+    }
+    return res
 }
 
 async function getItem(item: Book): Promise<DataItem> {
     return (await cache.tryGet(item.isbn, async () => {
-        const info = await getItemInfo(item.isbn);
-        const holdings = JSON.parse(item.holdings) as Holding[];
-        const link = `https://space.lib.buaa.edu.cn/space/searchDetailLocal/${item.bibId}`;
+        const info = await getItemInfo(item.isbn)
+        const holdings = JSON.parse(item.holdings) as Holding[]
+        const link = `https://space.lib.buaa.edu.cn/space/searchDetailLocal/${item.bibId}`
         const content = renderToString(
             <>
                 {info?.imageUrl ? (
@@ -228,20 +228,20 @@ async function getItem(item: Book): Promise<DataItem> {
                         <div itemprop="catalog">{raw(info.catalog)}</div>
                     </>
                 ) : null}
-            </>
-        );
+            </>,
+        )
         return {
             language: item.language === 'eng' ? 'en' : 'zh-CN',
             title: item.title,
             pubDate: item.onSelfDate ? timezone(parseDate(item.onSelfDate), +8) : undefined,
             description: content,
             link,
-        };
-    })) as DataItem;
+        }
+    })) as DataItem
 }
 
 async function getItemInfo(isbn: string): Promise<Info | null> {
-    const url = `https://space.lib.buaa.edu.cn/meta-local/opac/third_api/douban/${isbn}/info`;
-    const response = await got(url);
-    return JSON.parse(response.body).data;
+    const url = `https://space.lib.buaa.edu.cn/meta-local/opac/third_api/douban/${isbn}/info`
+    const response = await got(url)
+    return JSON.parse(response.body).data
 }

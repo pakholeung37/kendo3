@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const baseUrl = 'https://www.dora-world.com';
+const baseUrl = 'https://www.dora-world.com'
 
 export const route: Route = {
     path: '/article/:topic/:topicId?',
@@ -34,19 +34,19 @@ export const route: Route = {
     name: 'Article',
     maintainers: ['AChangAZha'],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { topic, topicId = '' } = ctx.req.param();
-    const topicIdParam = topicId === '' ? '' : `?t=${topicId}`;
-    const link = `${baseUrl}/${topic}${topicIdParam}`;
-    const { data: html } = await got(baseUrl);
-    const $ = load(html);
-    const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-    const nextBuildId = nextData.buildId;
-    const { data: response } = await got(`${baseUrl}/_next/data/${nextBuildId}/${topic}.json${topicIdParam}`);
-    const title = `${response.pageProps.label_name} - ドラえもんチャンネル`;
-    const contents = response.pageProps.contents;
+    const { topic, topicId = '' } = ctx.req.param()
+    const topicIdParam = topicId === '' ? '' : `?t=${topicId}`
+    const link = `${baseUrl}/${topic}${topicIdParam}`
+    const { data: html } = await got(baseUrl)
+    const $ = load(html)
+    const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+    const nextBuildId = nextData.buildId
+    const { data: response } = await got(`${baseUrl}/_next/data/${nextBuildId}/${topic}.json${topicIdParam}`)
+    const title = `${response.pageProps.label_name} - ドラえもんチャンネル`
+    const contents = response.pageProps.contents
     const list = contents.map((item) => ({
         title: item.title,
         link: item.page_url.startsWith('http') ? item.page_url : `${baseUrl}${item.page_url}`,
@@ -54,7 +54,7 @@ async function handler(ctx): Promise<Data> {
         pubDate: timezone(parseDate(item.publish_at), +9),
         category: item.tags.map((tag) => tag.name),
         guid: item.id,
-    }));
+    }))
     return {
         title,
         link,
@@ -65,26 +65,26 @@ async function handler(ctx): Promise<Data> {
                 async (item) =>
                     await cache.tryGet(item.link, async () => {
                         if (item.description === '') {
-                            item.description = await getContent(nextBuildId, item.guid);
+                            item.description = await getContent(nextBuildId, item.guid)
                         }
-                        return item;
-                    })
-            )
+                        return item
+                    }),
+            ),
         ).then((items) => items.filter((item) => item !== null))) as DataItem[],
-    };
+    }
 }
 
 async function getContent(nextBuildId: string, contentId: string) {
-    const { data: response } = await got(`${baseUrl}/_next/data/${nextBuildId}/contents/${contentId}.json`);
-    const $ = load(response.pageProps.content.content);
-    const content = $('.main_unit');
-    content.find('.tag').remove();
-    content.find('div[style="display:none"]').remove();
-    const rubyRegex = /<ruby>(.*?)<rt>(.*?)<\/rt><\/ruby>/g;
+    const { data: response } = await got(`${baseUrl}/_next/data/${nextBuildId}/contents/${contentId}.json`)
+    const $ = load(response.pageProps.content.content)
+    const content = $('.main_unit')
+    content.find('.tag').remove()
+    content.find('div[style="display:none"]').remove()
+    const rubyRegex = /<ruby>(.*?)<rt>(.*?)<\/rt><\/ruby>/g
     const description =
         content
             .html()
             ?.replaceAll(rubyRegex, '$1（$2）')
-            ?.replaceAll(/[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]/gm, '') ?? '';
-    return description;
+            ?.replaceAll(/[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFDCF\uFDE0-\uFFFD]/gm, '') ?? ''
+    return description
 }

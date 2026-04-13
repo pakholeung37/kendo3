@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjs',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'yz.ouc.edu.cn/5926/list.htm',
-};
+}
 
 async function handler() {
-    const link = 'https://yz.ouc.edu.cn/5926/list.htm';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.wp_article_list li');
+    const link = 'https://yz.ouc.edu.cn/5926/list.htm'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.wp_article_list li')
 
     return {
         title: '中国海洋大学研究生院',
@@ -41,13 +41,13 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a.attr('title'),
                     link: new URL(a.attr('href'), link).href,
                     pubDate: parseDate(item.find('.Article_PublishDate').text()),
-                };
+                }
             }),
-    };
+    }
 }

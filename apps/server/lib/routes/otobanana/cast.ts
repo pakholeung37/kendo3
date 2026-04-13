@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiBase, baseUrl, getUserInfo, renderCast } from './utils';
+import { apiBase, baseUrl, getUserInfo, renderCast } from './utils'
 
 export const route: Route = {
     path: '/user/:id/cast',
@@ -25,20 +25,20 @@ export const route: Route = {
     name: 'Cast 音声投稿',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const userInfo = await getUserInfo(id, cache.tryGet);
-    const { data: castData } = await got(`${apiBase}/users/${id}/casts/`);
+    const userInfo = await getUserInfo(id, cache.tryGet)
+    const { data: castData } = await got(`${apiBase}/users/${id}/casts/`)
 
-    const casts = castData.results.map((item) => renderCast(item));
+    const casts = castData.results.map((item) => renderCast(item))
 
     ctx.set('json', {
         userInfo,
         castData,
-    });
+    })
 
     return {
         title: `${userInfo.name} (@${userInfo.username}) - 音声投稿 | OTOBANANA`,
@@ -51,5 +51,5 @@ async function handler(ctx) {
         author: userInfo.name,
         itunes_author: userInfo.name,
         item: casts,
-    };
+    }
 }

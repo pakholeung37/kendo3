@@ -1,7 +1,7 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { maskHeader } from '../constants';
-import got from '../pixiv-got';
+import { maskHeader } from '../constants'
+import got from '../pixiv-got'
 
 /**
  * 按热门排序搜索内容
@@ -20,5 +20,5 @@ export default function searchPopularIllust(keyword, token) {
             search_target: 'partial_match_for_tags',
             filter: 'for_ios',
         }),
-    });
+    })
 }

@@ -1,12 +1,12 @@
-import pMap from 'p-map';
+import pMap from 'p-map'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/subscriptions/:embed?',
@@ -43,28 +43,28 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.youtube.com/feed/subscriptions',
-};
+}
 
 async function handler(ctx) {
     if (!config.youtube || !config.youtube.key || !config.youtube.clientId || !config.youtube.clientSecret || !config.youtube.refreshToken) {
-        throw new ConfigNotFoundError('YouTube RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('YouTube RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
-    const embed = !ctx.req.param('embed');
+    const embed = !ctx.req.param('embed')
 
-    const channelIds = (await utils.getSubscriptions('snippet', cache)).data.items.map((item) => item.snippet.resourceId.channelId);
+    const channelIds = (await utils.getSubscriptions('snippet', cache)).data.items.map((item) => item.snippet.resourceId.channelId)
 
-    const playlistIds = await pMap(channelIds, async (channelId) => (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads, { concurrency: 30 });
+    const playlistIds = await pMap(channelIds, async (channelId) => (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads, { concurrency: 30 })
 
-    let items = await pMap(playlistIds, async (playlistId) => (await utils.getPlaylistItems(playlistId, 'snippet', cache))?.data.items, { concurrency: 30 });
+    let items = await pMap(playlistIds, async (playlistId) => (await utils.getPlaylistItems(playlistId, 'snippet', cache))?.data.items, { concurrency: 30 })
 
-    items = items.flat();
+    items = items.flat()
 
     items = items
         .filter((i) => i && !i.error && i.snippet.title !== 'Private video' && i.snippet.title !== 'Deleted video')
         .map((item) => {
-            const snippet = item.snippet;
-            const videoId = snippet.resourceId.videoId;
-            const img = utils.getThumbnail(snippet.thumbnails);
+            const snippet = item.snippet
+            const videoId = snippet.resourceId.videoId
+            const img = utils.getThumbnail(snippet.thumbnails)
             return {
                 title: snippet.title,
                 description: utils.renderDescription(embed, videoId, img, utils.formatDescription(snippet.description)),
@@ -72,20 +72,20 @@ async function handler(ctx) {
                 link: `https://www.youtube.com/watch?v=${videoId}`,
                 author: snippet.videoOwnerChannelTitle,
                 image: img.url,
-            };
-        });
+            }
+        })
 
     const ret = {
         title: 'Subscriptions - YouTube',
         description: 'YouTube Subscriptions',
         link: 'www.youtube.com/feed/subscriptions',
         item: items,
-    };
+    }
 
     ctx.set('json', {
         ...ret,
         channelIds,
         playlistIds,
-    });
-    return ret;
+    })
+    return ret
 }

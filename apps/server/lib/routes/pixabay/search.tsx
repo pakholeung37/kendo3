@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/search/:q/:order?',
@@ -45,12 +45,12 @@ export const route: Route = {
     name: 'Search',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { q, order = 'latest' } = ctx.req.param();
-    const key = config.pixabay?.key ?? '7329690-bbadad6d872ba577d5a358679';
-    const baseUrl = 'https://pixabay.com';
+    const { q, order = 'latest' } = ctx.req.param()
+    const key = config.pixabay?.key ?? '7329690-bbadad6d872ba577d5a358679'
+    const baseUrl = 'https://pixabay.com'
 
     const data = await cache.tryGet(
         `pixabay:search:${q}:${order}`,
@@ -62,17 +62,17 @@ async function handler(ctx) {
                     order,
                     per_page: ctx.req.query('limit') ?? 200,
                 },
-            });
-            return data;
+            })
+            return data
         },
         Math.max(config.cache.contentExpire, 24 * 60 * 60), // required by Pixabay API
-        false
-    );
+        false,
+    )
 
     const items = data.hits.map((item) => {
-        const { pageURL, tags, user } = item;
-        const lastSlashIndex = pageURL.lastIndexOf('/');
-        const secondLastSlashIndex = pageURL.lastIndexOf('/', lastSlashIndex - 1);
+        const { pageURL, tags, user } = item
+        const lastSlashIndex = pageURL.lastIndexOf('/')
+        const secondLastSlashIndex = pageURL.lastIndexOf('/', lastSlashIndex - 1)
         return {
             title: pageURL
                 .slice(secondLastSlashIndex + 1, lastSlashIndex)
@@ -82,8 +82,8 @@ async function handler(ctx) {
             link: pageURL,
             category: tags.split(', '),
             author: user,
-        };
-    });
+        }
+    })
 
     return {
         title: `Search ${q} - Pixabay`,
@@ -92,7 +92,7 @@ async function handler(ctx) {
         image: `https://pixabay.com/apple-touch-icon.png`,
         language: 'en',
         item: items,
-    };
+    }
 }
 
-const PixabayImage = ({ item }: { item: { largeImageURL?: string; webformatURL?: string; previewURL?: string } }) => <img src={item.largeImageURL || item.webformatURL || item.previewURL} />;
+const PixabayImage = ({ item }: { item: { largeImageURL?: string; webformatURL?: string; previewURL?: string } }) => <img src={item.largeImageURL || item.webformatURL || item.previewURL} />

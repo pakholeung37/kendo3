@@ -1,34 +1,34 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const urlRoot = 'https://jwc.sjtu.edu.cn';
+const urlRoot = 'https://jwc.sjtu.edu.cn'
 
 async function getFullArticle(link) {
-    const response = await got(link);
+    const response = await got(link)
     if (!response) {
-        return null;
+        return null
     }
-    const $ = load(response.body);
-    const content = $('.content-con');
+    const $ = load(response.body)
+    const content = $('.content-con')
     if (content.length === 0) {
-        return null;
+        return null
     }
     // resolve links of <img> and <a>
     content.find('img').each((_, e) => {
-        const relativeLink = $(e).attr('src');
-        const absLink = new URL(relativeLink, urlRoot).href;
-        $(e).attr('src', absLink);
-    });
+        const relativeLink = $(e).attr('src')
+        const absLink = new URL(relativeLink, urlRoot).href
+        $(e).attr('src', absLink)
+    })
     content.find('a').each((_, e) => {
-        const relativeLink = $(e).attr('href');
-        const absLink = new URL(relativeLink, urlRoot).href;
-        $(e).attr('href', absLink);
-    });
-    return content.html() + ($('.Newslist2').length ? $('.Newslist2').html() : '');
+        const relativeLink = $(e).attr('href')
+        const absLink = new URL(relativeLink, urlRoot).href
+        $(e).attr('href', absLink)
+    })
+    return content.html() + ($('.Newslist2').length ? $('.Newslist2').html() : '')
 }
 
 export const route: Route = {
@@ -50,10 +50,10 @@ export const route: Route = {
     description: `| 新闻中心 | 通知通告 | 教学运行  | 注册学务 | 研究办 | 教改办 | 综合办 | 语言文字 | 工会与支部 | 通识教育 | 面向学生的通知 |
 | -------- | -------- | --------- | -------- | ------ | ------ | ------ | -------- | ---------- | -------- |
 | news     | notice   | operation | affairs  | yjb    | jgb    | zhb    | language | party      | ge       | students  |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'notice';
+    const type = ctx.req.param('type') ?? 'notice'
     const config = {
         all: {
             section: '通知通告',
@@ -103,45 +103,45 @@ async function handler(ctx) {
             link: '/index/mxxsdtz.htm',
             section: '面向学生的通知',
         },
-    };
+    }
 
-    const sectionLink = urlRoot + config[type].link;
+    const sectionLink = urlRoot + config[type].link
 
     const response = await got({
         method: 'get',
         url: sectionLink,
-    });
+    })
 
-    const $ = load(response.body);
+    const $ = load(response.body)
 
     const out = await Promise.all(
         $('body > div.list-box > div.container > div > div.ny_right > div > div.ny_right_con > div > ul')
             .find('li')
             .toArray()
             .map((e) => {
-                const info = $(e).find('.wz');
-                const relativeLink = info.find('a').attr('href');
-                const link = new URL(relativeLink, sectionLink).href;
-                const title = info.find('a > h2').text();
-                const timeElement = $(e).find('.sj');
-                const day = timeElement.find('h2').text();
-                const yearAndMonth = timeElement.find('p').text();
-                const pubDate = parseDate(`${yearAndMonth}.${day}`, 'YYYY.MM.DD');
+                const info = $(e).find('.wz')
+                const relativeLink = info.find('a').attr('href')
+                const link = new URL(relativeLink, sectionLink).href
+                const title = info.find('a > h2').text()
+                const timeElement = $(e).find('.sj')
+                const day = timeElement.find('h2').text()
+                const yearAndMonth = timeElement.find('p').text()
+                const pubDate = parseDate(`${yearAndMonth}.${day}`, 'YYYY.MM.DD')
                 return cache.tryGet(link, async () => {
-                    const description = await getFullArticle(link);
+                    const description = await getFullArticle(link)
                     return {
                         title,
                         link,
                         pubDate,
                         description,
-                    };
-                });
-            })
-    );
+                    }
+                })
+            }),
+    )
 
     return {
         title: '上海交通大学教务处 ' + config[type].section,
         link: sectionLink,
         item: out,
-    };
+    }
 }

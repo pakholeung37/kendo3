@@ -10,7 +10,7 @@ export const syosetuSubToJapanese = {
     [SyosetuSub.NOCTURNE]: 'ノクターン',
     [SyosetuSub.MOONLIGHT]: 'ムーンライト',
     [SyosetuSub.MIDNIGHT]: 'ミッドナイト',
-} as const;
+} as const
 
 export interface NarouSearchParams {
     /**
@@ -27,13 +27,13 @@ export interface NarouSearchParams {
      *
      * Note: While the official documentation describes 5 values, all 7 values above are functional.
      */
-    type?: 't' | 'r' | 'er' | 're' | 'ter' | 'tr' | 'all';
+    type?: 't' | 'r' | 'er' | 're' | 'ter' | 'tr' | 'all'
 
     /** 検索ワード Search Keywords */
-    word?: string;
+    word?: string
 
     /** 除外ワード Excluded Keywords */
-    notword?: string;
+    notword?: string
 
     /**
      * 検索範囲指定 Search Range Specifications
@@ -44,16 +44,16 @@ export interface NarouSearchParams {
      * - 最新掲載日（年月日）Latest Update Date (Year/Month/Day)
      * - 初回掲載日（年月日）First Publication Date (Year/Month/Day)
      */
-    mintime?: number;
-    maxtime?: number;
-    minlen?: number;
-    maxlen?: number;
-    min_globalpoint?: number;
-    max_globalpoint?: number;
-    minlastup?: string;
-    maxlastup?: string;
-    minfirstup?: string;
-    maxfirstup?: string;
+    mintime?: number
+    maxtime?: number
+    minlen?: number
+    maxlen?: number
+    min_globalpoint?: number
+    max_globalpoint?: number
+    minlastup?: string
+    maxlastup?: string
+    minfirstup?: string
+    maxfirstup?: string
 
     /**
      * 抽出条件の指定 Extraction Conditions
@@ -68,13 +68,13 @@ export interface NarouSearchParams {
      * - 異世界転生 Reincarnation in Another World
      * - 異世界転移 Transportation to Another World
      */
-    sasie?: string;
-    ispickup?: boolean;
-    iszankoku?: boolean;
-    isbl?: boolean;
-    isgl?: boolean;
-    istensei?: boolean;
-    istenni?: boolean;
+    sasie?: string
+    ispickup?: boolean
+    iszankoku?: boolean
+    isbl?: boolean
+    isgl?: boolean
+    istensei?: boolean
+    istenni?: boolean
 
     /**
      * 除外条件の指定 Exclusion Conditions
@@ -88,12 +88,12 @@ export interface NarouSearchParams {
      * - 異世界転生 Reincarnation in Another World
      * - 異世界転移 Transportation to Another World
      */
-    stop?: boolean;
-    notzankoku?: boolean;
-    notbl?: boolean;
-    notgl?: boolean;
-    nottensei?: boolean;
-    nottenni?: boolean;
+    stop?: boolean
+    notzankoku?: boolean
+    notbl?: boolean
+    notgl?: boolean
+    nottensei?: boolean
+    nottenni?: boolean
 
     /**
      * ワード検索範囲指定 Word Search Scope
@@ -105,10 +105,10 @@ export interface NarouSearchParams {
      * キーワード Keywords
      * 作者名 Author Name
      */
-    title?: boolean;
-    ex?: boolean;
-    keyword?: boolean;
-    wname?: boolean;
+    title?: boolean
+    ex?: boolean
+    keyword?: boolean
+    wname?: boolean
 
     /**
      * 並び順 Sort Order
@@ -128,11 +128,11 @@ export interface NarouSearchParams {
      * - ncodedesc: N コード降順 Ncode Descending
      * - old: 更新が古い順 Oldest Updates
      */
-    order?: 'new' | 'weekly' | 'favnovelcnt' | 'reviewcnt' | 'hyoka' | 'dailypoint' | 'weeklypoint' | 'monthlypoint' | 'quarterpoint' | 'yearlypoint' | 'hyokacnt' | 'lengthdesc' | 'generalfirstup' | 'ncodedesc' | 'old';
+    order?: 'new' | 'weekly' | 'favnovelcnt' | 'reviewcnt' | 'hyoka' | 'dailypoint' | 'weeklypoint' | 'monthlypoint' | 'quarterpoint' | 'yearlypoint' | 'hyokacnt' | 'lengthdesc' | 'generalfirstup' | 'ncodedesc' | 'old'
 
     /** ジャンル Genre */
-    genre?: string;
+    genre?: string
 
     /** 掲載サイト指定 Site */
-    nocgenre?: number;
+    nocgenre?: number
 }

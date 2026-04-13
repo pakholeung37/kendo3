@@ -1,20 +1,20 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 function jsonGet(obj, attr) {
     if (typeof attr !== 'string') {
-        return obj;
+        return obj
     }
     // a.b.c
     // a.b[0].c => a.b.0.c
     for (const key of attr.split('.')) {
-        obj = obj[key];
+        obj = obj[key]
     }
-    return obj;
+    return obj
 }
 
 export const route: Route = {
@@ -69,52 +69,52 @@ JSON Path only supports format like \`a.b.c\`. if you need to access arrays, lik
 | \`itemTitle\` | \`tag_name\`      |
 | \`itemLink\`  | \`html_url\`      |
 | \`itemDesc\`  | \`body\`          |`,
-};
+}
 
 async function handler(ctx) {
     if (!config.feature.allow_user_supply_unsafe_domain) {
-        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+        throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
     }
-    const url = ctx.req.param('url');
+    const url = ctx.req.param('url')
     const response = await got({
         method: 'get',
         url,
-    });
+    })
 
-    const routeParams = new URLSearchParams(ctx.req.param('routeParams'));
-    let rssTitle = routeParams.get('title');
+    const routeParams = new URLSearchParams(ctx.req.param('routeParams'))
+    let rssTitle = routeParams.get('title')
     if (!rssTitle) {
         const resp = await got({
             method: 'get',
             url: new URL(url).origin,
-        });
-        const $ = load(resp.data);
-        rssTitle = $('title').text();
+        })
+        const $ = load(resp.data)
+        rssTitle = $('title').text()
     }
 
     const items = jsonGet(response.data, routeParams.get('item')).map((item) => {
-        let link = jsonGet(item, routeParams.get('itemLink')).trim();
-        const linkPrefix = routeParams.get('itemLinkPrefix');
+        let link = jsonGet(item, routeParams.get('itemLink')).trim()
+        const linkPrefix = routeParams.get('itemLinkPrefix')
 
         if (link && linkPrefix) {
-            link = `${linkPrefix}${link}`;
+            link = `${linkPrefix}${link}`
         }
         // 补全绝对链接
         if (link && !link.startsWith('http')) {
-            link = `${new URL(url).origin}${link}`;
+            link = `${new URL(url).origin}${link}`
         }
         return {
             title: jsonGet(item, routeParams.get('itemTitle')),
             link,
             description: routeParams.get('itemDesc') ? jsonGet(item, routeParams.get('itemDesc')) : '',
             pubDate: routeParams.get('itemPubDate') ? jsonGet(item, routeParams.get('itemPubDate')) : '',
-        };
-    });
+        }
+    })
 
     return {
         title: rssTitle,
         link: url,
         description: `Proxy ${url}`,
         item: items,
-    };
+    }
 }

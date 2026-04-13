@@ -1,8 +1,8 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getProviderList } from './utils';
+import { getProviderList } from './utils'
 
 export const route: Route = {
     path: '/news/providers/:region/list',
@@ -28,25 +28,25 @@ export const route: Route = {
     name: '新聞來源列表',
     maintainers: ['TonyRL', 'williamgateszhao'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const region = ctx.req.param('region');
+    const region = ctx.req.param('region')
     if (!['hk', 'tw'].includes(region)) {
-        throw new InvalidParameterError(`Unknown region: ${region}`);
+        throw new InvalidParameterError(`Unknown region: ${region}`)
     }
 
-    const providerList = await getProviderList(region, cache.tryGet);
+    const providerList = await getProviderList(region, cache.tryGet)
 
     const items = providerList.map((provider) => ({
         ...provider,
         description: provider.key,
-    }));
+    }))
 
     return {
         title: 'Yahoo 新聞 - 新聞來源列表',
         link: `https://${region}.news.yahoo.com`,
         image: 'https://s.yimg.com/cv/apiv2/social/images/yahoo_default_logo-1200x1200.png',
         item: items,
-    };
+    }
 }

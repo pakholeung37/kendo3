@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import cache from './cache';
+import cache from './cache'
 
 export const route: Route = {
     path: '/message/like/:uid',
@@ -34,68 +34,68 @@ export const route: Route = {
     description: `:::warning
   用户消息需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 interface LikeUser {
-    mid: number;
-    fans: number;
-    nickname: string;
-    avatar: string;
-    mid_link: string;
-    follow: boolean;
+    mid: number
+    fans: number
+    nickname: string
+    avatar: string
+    mid_link: string
+    follow: boolean
 }
 
 interface LikeItem {
-    id: number;
-    users: LikeUser[];
+    id: number
+    users: LikeUser[]
     item: {
-        item_id: number;
-        pid: number;
-        type: string;
-        business: string;
-        business_id: number;
-        reply_business_id: number;
-        like_business_id: number;
-        title: string;
-        desc: string;
-        image: string;
-        uri: string;
-        detail_name: string;
-        native_uri: string;
-        ctime: number;
-    };
-    counts: number;
-    like_time: number;
-    notice_state: number;
+        item_id: number
+        pid: number
+        type: string
+        business: string
+        business_id: number
+        reply_business_id: number
+        like_business_id: number
+        title: string
+        desc: string
+        image: string
+        uri: string
+        detail_name: string
+        native_uri: string
+        ctime: number
+    }
+    counts: number
+    like_time: number
+    notice_state: number
 }
 
 interface LikeResponse {
-    code: number;
-    message: string;
-    ttl: number;
+    code: number
+    message: string
+    ttl: number
     data: {
         latest: {
-            items: LikeItem[];
-            last_view_at: number;
-        };
+            items: LikeItem[]
+            last_view_at: number
+        }
         total: {
             cursor: {
-                is_end: boolean;
-                id: number;
-                time: number;
-            };
-            items: LikeItem[];
-        };
-    };
+                is_end: boolean
+                id: number
+                time: number
+            }
+            items: LikeItem[]
+        }
+    }
 }
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const name = await cache.getUsernameFromUID(uid);
+    const uid = ctx.req.param('uid')
+    const name = await cache.getUsernameFromUID(uid)
 
-    const cookie = config.bilibili.cookies[uid];
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await ofetch<LikeResponse>('https://api.bilibili.com/x/msgfeed/like', {
@@ -108,40 +108,40 @@ async function handler(ctx) {
             Referer: 'https://message.bilibili.com/',
             Cookie: cookie,
         },
-    });
+    })
 
     if (response.code !== 0) {
-        throw new Error(response.message ?? `Error code ${response.code}`);
+        throw new Error(response.message ?? `Error code ${response.code}`)
     }
 
-    const allItems = [...(response.data.latest?.items || []), ...(response.data.total?.items || [])];
+    const allItems = [...(response.data.latest?.items || []), ...(response.data.total?.items || [])]
 
     // Deduplicate by id
-    const uniqueItems = allItems.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
+    const uniqueItems = allItems.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id))
 
     const items: DataItem[] = uniqueItems.map((item) => {
-        const likeUsers = item.users;
-        const likeItem = item.item;
-        const counts = item.counts;
+        const likeUsers = item.users
+        const likeItem = item.item
+        const counts = item.counts
 
-        const userNames = likeUsers.map((u) => u.nickname).join('、');
-        const displayNames = counts > likeUsers.length ? `${userNames} 等 ${counts} 人` : userNames;
+        const userNames = likeUsers.map((u) => u.nickname).join('、')
+        const displayNames = counts > likeUsers.length ? `${userNames} 等 ${counts} 人` : userNames
 
-        let description = `<p><strong>${displayNames}</strong> 赞了你的${likeItem.business}：</p>`;
-        description += `<p><strong>${likeItem.title}</strong></p>`;
+        let description = `<p><strong>${displayNames}</strong> 赞了你的${likeItem.business}：</p>`
+        description += `<p><strong>${likeItem.title}</strong></p>`
 
         if (likeItem.desc) {
-            description += `<blockquote>${likeItem.desc}</blockquote>`;
+            description += `<blockquote>${likeItem.desc}</blockquote>`
         }
 
         if (likeItem.image) {
-            description += `<p><img src="${likeItem.image.replace('http://', 'https://')}" /></p>`;
+            description += `<p><img src="${likeItem.image.replace('http://', 'https://')}" /></p>`
         }
 
         // Generate link based on type
-        let link = likeItem.uri;
+        let link = likeItem.uri
         if (likeItem.type === 'reply' && likeItem.item_id) {
-            link = `${likeItem.uri}/#reply${likeItem.item_id}`;
+            link = `${likeItem.uri}/#reply${likeItem.item_id}`
         }
 
         return {
@@ -150,8 +150,8 @@ async function handler(ctx) {
             link,
             pubDate: parseDate(item.like_time * 1000),
             author: userNames,
-        };
-    });
+        }
+    })
 
     return {
         title: `${name} 的 B站消息 - 收到的赞`,
@@ -159,5 +159,5 @@ async function handler(ctx) {
         description: `${name} 的 B站消息 - 收到的赞`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

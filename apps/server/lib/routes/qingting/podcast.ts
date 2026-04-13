@@ -1,13 +1,13 @@
-import crypto from 'node:crypto';
+import crypto from 'node:crypto'
 
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const qingtingId = config.qingting.id ?? '';
+const qingtingId = config.qingting.id ?? ''
 
 export const route: Route = {
     path: '/podcast/:id',
@@ -33,30 +33,30 @@ export const route: Route = {
     maintainers: ['RookieZoe', 'huyyi', 'pseudoyu'],
     handler,
     description: `获取的播放 URL 有效期只有 1 天，需要开启播客 APP 的自动下载功能。`,
-};
+}
 
 function getMediaUrl(channelId: string, mediaId: string) {
-    const path = `/audiostream/redirect/${channelId}/${mediaId}?access_token=&device_id=MOBILESITE&qingting_id=${qingtingId}&t=${Date.now()}`;
-    const sign = crypto.createHmac('md5', 'fpMn12&38f_2e').update(path).digest('hex').toString();
-    return `https://audio.qingting.fm${path}&sign=${sign}`;
+    const path = `/audiostream/redirect/${channelId}/${mediaId}?access_token=&device_id=MOBILESITE&qingting_id=${qingtingId}&t=${Date.now()}`
+    const sign = crypto.createHmac('md5', 'fpMn12&38f_2e').update(path).digest('hex').toString()
+    return `https://audio.qingting.fm${path}&sign=${sign}`
 }
 
 async function handler(ctx) {
-    const channelId = ctx.req.param('id');
-    const pageSize = Number(ctx.req.query('limit')) || 30;
+    const channelId = ctx.req.param('id')
+    const pageSize = Number(ctx.req.query('limit')) || 30
 
-    const channelUrl = `https://i.qingting.fm/capi/v3/channel/${channelId}`;
+    const channelUrl = `https://i.qingting.fm/capi/v3/channel/${channelId}`
     const response = await ofetch(channelUrl, {
         headers: {
             Referer: 'https://www.qingting.fm/',
         },
-    });
+    })
 
-    const title = response.data.title;
-    const channel_img = response.data.thumbs['400_thumb'];
-    const authors = response.data.podcasters.map((author) => author.nick_name).join(',');
-    const desc = response.data.description;
-    const programUrl = `https://i.qingting.fm/capi/channel/${channelId}/programs/${response.data.v}?curpage=1&pagesize=${pageSize}&order=asc`;
+    const title = response.data.title
+    const channel_img = response.data.thumbs['400_thumb']
+    const authors = response.data.podcasters.map((author) => author.nick_name).join(',')
+    const desc = response.data.description
+    const programUrl = `https://i.qingting.fm/capi/channel/${channelId}/programs/${response.data.v}?curpage=1&pagesize=${pageSize}&order=asc`
 
     const {
         data: { programs },
@@ -64,26 +64,26 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://www.qingting.fm/',
         },
-    });
+    })
 
-    const { data: channelInfo } = await ofetch(`https://i.qingting.fm/capi/v3/channel/${channelId}?user_id=${qingtingId}`);
+    const { data: channelInfo } = await ofetch(`https://i.qingting.fm/capi/v3/channel/${channelId}?user_id=${qingtingId}`)
 
-    const isCharged = channelInfo.purchase?.item_type !== 0;
+    const isCharged = channelInfo.purchase?.item_type !== 0
 
-    const isPaid = channelInfo.user_relevance?.sale_status === 'paid';
+    const isPaid = channelInfo.user_relevance?.sale_status === 'paid'
 
     const resultItems = await Promise.all(
         programs.map(async (item) => {
             const data = (await cache.tryGet(`qingting:podcast:${channelId}:${item.id}`, async () => {
-                const link = `https://www.qingting.fm/channels/${channelId}/programs/${item.id}/`;
+                const link = `https://www.qingting.fm/channels/${channelId}/programs/${item.id}/`
 
                 const detailRes = await ofetch(link, {
                     headers: {
                         Referer: 'https://www.qingting.fm/',
                     },
-                });
+                })
 
-                const detail = JSON.parse(detailRes.match(/},"program":(.*?),"plist":/)[1]);
+                const detail = JSON.parse(detailRes.match(/},"program":(.*?),"plist":/)[1])
 
                 const rssItem = {
                     title: item.title,
@@ -92,19 +92,19 @@ async function handler(ctx) {
                     itunes_duration: item.duration,
                     pubDate: timezone(parseDate(item.update_time), +8),
                     description: detail.richtext,
-                };
+                }
 
-                return rssItem;
-            })) as DataItem;
+                return rssItem
+            })) as DataItem
 
             if (!isCharged || isPaid || item.isfree) {
-                data.enclosure_url = getMediaUrl(channelId, item.id);
-                data.enclosure_type = 'audio/x-m4a';
+                data.enclosure_url = getMediaUrl(channelId, item.id)
+                data.enclosure_type = 'audio/x-m4a'
             }
 
-            return data;
-        })
-    );
+            return data
+        }),
+    )
 
     return {
         title: `${title} - 蜻蜓FM`,
@@ -113,5 +113,5 @@ async function handler(ctx) {
         image: channel_img,
         link: `https://www.qingting.fm/channels/${channelId}`,
         item: resultItems,
-    };
+    }
 }

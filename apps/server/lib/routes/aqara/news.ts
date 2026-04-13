@@ -1,26 +1,26 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/cn/news',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 35;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 35
 
-    const rootUrl = 'https://www.aqara.cn';
-    const currentUrl = new URL('news', rootUrl).href;
+    const rootUrl = 'https://www.aqara.cn'
+    const currentUrl = new URL('news', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = response
         .match(/(parm\.newsTitle[\S\s]*?arr\.push\(parm\))/g)
@@ -29,25 +29,25 @@ async function handler(ctx) {
             title: item.match(/parm\.newsTitle = '(.*?)'/)[1],
             link: new URL(item.match(/parm\.contentHerf = '(\d+)'/)[1], rootUrl).href,
             pubDate: parseDate(item.match(/parm\.issueTime = '(.*?)'/)[1], 'YYYY  年  MM  月  DD  日'),
-        }));
+        }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                item.title = content('h4.fnt_56').last().text();
-                item.description = content('div.news_body').html();
-                item.pubDate = parseDate(content('div.news_date').first().text(), 'YYYY  年  MM  月  DD  日');
+                item.title = content('h4.fnt_56').last().text()
+                item.description = content('div.news_body').html()
+                item.pubDate = parseDate(content('div.news_date').first().text(), 'YYYY  年  MM  月  DD  日')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const icon = $('link[rel="shortcut icon"]').prop('href').split('?')[0];
+    const icon = $('link[rel="shortcut icon"]').prop('href').split('?')[0]
 
     return {
         item: items,
@@ -59,5 +59,5 @@ async function handler(ctx) {
         icon,
         logo: icon,
         author: $('meta[name="author"]').prop('content'),
-    };
+    }
 }

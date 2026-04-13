@@ -1,67 +1,67 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { category = 'html/xinwen/index' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25;
+    const { category = 'html/xinwen/index' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 25
 
-    const rootUrl = 'https://www.lswz.gov.cn';
-    const currentUrl = new URL(`${category}.shtml`, rootUrl).href;
+    const rootUrl = 'https://www.lswz.gov.cn'
+    const currentUrl = new URL(`${category}.shtml`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.lists li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('a').text(),
                 pubDate: parseDate(item.find('span').text()),
                 link: new URL(item.find('a').prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                $$('ul.lists').remove();
-                $$('div.pub-right-source, div.detail_links_pane').remove();
+                $$('ul.lists').remove()
+                $$('div.pub-right-source, div.detail_links_pane').remove()
 
-                const title = $$('meta[name="ArticleTitle"]').prop('content') || $$('div.pub-det-title').text();
-                const description = $$('table.pages_content, div.article-content, div.TRS_UEDITOR, div.TRS_PreAppend').html();
-                const pubDate = $$('meta[name="PubDate"]').prop('content');
+                const title = $$('meta[name="ArticleTitle"]').prop('content') || $$('div.pub-det-title').text()
+                const description = $$('table.pages_content, div.article-content, div.TRS_UEDITOR, div.TRS_PreAppend').html()
+                const pubDate = $$('meta[name="PubDate"]').prop('content')
 
-                item.title = title || item.title;
-                item.description = description;
-                item.pubDate = pubDate ? timezone(parseDate(pubDate), +8) : item.pubDate;
-                item.author = $$('meta[name="ContentSource"]').prop('content')?.trim() ?? undefined;
+                item.title = title || item.title
+                item.description = description
+                item.pubDate = pubDate ? timezone(parseDate(pubDate), +8) : item.pubDate
+                item.author = $$('meta[name="ContentSource"]').prop('content')?.trim() ?? undefined
                 item.content = {
                     html: description,
                     text: $$('table.pages_content, div.article-content, div.TRS_UEDITOR, div.TRS_PreAppend').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.lsj-index-logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.lsj-index-logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -72,8 +72,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="SiteName"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/lswz/:category{.+}?',
@@ -150,9 +150,9 @@ export const route: Route = {
         {
             source: ['www.lswz.gov.cn/:category?'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/gov/lswz${category ? `/${category}` : ''}`;
+                return `/gov/lswz${category ? `/${category}` : ''}`
             },
         },
         {
@@ -286,4 +286,4 @@ export const route: Route = {
             target: '/lswz/html/zmhd/lysj/lszl',
         },
     ],
-};
+}

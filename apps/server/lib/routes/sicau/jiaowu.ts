@@ -1,19 +1,19 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { Language } from '@/routes/kurogames/wutheringwaves/constants';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { Language } from '@/routes/kurogames/wutheringwaves/constants'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const $get = async (url: string, encoding = 'gb2312') => new TextDecoder(encoding).decode(await ofetch(url, { responseType: 'arrayBuffer' }));
+const $get = async (url: string, encoding = 'gb2312') => new TextDecoder(encoding).decode(await ofetch(url, { responseType: 'arrayBuffer' }))
 const $trim = (str: string) => {
-    let s = str.trim();
-    s = s.startsWith('&nbsp;&nbsp;') ? s.slice(12) : s;
-    s = s.endsWith('<br>') ? s.slice(0, Math.max(0, s.length - 4)) : s;
-    return s.trim();
-};
+    let s = str.trim()
+    s = s.startsWith('&nbsp;&nbsp;') ? s.slice(12) : s
+    s = s.endsWith('<br>') ? s.slice(0, Math.max(0, s.length - 4)) : s
+    return s.trim()
+}
 
 export const route: Route = {
     path: '/jiaowu/jxtz/:detail?',
@@ -43,17 +43,17 @@ export const route: Route = {
 `,
     url: 'jiaowu.sicau.edu.cn/',
     handler: async (ctx) => {
-        const baseUrl = 'https://jiaowu.sicau.edu.cn/web/web/web';
-        const { detail = null } = ctx.req.param();
+        const baseUrl = 'https://jiaowu.sicau.edu.cn/web/web/web'
+        const { detail = null } = ctx.req.param()
 
-        const response = await $get(`${baseUrl}/gwmore.asp`);
-        const $ = load(response);
+        const response = await $get(`${baseUrl}/gwmore.asp`)
+        const $ = load(response)
 
         let items = $('tbody > .text-c:nth-child(-n+10)')
             .toArray()
             .map((item) => {
-                const children = $(item).children();
-                const a = children.eq(2).find('a');
+                const children = $(item).children()
+                const a = children.eq(2).find('a')
                 return {
                     category: [children.eq(1).text()],
                     link: `${baseUrl}/${a.attr('href')!}`,
@@ -61,20 +61,20 @@ export const route: Route = {
                     pubDate: timezone(parseDate(children.eq(3).text(), 'YYYY-M-D'), +8),
                     author: children.eq(4).text(),
                     description: '请在应用内抓取全文内容',
-                } as DataItem;
-            });
+                } as DataItem
+            })
 
         if (detail) {
             items = await Promise.all(
                 items.map((item) =>
                     cache.tryGet(item.link!, async () => {
-                        const html = await $get(item.link!);
-                        const $ = load(html);
-                        item.description = $trim($('.text1[width="95%"] b').html()!);
-                        return item;
-                    })
-                )
-            );
+                        const html = await $get(item.link!)
+                        const $ = load(html)
+                        item.description = $trim($('.text1[width="95%"] b').html()!)
+                        return item
+                    }),
+                ),
+            )
         }
 
         return {
@@ -82,6 +82,6 @@ export const route: Route = {
             link: 'https://jiaowu.sicau.edu.cn/web/web/web/gwmore.asp',
             language: Language.Chinese,
             item: items,
-        };
+        }
     },
-};
+}

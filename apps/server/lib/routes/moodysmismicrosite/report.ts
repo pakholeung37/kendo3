@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseRelativeDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseRelativeDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/report/:industry?',
@@ -46,7 +46,7 @@ export const route: Route = {
     `,
     maintainers: ['Cedaric'],
     handler,
-};
+}
 
 async function handler(ctx) {
     const industryMap: Record<number, string> = {
@@ -59,21 +59,21 @@ async function handler(ctx) {
         6: '基础设施项目融资',
         7: 'ESG',
         8: '其他',
-    };
+    }
 
-    const reversedIndustry = Object.fromEntries(Object.entries(industryMap).map(([k, v]) => [v, k]));
+    const reversedIndustry = Object.fromEntries(Object.entries(industryMap).map(([k, v]) => [v, k]))
 
-    const industry = ctx.req.param('industry') || '行业';
+    const industry = ctx.req.param('industry') || '行业'
 
     const industryId = industry
         .split('&')
         .map((name) => reversedIndustry[name.trim()])
         .filter((key) => key !== undefined)
-        .join(',');
+        .join(',')
 
-    const responseData = await got(`https://www.moodysmismicrosite.com/micro/v2/report/list?page_num=1&page_size=25&keyword=&industry_ids=${industryId}`);
+    const responseData = await got(`https://www.moodysmismicrosite.com/micro/v2/report/list?page_num=1&page_size=25&keyword=&industry_ids=${industryId}`)
 
-    const items = responseData?.data?.data?.list || [];
+    const items = responseData?.data?.data?.list || []
 
     return {
         title: `穆迪评级(${industry})`,
@@ -87,5 +87,5 @@ async function handler(ctx) {
             category: x.classification,
             guid: x.id,
         })),
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/it/postgraduate',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'it.ouc.edu.cn/_s381/16619/list.psp',
-};
+}
 
 async function handler() {
-    const link = 'https://it.ouc.edu.cn/_s381/16619/list.psp';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.col_news_list .news_list li');
+    const link = 'https://it.ouc.edu.cn/_s381/16619/list.psp'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.col_news_list .news_list li')
 
     return {
         title: '中国海洋大学信息科学与工程学院',
@@ -41,13 +41,13 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('a');
+                item = $(item)
+                const a = item.find('a')
                 return {
                     title: a.attr('title'),
                     link: new URL(a.attr('href'), link).href,
                     pubDate: parseDate(item.find('span').text(), 'YYYY-MM-DD'),
-                };
+                }
             }),
-    };
+    }
 }

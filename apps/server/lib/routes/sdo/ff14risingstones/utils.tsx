@@ -1,16 +1,16 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { getDutiesRecruitDetail, getFreeCompanyRecruitDetail, getNoviceNetworkRecruitDetail, getPostsDetail } from './api';
-import { DynamicSource, INDEX_URL, JOB, NoviceNetworkIdentity, PLAY_STYLE } from './constant';
-import type { BaseResponse, DutiesPartyDetail, FreeCompanyPartyDetail, NoviceNetworkParty, PostDetail, UserDynamic, UserPost } from './types';
+import { getDutiesRecruitDetail, getFreeCompanyRecruitDetail, getNoviceNetworkRecruitDetail, getPostsDetail } from './api'
+import { DynamicSource, INDEX_URL, JOB, NoviceNetworkIdentity, PLAY_STYLE } from './constant'
+import type { BaseResponse, DutiesPartyDetail, FreeCompanyPartyDetail, NoviceNetworkParty, PostDetail, UserDynamic, UserPost } from './types'
 
 const renderNoviceNetworkParty = ({ detail_mask, weekday_time, weekend_time, styles, target }) =>
     renderToString(
@@ -25,8 +25,8 @@ const renderNoviceNetworkParty = ({ detail_mask, weekday_time, weekend_time, sty
                 <p>游戏风格：{styles}</p>
                 <p>招募区服：{target}</p>
             </div>
-        </>
-    );
+        </>,
+    )
 
 const renderDutiesParty = ({ progress, strategy, fb_time, labelInfo, team_composition, team_position, MT, ST, T, H, H1, H2, D1, D2, D3, D4, need_job, team_detail_mask, recruit_require_mask, strategy_desc_mask }) =>
     renderToString(
@@ -69,8 +69,8 @@ const renderDutiesParty = ({ progress, strategy, fb_time, labelInfo, team_compos
             {team_detail_mask ? <p>队伍详情：{team_detail_mask}</p> : null}
             {recruit_require_mask ? <p>招募要求：{recruit_require_mask}</p> : null}
             {strategy_desc_mask ? <p>攻略说明：{strategy_desc_mask}</p> : null}
-        </div>
-    );
+        </div>,
+    )
 
 const renderFreeCompanyParty = ({ cover_pic, guild_name, guild_tag, area_name, group_name, active_member_num, target_recruit_num, weekday_time, weekend_time, guild_address, create_time, labelInfo, detail_mask, foot_pic }) =>
     renderToString(
@@ -92,8 +92,8 @@ const renderFreeCompanyParty = ({ cover_pic, guild_name, guild_tag, area_name, g
             <p>部队标签：{labelInfo.map((i) => i.name).join('，')}</p>
             <div>{detail_mask ? raw(detail_mask) : null}</div>
             {foot_pic ? foot_pic.split(',').map((url) => <img src={url} />) : null}
-        </>
-    );
+        </>,
+    )
 
 const renderRolePlayParty = ({ cover_pic, open_time, rp_type, create_time, area, address, custom_label, profile, detail_mask }) =>
     renderToString(
@@ -107,12 +107,12 @@ const renderRolePlayParty = ({ cover_pic, open_time, rp_type, create_time, area,
             <p>标签：{custom_label}</p>
             <p>简介：{profile}</p>
             <div>{detail_mask ? raw(detail_mask) : null}</div>
-        </>
-    );
+        </>,
+    )
 
 export function checkConfig() {
     if (!config.sdo.ff14risingstones || !config.sdo.ua) {
-        throw new ConfigNotFoundError('ff14risingstones RSS is disabled due to the lack of relevant config');
+        throw new ConfigNotFoundError('ff14risingstones RSS is disabled due to the lack of relevant config')
     }
 }
 
@@ -124,22 +124,22 @@ export function request(url: string, options?: RequestInit) {
             'User-Agent': config.sdo.ua!,
             ...options?.headers,
         },
-    });
+    })
 }
 
 export async function requestAPI<T = any>(url: string, options?: RequestInit) {
-    const response = (await request(url, options)) as BaseResponse<T>;
+    const response = (await request(url, options)) as BaseResponse<T>
 
     if (response.code !== 10000) {
-        throw new Error(response.msg);
+        throw new Error(response.msg)
     }
-    return response.data;
+    return response.data
 }
 
 export async function generatePostFeeds(posts: UserPost[]) {
     return await Promise.all(
         posts.map(async (post) => {
-            const detail = await getPostsDetail(post.posts_id);
+            const detail = await getPostsDetail(post.posts_id)
             return {
                 title: `[${post.part_name}] ${post.title}`,
                 link: `${INDEX_URL}#/post/detail/${post.posts_id}`,
@@ -148,54 +148,54 @@ export async function generatePostFeeds(posts: UserPost[]) {
                 updated: detail?.updated_at ? timezone(parseDate(detail.updated_at), +8) : undefined,
                 guid: `sdo/ff14risingstones/posts:${post.posts_id}`,
                 author: `${post.character_name}@${post.group_name}`,
-            } as DataItem;
-        })
-    );
+            } as DataItem
+        }),
+    )
 }
 
 export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
     return await Promise.all(
         dynamics.map(async (dynamic) => {
-            let title = `${dynamic.character_name}@${dynamic.group_name} ${dynamic.mask_content}`;
-            let link: string | undefined;
-            let description: string | undefined;
-            let detail: PostDetail | DutiesPartyDetail | FreeCompanyPartyDetail | NoviceNetworkParty | null;
+            let title = `${dynamic.character_name}@${dynamic.group_name} ${dynamic.mask_content}`
+            let link: string | undefined
+            let description: string | undefined
+            let detail: PostDetail | DutiesPartyDetail | FreeCompanyPartyDetail | NoviceNetworkParty | null
 
             switch (dynamic.from) {
                 case DynamicSource.Post:
                 case DynamicSource.Strat:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += dynamic.from_info.title;
-                    link = `${INDEX_URL}#/post/detail/${dynamic.from_info.posts_id}`;
-                    detail = await getPostsDetail(dynamic.from_info.posts_id);
-                    description = detail?.contentInfo.content;
-                    break;
+                    title += dynamic.from_info.title
+                    link = `${INDEX_URL}#/post/detail/${dynamic.from_info.posts_id}`
+                    detail = await getPostsDetail(dynamic.from_info.posts_id)
+                    description = detail?.contentInfo.content
+                    break
 
                 case DynamicSource.NoviceNetwork:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += `[找${dynamic.from_info.identity === NoviceNetworkIdentity.Mentor ? '豆芽' : '导师'}] ${dynamic.from_info.title}`;
-                    link = `${INDEX_URL}#/recruit/beginner?id=${dynamic.from_info.id}`;
-                    detail = await getNoviceNetworkRecruitDetail(dynamic.from_info.id);
+                    title += `[找${dynamic.from_info.identity === NoviceNetworkIdentity.Mentor ? '豆芽' : '导师'}] ${dynamic.from_info.title}`
+                    link = `${INDEX_URL}#/recruit/beginner?id=${dynamic.from_info.id}`
+                    detail = await getNoviceNetworkRecruitDetail(dynamic.from_info.id)
                     description = renderNoviceNetworkParty({
                         detail_mask: dynamic.from_info.detail_mask,
                         styles: dynamic.from_info.style.map((i) => PLAY_STYLE[i]).join(','),
                         target: `${dynamic.from_info.target_area_name} ${dynamic.from_info.target_group_name ?? '全区'}`,
                         weekday_time: detail?.weekday_time,
                         weekend_time: detail?.weekend_time,
-                    });
-                    break;
+                    })
+                    break
 
                 case DynamicSource.Duty:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += `[${dynamic.from_info.fb_type}] ${dynamic.from_info.fb_name}`;
-                    link = `${INDEX_URL}#/recruit/party?id=${dynamic.from_info.id}`;
-                    detail = await getDutiesRecruitDetail(dynamic.from_info.id);
+                    title += `[${dynamic.from_info.fb_type}] ${dynamic.from_info.fb_name}`
+                    link = `${INDEX_URL}#/recruit/party?id=${dynamic.from_info.id}`
+                    detail = await getDutiesRecruitDetail(dynamic.from_info.id)
 
                     description = renderDutiesParty({
                         progress: dynamic.from_info.progress,
@@ -233,16 +233,16 @@ export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
                         team_detail_mask: detail?.team_detail_mask,
                         recruit_require_mask: detail?.recruit_require_mask,
                         strategy_desc_mask: detail?.strategy_desc_mask,
-                    });
-                    break;
+                    })
+                    break
 
                 case DynamicSource.FreeCompany:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += `[部队招待] ${dynamic.from_info.guild_name} <${dynamic.from_info.guild_tag}>`;
-                    link = `${INDEX_URL}#/recruit/guild/detail/${dynamic.from_info.id}`;
-                    detail = await getFreeCompanyRecruitDetail(dynamic.from_info.id);
+                    title += `[部队招待] ${dynamic.from_info.guild_name} <${dynamic.from_info.guild_tag}>`
+                    link = `${INDEX_URL}#/recruit/guild/detail/${dynamic.from_info.id}`
+                    detail = await getFreeCompanyRecruitDetail(dynamic.from_info.id)
 
                     description = renderFreeCompanyParty({
                         cover_pic: dynamic.from_info.cover_pic,
@@ -259,15 +259,15 @@ export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
                         create_time: detail?.create_time ?? '',
                         foot_pic: detail?.foot_pic ?? '',
                         detail_mask: dynamic.from_info.detail_mask,
-                    });
-                    break;
+                    })
+                    break
 
                 case DynamicSource.RolePlay:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += dynamic.from_info.rp_name;
-                    link = `${INDEX_URL}#/recruit/roleplay/detail/${dynamic.from_info.id}`;
+                    title += dynamic.from_info.rp_name
+                    link = `${INDEX_URL}#/recruit/roleplay/detail/${dynamic.from_info.id}`
                     description = renderRolePlayParty({
                         cover_pic: dynamic.from_info.cover_pic,
                         open_time: dynamic.from_info.open_time,
@@ -279,7 +279,7 @@ export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
                                         '1': '轻',
                                         '2': '中',
                                         '3': '重',
-                                    })[i]
+                                    })[i],
                             )
                             .join('/')}RP 元素`,
                         create_time: dynamic.from_info.create_time,
@@ -288,16 +288,16 @@ export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
                         custom_label: dynamic.from_info.custom_label,
                         profile: dynamic.from_info.profile,
                         detail_mask: dynamic.from_info.detail_mask,
-                    });
-                    break;
+                    })
+                    break
                 case DynamicSource.Other:
                     if (!dynamic.from_info) {
-                        break;
+                        break
                     }
-                    title += `[${dynamic.from_info.category_name}] ${dynamic.from_info.title}`;
-                    link = `${INDEX_URL}#/recruit/others?id=${dynamic.from_info.id}`;
-                    description = dynamic.from_info.detail_mask;
-                    break;
+                    title += `[${dynamic.from_info.category_name}] ${dynamic.from_info.title}`
+                    link = `${INDEX_URL}#/recruit/others?id=${dynamic.from_info.id}`
+                    description = dynamic.from_info.detail_mask
+                    break
                 default:
                 // do nothing
             }
@@ -308,7 +308,7 @@ export async function generateDynamicFeeds(dynamics: UserDynamic[]) {
                 guid: `sdo/ff14risingstones/dynamics:${dynamic.id}`,
                 author: `${dynamic.character_name}@${dynamic.group_name}`,
                 description,
-            } as DataItem;
-        })
-    );
+            } as DataItem
+        }),
+    )
 }

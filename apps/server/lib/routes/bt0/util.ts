@@ -1,53 +1,53 @@
-import { CookieJar } from 'tough-cookie';
+import { CookieJar } from 'tough-cookie'
 
-import got from '@/utils/got';
+import got from '@/utils/got'
 
-const cookieJar = new CookieJar();
+const cookieJar = new CookieJar()
 
 async function doGot(num, host, link) {
     if (num > 4) {
-        throw new Error('The number of attempts has exceeded 5 times');
+        throw new Error('The number of attempts has exceeded 5 times')
     }
     const response = await got.get(link, {
         cookieJar,
-    });
-    const data = response.data;
+    })
+    const data = response.data
     if (typeof data === 'string') {
-        const regex = /document\.cookie\s*=\s*"([^"]*)"/;
-        const match = data.match(regex);
+        const regex = /document\.cookie\s*=\s*"([^"]*)"/
+        const match = data.match(regex)
         if (!match) {
-            throw new Error('api error');
+            throw new Error('api error')
         }
-        cookieJar.setCookieSync(match[1], host);
-        return doGot(num + 1, host, link);
+        cookieJar.setCookieSync(match[1], host)
+        return doGot(num + 1, host, link)
     }
-    return data;
+    return data
 }
 
 const genSize = (sizeStr) => {
     // 正则表达式，用于匹配数字和单位 GB 或 MB
-    const regex = /^(\d+(\.\d+)?)\s*(gb|mb)$/i;
-    const match = sizeStr.match(regex);
+    const regex = /^(\d+(\.\d+)?)\s*(gb|mb)$/i
+    const match = sizeStr.match(regex)
 
     if (!match) {
-        return 0;
+        return 0
     }
 
-    const value = Number.parseFloat(match[1]);
-    const unit = match[3].toUpperCase();
+    const value = Number.parseFloat(match[1])
+    const unit = match[3].toUpperCase()
 
-    let bytes;
+    let bytes
     switch (unit) {
         case 'GB':
-            bytes = Math.floor(value * 1024 * 1024 * 1024);
-            break;
+            bytes = Math.floor(value * 1024 * 1024 * 1024)
+            break
         case 'MB':
-            bytes = Math.floor(value * 1024 * 1024);
-            break;
+            bytes = Math.floor(value * 1024 * 1024)
+            break
         default:
-            bytes = 0;
+            bytes = 0
     }
-    return bytes;
-};
+    return bytes
+}
 
-export { doGot, genSize };
+export { doGot, genSize }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/articles', '/essays', '/'],
@@ -27,51 +27,51 @@ export const route: Route = {
     maintainers: ['Maecenas', 'nczitzk', 'dvorak0'],
     handler,
     url: 'paulgraham.com/articles.html',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://paulgraham.com';
-    const currentUrl = new URL('articles.html', rootUrl).href;
+    const rootUrl = 'https://paulgraham.com'
+    const currentUrl = new URL('articles.html', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('font a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: new URL(item.prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                const description = content('font').first();
+                const description = content('font').first()
 
-                item.title = content('title').text();
-                item.description = description.html();
-                item.pubDate = parseDate(description.contents().first().text(), 'MMMM YYYY');
+                item.title = content('title').text()
+                item.description = description.html()
+                item.pubDate = parseDate(description.contents().first().text(), 'MMMM YYYY')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const author = 'Paul Graham';
-    const title = $('title').text();
-    const icon = $('link[rel="shortcut icon"]').prop('href');
+    const author = 'Paul Graham'
+    const title = $('title').text()
+    const icon = $('link[rel="shortcut icon"]').prop('href')
 
     return {
         item: items,
@@ -85,5 +85,5 @@ async function handler(ctx) {
         subtitle: title,
         author,
         allowEmpty: true,
-    };
+    }
 }

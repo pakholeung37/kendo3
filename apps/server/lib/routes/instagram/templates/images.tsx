@@ -1,17 +1,17 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ImageItem = {
-    url: string;
-    height?: number | string;
-    width?: number | string;
-    alt?: string;
-};
+    url: string
+    height?: number | string
+    width?: number | string
+    alt?: string
+}
 
 type ImagesRenderOptions = {
-    summary?: string;
-    images: ImageItem[];
-};
+    summary?: string
+    images: ImageItem[]
+}
 
 export const renderImages = ({ summary, images }: ImagesRenderOptions): string =>
     renderToString(
@@ -25,5 +25,5 @@ export const renderImages = ({ summary, images }: ImagesRenderOptions): string =
             {images.map((image) => (
                 <img src={image.url} height={image.height} width={image.width} alt={image.alt ?? undefined} />
             ))}
-        </>
-    );
+        </>,
+    )

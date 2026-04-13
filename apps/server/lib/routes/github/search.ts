@@ -1,7 +1,7 @@
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const host = 'https://github.com';
+const host = 'https://github.com'
 
 export const route: Route = {
     path: '/search/:query/:sort?/:order?',
@@ -25,43 +25,43 @@ export const route: Route = {
 | Most stars       | stars     |
 | Most forks       | forks     |
 | Recently updated | updated   |`,
-};
+}
 
 async function handler(ctx) {
-    const query = ctx.req.param('query');
-    let sort = ctx.req.param('sort') || 'bestmatch';
-    const order = ctx.req.param('order') || 'desc';
+    const query = ctx.req.param('query')
+    let sort = ctx.req.param('sort') || 'bestmatch'
+    const order = ctx.req.param('order') || 'desc'
 
     if (sort === 'bestmatch') {
-        sort = '';
+        sort = ''
     }
 
-    const suffix = 'search?o='.concat(order, '&q=', encodeURIComponent(query), '&s=', sort, '&type=Repositories');
-    const link = new URL(suffix, host).href;
+    const suffix = 'search?o='.concat(order, '&q=', encodeURIComponent(query), '&s=', sort, '&type=Repositories')
+    const link = new URL(suffix, host).href
     const response = await ofetch(link, {
         headers: {
             accept: 'application/json',
         },
-    });
+    })
 
     const out = response.payload.results.map((item) => {
         const {
             repo: { repository },
             hl_trunc_description,
-        } = item;
+        } = item
 
         return {
             title: repository.name,
             author: repository.owner_login,
             link: host.concat(`/${repository.owner_login}/${repository.name}`),
             description: hl_trunc_description,
-        } as DataItem;
-    });
+        } as DataItem
+    })
 
     return {
         allowEmpty: true,
         title: `${query}的搜索结果`,
         link,
         item: out,
-    };
+    }
 }

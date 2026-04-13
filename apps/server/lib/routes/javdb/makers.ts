@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/makers/:id/:filter?',
@@ -37,13 +37,13 @@ export const route: Route = {
 |      | playable | single   | download | cnsub | preview |
 
   所有片商编号参见 [片商庫](https://javdb.com/makers)`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const filter = ctx.req.param('filter') ?? '';
+    const id = ctx.req.param('id')
+    const filter = ctx.req.param('filter') ?? ''
 
-    const currentUrl = `/makers/${id}${filter ? `?f=${filter}` : ''}`;
+    const currentUrl = `/makers/${id}${filter ? `?f=${filter}` : ''}`
 
     const filters = {
         '': '',
@@ -52,9 +52,9 @@ async function handler(ctx) {
         download: '可下載',
         cnsub: '字幕',
         preview: '預覽圖',
-    };
+    }
 
-    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} `;
+    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} `
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

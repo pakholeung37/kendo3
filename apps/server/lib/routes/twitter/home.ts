@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import api from './api';
-import utils from './utils';
+import api from './api'
+import utils from './utils'
 
 export const route: Route = {
     path: '/home/:routeParams?',
@@ -37,20 +37,20 @@ export const route: Route = {
             target: '/home',
         },
     ],
-};
+}
 
 async function handler(ctx) {
     // For compatibility
-    const { count, include_rts, only_media } = utils.parseRouteParams(ctx.req.param('routeParams'));
-    const params = count ? { count } : {};
+    const { count, include_rts, only_media } = utils.parseRouteParams(ctx.req.param('routeParams'))
+    const params = count ? { count } : {}
 
-    await api.init();
-    let data = await api.getHomeTimeline('', params);
+    await api.init()
+    let data = await api.getHomeTimeline('', params)
     if (!include_rts) {
-        data = utils.excludeRetweet(data);
+        data = utils.excludeRetweet(data)
     }
     if (only_media) {
-        data = utils.keepOnlyMedia(data);
+        data = utils.keepOnlyMedia(data)
     }
 
     return {
@@ -60,5 +60,5 @@ async function handler(ctx) {
         item: utils.ProcessFeed(ctx, {
             data,
         }),
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const categories = {
     latest: {
@@ -51,27 +51,27 @@ const categories = {
             title: '活動',
         },
     },
-};
+}
 
 const rootUrls = {
     main: 'https://ys.mihoyo.com',
     'zh-tw': 'https://genshin.hoyoverse.com',
-};
+}
 
 const apiRootUrls = {
     main: 'https://api-takumi-static.mihoyo.com',
     'zh-tw': 'https://api-os-takumi-static.hoyoverse.com',
-};
+}
 
 const currentUrls = {
     main: '/main/news',
     'zh-tw': '/zh-tw/news',
-};
+}
 
 const apiUrls = {
     main: '/content_v2_user/app/16471662a82d418a/getContentList',
     'zh-tw': '/content_v2_user/app/a1b1f9d3315447cc/getContentList',
-};
+}
 
 export const route: Route = {
     path: '/ys/:location?/:category?',
@@ -100,40 +100,40 @@ export const route: Route = {
 | 最新   | 新闻 | 公告   | 活动     |
 | ------ | ---- | ------ | -------- |
 | latest | news | notice | activity |`,
-};
+}
 
 async function handler(ctx) {
-    const location = ctx.req.param('location') ?? 'main';
-    const category = ctx.req.param('category') ?? 'latest';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const location = ctx.req.param('location') ?? 'main'
+    const category = ctx.req.param('category') ?? 'latest'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
     const params = {
         main: `iPage=1&sLangKey=zh-cn&iChanId=${categories[category][location].id}&iPageSize=${limit}`,
         'zh-tw': `iPage=1&sLangKey=zh-tw&iChanId=${categories[category][location].id}&iPageSize=${limit}`,
-    };
+    }
 
-    const rootUrl = rootUrls[location];
-    const apiRootUrl = apiRootUrls[location];
-    const apiUrl = `${apiRootUrl}${apiUrls[location]}?${params[location]}`;
-    const currentUrl = `${rootUrl}${currentUrls[location]}/${categories[category][location].slug}`;
+    const rootUrl = rootUrls[location]
+    const apiRootUrl = apiRootUrls[location]
+    const apiUrl = `${apiRootUrl}${apiUrls[location]}?${params[location]}`
+    const currentUrl = `${rootUrl}${currentUrls[location]}/${categories[category][location].slug}`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    const list = response.data.data.list;
+    const list = response.data.data.list
     const items = list.map((item) => ({
         title: item.sTitle,
         description: item.sContent,
         link: `${rootUrl}${currentUrls[location]}/detail/${item.iInfoId}`,
         pubDate: parseDate(item.dtStartTime),
         category: item.sCategoryName,
-    }));
+    }))
 
     return {
         title: `原神 - ${categories[category][location].title}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

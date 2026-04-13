@@ -1,4 +1,4 @@
-const baseUrl = 'https://www.hkepc.com';
+const baseUrl = 'https://www.hkepc.com'
 const categoryMap = {
     price: {
         url: `${baseUrl}/news`,
@@ -55,6 +55,6 @@ const categoryMap = {
         feedSuffix: ' - 超頻領域',
         selector: '.heading',
     },
-};
+}
 
-export { baseUrl, categoryMap };
+export { baseUrl, categoryMap }

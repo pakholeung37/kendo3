@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://www.cyzone.cn';
-const apiRootUrl = 'https://api1.cyzone.cn';
-const apiShowUrl = new URL('v2/content/app_content/show', apiRootUrl).href;
+const rootUrl = 'https://www.cyzone.cn'
+const apiRootUrl = 'https://api1.cyzone.cn'
+const apiShowUrl = new URL('v2/content/app_content/show', apiRootUrl).href
 
 /**
  * Retrieves information from a given URL using a provided tryGet function.
@@ -15,13 +15,13 @@ const apiShowUrl = new URL('v2/content/app_content/show', apiRootUrl).href;
  */
 const getInfo = (url, tryGet) =>
     tryGet(url, async () => {
-        const { data: response } = await got(url);
+        const { data: response } = await got(url)
 
-        const $ = load(response);
+        const $ = load(response)
 
-        const avatar = $('img.avatar')?.prop('src')?.split('?')[0] ?? undefined;
-        const icon = new URL($('link[rel="icon"]')?.prop('href'), rootUrl).href;
-        const image = new URL($('div.logo img')?.prop('src'), rootUrl).href;
+        const avatar = $('img.avatar')?.prop('src')?.split('?')[0] ?? undefined
+        const icon = new URL($('link[rel="icon"]')?.prop('href'), rootUrl).href
+        const image = new URL($('div.logo img')?.prop('src'), rootUrl).href
 
         return {
             title: $('title').text(),
@@ -33,8 +33,8 @@ const getInfo = (url, tryGet) =>
             logo: icon,
             subtitle: $('meta[name="keywords"]').prop('content'),
             author: $('meta[name="app-mobile-web-app-title"]').prop('content'),
-        };
-    });
+        }
+    })
 
 /**
  * Process the item list and return the resulting array.
@@ -48,20 +48,20 @@ const processItems = async (apiUrl, limit, tryGet, ...params) => {
     // Merge search parameters
     let searchParams = {
         size: limit,
-    };
+    }
     for (const param of params) {
         searchParams = {
             ...searchParams,
             ...param,
-        };
+        }
     }
 
     const { data: response } = await got(apiUrl, {
         searchParams,
-    });
+    })
 
     let items = (response.data?.article ?? response.data?.data ?? response.data).slice(0, limit).map((item) => {
-        item = item.item ?? item;
+        item = item.item ?? item
 
         return {
             title: item.title,
@@ -71,8 +71,8 @@ const processItems = async (apiUrl, limit, tryGet, ...params) => {
             guid: item.content_id,
             pubDate: parseDate(item.published_at * 1000),
             upvotes: item.votes ?? 0,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
@@ -81,38 +81,38 @@ const processItems = async (apiUrl, limit, tryGet, ...params) => {
                     json: {
                         content_id: item.guid,
                     },
-                });
+                })
 
-                const data = detailResponse.data;
+                const data = detailResponse.data
 
-                const categories = [data.category, ...item.category, ...(data.tags?.split(',') ?? [])];
+                const categories = [data.category, ...item.category, ...(data.tags?.split(',') ?? [])]
 
-                const content = load(data.content);
+                const content = load(data.content)
 
                 content('img').each(function () {
                     if (content(this).prop('src')) {
-                        content(this).prop('src', content(this).prop('src').split('?')[0]);
+                        content(this).prop('src', content(this).prop('src').split('?')[0])
                     } else {
-                        content(this).remove();
+                        content(this).remove()
                     }
-                });
+                })
 
-                item.title = data.title;
+                item.title = data.title
                 // api 返回的 link_url 数据可能是空, 所有最好自己通过 id 拼接 url
-                item.link = `${rootUrl}/article/${item.guid}.html`;
-                item.description = content.html();
-                item.author = data.author_name ?? data.author;
-                item.category = [...new Set(categories)].filter(Boolean);
-                item.guid = `cyzone-${item.guid}`;
-                item.pubDate = parseDate(data.published_at * 1000);
-                item.upvotes = data.votes ?? 0;
+                item.link = `${rootUrl}/article/${item.guid}.html`
+                item.description = content.html()
+                item.author = data.author_name ?? data.author
+                item.category = [...new Set(categories)].filter(Boolean)
+                item.guid = `cyzone-${item.guid}`
+                item.pubDate = parseDate(data.published_at * 1000)
+                item.upvotes = data.votes ?? 0
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    return items;
-};
+    return items
+}
 
-export { apiRootUrl, getInfo, processItems, rootUrl };
+export { apiRootUrl, getInfo, processItems, rootUrl }

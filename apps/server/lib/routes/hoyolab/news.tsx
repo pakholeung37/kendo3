@@ -1,45 +1,45 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import logger from '@/utils/logger';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import logger from '@/utils/logger'
+import { parseDate } from '@/utils/parse-date'
 
-import { HOST, LINK, NEW_LIST, OFFICIAL_PAGE_TYPE, POST_FULL, PRIVATE_IMG, PUBLIC_IMG } from './constant';
-import { getI18nGameInfo, getI18nType } from './utils';
+import { HOST, LINK, NEW_LIST, OFFICIAL_PAGE_TYPE, POST_FULL, PRIVATE_IMG, PUBLIC_IMG } from './constant'
+import { getI18nGameInfo, getI18nType } from './utils'
 
 const getEventList = async ({ type, gids, size, language }) => {
     const query = new URLSearchParams({
         type,
         gids,
         page_size: size,
-    }).toString();
-    const url = `${HOST}${NEW_LIST}?${query}`;
+    }).toString()
+    const url = `${HOST}${NEW_LIST}?${query}`
     const res = await got({
         method: 'get',
         url,
         headers: {
             'X-Rpc-Language': language,
         },
-    });
-    const list = res?.data?.data?.list || [];
-    return list;
-};
+    })
+    const list = res?.data?.data?.list || []
+    return list
+}
 
-const replaceImgDomain = (content) => content.replaceAll(PRIVATE_IMG, PUBLIC_IMG);
+const replaceImgDomain = (content) => content.replaceAll(PRIVATE_IMG, PUBLIC_IMG)
 
 const getPostContent = (list, { language }) =>
     Promise.all(
         list.map(async (row) => {
-            const post = row.post;
-            const post_id = post.post_id;
+            const post = row.post
+            const post_id = post.post_id
             const query = new URLSearchParams({
                 post_id,
                 language, // language为了区分缓存，对接口并无意义
-            }).toString();
-            const url = `${HOST}${POST_FULL}?${query}`;
+            }).toString()
+            const url = `${HOST}${POST_FULL}?${query}`
             return await cache.tryGet(url, async () => {
                 const res = await got({
                     method: 'get',
@@ -47,17 +47,17 @@ const getPostContent = (list, { language }) =>
                     headers: {
                         'X-Rpc-Language': language,
                     },
-                });
-                const author = res?.data?.data?.post?.user?.nickname || '';
-                let content = res?.data?.data?.post?.post?.content || '';
+                })
+                const author = res?.data?.data?.post?.user?.nickname || ''
+                let content = res?.data?.data?.post?.post?.content || ''
                 if (content === language || !content) {
-                    content = post.content;
+                    content = post.content
                 }
                 const description = renderPostDescription({
                     hasCover: post.has_cover,
                     coverList: row.cover_list,
                     content: replaceImgDomain(content),
-                });
+                })
                 return {
                     // 文章标题
                     title: post.subject,
@@ -68,10 +68,10 @@ const getPostContent = (list, { language }) =>
                     // 文章发布日期
                     pubDate: parseDate(post.created_at * 1000),
                     author,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
 export const route: Route = {
     path: '/news/:language/:gids/:type',
@@ -113,21 +113,21 @@ export const route: Route = {
 | Notices | Events | Info |
 | ------- | ------ | ---- |
 | 1       | 2      | 3    |`,
-};
+}
 
 async function handler(ctx) {
     try {
-        const { type, gids, language } = ctx.req.param();
+        const { type, gids, language } = ctx.req.param()
         const params = {
             type,
             gids,
             language,
             size: Number.parseInt(ctx.req.query('limit')) || 15,
-        };
-        const gameInfo = await getI18nGameInfo(gids, language, cache.tryGet);
-        const typeInfo = await getI18nType(language, cache.tryGet);
-        const list = await getEventList(params);
-        const items = await getPostContent(list, params);
+        }
+        const gameInfo = await getI18nGameInfo(gids, language, cache.tryGet)
+        const typeInfo = await getI18nType(language, cache.tryGet)
+        const list = await getEventList(params)
+        const items = await getPostContent(list, params)
         return {
             title: `HoYoLAB-${gameInfo.name}-${typeInfo[type].title}`,
             link: `${LINK}/circles/${gids}/${OFFICIAL_PAGE_TYPE[gids]}/official?page_type=${OFFICIAL_PAGE_TYPE[gids]}&page_sort=${typeInfo[type].sort}`,
@@ -135,15 +135,15 @@ async function handler(ctx) {
             image: gameInfo.icon,
             icon: gameInfo.icon,
             logo: gameInfo.icon,
-        };
+        }
     } catch (error) {
-        logger.error(error);
+        logger.error(error)
     }
 }
 
 type CoverItem = {
-    url: string;
-};
+    url: string
+}
 
 const renderPostDescription = ({ hasCover, coverList, content }: { hasCover: boolean; coverList?: CoverItem[]; content: string }): string =>
     renderToString(
@@ -157,5 +157,5 @@ const renderPostDescription = ({ hasCover, coverList, content }: { hasCover: boo
                   ))
                 : null}
             {raw(content)}
-        </>
-    );
+        </>,
+    )

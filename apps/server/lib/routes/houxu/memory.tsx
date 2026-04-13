@@ -1,8 +1,8 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/memory',
@@ -17,17 +17,17 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'houxu.app/memory',
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://houxu.app';
-    const apiUrl = `${rootUrl}/api/1/lives/updated?limit=${ctx.req.query('limit') ?? 50}`;
-    const currentUrl = `${rootUrl}/memory`;
+    const rootUrl = 'https://houxu.app'
+    const apiUrl = `${rootUrl}/api/1/lives/updated?limit=${ctx.req.query('limit') ?? 50}`
+    const currentUrl = `${rootUrl}/memory`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = response.data.results.map((item) => ({
         guid: `${rootUrl}/lives/${item.id}#${item.last.id}`,
@@ -44,13 +44,13 @@ async function handler(ctx) {
                     {item.last.link.source ? <> ({item.last.link.source})</> : null}
                 </b>
                 <p>{item.last.link.description}</p>
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: '后续 - 跟踪',
         link: currentUrl,
         item: items,
-    };
+    }
 }

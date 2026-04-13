@@ -1,45 +1,45 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 // type id => display name
-type Mapping = Record<string, string>;
+type Mapping = Record<string, string>
 
 const JP: Mapping = {
     '0': '全て',
     '1': 'イベント',
     '2': 'お知らせ',
     '3': 'メンテナンス',
-};
+}
 
 // render into MD table
 const mkTable = (mapping: Mapping): string => {
     const heading: string[] = [],
         separator: string[] = [],
-        body: string[] = [];
+        body: string[] = []
 
     for (const key in mapping) {
-        heading.push(mapping[key]);
-        separator.push(':--:');
-        body.push(key);
+        heading.push(mapping[key])
+        separator.push(':--:')
+        body.push(key)
     }
 
-    return [heading.join(' | '), separator.join(' | '), body.join(' | ')].map((s) => `| ${s} |`).join('\n');
-};
+    return [heading.join(' | '), separator.join(' | '), body.join(' | ')].map((s) => `| ${s} |`).join('\n')
+}
 
 const handler: Route['handler'] = async (ctx) => {
-    const { server } = ctx.req.param();
+    const { server } = ctx.req.param()
 
     switch (server.toUpperCase()) {
         case 'JP':
-            return await ja(ctx);
+            return await ja(ctx)
         default:
-            throw [];
+            throw []
     }
-};
+}
 
 const ja: Route['handler'] = async (ctx) => {
-    const { type = '0' } = ctx.req.param();
+    const { type = '0' } = ctx.req.param()
 
     const data = await ofetch<{ data: { rows: Array<{ id: number; content: string; summary: string; publishTime: number }> } }, 'json'>('https://api-web.bluearchive.jp/api/news/list', {
         query: {
@@ -47,7 +47,7 @@ const ja: Route['handler'] = async (ctx) => {
             pageNum: 16,
             pageIndex: 1,
         },
-    });
+    })
 
     return {
         title: `ブルアカ - ${JP[type]}`,
@@ -62,8 +62,8 @@ const ja: Route['handler'] = async (ctx) => {
             link: `https://bluearchive.jp/news/newsJump/${row.id}`,
             pubDate: parseDate(row.publishTime),
         })),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:server/:type?',
@@ -85,4 +85,4 @@ export const route: Route = {
     },
     handler,
     description: [JP].map((el) => mkTable(el)).join('\n\n'),
-};
+}

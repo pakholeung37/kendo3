@@ -1,43 +1,43 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest'
 
-import configUtils, { getProp, replaceParams, transElemText } from '@/utils/common-config';
+import configUtils, { getProp, replaceParams, transElemText } from '@/utils/common-config'
 
 describe('index', () => {
     it('transElemText', () => {
-        const $ = () => 'RSSHub';
-        expect(transElemText($, '$()')).toBe('RSSHub');
-    });
+        const $ = () => 'RSSHub'
+        expect(transElemText($, '$()')).toBe('RSSHub')
+    })
 
     it('replaceParams', () => {
-        const $ = () => 'RSSHub';
+        const $ = () => 'RSSHub'
         const data = {
             params: {
                 title: 'RSSHub',
             },
             title: '%title%',
-        };
-        expect(replaceParams(data, data.title, $)).toBe('RSSHub');
-    });
+        }
+        expect(replaceParams(data, data.title, $)).toBe('RSSHub')
+    })
 
     it('getProp', () => {
-        const $ = () => 'RSSHub';
+        const $ = () => 'RSSHub'
         const data = {
             title: 'RSSHub',
-        };
-        expect(getProp(data, ['title'], $)).toBe('RSSHub');
-        expect(getProp(data, 'title', $)).toBe('RSSHub');
-    });
+        }
+        expect(getProp(data, ['title'], $)).toBe('RSSHub')
+        expect(getProp(data, 'title', $)).toBe('RSSHub')
+    })
 
     it('all', () => {
-        const $ = () => 'RSSHub';
+        const $ = () => 'RSSHub'
         const data = {
             params: {
                 title: '$()',
             },
             title: '%title%',
-        };
-        expect(getProp(data, ['title'], $)).toBe('RSSHub');
-    });
+        }
+        expect(getProp(data, ['title'], $)).toBe('RSSHub')
+    })
 
     it('buildData', async () => {
         const data = await configUtils({
@@ -54,7 +54,7 @@ describe('index', () => {
                 description: `$('.description').html()`,
                 pubDate: `timezone(parseDate($('.date').text(), 'YYYY-MM-DD'), 0)`,
             },
-        });
+        })
 
         expect(data).toMatchObject({
             link: 'http://rsshub.test/buildData',
@@ -75,6 +75,6 @@ describe('index', () => {
                     title: '2 - buildData',
                 },
             ],
-        });
-    });
-});
+        })
+    })
+})

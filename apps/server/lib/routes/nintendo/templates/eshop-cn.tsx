@@ -1,50 +1,46 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type NormalPlayersNum = {
-    min?: number;
-    max?: number;
-};
+    min?: number
+    max?: number
+}
 
 type AgeAppropriateInfo = {
-    text?: string;
-};
+    text?: string
+}
 
 type Software = {
-    coverImage?: string;
-    descriptionTitle?: string;
-    descriptionContent?: string;
-    price?: string;
-    currency?: string;
-    sizeNum?: string;
-    sizeUnit?: string;
-    playMode?: string[];
-    normalPlayersNum?: NormalPlayersNum;
-    handleSupport?: string;
-    platform?: string;
-    publisher?: string;
-    genre?: string[];
-    supportLanguages?: string[];
-    ageAppropriateInfo?: AgeAppropriateInfo;
-    images?: string[];
-};
+    coverImage?: string
+    descriptionTitle?: string
+    descriptionContent?: string
+    price?: string
+    currency?: string
+    sizeNum?: string
+    sizeUnit?: string
+    playMode?: string[]
+    normalPlayersNum?: NormalPlayersNum
+    handleSupport?: string
+    platform?: string
+    publisher?: string
+    genre?: string[]
+    supportLanguages?: string[]
+    ageAppropriateInfo?: AgeAppropriateInfo
+    images?: string[]
+}
 
 type Item = {
-    description?: string;
-};
+    description?: string
+}
 
 type DescriptionParams = {
-    item: Item;
-    software: Software;
-    releaseDatetime?: string;
-};
+    item: Item
+    software: Software
+    releaseDatetime?: string
+}
 
 export const renderEshopCnDescription = ({ item, software, releaseDatetime }: DescriptionParams) => {
-    const normalPlayers = software.normalPlayersNum
-        ? software.normalPlayersNum.max === software.normalPlayersNum.min
-            ? software.normalPlayersNum.max
-            : `${software.normalPlayersNum.min}-${software.normalPlayersNum.max}`
-        : undefined;
+    const normalPlayers = software.normalPlayersNum ? (software.normalPlayersNum.max === software.normalPlayersNum.min ? software.normalPlayersNum.max : `${software.normalPlayersNum.min}-${software.normalPlayersNum.max}`) : undefined
 
     return renderToString(
         <>
@@ -131,6 +127,6 @@ export const renderEshopCnDescription = ({ item, software, releaseDatetime }: De
             </table>
             <br />
             {software.images?.length ? software.images.slice(1).map((image, index) => <img src={`https:${image}`} key={`${image}-${index}`} />) : null}
-        </>
-    );
-};
+        </>,
+    )
+}

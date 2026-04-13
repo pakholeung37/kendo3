@@ -1,36 +1,36 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { id = '0' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { id = '0' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://fashionnetwork.cn';
-    const currentUrl = new URL(`lists/${id}`, rootUrl).href;
+    const rootUrl = 'https://fashionnetwork.cn'
+    const currentUrl = new URL(`lists/${id}`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('div.home__item')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h2.family-title').text();
+            const title = item.find('h2.family-title').text()
 
-            const src = item.find('img.item__img').first().prop('src') ?? undefined;
-            const image = src ? new URL(src, rootUrl).href : undefined;
+            const src = item.find('img.item__img').first().prop('src') ?? undefined
+            const image = src ? new URL(src, rootUrl).href : undefined
 
             const description = renderDescription({
                 images: image
@@ -41,7 +41,7 @@ export const handler = async (ctx) => {
                           },
                       ]
                     : undefined,
-            });
+            })
 
             return {
                 title,
@@ -53,43 +53,43 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: image ? `image/${image.split(/\./).pop()}` : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.newsTitle').text();
+                const title = $$('h1.newsTitle').text()
                 const description = renderDescription({
                     description: $$('div.article-content').html(),
-                });
+                })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate($$('span.time-ago').first().text().trim()), +8);
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate($$('span.time-ago').first().text().trim()), +8)
                 item.category = $$('div.newsTags')
                     .first()
                     .find('div.news-tag')
                     .toArray()
-                    .map((c) => $$(c).text());
-                item.author = $$('div.newsLeftCol span').first().text();
+                    .map((c) => $$(c).text())
+                item.author = $$('div.newsLeftCol span').first().text()
                 item.content = {
                     html: description,
                     text: $$('div.article-content').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const label = $(`label[for="news_categs_${id}"]`).text()?.split(/\(/)?.[0]?.trim() ?? '';
-    const image = new URL($('div.header__fnw-logo img').prop('src'), rootUrl).href;
+    const label = $(`label[for="news_categs_${id}"]`).text()?.split(/\(/)?.[0]?.trim() ?? ''
+    const image = new URL($('div.header__fnw-logo img').prop('src'), rootUrl).href
 
     return {
         title: `${label}${$('title').text()}`,
@@ -100,8 +100,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="author"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/cn/lists/:id?',
@@ -141,9 +141,9 @@ export const route: Route = {
         {
             source: ['fashionnetwork.cn/lists/:id'],
             target: (params) => {
-                const id = params.id;
+                const id = params.id
 
-                return `/fashionnetwork/cn/lists${id ? `/${id}` : ''}`;
+                return `/fashionnetwork/cn/lists${id ? `/${id}` : ''}`
             },
         },
         {
@@ -187,4 +187,4 @@ export const route: Route = {
             target: '/cn/lists/11',
         },
     ],
-};
+}

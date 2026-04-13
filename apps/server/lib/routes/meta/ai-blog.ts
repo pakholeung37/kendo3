@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/ai/blog',
@@ -17,11 +17,11 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit') || 12, 10);
-    const link = 'https://ai.meta.com/blog/';
+    const limit = Number.parseInt(ctx.req.query('limit') || 12, 10)
+    const link = 'https://ai.meta.com/blog/'
 
     const res = await ofetch(link, {
         headers: {
@@ -31,21 +31,21 @@ async function handler(ctx) {
             'sec-fetch-site': 'none',
             'sec-fetch-user': '?1',
         },
-    });
-    const $ = load(res);
-    const script = $('script:contains("DTSGInitialData"):first').text();
-    const serverJs = JSON.parse(script.match(/\(new ServerJS\(\)\)\.handle\((\{[\s\S]*?\})\);/)?.[1] || '{}');
+    })
+    const $ = load(res)
+    const script = $('script:contains("DTSGInitialData"):first').text()
+    const serverJs = JSON.parse(script.match(/\(new ServerJS\(\)\)\.handle\((\{[\s\S]*?\})\);/)?.[1] || '{}')
 
     type ServerData = {
-        LSD: { token: string };
+        LSD: { token: string }
         SiteData: {
-            haste_session: string;
-            hsi: string;
-            __spin_r: number;
-            __spin_b: string;
-            __spin_t: number;
-        };
-    };
+            haste_session: string
+            hsi: string
+            __spin_r: number
+            __spin_b: string
+            __spin_t: number
+        }
+    }
 
     const server: ServerData = {
         LSD: { token: '' },
@@ -56,12 +56,12 @@ async function handler(ctx) {
             __spin_b: 'trunk',
             __spin_t: Date.now(),
         },
-    };
+    }
 
     for (const obj of serverJs.define) {
-        const key = obj[0];
-        const value = obj[2];
-        server[key as keyof ServerData] = value;
+        const key = obj[0]
+        const value = obj[2]
+        server[key as keyof ServerData] = value
     }
 
     const data = await ofetch('https://ai.meta.com/api/graphql/', {
@@ -101,7 +101,7 @@ async function handler(ctx) {
             doc_id: '9516719638450392',
         }),
         parseResponse: JSON.parse,
-    });
+    })
 
     const items = data.data.query.map((item) => ({
         title: item.title,
@@ -110,7 +110,7 @@ async function handler(ctx) {
         pubDate: parseDate(item.date),
         category: [item.research_area],
         image: item.image,
-    }));
+    }))
 
     return {
         title: $('#pageTitle').text(),
@@ -118,5 +118,5 @@ async function handler(ctx) {
         image: $('link[rel="icon"]').attr('href'),
         link,
         item: items,
-    };
+    }
 }

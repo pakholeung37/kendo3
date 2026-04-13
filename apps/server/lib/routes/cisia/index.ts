@@ -1,69 +1,69 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { id = '9' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { id = '9' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const domain = 'www.cisia.org';
-    const rootUrl = `http://${domain}`;
-    const currentUrl = new URL(`site/term/${id}.html`, rootUrl).href;
+    const domain = 'www.cisia.org'
+    const rootUrl = `http://${domain}`
+    const currentUrl = new URL(`site/term/${id}.html`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('ul.list_first li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a');
+            const a = item.find('a')
 
             return {
                 title: a.text(),
                 pubDate: parseDate(item.find('span.time').text()),
                 link: new URL(a.prop('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!/^https?:\/\/www\.cisia\.org(\/[^\s]*)?$/.test(item.link)) {
-                    return item;
+                    return item
                 }
 
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.TextTitle').text();
-                const description = $$('div.NewsText').html();
+                const title = $$('div.TextTitle').text()
+                const description = $$('div.NewsText').html()
                 const pubDate = $$('div.shar')
                     .text()
-                    .match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+                    .match(/(\d{4}-\d{2}-\d{2})/)?.[1]
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate;
-                item.author = $$('meta[name="Description"]').prop('content');
+                item.title = title
+                item.description = description
+                item.pubDate = pubDate ? parseDate(pubDate) : item.pubDate
+                item.author = $$('meta[name="Description"]').prop('content')
                 item.content = {
                     html: description,
                     text: $$('div.NewsText').text(),
-                };
+                }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('div.logo img').prop('src'), rootUrl).href;
+    const image = new URL($('div.logo img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -73,8 +73,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author: $('meta[name="Keywords"]').prop('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:id?',
@@ -150,9 +150,9 @@ export const route: Route = {
         {
             source: ['www.cisia.org/site/term/:id'],
             target: (params) => {
-                const id = params.id.replace(/\.html/, '');
+                const id = params.id.replace(/\.html/, '')
 
-                return id ? `/${id}` : '';
+                return id ? `/${id}` : ''
             },
         },
         {
@@ -261,4 +261,4 @@ export const route: Route = {
             target: '/68',
         },
     ],
-};
+}

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const defaultRootUrl = 'https://www.setn.com';
+const defaultRootUrl = 'https://www.setn.com'
 
 const rootUrls = {
     娛樂: 'https://star.setn.com',
@@ -14,7 +14,7 @@ const rootUrls = {
     旅遊: 'https://travel.setn.com',
     富房網: 'https://fuhouse.setn.com',
     女孩: 'https://watch.setn.com',
-};
+}
 
 const ids = {
     即時: '',
@@ -33,17 +33,17 @@ const ids = {
     汽車: 12,
     寵物: 47,
     HOT焦點: 31,
-};
+}
 
 const getCurrentUrl = (category) => {
-    const rootUrl = Object.hasOwn(rootUrls, category) ? rootUrls[category] : defaultRootUrl;
+    const rootUrl = Object.hasOwn(rootUrls, category) ? rootUrls[category] : defaultRootUrl
 
     if (Object.hasOwn(ids, category)) {
-        return `${rootUrl}/ViewAll.aspx${ids[category] === '' ? '' : `?PageGroupID=${ids[category]}`}`;
+        return `${rootUrl}/ViewAll.aspx${ids[category] === '' ? '' : `?PageGroupID=${ids[category]}`}`
     }
 
-    return `${rootUrl}/viewall`;
-};
+    return `${rootUrl}/viewall`
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -79,36 +79,36 @@ export const route: Route = {
 
 | 新奇 | 科技 | 汽車 | 寵物 | 女孩 | HOT 焦點 |
 | ---- | ---- | ---- | ---- | ---- | -------- |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '即時';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 42;
+    const category = ctx.req.param('category') ?? '即時'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 42
 
-    const currentUrl = getCurrentUrl(category);
+    const currentUrl = getCurrentUrl(category)
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('#NewsList, .newsList, .hotNewsList')
         .find('.newsItems, .st-news, .all_three_list, div.title-word')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('a').last();
-            const link = a.attr('href').replaceAll(/(\?|&)utm_campaign=.*/g, '');
+            const a = item.find('a').last()
+            const link = a.attr('href').replaceAll(/(\?|&)utm_campaign=.*/g, '')
 
             return {
                 title: a.text(),
                 link: link.startsWith('http') ? link : `${Object.hasOwn(rootUrls, category) ? rootUrls[category] : defaultRootUrl}${link}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -116,33 +116,33 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                let head: Record<string, unknown>;
+                let head: Record<string, unknown>
                 try {
-                    head = JSON.parse(content('script[type="application/ld+json"]').first().text());
+                    head = JSON.parse(content('script[type="application/ld+json"]').first().text())
                 } catch {
-                    head = {};
+                    head = {}
                 }
 
-                content('#gad_setn_innity_oop_1x1').remove();
+                content('#gad_setn_innity_oop_1x1').remove()
 
-                item.title = content('h1').text();
-                item.author = head?.author?.name || content('meta[name="author"]').attr('content');
-                item.category = [content('meta[property="article:section"]').attr('content'), ...content('meta[name="news_keywords"]').attr('content').split(',')];
-                item.pubDate = timezone(parseDate(content('meta[property="article:published_time"]').attr('content')), +8);
-                item.description = content('article, .content-p').html();
+                item.title = content('h1').text()
+                item.author = head?.author?.name || content('meta[name="author"]').attr('content')
+                item.category = [content('meta[property="article:section"]').attr('content'), ...content('meta[name="news_keywords"]').attr('content').split(',')]
+                item.pubDate = timezone(parseDate(content('meta[property="article:published_time"]').attr('content')), +8)
+                item.description = content('article, .content-p').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `三立新聞網 - ${category}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

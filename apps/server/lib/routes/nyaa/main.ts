@@ -1,7 +1,7 @@
-import Parser from 'rss-parser';
+import Parser from 'rss-parser'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
+import { config } from '@/config'
+import type { Route } from '@/types'
 
 export const route: Route = {
     path: ['/search/:query?', '/user/:username?', '/user/:username/search/:query?', '/sukebei/search/:query?', '/sukebei/user/:username?', '/sukebei/user/:username/search/:query?'],
@@ -19,7 +19,7 @@ export const route: Route = {
     name: 'Search Result',
     maintainers: ['Lava-Swimmer', 'noname1776', 'camera-2018'],
     handler,
-};
+}
 
 async function handler(ctx) {
     const parser = new Parser({
@@ -29,36 +29,36 @@ async function handler(ctx) {
         headers: {
             'User-Agent': config.ua,
         },
-    });
+    })
 
-    const { query, username } = ctx.req.param();
+    const { query, username } = ctx.req.param()
 
-    const rootURL = ctx.req.path.split('/')[2] === 'sukebei' ? 'https://sukebei.nyaa.si' : 'https://nyaa.si';
+    const rootURL = ctx.req.path.split('/')[2] === 'sukebei' ? 'https://sukebei.nyaa.si' : 'https://nyaa.si'
 
-    let currentRSSURL = `${rootURL}/?page=rss`;
-    let currentLink = `${rootURL}/`;
+    let currentRSSURL = `${rootURL}/?page=rss`
+    let currentLink = `${rootURL}/`
     if (username !== undefined) {
-        currentRSSURL = `${currentRSSURL}&u=${encodeURI(username)}`;
-        currentLink = `${currentLink}user/${encodeURI(username)}`;
+        currentRSSURL = `${currentRSSURL}&u=${encodeURI(username)}`
+        currentLink = `${currentLink}user/${encodeURI(username)}`
     }
     if (query !== undefined) {
-        currentRSSURL = `${currentRSSURL}&q=${encodeURI(query)}`;
-        currentLink = `${currentLink}?q=${encodeURI(query)}`;
+        currentRSSURL = `${currentRSSURL}&q=${encodeURI(query)}`
+        currentLink = `${currentLink}?q=${encodeURI(query)}`
     }
 
-    const feed = await parser.parseURL(currentRSSURL);
+    const feed = await parser.parseURL(currentRSSURL)
 
     feed.items.map((item) => {
-        item.description = item.content;
-        item.enclosure_url = `magnet:?xt=urn:btih:${item.infoHash}`;
-        item.enclosure_type = 'application/x-bittorrent';
-        return item;
-    });
+        item.description = item.content
+        item.enclosure_url = `magnet:?xt=urn:btih:${item.infoHash}`
+        item.enclosure_type = 'application/x-bittorrent'
+        return item
+    })
 
     return {
         title: feed.title,
         link: currentLink,
         description: feed.description,
         item: feed.items,
-    };
+    }
 }

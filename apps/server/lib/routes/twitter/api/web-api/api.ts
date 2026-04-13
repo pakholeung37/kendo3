@@ -1,10 +1,10 @@
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, gqlFeatures, gqlMap, initGqlMap } from './constants';
-import { gatherLegacyFromData, paginationTweets, twitterGot } from './utils';
+import { baseUrl, gqlFeatures, gqlMap, initGqlMap } from './constants'
+import { gatherLegacyFromData, paginationTweets, twitterGot } from './utils'
 
 const getUserData = (id) =>
     cache.tryGet(`twitter-userdata-${id}`, () => {
@@ -22,10 +22,10 @@ const getUserData = (id) =>
             fieldToggles: JSON.stringify({
                 withAuxiliaryUserLabels: false,
             }),
-        };
+        }
 
         if (config.twitter.thirdPartyApi) {
-            const endpoint = id.startsWith('+') ? gqlMap.UserByRestId : gqlMap.UserByScreenName;
+            const endpoint = id.startsWith('+') ? gqlMap.UserByRestId : gqlMap.UserByScreenName
 
             return ofetch(`${config.twitter.thirdPartyApi}${endpoint}`, {
                 method: 'GET',
@@ -33,25 +33,25 @@ const getUserData = (id) =>
                 headers: {
                     'accept-encoding': 'gzip',
                 },
-            });
+            })
         }
 
         return twitterGot(`${baseUrl}${id.startsWith('+') ? gqlMap.UserByRestId : gqlMap.UserByScreenName}`, params, {
             allowNoAuth: !id.startsWith('+'),
-        });
-    });
+        })
+    })
 
 const cacheTryGet = async (_id, params, func) => {
-    const userData: any = await getUserData(_id);
-    const id = (userData.data?.user || userData.data?.user_result)?.result?.rest_id;
+    const userData: any = await getUserData(_id)
+    const id = (userData.data?.user || userData.data?.user_result)?.result?.rest_id
     if (id === undefined) {
-        cache.set(`twitter-userdata-${_id}`, '', config.cache.contentExpire);
-        throw new InvalidParameterError('User not found');
+        cache.set(`twitter-userdata-${_id}`, '', config.cache.contentExpire)
+        throw new InvalidParameterError('User not found')
     }
-    const funcName = func.name;
-    const paramsString = JSON.stringify(params);
-    return cache.tryGet(`twitter:${id}:${funcName}:${paramsString}`, () => func(id, params), config.cache.routeExpire, false);
-};
+    const funcName = func.name
+    const paramsString = JSON.stringify(params)
+    return cache.tryGet(`twitter:${id}:${funcName}:${paramsString}`, () => func(id, params), config.cache.routeExpire, false)
+}
 
 const getUserTweets = (id: string, params?: Record<string, any>) =>
     cacheTryGet(id, params, async (id, params = {}) =>
@@ -63,9 +63,9 @@ const getUserTweets = (id: string, params?: Record<string, any>) =>
                 withQuickPromoteEligibilityTweetFields: true,
                 withVoice: true,
                 withV2Timeline: true,
-            })
-        )
-    );
+            }),
+        ),
+    )
 
 const getUserTweetsAndReplies = (id: string, params?: Record<string, any>) =>
     cacheTryGet(id, params, async (id, params = {}) =>
@@ -79,9 +79,9 @@ const getUserTweetsAndReplies = (id: string, params?: Record<string, any>) =>
                 withV2Timeline: true,
             }),
             ['profile-conversation-'],
-            id
-        )
-    );
+            id,
+        ),
+    )
 
 const getUserMedia = (id: string, params?: Record<string, any>) =>
     cacheTryGet(id, params, async (id, params = {}) =>
@@ -94,9 +94,9 @@ const getUserMedia = (id: string, params?: Record<string, any>) =>
                 withBirdwatchNotes: false,
                 withVoice: true,
                 withV2Timeline: true,
-            })
-        )
-    );
+            }),
+        ),
+    )
 
 const getUserLikes = (id: string, params?: Record<string, any>) =>
     cacheTryGet(id, params, async (id, params = {}) =>
@@ -108,9 +108,9 @@ const getUserLikes = (id: string, params?: Record<string, any>) =>
                 withBirdwatchNotes: false,
                 withVoice: false,
                 withV2Timeline: true,
-            })
-        )
-    );
+            }),
+        ),
+    )
 
 const getUserTweet = (id: string, params?: Record<string, any>) =>
     cacheTryGet(id, params, async (id, params = {}) =>
@@ -126,11 +126,11 @@ const getUserTweet = (id: string, params?: Record<string, any>) =>
                     withVoice: false,
                     withV2Timeline: true,
                 },
-                ['threaded_conversation_with_injections_v2']
+                ['threaded_conversation_with_injections_v2'],
             ),
-            ['homeConversation-', 'conversationthread-']
-        )
-    );
+            ['homeConversation-', 'conversationthread-'],
+        ),
+    )
 
 const getSearch = async (keywords: string, params?: Record<string, any>) =>
     gatherLegacyFromData(
@@ -144,9 +144,9 @@ const getSearch = async (keywords: string, params?: Record<string, any>) =>
                 querySource: 'typed_query',
                 product: 'Latest',
             },
-            ['search_by_raw_query', 'search_timeline', 'timeline']
-        )
-    );
+            ['search_by_raw_query', 'search_timeline', 'timeline'],
+        ),
+    )
 
 const getList = async (id: string, params?: Record<string, any>) =>
     gatherLegacyFromData(
@@ -158,18 +158,18 @@ const getList = async (id: string, params?: Record<string, any>) =>
                 listId: id,
                 count: 20,
             },
-            ['list', 'tweets_timeline', 'timeline']
-        )
-    );
+            ['list', 'tweets_timeline', 'timeline'],
+        ),
+    )
 
 const getUser = async (id: string) => {
-    const userData: any = await getUserData(id);
+    const userData: any = await getUserData(id)
     return {
         profile_image_url: userData.data?.user?.result?.avatar?.image_url,
         ...userData.data?.user?.result?.core,
         ...(userData.data?.user || userData.data?.user_result)?.result?.legacy,
-    };
-};
+    }
+}
 
 const getHomeTimeline = async (id: string, params?: Record<string, any>) =>
     gatherLegacyFromData(
@@ -184,9 +184,9 @@ const getHomeTimeline = async (id: string, params?: Record<string, any>) =>
                 requestContext: 'launch',
                 withCommunity: true,
             },
-            ['home', 'home_timeline_urt']
-        )
-    );
+            ['home', 'home_timeline_urt'],
+        ),
+    )
 
 const getHomeLatestTimeline = async (id: string, params?: Record<string, any>) =>
     gatherLegacyFromData(
@@ -201,9 +201,9 @@ const getHomeLatestTimeline = async (id: string, params?: Record<string, any>) =
                 requestContext: 'launch',
                 withCommunity: true,
             },
-            ['home', 'home_timeline_urt']
-        )
-    );
+            ['home', 'home_timeline_urt'],
+        ),
+    )
 
 export default {
     getUser,
@@ -217,4 +217,4 @@ export default {
     getHomeTimeline,
     getHomeLatestTimeline,
     init: initGqlMap,
-};
+}

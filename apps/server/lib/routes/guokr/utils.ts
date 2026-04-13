@@ -1,8 +1,8 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const parseList = (result) =>
     result.map((item) => ({
@@ -14,25 +14,25 @@ export const parseList = (result) =>
         category: item.subject?.name,
         id: item.id,
         channels: item.channels,
-    }));
+    }))
 
 export const parseItem = (item) =>
     cache.tryGet(item.link, async () => {
-        const { data: res } = await got(`https://apis.guokr.com/minisite/article/${item.id}.json`);
-        const $ = cheerio.load(res.result.content);
+        const { data: res } = await got(`https://apis.guokr.com/minisite/article/${item.id}.json`)
+        const $ = cheerio.load(res.result.content)
 
-        $('#meta_content').remove();
+        $('#meta_content').remove()
         $('div').each((_, elem) => {
-            const $elem = $(elem);
-            $elem.attr('style', $elem.attr('style')?.replaceAll(/(?:display:\s*none|visibility:\s*hidden|opacity:\s*0);?/g, ''));
-        });
+            const $elem = $(elem)
+            $elem.attr('style', $elem.attr('style')?.replaceAll(/(?:display:\s*none|visibility:\s*hidden|opacity:\s*0);?/g, ''))
+        })
         $('img').each((_, elem) => {
-            const $elem = $(elem);
+            const $elem = $(elem)
             if ($elem.attr('data-src')) {
-                $elem.attr('src', $elem.attr('data-src'));
+                $elem.attr('src', $elem.attr('data-src'))
             }
-        });
-        item.description = $.html();
+        })
+        item.description = $.html()
 
-        return item;
-    });
+        return item
+    })

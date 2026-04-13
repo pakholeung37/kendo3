@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getBoards, rootUrl } from './utils';
+import { getBoards, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/student5/boards',
@@ -19,10 +19,10 @@ export const route: Route = {
     name: '看板列表',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler() {
-    const items = await getBoards(cache.tryGet);
+    const items = await getBoards(cache.tryGet)
 
     return {
         title: 'Zuvio 校園話題列表 - 大學生論壇',
@@ -31,5 +31,5 @@ async function handler() {
         link: `${rootUrl}/articles`,
         item: items,
         language: 'zh-Hant',
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiRootUrl, ProcessItems, rootUrl } from './utils';
+import { apiRootUrl, ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/latest',
@@ -26,22 +26,22 @@ export const route: Route = {
     maintainers: ['5upernova-heng'],
     handler,
     url: 'hk01.com/latest',
-};
+}
 
 async function handler(ctx) {
-    const currentUrl = `${rootUrl}/latest`;
-    const apiUrl = `${apiRootUrl}/v2/page/latest`;
+    const currentUrl = `${rootUrl}/latest`
+    const apiUrl = `${apiRootUrl}/v2/page/latest`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    const items = await ProcessItems(response.data.items, ctx.req.query('limit'), cache.tryGet);
+    const items = await ProcessItems(response.data.items, ctx.req.query('limit'), cache.tryGet)
 
     return {
         title: '即時 | 香港01',
         link: currentUrl,
         item: items,
-    };
+    }
 }

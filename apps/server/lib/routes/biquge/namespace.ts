@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '笔趣阁',
@@ -25,4 +25,4 @@ export const namespace: Namespace = {
 | [https://www.ishuquge.com](https://www.ishuquge.com) | 书趣阁     |
 | [https://www.mayiwxw.com](https://www.mayiwxw.com)   | 蚂蚁文学   |`,
     lang: 'zh-CN',
-};
+}

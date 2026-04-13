@@ -1,55 +1,55 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import fs from 'node:fs'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 export type DirectoryImportOptions = {
-    targetDirectoryPath: string;
-    importPattern?: RegExp;
-    includeSubdirectories?: boolean;
-};
+    targetDirectoryPath: string
+    importPattern?: RegExp
+    includeSubdirectories?: boolean
+}
 
-const VALID_IMPORT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.json']);
+const VALID_IMPORT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.json'])
 
 const readDirectory = (targetDirectoryPath: string, includeSubdirectories: boolean): string[] => {
-    const entries = fs.readdirSync(targetDirectoryPath, { withFileTypes: true });
-    const files: string[] = [];
+    const entries = fs.readdirSync(targetDirectoryPath, { withFileTypes: true })
+    const files: string[] = []
 
     for (const entry of entries) {
-        const fullPath = path.join(targetDirectoryPath, entry.name);
+        const fullPath = path.join(targetDirectoryPath, entry.name)
         if (entry.isDirectory()) {
             if (includeSubdirectories) {
-                files.push(...readDirectory(fullPath, includeSubdirectories));
+                files.push(...readDirectory(fullPath, includeSubdirectories))
             }
-            continue;
+            continue
         }
 
         if (entry.isFile()) {
-            files.push(fullPath);
+            files.push(fullPath)
         }
     }
 
-    return files;
-};
+    return files
+}
 
 export const directoryImport = async ({ targetDirectoryPath, importPattern = /.*/, includeSubdirectories = true }: DirectoryImportOptions) => {
-    const modules: Record<string, unknown> = {};
-    const filesPaths = readDirectory(targetDirectoryPath, includeSubdirectories);
+    const modules: Record<string, unknown> = {}
+    const filesPaths = readDirectory(targetDirectoryPath, includeSubdirectories)
 
     await Promise.all(
         filesPaths.map(async (filePath) => {
-            const { ext: fileExtension } = path.parse(filePath);
-            const isValidModuleExtension = VALID_IMPORT_EXTENSIONS.has(fileExtension);
-            const isDeclarationFile = filePath.endsWith('.d.ts') || filePath.endsWith('.d.tsx');
-            const isValidFilePath = importPattern.test(filePath);
+            const { ext: fileExtension } = path.parse(filePath)
+            const isValidModuleExtension = VALID_IMPORT_EXTENSIONS.has(fileExtension)
+            const isDeclarationFile = filePath.endsWith('.d.ts') || filePath.endsWith('.d.tsx')
+            const isValidFilePath = importPattern.test(filePath)
 
             if (!isValidModuleExtension || isDeclarationFile || !isValidFilePath) {
-                return;
+                return
             }
 
-            const relativeModulePath = filePath.slice(targetDirectoryPath.length);
-            modules[relativeModulePath] = await import(pathToFileURL(filePath).href);
-        })
-    );
+            const relativeModulePath = filePath.slice(targetDirectoryPath.length)
+            modules[relativeModulePath] = await import(pathToFileURL(filePath).href)
+        }),
+    )
 
-    return modules;
-};
+    return modules
+}

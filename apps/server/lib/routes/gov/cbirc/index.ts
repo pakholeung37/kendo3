@@ -1,31 +1,31 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const { id = '915' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 18;
+    const { id = '915' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 18
 
-    const rootUrl = 'https://www.nfra.gov.cn';
-    const apiUrl = new URL(`cn/static/data/DocInfo/SelectDocByItemIdAndChild/data_itemId=${id},pageIndex=1,pageSize=18.json`, rootUrl).href;
-    const apiBreadUrl = new URL(`cn/static/data/item/getItemBread/data_itemId=${id}.json`, rootUrl).href;
+    const rootUrl = 'https://www.nfra.gov.cn'
+    const apiUrl = new URL(`cn/static/data/DocInfo/SelectDocByItemIdAndChild/data_itemId=${id},pageIndex=1,pageSize=18.json`, rootUrl).href
+    const apiBreadUrl = new URL(`cn/static/data/item/getItemBread/data_itemId=${id}.json`, rootUrl).href
 
-    const breadResponse = await ofetch(apiBreadUrl);
+    const breadResponse = await ofetch(apiBreadUrl)
 
-    const item = breadResponse.data.find((b) => String(b.itemId) === id);
+    const item = breadResponse.data.find((b) => String(b.itemId) === id)
 
-    const currentUrl = new URL(`cn/view/pages/ItemList.html?itemPId=${item.itemPid}&itemId=${id}&itemUrl=ItemListRightList.html`, rootUrl).href;
+    const currentUrl = new URL(`cn/view/pages/ItemList.html?itemPId=${item.itemPid}&itemId=${id}&itemUrl=ItemListRightList.html`, rootUrl).href
 
-    const response = await ofetch(apiUrl);
+    const response = await ofetch(apiUrl)
 
     let items = response.data.rows.slice(0, limit).map((item) => {
-        const title = item.docTitle;
-        const description = item.docSubtitle;
-        const guid = item.docId;
+        const title = item.docTitle
+        const description = item.docSubtitle
+        const guid = item.docId
 
         return {
             title,
@@ -41,52 +41,52 @@ export const handler = async (ctx) => {
             enclosure_url: new URL(item.pdfFileUrl, rootUrl).href,
             enclosure_type: 'application/pdf',
             enclosure_title: title,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const apiDocUrl = new URL(`cn/static/data/DocInfo/SelectByDocId/data_docId=${item.guid}.json`, rootUrl).href;
+                const apiDocUrl = new URL(`cn/static/data/DocInfo/SelectByDocId/data_docId=${item.guid}.json`, rootUrl).href
 
-                const detailResponse = await ofetch(apiDocUrl);
+                const detailResponse = await ofetch(apiDocUrl)
 
-                const data = detailResponse.data;
+                const data = detailResponse.data
 
-                const $$ = load(data.docClob);
+                const $$ = load(data.docClob)
 
-                const title = data.docTitle;
-                const description = $$('div.Section0').html();
+                const title = data.docTitle
+                const description = $$('div.Section0').html()
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = timezone(parseDate(data.publishDate), +8);
-                item.category = data.listTwoItem?.[0]?.ItemLvs.map((c) => c.itemName);
-                item.author = data.docSource;
-                item.guid = `cbirc-${item.guid}`;
-                item.id = item.guid;
+                item.title = title
+                item.description = description
+                item.pubDate = timezone(parseDate(data.publishDate), +8)
+                item.category = data.listTwoItem?.[0]?.ItemLvs.map((c) => c.itemName)
+                item.author = data.docSource
+                item.guid = `cbirc-${item.guid}`
+                item.id = item.guid
                 item.content = {
                     html: description,
                     text: $$('div.Section0').text(),
-                };
-                item.updated = parseDate(data.docEditdate);
-                item.language = $$('html').prop('lang') || '';
+                }
+                item.updated = parseDate(data.docEditdate)
+                item.language = $$('html').prop('lang') || ''
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const currentResponse = await ofetch(currentUrl);
+    const currentResponse = await ofetch(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    $('a.lyxd').remove();
+    $('a.lyxd').remove()
 
-    const language = $('html').prop('lang') || '';
+    const language = $('html').prop('lang') || ''
 
-    const imageSrc = $('div.header-left img').prop('src');
-    const image = imageSrc ? new URL(imageSrc, rootUrl).href : '';
+    const imageSrc = $('div.header-left img').prop('src')
+    const image = imageSrc ? new URL(imageSrc, rootUrl).href : ''
 
     return {
         title: `${$('title').text()} - ${item.itemName}`,
@@ -97,8 +97,8 @@ export const handler = async (ctx) => {
         image,
         author: item.type,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/cbirc/:id?',
@@ -187,10 +187,10 @@ export const route: Route = {
         {
             source: ['www.cbirc.gov.cn/:id?'],
             target: (_, url) => {
-                const urlObj = new URL(url.toString());
-                const id = urlObj.searchParams.get('itemId');
+                const urlObj = new URL(url.toString())
+                const id = urlObj.searchParams.get('itemId')
 
-                return `/gov/cbirc${id ? `/${id}` : ''}`;
+                return `/gov/cbirc${id ? `/${id}` : ''}`
             },
         },
         {
@@ -369,4 +369,4 @@ export const route: Route = {
             target: '/cbirc/4229',
         },
     ],
-};
+}

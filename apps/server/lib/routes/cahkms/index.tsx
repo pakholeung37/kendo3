@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const titles = {
     '01': '关于我们',
@@ -19,7 +19,7 @@ const titles = {
     '09': '港澳研究',
     10: '最新书讯',
     11: '研究资讯',
-};
+}
 
 export const route: Route = {
     path: '/:category?',
@@ -50,18 +50,18 @@ export const route: Route = {
 | 港澳时评 | 图片新闻 | 视频中心 | 港澳研究 | 最新书讯 | 研究资讯 |
 | -------- | -------- | -------- | -------- | -------- | -------- |
 | 06       | 07       | 08       | 09       | 10       | 11       |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '03';
+    const category = ctx.req.param('category') ?? '03'
 
-    const rootUrl = 'http://www.cahkms.org';
-    const currentUrl = `${rootUrl}/HKMAC/indexMac/getRightList?dm=${category}&page=1&countPage=${ctx.req.query('limit') ?? 10}`;
+    const rootUrl = 'http://www.cahkms.org'
+    const currentUrl = `${rootUrl}/HKMAC/indexMac/getRightList?dm=${category}&page=1&countPage=${ctx.req.query('limit') ?? 10}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
     let items = response.data
         .filter((item) => item.ID)
@@ -70,7 +70,7 @@ async function handler(ctx) {
             description: `<p>${item.GJZ}</p>`,
             pubDate: timezone(parseDate(item.JDRQ), +8),
             link: `${rootUrl}/HKMAC/indexMac/getWzxx?id=${item.ID}`,
-        }));
+        }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -78,10 +78,10 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                item.author = detailResponse.data.WZLY;
-                const video = detailResponse.data.VIDEO.indexOf('.mp4') > 0 ? detailResponse.data.VIDEO : null;
+                item.author = detailResponse.data.WZLY
+                const video = detailResponse.data.VIDEO.indexOf('.mp4') > 0 ? detailResponse.data.VIDEO : null
                 item.description = renderToString(
                     <>
                         {detailResponse.data.URL ? <img src={`${rootUrl}${detailResponse.data.URL}`} /> : null}
@@ -104,18 +104,18 @@ async function handler(ctx) {
                                 ))}
                             </>
                         ) : null}
-                    </>
-                );
-                item.link = `${rootUrl}/HKMAC/webView/mc/AboutUs_1.html?${category}&${titles[category]}`;
+                    </>,
+                )
+                item.link = `${rootUrl}/HKMAC/webView/mc/AboutUs_1.html?${category}&${titles[category]}`
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${titles[category]} - 全国港澳研究会`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

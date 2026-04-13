@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { appsUrl, fixImg, newsUrl } from '../utils';
+import { appsUrl, fixImg, newsUrl } from '../utils'
 
 export const route: Route = {
     path: '/apps/:lang?/post/:id',
@@ -24,20 +24,20 @@ export const route: Route = {
     name: 'Game Store - Article',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id, lang = '' } = ctx.req.param();
-    const link = `${appsUrl}${lang ? `/${lang}` : ''}/app-post/${id}`;
+    const { id, lang = '' } = ctx.req.param()
+    const link = `${appsUrl}${lang ? `/${lang}` : ''}/app-post/${id}`
 
-    const { data: response } = await got(link);
-    const $ = load(response);
+    const { data: response } = await got(link)
+    const $ = load(response)
 
     const list = $('.qoo-post-item')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a');
+            item = $(item)
+            const a = item.find('a')
             return {
                 title: a.attr('title'),
                 link: a.attr('href'),
@@ -45,29 +45,29 @@ async function handler(ctx) {
                 pubDate: timezone(parseDate(item.find('time').text(), 'YYYY-MM-DD HH:mm'), 8),
                 author: item.find('cite.name').text(),
                 postId: a.attr('href').split('/').pop(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${newsUrl}${lang ? `/${lang}` : ''}/wp-json/wp/v2/posts/${item.postId}`);
-                const $ = load(data.content.rendered, null, false);
+                const { data } = await got(`${newsUrl}${lang ? `/${lang}` : ''}/wp-json/wp/v2/posts/${item.postId}`)
+                const $ = load(data.content.rendered, null, false)
 
-                fixImg($);
+                fixImg($)
 
-                item.description = $.html();
-                item.pubDate = parseDate(data.date_gmt);
+                item.description = $.html()
+                item.pubDate = parseDate(data.date_gmt)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         link,
         language: $('html').attr('lang'),
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/today',
@@ -25,7 +25,7 @@ export const route: Route = {
     maintainers: ['KotoriK'],
     handler,
     url: 'niaogebiji.com/',
-};
+}
 
 async function handler() {
     const response = await got({
@@ -36,13 +36,13 @@ async function handler() {
             pub_time: '',
             isfromajax: 1,
         },
-    });
+    })
 
     if (response.data.return_code !== '200') {
-        throw new Error(response.data.return_msg);
+        throw new Error(response.data.return_msg)
     }
 
-    const data = response.data.return_data;
+    const data = response.data.return_data
 
     return {
         title: '鸟哥笔记-今日事',
@@ -56,5 +56,5 @@ async function handler() {
             category: item.seo_keywords.split(','),
             author: item.user_info.nickname,
         })),
-    };
+    }
 }

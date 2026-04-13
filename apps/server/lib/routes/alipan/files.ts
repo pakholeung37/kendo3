@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { AnonymousShareInfo, ShareList, TokenResponse } from './types';
+import type { AnonymousShareInfo, ShareList, TokenResponse } from './types'
 
 export const route: Route = {
     path: '/files/:share_id/:parent_file_id?',
@@ -17,17 +17,17 @@ export const route: Route = {
     maintainers: ['DIYgod'],
     handler,
     url: 'www.alipan.com/s',
-};
+}
 
 async function handler(ctx) {
-    const { share_id, parent_file_id } = ctx.req.param();
-    const url = `https://www.aliyundrive.com/s/${share_id}${parent_file_id ? `/folder/${parent_file_id}` : ''}`;
+    const { share_id, parent_file_id } = ctx.req.param()
+    const url = `https://www.aliyundrive.com/s/${share_id}${parent_file_id ? `/folder/${parent_file_id}` : ''}`
 
     const headers = {
         referer: 'https://www.aliyundrive.com/',
         origin: 'https://www.aliyundrive.com',
         'x-canary': 'client=web,app=share,version=v2.3.1',
-    };
+    }
 
     const shareRes = await ofetch<AnonymousShareInfo>('https://api.aliyundrive.com/adrive/v3/share_link/get_share_by_anonymous', {
         method: 'POST',
@@ -38,7 +38,7 @@ async function handler(ctx) {
         body: {
             share_id,
         },
-    });
+    })
 
     const tokenRes = await ofetch<TokenResponse>('https://api.aliyundrive.com/v2/share_link/get_share_token', {
         method: 'POST',
@@ -46,8 +46,8 @@ async function handler(ctx) {
         body: {
             share_id,
         },
-    });
-    const shareToken = tokenRes.share_token;
+    })
+    const shareToken = tokenRes.share_token
 
     const listRes = await ofetch<ShareList>('https://api.aliyundrive.com/adrive/v2/file/list_by_share', {
         method: 'POST',
@@ -62,7 +62,7 @@ async function handler(ctx) {
             parent_file_id: parent_file_id || 'root',
             share_id,
         },
-    });
+    })
 
     const result = listRes.items.map((item) => ({
         title: item.name,
@@ -71,11 +71,11 @@ async function handler(ctx) {
         pubDate: parseDate(item.created_at),
         updated: parseDate(item.updated_at),
         guid: item.file_id,
-    }));
+    }))
 
     return {
         title: `${shareRes.display_name || `${share_id}${parent_file_id ? `-${parent_file_id}` : ''}`}-阿里云盘`,
         link: url,
         item: result,
-    };
+    }
 }

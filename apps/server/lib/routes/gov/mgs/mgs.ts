@@ -1,13 +1,13 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { gdgov } from '../general/general';
+import { gdgov } from '../general/general'
 
 export const route: Route = {
     path: '/mgs/*',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
     const info = {
@@ -23,6 +23,6 @@ async function handler(ctx) {
         pubDate_element: '.note > span:nth-child(1)',
         pubDate_match: '时间：(.*)',
         pubDate_format: undefined,
-    };
-    await gdgov(info, ctx);
+    }
+    await gdgov(info, ctx)
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 const renderDescription = (description, images) =>
     renderToString(
@@ -14,8 +14,8 @@ const renderDescription = (description, images) =>
             {images?.map((image) => (
                 <img src={image} />
             ))}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/search/:keyword',
@@ -33,52 +33,52 @@ export const route: Route = {
     name: '搜索',
     maintainers: ['CaoMeiYouRen'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
-    const url = `https://www.baidu.com/s?wd=${encodeURIComponent(keyword)}`;
-    const key = `baidu-search:${url}`;
+    const keyword = ctx.req.param('keyword')
+    const url = `https://www.baidu.com/s?wd=${encodeURIComponent(keyword)}`
+    const key = `baidu-search:${url}`
 
     const items = await cache.tryGet(
         key,
         async () => {
-            const response = (await got(url)).data;
-            const visitedLinks = new Set();
-            const $ = load(response);
-            const contentLeft = $('#content_left');
-            const containers = contentLeft.find('.c-container');
+            const response = (await got(url)).data
+            const visitedLinks = new Set()
+            const $ = load(response)
+            const contentLeft = $('#content_left')
+            const containers = contentLeft.find('.c-container')
             return containers
                 .toArray()
                 .map((el) => {
-                    const element = $(el);
-                    const link = element.find('h3 a').first().attr('href');
+                    const element = $(el)
+                    const link = element.find('h3 a').first().attr('href')
                     if (link && !visitedLinks.has(link)) {
-                        visitedLinks.add(link);
+                        visitedLinks.add(link)
                         const imgs = element
                             .find('img')
                             .toArray()
-                            .map((_el) => $(_el).attr('src'));
-                        const description = element.find('.c-gap-top-small [class^="content-right_"]').first().text() || element.find('.c-row').first().text() || element.find('.cos-row').first().text();
+                            .map((_el) => $(_el).attr('src'))
+                        const description = element.find('.c-gap-top-small [class^="content-right_"]').first().text() || element.find('.c-row').first().text() || element.find('.cos-row').first().text()
                         return {
                             title: element.find('h3').first().text(),
                             description: renderDescription(description, imgs),
                             link: element.find('h3 a').first().attr('href'),
                             author: element.find('.c-row .c-color-gray').first().text() || '',
-                        };
+                        }
                     }
-                    return null;
+                    return null
                 })
-                .filter((e) => e?.link);
+                .filter((e) => e?.link)
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     return {
         title: `${keyword} - 百度搜索`,
         description: `${keyword} - 百度搜索`,
         link: url,
         item: items,
-    };
+    }
 }

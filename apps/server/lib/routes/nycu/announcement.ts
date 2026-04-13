@@ -1,38 +1,38 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import timezone from '@/utils/timezone';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import timezone from '@/utils/timezone'
 
 async function handler(ctx: Context): Promise<Data> {
-    const type = ctx.req.param('type') ?? '5';
-    const url = `https://infonews.nycu.edu.tw/index.php?SuperType=${type}&action=more&pagekey=1&categoryid=all`;
+    const type = ctx.req.param('type') ?? '5'
+    const url = `https://infonews.nycu.edu.tw/index.php?SuperType=${type}&action=more&pagekey=1&categoryid=all`
 
     const $ = await ofetch<CheerioAPI>(url, {
         parseResponse: load,
-    });
+    })
 
     const typeName =
         Object.fromEntries(
             $('#masterMenu1 #option li a')
                 .toArray()
                 .slice(1, -1)
-                .map((a) => [new URLSearchParams(($(a).attr('href') || '').replace('index.php', '')).get('SuperType'), $(a).text().replaceAll(/\s+/g, '')])
-        )[type] || '未知分類';
+                .map((a) => [new URLSearchParams(($(a).attr('href') || '').replace('index.php', '')).get('SuperType'), $(a).text().replaceAll(/\s+/g, '')]),
+        )[type] || '未知分類'
 
     const item = $('.category-style tr .style2')
         .toArray()
         .map((titleEle) => {
-            const date = $(titleEle).parent().next().find('td').text().split('-')[0]?.trim();
+            const date = $(titleEle).parent().next().find('td').text().split('-')[0]?.trim()
 
             return {
                 title: $(titleEle).attr('title')?.trim() || '',
                 link: $(titleEle).find('a').attr('href') || '',
                 pubDate: date ? timezone(date, 8) : undefined,
-            };
-        });
+            }
+        })
 
     return {
         title: `陽明交大交大校園公告 - ${typeName}`,
@@ -40,7 +40,7 @@ async function handler(ctx: Context): Promise<Data> {
         language: 'zh-TW',
         link: url,
         item,
-    };
+    }
 }
 
 export const route: Route = {
@@ -60,4 +60,4 @@ export const route: Route = {
     parameters: { type: '類型，見下表' },
     example: '/nycu/announcement/5',
     handler,
-};
+}

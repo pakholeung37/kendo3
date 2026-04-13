@@ -1,8 +1,8 @@
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/jk/:gid/:typeId/:sortType/:token',
@@ -76,12 +76,12 @@ export const route: Route = {
 | 1     | 2     | 4     |
 `,
     handler: async (ctx) => {
-        const { gid, typeId, sortType, token } = ctx.req.param();
+        const { gid, typeId, sortType, token } = ctx.req.param()
         const $post = ofetch.create({
             baseURL: 'https://jk.sicau.edu.cn/act/actInfo/v1.0.0',
             headers: { 'x-access-token': token },
             method: 'post',
-        });
+        })
         const query = async (page: number) =>
             await $post(`/getUserSchoolActList`, {
                 query: {
@@ -90,13 +90,13 @@ export const route: Route = {
                     sortType,
                     page,
                 },
-            });
+            })
 
-        const res = await Promise.all([query(1), query(2)]);
+        const res = await Promise.all([query(1), query(2)])
 
         for (const each of res) {
             if (each.code !== '0') {
-                throw new Error(each.message);
+                throw new Error(each.message)
             }
         }
 
@@ -107,33 +107,33 @@ export const route: Route = {
                 guid: each.id,
                 title: each.title,
                 image: each.logo,
-            }));
+            }))
 
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(String(item.id), async () => {
-                    const { code, message, content } = await $post(`/getActDetail?actId=${item.id}`);
+                    const { code, message, content } = await $post(`/getActDetail?actId=${item.id}`)
                     if (code === '0') {
-                        item.author = content.groupName;
-                        item.pubDate = timezone(parseDate(content.startDate, 'YYYY-MM-DD HH:mm:ss'), +8);
-                        item.category = [content.typeName, content.levelName];
-                        item.description = `<img src="${item.image}" alt="${item.title}" /><p style='white-space: pre-wrap'>${content.description}</p>`;
+                        item.author = content.groupName
+                        item.pubDate = timezone(parseDate(content.startDate, 'YYYY-MM-DD HH:mm:ss'), +8)
+                        item.category = [content.typeName, content.levelName]
+                        item.description = `<img src="${item.image}" alt="${item.title}" /><p style='white-space: pre-wrap'>${content.description}</p>`
 
-                        return item;
+                        return item
                     }
-                    throw new Error(message);
-                })
-            )
-        );
+                    throw new Error(message)
+                }),
+            ),
+        )
 
         return {
             title: '二课活动 - 四川农业大学',
             link: 'https://jk.sicau.edu.cn/act/actInfo/v1.0.0/getUserSchoolActList',
             language: 'zh-cn',
             item: items as DataItem[],
-        };
+        }
     },
-};
+}
 
 const typeDict = {
     '0': '',
@@ -150,7 +150,7 @@ const typeDict = {
     '11': '1cee1aea9994489286fe2a7d42b6e21e',
     '12': '4f7a37aa8ca2452dbf5f44fc7cfa2679',
     '13': '7969c78baee34a6f90e029d95db18592',
-};
+}
 
 const gidDict = {
     '0': '',
@@ -207,4 +207,4 @@ const gidDict = {
     '51': 'fa5098c59a9c4db6b287744049053762',
     '52': 'fccf2f15e15a479ba9b5564efee436c7',
     '53': 'fcf30bbdd8004026ae9b447f2722aecf',
-};
+}

@@ -1,15 +1,15 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { getLocalName } from './utils';
+import { getLocalName } from './utils'
 
 const getEps = async (subjectID, showOriginalName) => {
-    const url = `https://api.bgm.tv/subject/${subjectID}?responseGroup=large`;
-    const epsInfo = await ofetch(url);
-    const activeEps = epsInfo.eps.filter((e) => e.status === 'Air');
+    const url = `https://api.bgm.tv/subject/${subjectID}?responseGroup=large`
+    const epsInfo = await ofetch(url)
+    const activeEps = epsInfo.eps.filter((e) => e.status === 'Air')
 
     return {
         title: getLocalName(epsInfo, showOriginalName),
@@ -21,11 +21,11 @@ const getEps = async (subjectID, showOriginalName) => {
                 <>
                     <img src={epsInfo.images.large || epsInfo.images.common} alt={`ep.${e.sort} ${e.name_cn || e.name}`} />
                     <p>{raw(e.desc.replaceAll('\r\n', '<br>'))}</p>
-                </>
+                </>,
             ),
             pubDate: parseDate(e.airdate),
             link: e.url.replace('http:', 'https:'),
         })),
-    };
-};
-export default getEps;
+    }
+}
+export default getEps

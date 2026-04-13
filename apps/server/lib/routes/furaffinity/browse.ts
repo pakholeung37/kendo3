@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/browse/:mode?',
@@ -25,13 +25,13 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { mode = 'sfw' } = ctx.req.param();
-    let url = 'https://faexport.spangle.org.uk/browse.json?sfw=1';
+    const { mode = 'sfw' } = ctx.req.param()
+    let url = 'https://faexport.spangle.org.uk/browse.json?sfw=1'
     if (mode === 'nsfw') {
-        url = 'https://faexport.spangle.org.uk/browse.json';
+        url = 'https://faexport.spangle.org.uk/browse.json'
     }
 
     const data = await ofetch(url, {
@@ -39,7 +39,7 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
     const items = data.map((item) => ({
         title: item.title,
@@ -48,12 +48,12 @@ async function handler(ctx) {
         description: `<img src="${item.thumbnail}">`,
         // 由于源API未提供日期，故无pubDate
         author: item.name,
-    }));
+    }))
 
     return {
         title: 'Fur Affinity | Browse',
         link: 'https://www.furaffinity.net/browse/',
         description: `Fur Affinity Browsing Artwork`,
         item: items,
-    };
+    }
 }

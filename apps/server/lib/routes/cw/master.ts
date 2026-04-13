@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
-import { baseUrl, parsePage } from './utils';
+import { baseUrl, parsePage } from './utils'
 
 export const route: Route = {
     path: '/master/:channel',
@@ -34,14 +34,14 @@ export const route: Route = {
 | 時尚品味   | 11        |
 | 運動生活   | 103       |
 | 重磅外媒   | 16        |`,
-};
+}
 
 async function handler(ctx) {
-    const browser = await puppeteer();
+    const browser = await puppeteer()
 
-    const { $, items } = await parsePage('master', browser, ctx);
+    const { $, items } = await parsePage('master', browser, ctx)
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: $('head title').text(),
@@ -50,5 +50,5 @@ async function handler(ctx) {
         image: `${baseUrl}/assets_new/img/fbshare.jpg`,
         language: $('meta[property="og:locale"]').attr('content'),
         item: items,
-    };
+    }
 }

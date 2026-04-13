@@ -1,16 +1,16 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ChartData = {
-    title?: string;
-    subtitle?: string;
-    fallback?: string;
-    chartAlt?: string;
-    chartId?: string;
-    url?: string;
-    source?: string;
-    footnote?: string;
-};
+    title?: string
+    subtitle?: string
+    fallback?: string
+    chartAlt?: string
+    chartId?: string
+    url?: string
+    source?: string
+    footnote?: string
+}
 
 export const renderChartMedia = ({ chart }: { chart: ChartData }) =>
     renderToString(
@@ -40,5 +40,5 @@ export const renderChartMedia = ({ chart }: { chart: ChartData }) =>
                     {chart.footnote ? <p>{chart.footnote}</p> : null}
                 </figcaption>
             ) : null}
-        </figure>
-    );
+        </figure>,
+    )

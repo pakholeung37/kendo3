@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const renderTitle = ({ line, latency, loss, speed, node, ip }) =>
     renderToString(
         <>
             [{line} | {latency} | {loss} | {speed} | {node}] {ip}
-        </>
-    );
+        </>,
+    )
 
 const renderDescription = ({ line, latency, loss, speed, node, ip }) =>
     renderToString(
@@ -42,14 +42,14 @@ const renderDescription = ({ line, latency, loss, speed, node, ip }) =>
                     <td>{ip}</td>
                 </tr>
             </tbody>
-        </table>
-    );
+        </table>,
+    )
 
 const lines = {
     CM: '中国移动',
     CU: '中国联通',
     CT: '中国电信',
-};
+}
 
 export const route: Route = {
     path: '/cloudflareyes/:type?',
@@ -70,21 +70,21 @@ export const route: Route = {
     description: `| v4 | v6 |
 | -- | -- |
 |    | v6 |`,
-};
+}
 
 async function handler(ctx) {
-    const { type = 'v4' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { type = 'v4' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const domain = 'hostmonit.com';
-    const title = `CloudFlareYes${type === 'v6' ? type.toUpperCase() : ''}`;
+    const domain = 'hostmonit.com'
+    const title = `CloudFlareYes${type === 'v6' ? type.toUpperCase() : ''}`
 
-    const rootUrl = `https://stock.${domain}`;
-    const rootApiUrl = `https://api.${domain}`;
-    const apiUrl = new URL('get_optimization_ip', rootApiUrl).href;
-    const currentUrl = new URL(title, rootUrl).href;
+    const rootUrl = `https://stock.${domain}`
+    const rootApiUrl = `https://api.${domain}`
+    const apiUrl = new URL('get_optimization_ip', rootApiUrl).href
+    const currentUrl = new URL(title, rootUrl).href
 
-    const key = 'iDetkOys';
+    const key = 'iDetkOys'
 
     const { data: response } = await got.post(apiUrl, {
         json: {
@@ -95,16 +95,16 @@ async function handler(ctx) {
                   }
                 : {}),
         },
-    });
+    })
 
     const items = response.info.slice(0, limit).map((item) => {
-        const ip = item.ip;
-        const latency = item.latency === undefined ? undefined : `${item.latency}ms`;
-        const line = item.line === undefined ? undefined : Object.hasOwn(lines, item.line) ? lines[item.line] : item.line;
-        const loss = item.loss === undefined ? undefined : `${item.loss}%`;
-        const node = item.node;
-        const speed = item.speed === undefined ? undefined : `${item.speed} KB/s`;
-        const pubDate = timezone(parseDate(item.time), +8);
+        const ip = item.ip
+        const latency = item.latency === undefined ? undefined : `${item.latency}ms`
+        const line = item.line === undefined ? undefined : Object.hasOwn(lines, item.line) ? lines[item.line] : item.line
+        const loss = item.loss === undefined ? undefined : `${item.loss}%`
+        const node = item.node
+        const speed = item.speed === undefined ? undefined : `${item.speed} KB/s`
+        const pubDate = timezone(parseDate(item.time), +8)
 
         return {
             title: renderTitle({
@@ -128,14 +128,14 @@ async function handler(ctx) {
             category: [line, latency, loss, node].filter(Boolean),
             guid: `${domain}-${title}-${ip}#${pubDate.toISOString()}`,
             pubDate,
-        };
-    });
+        }
+    })
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href;
+    const icon = new URL($('link[rel="icon"]').prop('href'), rootUrl).href
 
     return {
         item: items,
@@ -148,5 +148,5 @@ async function handler(ctx) {
         subtitle: title,
         author: $('title').text().split(/\s-/)[0],
         allowEmpty: true,
-    };
+    }
 }

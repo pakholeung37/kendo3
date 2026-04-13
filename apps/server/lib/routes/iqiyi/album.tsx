@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/album/:id',
@@ -25,28 +25,28 @@ export const route: Route = {
     description: `::: tip
   可抓取內容根据服务器所在地区而定
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const { data: response } = await got(`https://www.iq.com/album/${id}`);
+    const { data: response } = await got(`https://www.iq.com/album/${id}`)
 
-    const $ = load(response);
-    const nextData = JSON.parse($('#__NEXT_DATA__').text());
-    const { album } = nextData.props.initialState;
+    const $ = load(response)
+    const nextData = JSON.parse($('#__NEXT_DATA__').text())
+    const { album } = nextData.props.initialState
 
     const {
         data: { data: baseInfo },
-    } = await got(`https://pcw-api.iqiyi.com/album/album/baseinfo/${album.videoAlbumInfo.albumId}`);
+    } = await got(`https://pcw-api.iqiyi.com/album/album/baseinfo/${album.videoAlbumInfo.albumId}`)
 
     if (Object.keys(album.cacheAlbumList).length === 0) {
-        throw new InvalidParameterError(`${baseInfo.name} is not available in this server region.`);
+        throw new InvalidParameterError(`${baseInfo.name} is not available in this server region.`)
     }
 
-    let pos = 1;
-    let hasMore: boolean;
-    let epgs = [];
+    let pos = 1
+    let hasMore: boolean
+    let epgs = []
     do {
         const {
             data: { data },
@@ -59,18 +59,18 @@ async function handler(ctx) {
                 endOrder: album.videoAlbumInfo.maxOrder,
                 startOrder: pos,
             },
-        });
-        epgs = [...epgs, ...data.epg];
-        pos = data.pos;
-        hasMore = data.hasMore;
-    } while (hasMore);
+        })
+        epgs = [...epgs, ...data.epg]
+        pos = data.pos
+        hasMore = data.hasMore
+    } while (hasMore)
 
     const items = epgs.map((item) => ({
         title: item.name,
         description: renderToString(<img src={`https:${item.pic.replace('http:', 'https:')}`} />),
         link: `https://www.iq.com/play/${item.playLocSuffix}`,
         pubDate: parseDate(item.initIssueTime),
-    }));
+    }))
 
     return {
         title: baseInfo.name,
@@ -79,5 +79,5 @@ async function handler(ctx) {
         link: `https://www.iq.com/album/${album.videoAlbumInfo.albumLocSuffix}`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

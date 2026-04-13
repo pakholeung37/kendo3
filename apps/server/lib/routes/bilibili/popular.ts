@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/popular/all/:embed?',
@@ -21,18 +21,18 @@ export const route: Route = {
     name: '综合热门',
     maintainers: ['ziminliu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const embed = !ctx.req.param('embed');
+    const embed = !ctx.req.param('embed')
     const response = await got({
         method: 'get',
         url: `https://api.bilibili.com/x/web-interface/popular`,
         headers: {
             Referer: 'https://www.bilibili.com/',
         },
-    });
-    const list = response.data.data.list;
+    })
+    const list = response.data.data.list
 
     return {
         title: `bilibili 综合热门`,
@@ -47,5 +47,5 @@ async function handler(ctx) {
                 link: item.pubdate > utils.bvidTime && item.bvid ? `https://www.bilibili.com/video/${item.bvid}` : `https://www.bilibili.com/video/av${item.aid}`,
                 author: item.owner.name,
             })),
-    };
+    }
 }

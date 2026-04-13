@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export async function getNotifList() {
     try {
@@ -10,35 +10,35 @@ export async function getNotifList() {
             headers: {
                 'User-Agent': config.ua,
             },
-        });
-        const html = response.body;
-        const $ = load(html);
+        })
+        const html = response.body
+        const $ = load(html)
 
-        const listElement = $('body > div.wrapper > main > section > div > div > div.news > div > ul');
+        const listElement = $('body > div.wrapper > main > section > div > div > div.news > div > ul')
         return listElement
             .find('article')
             .toArray()
             .map((articleElement) => {
-                const titleElement = $(articleElement).find('li > div > div.news-text > h4 > a');
-                const timeElement = $(articleElement).find('li > div > div.news-text > span');
-                const imageElement = $(articleElement).find('li > div > div.news-img > a > img');
+                const titleElement = $(articleElement).find('li > div > div.news-text > h4 > a')
+                const timeElement = $(articleElement).find('li > div > div.news-text > span')
+                const imageElement = $(articleElement).find('li > div > div.news-img > a > img')
 
-                const link = titleElement.attr('href');
-                const title = titleElement.attr('title');
-                const pubDate = timeElement.text().trim();
+                const link = titleElement.attr('href')
+                const title = titleElement.attr('title')
+                const pubDate = timeElement.text().trim()
 
                 return {
                     title,
                     link,
                     itunes_item_image: imageElement.attr('src'),
                     pubDate: parseDate(pubDate, 'YYYY-MM-DD'),
-                };
-            });
+                }
+            })
     } catch {
         // console.error(error);
     }
 
-    return [];
+    return []
 }
 
 export async function getArticle(item) {
@@ -47,17 +47,17 @@ export async function getArticle(item) {
             headers: {
                 'User-Agent': config.ua,
             },
-        });
-        const html = response.body;
-        const $ = load(html);
-        const articleContentElement = $('body > div > main > section > div > div > div.post-content-contaier > div');
-        const content = articleContentElement.html();
+        })
+        const html = response.body
+        const $ = load(html)
+        const articleContentElement = $('body > div > main > section > div > div > div.post-content-contaier > div')
+        const content = articleContentElement.html()
 
-        item.description = content;
-        return item;
+        item.description = content
+        return item
     } catch {
         // console.error(error);
     }
 
-    return item;
+    return item
 }

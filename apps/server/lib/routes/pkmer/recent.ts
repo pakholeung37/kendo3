@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const baseUrl = 'https://pkmer.cn';
+const baseUrl = 'https://pkmer.cn'
 
 export const route: Route = {
     path: '/recent',
@@ -27,12 +27,12 @@ export const route: Route = {
     maintainers: ['Gnoyong'],
     handler,
     url: 'pkmer.cn/page/*',
-};
+}
 
 async function handler() {
-    const { data: response } = await got(`${baseUrl}/page/1/`);
-    const $ = load(response);
-    const items = process($);
+    const { data: response } = await got(`${baseUrl}/page/1/`)
+    const $ = load(response)
+    const items = process($)
 
     return {
         title: 'PKMer',
@@ -41,14 +41,14 @@ async function handler() {
         link: baseUrl,
         allowEmpty: true,
         item: items,
-    };
+    }
 }
 
 function process($) {
-    const container = $('#pages > div.grid > .relative');
+    const container = $('#pages > div.grid > .relative')
     const items = container.toArray().map((el) => {
-        el = $(el);
-        const title = el.find('h3');
+        el = $(el)
+        const title = el.find('h3')
         return {
             title: title.text().trim(),
             link: baseUrl + title.parent().attr('href'),
@@ -56,7 +56,7 @@ function process($) {
             pubDate: el.find('time').attr('datetime'),
             author: el.find('h4').text().trim(),
             itunes_item_image: el.find('img').attr('src'),
-        };
-    });
-    return items;
+        }
+    })
+    return items
 }

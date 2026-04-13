@@ -1,69 +1,69 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'ywdt/hjyw' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10);
+    const { category = 'ywdt/hjyw' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10)
 
-    const baseUrl = 'https://nnsa.mee.gov.cn';
-    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href;
+    const baseUrl = 'https://nnsa.mee.gov.cn'
+    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('a.cjcx_biaob, ul#div li a')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const title: string = $el.text();
-            const linkUrl: string | undefined = $el.attr('href');
+            const title: string = $el.text()
+            const linkUrl: string | undefined = $el.attr('href')
 
             const processedItem: DataItem = {
                 title,
                 link: linkUrl ? (linkUrl.startsWith('http') ? linkUrl : new URL(linkUrl as string, baseUrl).href) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('meta[name="ArticleTitle"]').attr('content') ?? item.title;
-                const description: string | undefined = $$('div.Custom_UnionStyle').html() ?? undefined;
-                const pubDateStr: string | undefined = $$('meta[name="PubDate"]').attr('content');
-                const categoryEls: Array<Cheerio<Element>> = [$$('meta[name="ColumnName"]'), $$('meta[name="ColumnType"]'), $$('meta[name="ContentSource"]'), $$('meta[name="source"]')];
-                const categories: string[] = [...new Set(categoryEls.map((el) => $$(el)?.attr('content') ?? '').filter(Boolean))];
+                const title: string = $$('meta[name="ArticleTitle"]').attr('content') ?? item.title
+                const description: string | undefined = $$('div.Custom_UnionStyle').html() ?? undefined
+                const pubDateStr: string | undefined = $$('meta[name="PubDate"]').attr('content')
+                const categoryEls: Array<Cheerio<Element>> = [$$('meta[name="ColumnName"]'), $$('meta[name="ColumnType"]'), $$('meta[name="ContentSource"]'), $$('meta[name="source"]')]
+                const categories: string[] = [...new Set(categoryEls.map((el) => $$(el)?.attr('content') ?? '').filter(Boolean))]
                 const authors: DataItem['author'] = [$$('meta[name="Author"]'), $$('meta[name="author"]'), $$('meta[name="source"]')]
                     .filter((authorEl) => $$(authorEl).attr('content'))
                     .map((authorEl) => {
-                        const $$authorEl: Cheerio<Element> = $$(authorEl);
+                        const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                         return {
                             name: $$authorEl.attr('content') ?? '',
-                        };
-                    });
-                const upDatedStr: string | undefined = pubDateStr;
+                        }
+                    })
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -77,15 +77,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -97,8 +97,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="SiteName"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/mee/nnsa/:category{.+}?',
@@ -345,4 +345,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

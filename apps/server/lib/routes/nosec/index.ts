@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import ofetch from '@/utils/ofetch'
 
-const baseUrl = 'https://nosec.org/home/ajaxindexdata';
+const baseUrl = 'https://nosec.org/home/ajaxindexdata'
 const keykinds = {
     threaten: '威胁情报',
     security: '安全动态',
@@ -13,7 +13,7 @@ const keykinds = {
     speech: '专题报告',
     skill: '技术分析',
     tool: '安全工具',
-};
+}
 
 export const route: Route = {
     path: '/:keykind?',
@@ -38,30 +38,30 @@ export const route: Route = {
             target: (params) => `/nosec${params.keykind ? `/${params.keybind.replace('.html', '')}` : ''}`,
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const csrfresponse = await ofetch.raw('https://nosec.org/home/index');
-    const $ = load(csrfresponse._data);
-    const token = $('meta[name="csrf-token"]').attr('content');
-    const cookies = csrfresponse.headers.getSetCookie().toString();
-    const xsrf_token = cookies.match(/XSRF-TOKEN=[^\s;]+/)[0];
-    const laravel_session = cookies.match(/laravel_session[^\s;]+/)[0];
+    const csrfresponse = await ofetch.raw('https://nosec.org/home/index')
+    const $ = load(csrfresponse._data)
+    const token = $('meta[name="csrf-token"]').attr('content')
+    const cookies = csrfresponse.headers.getSetCookie().toString()
+    const xsrf_token = cookies.match(/XSRF-TOKEN=[^\s;]+/)[0]
+    const laravel_session = cookies.match(/laravel_session[^\s;]+/)[0]
 
-    const keykind = ctx.req.param('keykind') || '';
-    let formdata;
-    let title;
-    let link;
+    const keykind = ctx.req.param('keykind') || ''
+    let formdata
+    let title
+    let link
 
     if (Object.hasOwn(keykinds, keykind)) {
-        formdata = `keykind=${keykind}&page=1`;
-        title = `NOSEC 安全讯息平台 - ${keykinds[keykind]}`;
-        link = `https://nosec.org/home/index/${keykind}.html`;
+        formdata = `keykind=${keykind}&page=1`
+        title = `NOSEC 安全讯息平台 - ${keykinds[keykind]}`
+        link = `https://nosec.org/home/index/${keykind}.html`
     } else {
         // keykind 未知时则获取全部
-        formdata = `keykind=&page=1`;
-        title = `NOSEC 安全讯息平台`;
-        link = `https://nosec.org/home/index`;
+        formdata = `keykind=&page=1`
+        title = `NOSEC 安全讯息平台`
+        link = `https://nosec.org/home/index`
     }
 
     const response = await got({
@@ -74,9 +74,9 @@ async function handler(ctx) {
             'X-CSRF-TOKEN': token,
         },
         body: formdata,
-    });
+    })
 
-    const data = response.data.data.threatData.data;
+    const data = response.data.data.threatData.data
 
     return {
         // 源标题
@@ -97,5 +97,5 @@ async function handler(ctx) {
             link: `https://nosec.org/home/detail/${item.id}.html`,
             author: item.username,
         })),
-    };
+    }
 }

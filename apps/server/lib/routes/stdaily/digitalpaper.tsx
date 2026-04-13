@@ -1,19 +1,19 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import type { ArticleDetailResponse, ArticleListResponse, DateListResponse, SectionListResponse } from './types';
+import type { ArticleDetailResponse, ArticleListResponse, DateListResponse, SectionListResponse } from './types'
 
-const SITE_ID = '811c18b08cf04e79be3b67d6902ee1a7';
-const CODE = 'KJRB';
-const API_HOST = 'https://epaper.stdaily.com/stdailynewspaperapi';
+const SITE_ID = '811c18b08cf04e79be3b67d6902ee1a7'
+const CODE = 'KJRB'
+const API_HOST = 'https://epaper.stdaily.com/stdailynewspaperapi'
 
 export const route: Route = {
     path: '/digitalpaper',
@@ -31,7 +31,7 @@ export const route: Route = {
             target: '/digitalpaper',
         },
     ],
-};
+}
 
 async function handler() {
     const dateListResponse = await ofetch<DateListResponse>(`${API_HOST}/uv/article/period/date`, {
@@ -41,9 +41,9 @@ async function handler() {
             date: dayjs(new Date(), 'YYYY-MM-01'),
         },
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    });
+    })
 
-    const lastDate = dateListResponse.obj.dateList.toSorted().at(-1);
+    const lastDate = dateListResponse.obj.dateList.toSorted().at(-1)
 
     const sectionListResponse = await ofetch<SectionListResponse>(`${API_HOST}/uv/article/period/periodTime`, {
         method: 'POST',
@@ -53,7 +53,7 @@ async function handler() {
             siteId: SITE_ID,
         },
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    });
+    })
 
     const items = await Promise.all(
         sectionListResponse.obj.editionList.map((section) =>
@@ -65,7 +65,7 @@ async function handler() {
                         siteId: SITE_ID,
                     },
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                });
+                })
 
                 return await Promise.all(
                     list.map(
@@ -81,7 +81,7 @@ async function handler() {
                                         siteId: SITE_ID,
                                     },
                                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                                });
+                                })
 
                                 return {
                                     title: `${articleVo.editionName.match(/：(.*)/)?.[1]} - ${load(articleVo.title).text()}`,
@@ -97,23 +97,23 @@ async function handler() {
                                                   ))
                                                 : null}
                                             {articleVo.content ? raw(articleVo.content) : null}
-                                        </>
+                                        </>,
                                     ),
                                     pubDate: timezone(parseDate(articleVo.periodTime), +8),
                                     author: articleVo.author,
                                     link: `https://epaper.stdaily.com/statics/technology-site/index.html#/home?isDetail=1&currentNewsId=${article.id}&currentVersionName=${articleVo.editionName}&currentVersion=${Number(section.editionCode)}&timeValue=${articleVo.periodTime}`,
-                                } as DataItem;
-                            })
-                    )
-                );
-            })
-        )
-    );
+                                } as DataItem
+                            }),
+                    ),
+                )
+            }),
+        ),
+    )
 
     return {
         title: '中国科技网 - 科技日报',
         link: 'https://epaper.stdaily.com',
         item: items.flat(),
         image: 'https://www.stdaily.com/favicon.ico',
-    } as Data;
+    } as Data
 }

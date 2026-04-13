@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/download/:id?',
@@ -20,22 +20,22 @@ export const route: Route = {
     name: 'Download',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '279';
+    const id = ctx.req.param('id') ?? '279'
 
-    const rootUrl = 'https://support.wdc.com';
-    const currentUrl = `${rootUrl}/downloads.aspx?p=${id}`;
+    const rootUrl = 'https://support.wdc.com'
+    const currentUrl = `${rootUrl}/downloads.aspx?p=${id}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const version = $('#WD_lblVersionSelected').text();
+    const version = $('#WD_lblVersionSelected').text()
 
     const items = [
         {
@@ -47,11 +47,11 @@ async function handler(ctx) {
                 .html()
                 .replace(/style="color:White;"/, ''),
         },
-    ];
+    ]
 
     return {
         title: `${$('#WD_lblSelectedName').text()} | WD Support`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

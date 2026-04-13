@@ -1,13 +1,13 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import { getUser, getUserWithCookie, renderNotesFulltext } from './util';
+import { getUser, getUserWithCookie, renderNotesFulltext } from './util'
 
 export const route: Route = {
     path: '/user/:user_id/:category/:routeParams?',
@@ -55,34 +55,34 @@ export const route: Route = {
             default: '0',
         },
     },
-};
+}
 
 async function handler(ctx) {
-    const userId = ctx.req.param('user_id');
-    const category = ctx.req.param('category');
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
-    const displayLivePhoto = !!fallback(undefined, queryToBoolean(routeParams.displayLivePhoto), false);
-    const url = `https://www.xiaohongshu.com/user/profile/${userId}`;
-    const cookie = config.xiaohongshu.cookie;
+    const userId = ctx.req.param('user_id')
+    const category = ctx.req.param('category')
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
+    const displayLivePhoto = !!fallback(undefined, queryToBoolean(routeParams.displayLivePhoto), false)
+    const url = `https://www.xiaohongshu.com/user/profile/${userId}`
+    const cookie = config.xiaohongshu.cookie
 
     if (cookie && category === 'notes') {
         try {
-            const urlNotePrefix = 'https://www.xiaohongshu.com/explore';
-            const user = await getUserWithCookie(url);
-            const notes = await renderNotesFulltext(user.notes, urlNotePrefix, displayLivePhoto);
+            const urlNotePrefix = 'https://www.xiaohongshu.com/explore'
+            const user = await getUserWithCookie(url)
+            const notes = await renderNotesFulltext(user.notes, urlNotePrefix, displayLivePhoto)
             return {
                 title: `${user.userPageData.basicInfo.nickname} - 笔记 • 小红书 / RED`,
                 description: user.userPageData.basicInfo.desc,
                 image: user.userPageData.basicInfo.imageb || user.userPageData.basicInfo.images,
                 link: url,
                 item: notes,
-            };
+            }
         } catch {
             // Fallback to normal logic if cookie method fails
-            return await getUserFeeds(url, category);
+            return await getUserFeeds(url, category)
         }
     } else {
-        return await getUserFeeds(url, category);
+        return await getUserFeeds(url, category)
     }
 }
 
@@ -91,11 +91,11 @@ async function getUserFeeds(url: string, category: string) {
         userPageData: { basicInfo, interactions, tags },
         notes,
         collect,
-    } = await getUser(url, cache);
+    } = await getUser(url, cache)
 
-    const title = `${basicInfo.nickname} - 小红书${category === 'notes' ? '笔记' : '收藏'}`;
-    const description = `${basicInfo.desc} ${tags.map((t) => t.name).join(' ')} ${interactions.map((i) => `${i.count} ${i.name}`).join(' ')}`;
-    const image = basicInfo.imageb || basicInfo.images;
+    const title = `${basicInfo.nickname} - 小红书${category === 'notes' ? '笔记' : '收藏'}`
+    const description = `${basicInfo.desc} ${tags.map((t) => t.name).join(' ')} ${interactions.map((i) => `${i.count} ${i.name}`).join(' ')}`
+    const image = basicInfo.imageb || basicInfo.images
 
     const renderNote = (notes) =>
         notes.flatMap((n) =>
@@ -106,17 +106,17 @@ async function getUserFeeds(url: string, category: string) {
                 description: `<img src="${noteCard.cover.infoList.pop().url}" width="${noteCard.cover.width}" height="${noteCard.cover.height}"><br>${noteCard.displayTitle}`,
                 author: noteCard.user.nickname,
                 upvotes: noteCard.interactInfo.likedCount,
-            }))
-        );
+            })),
+        )
     const renderCollect = (collect) => {
         if (!collect) {
-            throw new InvalidParameterError('该用户已设置收藏内容不可见');
+            throw new InvalidParameterError('该用户已设置收藏内容不可见')
         }
         if (collect.code !== 0) {
-            throw new Error(JSON.stringify(collect));
+            throw new Error(JSON.stringify(collect))
         }
         if (!collect.data.notes.length) {
-            throw new InvalidParameterError('该用户已设置收藏内容不可见');
+            throw new InvalidParameterError('该用户已设置收藏内容不可见')
         }
         return collect.data.notes.map((item) => ({
             title: item.display_title,
@@ -124,8 +124,8 @@ async function getUserFeeds(url: string, category: string) {
             description: `<img src ="${item.cover.info_list.pop().url}"><br>${item.display_title}`,
             author: item.user.nickname,
             upvotes: item.interact_info.likedCount,
-        }));
-    };
+        }))
+    }
 
     return {
         title,
@@ -133,5 +133,5 @@ async function getUserFeeds(url: string, category: string) {
         image,
         link: url,
         item: category === 'notes' ? renderNote(notes) : renderCollect(collect),
-    };
+    }
 }

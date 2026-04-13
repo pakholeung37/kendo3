@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { rootUrl } from './utils';
+import { rootUrl } from './utils'
 
 export const route: Route = {
     path: '/changelog',
@@ -28,15 +28,15 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'gitpod.io/changelog',
-};
+}
 
 async function handler() {
-    const response = await got(rootUrl + '/changelog');
-    const $ = load(response.data);
+    const response = await got(rootUrl + '/changelog')
+    const $ = load(response.data)
     const items = $('div[class^=changelog-entry]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('h2').text(),
                 link: rootUrl + item.find('a').attr('href'),
@@ -49,8 +49,8 @@ async function handler() {
                     .toArray()
                     .map((e) => $(e).attr('alt').replace('Avatar of ', ''))
                     .join(', '),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
@@ -58,5 +58,5 @@ async function handler() {
         description: $('meta[name="description"]').attr('content'),
         language: 'en-US',
         item: items,
-    };
+    }
 }

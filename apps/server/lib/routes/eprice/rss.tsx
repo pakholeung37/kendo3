@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
-const allowRegion = new Set(['tw', 'hk']);
+const allowRegion = new Set(['tw', 'hk'])
 
 export const route: Route = {
     path: '/:region?',
@@ -31,18 +31,18 @@ export const route: Route = {
 | hk   | tw   |
 | ---- | ---- |
 | 香港 | 台湾 |`,
-};
+}
 
 async function handler(ctx) {
-    const region = ctx.req.param('region') ?? 'tw';
+    const region = ctx.req.param('region') ?? 'tw'
     if (!allowRegion.has(region)) {
-        throw new InvalidParameterError('Invalid region');
+        throw new InvalidParameterError('Invalid region')
     }
 
-    const feed = await parser.parseURL(`https://www.eprice.com.${region}/news/rss.xml`);
+    const feed = await parser.parseURL(`https://www.eprice.com.${region}/news/rss.xml`)
 
     for (const e of feed.items) {
-        e.link = e.link.replace(/^http:\/\//i, 'https://');
+        e.link = e.link.replace(/^http:\/\//i, 'https://')
     }
 
     const items = await Promise.all(
@@ -52,61 +52,61 @@ async function handler(ctx) {
                     headers: {
                         Referer: `https://www.eprice.com.${region}`,
                     },
-                });
+                })
 
-                const $ = load(response.data);
+                const $ = load(response.data)
 
                 // remove unwanted elements
-                $('noscript').remove();
-                $('div[id^=dablewidget]').remove();
-                $('div[class^=parallax-ads]').remove();
-                $('.adsbygoogle, .join-eprice-fb, .teads').remove();
-                $('div.ad-336x280-g, div.ad-728x90-g').remove();
-                $('div.clear, div.news-vote, div.signature').remove();
-                $('ul.inner, ul.navigator, ul.infobar').remove();
-                $('iframe[src^="https://www.facebook.com/plugins/like.php"]').remove();
+                $('noscript').remove()
+                $('div[id^=dablewidget]').remove()
+                $('div[class^=parallax-ads]').remove()
+                $('.adsbygoogle, .join-eprice-fb, .teads').remove()
+                $('div.ad-336x280-g, div.ad-728x90-g').remove()
+                $('div.clear, div.news-vote, div.signature').remove()
+                $('ul.inner, ul.navigator, ul.infobar').remove()
+                $('iframe[src^="https://www.facebook.com/plugins/like.php"]').remove()
 
                 // extract categories
-                item.category = item.categories;
+                item.category = item.categories
 
                 // fix lazyload image
                 $('a').each((_, e) => {
-                    e = $(e);
+                    e = $(e)
                     if (e.attr('href') && e.attr('href').endsWith('.jpg')) {
                         e.after(
                             renderToString(
                                 <figure>
                                     <img src={e.attr('href')} alt={e.attr('title') ?? ''} title={e.attr('title') ?? ''} />
                                     <figcaption>{e.attr('title') ?? ''}</figcaption>
-                                </figure>
-                            )
-                        );
-                        e.remove();
+                                </figure>,
+                            ),
+                        )
+                        e.remove()
                     }
-                });
+                })
                 $('img').each((_, e) => {
-                    e = $(e);
+                    e = $(e)
                     if (e.attr('data-original')) {
-                        e.attr('src', e.attr('data-original'));
+                        e.attr('src', e.attr('data-original'))
                     }
-                });
+                })
 
                 // remove unwanted key value
-                delete item.categories;
-                delete item.content;
-                delete item.contentSnippet;
-                delete item.creator;
-                delete item.enclosure;
-                delete item.isoDate;
+                delete item.categories
+                delete item.content
+                delete item.contentSnippet
+                delete item.creator
+                delete item.enclosure
+                delete item.isoDate
 
                 // tw || tw || hk || hk || hk
-                item.description = $('div.user-comment-block').html() || $('div.content').html() || $('li.inner').html() || $('div.section-content').html() || $('.article__content').html();
-                item.pubDate = parseDate(item.pubDate);
+                item.description = $('div.user-comment-block').html() || $('div.content').html() || $('li.inner').html() || $('div.section-content').html() || $('.article__content').html()
+                item.pubDate = parseDate(item.pubDate)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     const ret = {
         title: feed.title,
@@ -115,8 +115,8 @@ async function handler(ctx) {
         item: items,
         image: feed.image.url,
         language: feed.language,
-    };
+    }
 
-    ctx.set('json', ret);
-    return ret;
+    ctx.set('json', ret)
+    return ret
 }

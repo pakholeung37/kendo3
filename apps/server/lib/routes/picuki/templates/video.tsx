@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type VideoData = {
-    videoPoster?: string;
-    videoSrcs?: string[];
-};
+    videoPoster?: string
+    videoSrcs?: string[]
+}
 
 const PicukiVideo = ({ videoPoster, videoSrcs }: VideoData) => (
     <video poster={videoPoster} controls>
@@ -11,6 +11,6 @@ const PicukiVideo = ({ videoPoster, videoSrcs }: VideoData) => (
             <source src={src} type="video/mp4" />
         ))}
     </video>
-);
+)
 
-export const renderVideo = (data: VideoData) => renderToString(<PicukiVideo {...data} />);
+export const renderVideo = (data: VideoData) => renderToString(<PicukiVideo {...data} />)

@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/new-releases/:category?',
@@ -31,37 +31,37 @@ export const route: Route = {
 | ---- | ---- | ---- | ---- | ---- |
 | A | B | F | M | D |`,
     url: 'www.5music.com.tw/New_releases.asp',
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'A';
-    const url = `https://www.5music.com.tw/New_releases.asp?mut=${category}`;
+    const category = ctx.req.param('category') ?? 'A'
+    const url = `https://www.5music.com.tw/New_releases.asp?mut=${category}`
 
-    const { data } = await got(url);
-    const $ = load(data);
+    const { data } = await got(url)
+    const $ = load(data)
 
     const items = $('.releases-list .tbody > .box')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const cells = $item.find('.td');
+            const $item = $(item)
+            const cells = $item.find('.td')
 
             // 解析艺人名称 (可能包含中英文名)
-            const artistCell = $(cells[0]);
+            const artistCell = $(cells[0])
             const artist = artistCell
                 .find('a')
                 .toArray()
                 .map((el) => $(el).text().trim())
-                .join(' / ');
+                .join(' / ')
 
             // 解析专辑信息
-            const albumCell = $(cells[1]);
-            const album = albumCell.find('a').first().text().trim();
-            const albumLink = albumCell.find('a').first().attr('href');
+            const albumCell = $(cells[1])
+            const album = albumCell.find('a').first().text().trim()
+            const albumLink = albumCell.find('a').first().attr('href')
 
-            const releaseDate = $(cells[2]).text().trim();
-            const company = $(cells[3]).text().trim();
-            const format = $(cells[4]).text().trim();
+            const releaseDate = $(cells[2]).text().trim()
+            const company = $(cells[3]).text().trim()
+            const format = $(cells[4]).text().trim()
 
             return {
                 title: `${artist} - ${album}`,
@@ -76,13 +76,13 @@ async function handler(ctx) {
                 pubDate: parseDate(releaseDate),
                 category: format,
                 author: artist,
-            };
-        });
+            }
+        })
 
     return {
         title: '五大唱片 - 新货上架',
         link: url,
         item: items,
         language: 'zh-tw',
-    };
+    }
 }

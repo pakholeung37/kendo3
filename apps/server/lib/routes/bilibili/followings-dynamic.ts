@@ -1,16 +1,16 @@
-import querystring from 'node:querystring';
+import querystring from 'node:querystring'
 
-import JSONbig from 'json-bigint';
+import JSONbig from 'json-bigint'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import logger from '@/utils/logger';
-import { fallback, queryToBoolean } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import logger from '@/utils/logger'
+import { fallback, queryToBoolean } from '@/utils/readable-social'
 
-import cache from './cache';
-import utils from './utils';
+import cache from './cache'
+import utils from './utils'
 
 export const route: Route = {
     path: '/followings/dynamic/:uid/:routeParams?',
@@ -52,20 +52,20 @@ export const route: Route = {
     description: `::: warning
   用户动态需要 b 站登录后的 Cookie 值，所以只能自建，详情见部署页面的配置模块。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const uid = String(ctx.req.param('uid'));
-    const routeParams = querystring.parse(ctx.req.param('routeParams'));
+    const uid = String(ctx.req.param('uid'))
+    const routeParams = querystring.parse(ctx.req.param('routeParams'))
 
-    const showEmoji = fallback(undefined, queryToBoolean(routeParams.showEmoji), false);
-    const embed = fallback(undefined, queryToBoolean(routeParams.embed), true);
-    const displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false);
+    const showEmoji = fallback(undefined, queryToBoolean(routeParams.showEmoji), false)
+    const embed = fallback(undefined, queryToBoolean(routeParams.embed), true)
+    const displayArticle = fallback(undefined, queryToBoolean(routeParams.displayArticle), false)
 
-    const name = await cache.getUsernameFromUID(uid);
-    const cookie = config.bilibili.cookies[uid];
+    const name = await cache.getUsernameFromUID(uid)
+    const cookie = config.bilibili.cookies[uid]
     if (cookie === undefined) {
-        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值');
+        throw new ConfigNotFoundError('缺少对应 uid 的 Bilibili 用户登录后的 Cookie 值')
     }
 
     const response = await got({
@@ -75,88 +75,88 @@ async function handler(ctx) {
             Referer: `https://space.bilibili.com/${uid}/`,
             Cookie: cookie,
         },
-    });
+    })
     if (response.data.code === -6) {
-        throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户的 Cookie 已过期');
+        throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户的 Cookie 已过期')
     }
     if (response.data.code === 4_100_000) {
-        throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户 请求失败');
+        throw new ConfigNotFoundError('对应 uid 的 Bilibili 用户 请求失败')
     }
-    const data = JSONbig.parse(response.body).data.cards;
+    const data = JSONbig.parse(response.body).data.cards
 
-    const getTitle = (data) => (data ? data.title || data.description || data.content || (data.vest && data.vest.content) || '' : '');
+    const getTitle = (data) => (data ? data.title || data.description || data.content || (data.vest && data.vest.content) || '' : '')
     const getDes = (data) =>
-        data.dynamic || data.desc || data.description || data.content || data.summary || (data.vest && data.vest.content) + (data.sketch && `<br>${data.sketch.title}<br>${data.sketch.desc_text}`) || data.intro || '';
-    const getOriginDes = (data) => (data && (data.apiSeasonInfo && data.apiSeasonInfo.title && `//转发自: ${data.apiSeasonInfo.title}`) + (data.index_title && `<br>${data.index_title}`)) || '';
-    const getOriginName = (data) => data.uname || (data.author && data.author.name) || (data.upper && data.upper.name) || (data.user && (data.user.uname || data.user.name)) || (data.owner && data.owner.name) || '';
-    const getOriginTitle = (data) => (data.title ? `${data.title}<br>` : '');
+        data.dynamic || data.desc || data.description || data.content || data.summary || (data.vest && data.vest.content) + (data.sketch && `<br>${data.sketch.title}<br>${data.sketch.desc_text}`) || data.intro || ''
+    const getOriginDes = (data) => (data && (data.apiSeasonInfo && data.apiSeasonInfo.title && `//转发自: ${data.apiSeasonInfo.title}`) + (data.index_title && `<br>${data.index_title}`)) || ''
+    const getOriginName = (data) => data.uname || (data.author && data.author.name) || (data.upper && data.upper.name) || (data.user && (data.user.uname || data.user.name)) || (data.owner && data.owner.name) || ''
+    const getOriginTitle = (data) => (data.title ? `${data.title}<br>` : '')
     const getIframe = (data) => {
         if (!embed) {
-            return '';
+            return ''
         }
-        const aid = data?.aid;
-        const bvid = data?.bvid;
+        const aid = data?.aid
+        const bvid = data?.bvid
         if (aid === undefined && bvid === undefined) {
-            return '';
+            return ''
         }
-        return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid);
-    };
+        return utils.renderUGCDescription(embed, '', '', aid, undefined, bvid)
+    }
     const getImgs = (data) => {
-        let imgs = '';
+        let imgs = ''
         // 动态图片
         if (data.pictures) {
             for (const pic of data.pictures) {
-                imgs += `<img src="${pic.img_src}">`;
+                imgs += `<img src="${pic.img_src}">`
             }
         }
         // 专栏封面
         if (data.image_urls) {
             for (const url of data.image_urls) {
-                imgs += `<img src="${url}">`;
+                imgs += `<img src="${url}">`
             }
         }
         // 视频封面
         if (data.pic) {
-            imgs += `<img src="${data.pic}">`;
+            imgs += `<img src="${data.pic}">`
         }
         // 音频/番剧/直播间封面/小视频封面
         if (data.cover && data.cover.unclipped) {
-            imgs += `<img src="${data.cover.unclipped}">`;
+            imgs += `<img src="${data.cover.unclipped}">`
         } else if (data.cover) {
-            imgs += `<img src="${data.cover}">`;
+            imgs += `<img src="${data.cover}">`
         }
         // 专题页封面
         if (data.sketch && data.sketch.cover_url) {
-            imgs += `<img src="${data.sketch.cover_url}">`;
+            imgs += `<img src="${data.sketch.cover_url}">`
         }
-        return imgs;
-    };
+        return imgs
+    }
 
     const items = await Promise.all(
         data.map(async (item) => {
-            const parsed = JSONbig.parse(item.card);
-            const data = parsed.apiSeasonInfo || (getTitle(parsed.item) ? parsed.item : parsed);
-            let origin = parsed.origin;
+            const parsed = JSONbig.parse(item.card)
+            const data = parsed.apiSeasonInfo || (getTitle(parsed.item) ? parsed.item : parsed)
+            let origin = parsed.origin
             if (origin) {
                 try {
-                    origin = JSONbig.parse(origin);
+                    origin = JSONbig.parse(origin)
                 } catch {
-                    logger.warn(`card.origin '${origin}' is not falsy-valued or a JSON string, fall back to unparsed value`);
+                    logger.warn(`card.origin '${origin}' is not falsy-valued or a JSON string, fall back to unparsed value`)
                 }
             }
 
             // img
-            let imgHTML = '';
+            let imgHTML = ''
 
-            imgHTML += getImgs(data);
+            imgHTML += getImgs(data)
 
             if (origin) {
-                imgHTML += getImgs(origin.item || origin);
+                imgHTML += getImgs(origin.item || origin)
             }
             // video小视频
-            let videoHTML = '';
+            let videoHTML = ''
             if (data.video_playurl) {
-                videoHTML += `<video width="${data.width}" height="${data.height}" controls><source src="${unescape(data.video_playurl).replace(/^http:/, 'https:')}"><source src="${unescape(data.video_playurl)}"></video>`;
+                videoHTML += `<video width="${data.width}" height="${data.height}" controls><source src="${unescape(data.video_playurl).replace(/^http:/, 'https:')}"><source src="${unescape(data.video_playurl)}"></video>`
             }
             // some rss readers disallow http content.
             // 部分 RSS 阅读器要求内容必须使用https传输
@@ -165,55 +165,55 @@ async function handler(ctx) {
             // bilibili的API中返回的视频地址采用http，然而经验证，短视频地址支持https访问，但偶尔会返回超时错误(可能是网络原因)。
             // 因此保险起见加入两个source标签
             // link
-            let link = '';
+            let link = ''
             if (data.dynamic_id) {
-                link = `https://t.bilibili.com/${data.dynamic_id}`;
+                link = `https://t.bilibili.com/${data.dynamic_id}`
             } else if (item.desc?.dynamic_id) {
-                link = `https://t.bilibili.com/${item.desc.dynamic_id}`;
+                link = `https://t.bilibili.com/${item.desc.dynamic_id}`
             }
 
             // emoji
-            let data_content = getDes(data);
+            let data_content = getDes(data)
             if (item.display && item.display.emoji_info && showEmoji) {
-                const emoji = item.display.emoji_info.emoji_details;
+                const emoji = item.display.emoji_info.emoji_details
                 for (const item of emoji) {
                     data_content = data_content.replaceAll(
                         new RegExp(`\\${item.text}`, 'g'),
-                        `<img alt="${item.text}" src="${item.url}"style="margin: -1px 1px 0px; display: inline-block; width: 20px; height: 20px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`
-                    );
+                        `<img alt="${item.text}" src="${item.url}"style="margin: -1px 1px 0px; display: inline-block; width: 20px; height: 20px; vertical-align: text-bottom;" title="" referrerpolicy="no-referrer">`,
+                    )
                 }
             }
             // 作者信息
-            let author = '';
+            let author = ''
             if (item.desc?.user_profile) {
-                author = item.desc.user_profile.info.uname;
+                author = item.desc.user_profile.info.uname
             }
 
             if (data.image_urls && displayArticle) {
-                data_content = (await cache.getArticleDataFromCvid(data.id, uid)).description;
+                data_content = (await cache.getArticleDataFromCvid(data.id, uid)).description
             }
 
             return {
                 title: getTitle(data),
                 author,
                 description: (() => {
-                    const description = parsed.new_desc || data_content || getDes(data);
-                    const originName = origin && getOriginName(origin) ? `<br><br>//转发自: @${getOriginName(origin)}: ${getOriginTitle(origin.item || origin)}${getDes(origin.item || origin)}` : getOriginDes(origin);
-                    const imgHTMLSource = imgHTML ? `<br>${imgHTML}` : '';
-                    const videoHTMLSource = videoHTML ? `<br>${videoHTML}` : '';
+                    const description = parsed.new_desc || data_content || getDes(data)
+                    const originName = origin && getOriginName(origin) ? `<br><br>//转发自: @${getOriginName(origin)}: ${getOriginTitle(origin.item || origin)}${getDes(origin.item || origin)}` : getOriginDes(origin)
+                    const imgHTMLSource = imgHTML ? `<br>${imgHTML}` : ''
+                    const videoHTMLSource = videoHTML ? `<br>${videoHTML}` : ''
 
-                    return `${description}${originName}${getIframe(data)}${getIframe(origin)}${imgHTMLSource}${videoHTMLSource}`;
+                    return `${description}${originName}${getIframe(data)}${getIframe(origin)}${imgHTMLSource}${videoHTMLSource}`
                 })(),
                 pubDate: new Date(item.desc?.timestamp * 1000).toUTCString(),
                 link,
-            };
-        })
-    );
+            }
+        }),
+    )
 
     return {
         title: `${name} 关注的动态`,
         link: `https://t.bilibili.com`,
         description: `${name} 关注的动态`,
         item: items,
-    };
+    }
 }

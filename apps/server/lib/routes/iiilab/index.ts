@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import buildData from '@/utils/common-config';
+import type { Route } from '@/types'
+import buildData from '@/utils/common-config'
 
-const baseUrl = 'https://www.iiilab.com/';
+const baseUrl = 'https://www.iiilab.com/'
 
 export const route: Route = {
     path: '/',
@@ -15,10 +15,10 @@ export const route: Route = {
     maintainers: ['Joey'],
     handler,
     url: 'www.iiilab.com/',
-};
+}
 
 async function handler() {
-    const link = baseUrl;
+    const link = baseUrl
     return await buildData({
         link,
         url: link,
@@ -36,5 +36,5 @@ async function handler() {
             pubDate: `parseDate($('.text-color-999').first().text(), 'YYYY-MM-DD HH:mm')`,
             guid: Buffer.from(`$('a').attr('href')`).toString('base64'),
         },
-    });
+    })
 }

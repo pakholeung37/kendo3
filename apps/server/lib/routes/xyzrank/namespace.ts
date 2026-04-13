@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '中文播客榜',
@@ -11,4 +11,4 @@ export const namespace: Namespace = {
 即，以 [热门节目](https://xyzrank.com/#/) 为例，路由为[\`/xyzrank?limit=50\`](https://rsshub.app/xyzrank?limit=50)。
 :::`,
     lang: 'zh-CN',
-};
+}

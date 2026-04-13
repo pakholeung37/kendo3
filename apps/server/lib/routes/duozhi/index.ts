@@ -1,40 +1,40 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'http://www.duozhi.com';
-    const targetUrl: string = new URL(category && category.endsWith('/') ? category : category ? `${category}/` : '', baseUrl).href;
+    const baseUrl = 'http://www.duozhi.com'
+    const targetUrl: string = new URL(category && category.endsWith('/') ? category : category ? `${category}/` : '', baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('div.post-item')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a.post-title');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a.post-title')
 
-            const title: string = $aEl.text();
+            const title: string = $aEl.text()
             const image: string | undefined = $el
                 .find('a.post-img')
                 .attr('style')
-                ?.match(/url\(['"]?(.*?)['"]?\)?/)?.[1];
+                ?.match(/url\(['"]?(.*?)['"]?\)?/)?.[1]
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -44,11 +44,11 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           },
                       ]
                     : undefined,
-            });
-            const pubDateStr: string | undefined = $el.find('div.post-attr').text().split(/\|/)[0]?.trim();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = $el.find('span.post-tag a.link-tag').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
+            })
+            const pubDateStr: string | undefined = $el.find('div.post-attr').text().split(/\|/)[0]?.trim()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = $el.find('span.post-tag a.link-tag').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
             const authors: DataItem['author'] = $el
                 .find('div.post-attr')
                 .text()
@@ -60,8 +60,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     name: author,
                     url: undefined,
                     avatar: undefined,
-                }));
-            const upDatedStr: string | undefined = pubDateStr;
+                }))
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -78,23 +78,23 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h1.subject-title').text();
-                const image: string | undefined = $$('div.subject-banner img').attr('src');
+                const title: string = $$('h1.subject-title').text()
+                const image: string | undefined = $$('div.subject-banner img').attr('src')
                 const description: string | undefined = renderDescription({
                     images: image
                         ? [
@@ -106,8 +106,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         : undefined,
                     intro: $$('div.subject-desc').text(),
                     description: $$('div.subject-content').html(),
-                });
-                const pubDateStr: string | undefined = $$('div.subject-meta').text()?.split(/发布/)[0];
+                })
+                const pubDateStr: string | undefined = $$('div.subject-meta').text()?.split(/发布/)[0]
                 const categories: string[] = [
                     ...new Set([
                         ...(item.category ?? []),
@@ -116,7 +116,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             ?.split(',')
                             .map((c) => c.trim()) ?? []),
                     ]),
-                ];
+                ]
                 const authors: DataItem['author'] = $$('div.subject-meta')
                     .text()
                     .split(/作者：/)
@@ -127,8 +127,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         name: author,
                         url: undefined,
                         avatar: undefined,
-                    }));
-                const upDatedStr: string | undefined = pubDateStr;
+                    }))
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -144,15 +144,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -164,8 +164,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[property="og:site_name"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -334,4 +334,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

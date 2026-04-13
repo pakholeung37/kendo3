@@ -1,9 +1,9 @@
-import type { Context } from 'hono';
-import { NovelType } from 'narou';
+import type { Context } from 'hono'
+import { NovelType } from 'narou'
 
-import type { Data, DataItem, Route } from '@/types';
+import type { Data, DataItem, Route } from '@/types'
 
-import { fetchChapterContent, fetchNovelInfo } from './utils';
+import { fetchChapterContent, fetchNovelInfo } from './utils'
 
 export const route: Route = {
     path: '/:ncode',
@@ -35,23 +35,23 @@ export const route: Route = {
             target: '/:ncode',
         },
     ],
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const { ncode } = ctx.req.param();
-    const limit = Math.min(Number(ctx.req.query('limit') ?? 5), 20);
+    const { ncode } = ctx.req.param()
+    const limit = Math.min(Number(ctx.req.query('limit') ?? 5), 20)
 
-    const { baseUrl, novel } = await fetchNovelInfo(ncode);
-    novel.story = novel.story.replaceAll('\n', '<br>') || '';
+    const { baseUrl, novel } = await fetchNovelInfo(ncode)
+    novel.story = novel.story.replaceAll('\n', '<br>') || ''
 
     // Tanpen = Short
     if (novel.noveltype === NovelType.Tanpen) {
-        const chapterUrl = `${baseUrl}/${ncode}`;
-        const item = await fetchChapterContent(chapterUrl);
+        const chapterUrl = `${baseUrl}/${ncode}`
+        const item = await fetchChapterContent(chapterUrl)
 
         // Shorts are updated rather than having new chapters
         // Use novelupdated_at as pubDate since RSS 2.0 doesn't have updated field
-        item.pubDate = novel.novelupdated_at;
+        item.pubDate = novel.novelupdated_at
 
         return {
             title: novel.title,
@@ -59,23 +59,23 @@ async function handler(ctx: Context): Promise<Data> {
             link: chapterUrl,
             item: [item] as DataItem[],
             language: 'ja',
-        };
+        }
     }
 
     // Rensai = Series
     // if (novel.noveltype === NovelType.Rensai)
-    const totalChapters = novel.general_all_no ?? 1;
-    const startChapter = Math.max(totalChapters - limit + 1, 1);
+    const totalChapters = novel.general_all_no ?? 1
+    const startChapter = Math.max(totalChapters - limit + 1, 1)
 
     const items = await Promise.all(
         Array.from({ length: Math.min(limit, totalChapters) }, async (_, index) => {
-            const chapterNumber = startChapter + index;
-            const chapterUrl = `${baseUrl}/${ncode}/${chapterNumber}`;
+            const chapterNumber = startChapter + index
+            const chapterUrl = `${baseUrl}/${ncode}/${chapterNumber}`
 
-            const item = await fetchChapterContent(chapterUrl, chapterNumber);
-            return item;
-        }).toReversed()
-    );
+            const item = await fetchChapterContent(chapterUrl, chapterNumber)
+            return item
+        }).toReversed(),
+    )
 
     return {
         title: novel.title,
@@ -83,5 +83,5 @@ async function handler(ctx: Context): Promise<Data> {
         link: `${baseUrl}/${ncode}`,
         item: items as DataItem[],
         language: 'ja',
-    };
+    }
 }

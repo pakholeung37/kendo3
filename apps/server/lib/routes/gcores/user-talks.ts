@@ -1,54 +1,54 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseContent } from './parser';
-import { renderDescription } from './templates/description';
-import { baseUrl, imageBaseUrl } from './util';
+import { parseContent } from './parser'
+import { renderDescription } from './templates/description'
+import { baseUrl, imageBaseUrl } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl = new URL(`users/${id}/talks`, baseUrl).href;
-    const apiUrl = new URL(`gapi/v1/users/${id}/talks`, baseUrl).href;
+    const targetUrl = new URL(`users/${id}/talks`, baseUrl).href
+    const apiUrl = new URL(`gapi/v1/users/${id}/talks`, baseUrl).href
 
     // 获取更多数据以确保过滤后仍有足够的项目
-    const fetchLimit = Math.min(limit * 2, 100);
+    const fetchLimit = Math.min(limit * 2, 100)
 
     const query = {
         'page[limit]': fetchLimit,
         sort: '-created-at',
         include: 'user',
-    };
+    }
 
-    const response = await ofetch(apiUrl, { query });
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(apiUrl, { query })
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
-    const included = response.included || [];
+    const included = response.included || []
 
     // 过滤掉播客和视频类型的动态
-    let data = response.data.filter((item) => item.type !== 'radios' && item.type !== 'videos');
+    let data = response.data.filter((item) => item.type !== 'radios' && item.type !== 'videos')
 
     // 限制数量
-    data = data.slice(0, limit);
+    data = data.slice(0, limit)
 
     const items: DataItem[] = data.map((item): DataItem => {
-        const attributes = item.attributes;
-        const relationships = item.relationships;
+        const attributes = item.attributes
+        const relationships = item.relationships
 
-        const title: string = attributes.title;
-        const pubDate: number | string = attributes['created-at'] || attributes['published-at'];
+        const title: string = attributes.title
+        const pubDate: number | string = attributes['created-at'] || attributes['published-at']
 
-        const authorObj = relationships?.user?.data;
-        const authorIncluded = authorObj ? included.find((i) => i.type === authorObj.type && i.id === authorObj.id) : undefined;
+        const authorObj = relationships?.user?.data
+        const authorIncluded = authorObj ? included.find((i) => i.type === authorObj.type && i.id === authorObj.id) : undefined
         const authors: DataItem['author'] = authorIncluded
             ? [
                   {
@@ -57,10 +57,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: authorIncluded.thumb ? new URL(authorIncluded.thumb, imageBaseUrl).href : undefined,
                   },
               ]
-            : undefined;
+            : undefined
 
-        const guid = `gcores-${item.type}-${item.id}`;
-        const image: string | undefined = (attributes.cover ?? attributes.thumb) ? new URL(attributes.cover ?? attributes.thumb, imageBaseUrl).href : undefined;
+        const guid = `gcores-${item.type}-${item.id}`
+        const image: string | undefined = (attributes.cover ?? attributes.thumb) ? new URL(attributes.cover ?? attributes.thumb, imageBaseUrl).href : undefined
 
         const description = renderDescription({
             images: attributes.cover
@@ -73,7 +73,7 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 : undefined,
             intro: attributes.desc || attributes.excerpt,
             description: attributes.content ? parseContent(JSON.parse(attributes.content)) : undefined,
-        });
+        })
 
         return {
             title: title ?? $(description).text(),
@@ -91,8 +91,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 html: description,
                 text: description,
             },
-        };
-    });
+        }
+    })
 
     return {
         title: $('title').text(),
@@ -103,8 +103,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('title').text().split(/\|/).pop()?.trim(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/users/:id/talks',
@@ -139,4 +139,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.SocialMedia,
-};
+}

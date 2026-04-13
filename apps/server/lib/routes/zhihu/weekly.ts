@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const host = 'https://www.zhihu.com';
+const host = 'https://www.zhihu.com'
 
 export const route: Route = {
     path: '/weekly',
@@ -27,14 +27,14 @@ export const route: Route = {
     maintainers: ['LogicJake'],
     handler,
     url: 'www.zhihu.com/pub/weekly',
-};
+}
 
 async function handler() {
-    const link = 'https://www.zhihu.com/pub/weekly';
-    const response = await got(link);
-    const $ = load(response.data);
+    const link = 'https://www.zhihu.com/pub/weekly'
+    const response = await got(link)
+    const $ = load(response.data)
 
-    const description = $('p.Weekly-description').text();
+    const description = $('p.Weekly-description').text()
     const out = $('div.Card-section.PubBookListItem')
         .slice(0, 10)
         .toArray()
@@ -44,14 +44,14 @@ async function handler() {
                 link: new URL($(element).find('a.PubBookListItem-buttonWrapper').attr('href'), host).href,
                 description: $(element).find('div.PubBookListItem-description').text(),
                 author: $(element).find('span.PubBookListItem-author').text(),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     return {
         title: '知乎周刊',
         link,
         description,
         item: out,
-    };
+    }
 }

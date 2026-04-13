@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
-import { filterEvents } from './eventapi';
+import { filterEvents } from './eventapi'
 
 export const route: Route = {
     path: '/feed/:user/:types?',
@@ -90,17 +90,17 @@ export const route: Route = {
     name: "User's Feed",
     maintainers: ['RtYkk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
-    const types = ctx.req.param('types') || 'all';
+    const user = ctx.req.param('user')
+    const types = ctx.req.param('types') || 'all'
 
-    const isAuthenticated = config.github && config.github.access_token;
+    const isAuthenticated = config.github && config.github.access_token
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {}
     if (isAuthenticated) {
-        headers.Authorization = `token ${config.github.access_token}`;
+        headers.Authorization = `token ${config.github.access_token}`
     }
 
     const response = await got({
@@ -110,17 +110,17 @@ async function handler(ctx) {
         searchParams: {
             per_page: 100,
         },
-    });
+    })
 
-    const items = filterEvents(types, response.data);
+    const items = filterEvents(types, response.data)
 
-    const typeFilter = types === 'all' ? 'All Events' : `Events: ${types}`;
-    const feedType = isAuthenticated ? 'Private Feed' : 'Public Feed';
+    const typeFilter = types === 'all' ? 'All Events' : `Events: ${types}`
+    const feedType = isAuthenticated ? 'Private Feed' : 'Public Feed'
 
     return {
         title: `${user}'s GitHub ${feedType} - ${typeFilter}`,
         link: `https://github.com/${user}`,
         description: `GitHub events received by ${user}${types === 'all' ? '' : ` (filtered: ${types})`}${isAuthenticated ? ' - includes private events' : ' - public events only'}`,
         item: items,
-    };
+    }
 }

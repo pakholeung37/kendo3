@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const rootUrl = 'https://www.hellobtc.com';
+const rootUrl = 'https://www.hellobtc.com'
 
 const channelSelector = {
     latest: 'div.index_tabs_container.js-tabs-container > div:nth-child(1)',
@@ -16,7 +16,7 @@ const channelSelector = {
     safety: 'div.index_tabs_container.js-tabs-container > div:nth-child(7)',
     satoshi_nakamoto: 'div.index_tabs_container.js-tabs-container > div:nth-child(8)',
     public_blockchain: 'div.index_tabs_container.js-tabs-container > div:nth-child(9)',
-};
+}
 
 const titleMap = {
     latest: '最新',
@@ -28,7 +28,7 @@ const titleMap = {
     safety: '安全',
     satoshi_nakamoto: '中本聪',
     public_blockchain: '公链',
-};
+}
 
 export const route: Route = {
     path: '/kepu/:channel?',
@@ -49,40 +49,40 @@ export const route: Route = {
     description: `| latest | bitcoin | ethereum | defi | inter_blockchain | mining | safety | satoshi_nakomoto | public_blockchain |
 | ------ | ------- | -------- | ---- | ----------------- | ------ | ------ | ----------------- | ------------------ |
 | 最新   | 比特币  | 以太坊   | DeFi | 跨链              | 挖矿   | 安全   | 中本聪            | 公链               |`,
-};
+}
 
 async function handler(ctx) {
-    const channel = ctx.req.param('channel') ?? 'latest';
-    const url = `${rootUrl}/kepu.html`;
+    const channel = ctx.req.param('channel') ?? 'latest'
+    const url = `${rootUrl}/kepu.html`
 
-    const response = await got(url);
-    const $ = load(response.data);
+    const response = await got(url)
+    const $ = load(response.data)
     const list = $(channelSelector[channel])
         .find('div.new_item')
         .toArray()
         .map((item) => ({
             title: $(item).find('a').text(),
             link: $(item).find('a').attr('href'),
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await got(item.link);
-                const content = load(detailResponse.data);
+                const detailResponse = await got(item.link)
+                const content = load(detailResponse.data)
 
                 item.description = content('#js_content')
                     .html()
-                    .replaceAll(/(<img.*?)data-src(.*?>)/g, '$1src$2');
+                    .replaceAll(/(<img.*?)data-src(.*?>)/g, '$1src$2')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `白话区块链 - 科普 ${titleMap[channel]}`,
         link: url,
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { renderGoods } from './templates/goods';
+import { renderGoods } from './templates/goods'
 
-const base_url = 'https://m.xiaomiyoupin.com';
+const base_url = 'https://m.xiaomiyoupin.com'
 export const route: Route = {
     path: '/crowdfunding',
     categories: ['shopping'],
@@ -26,43 +26,43 @@ export const route: Route = {
     maintainers: ['bigfei'],
     handler,
     url: 'xiaomiyoupin.com/',
-};
+}
 
 async function handler() {
-    const resp = await got('https://home.mi.com/lasagne/page/5');
-    const site_url = resp.data.redirect.location;
+    const resp = await got('https://home.mi.com/lasagne/page/5')
+    const site_url = resp.data.redirect.location
 
-    const urlParams = new URLSearchParams(site_url);
-    const pageid = urlParams.get('pageid');
-    const sign = urlParams.get('sign');
+    const urlParams = new URLSearchParams(site_url)
+    const pageid = urlParams.get('pageid')
+    const sign = urlParams.get('sign')
 
     // 1. fetchPageData
-    const pageData = await got(`${base_url}/mtop/navi/venue/page?page_id=${pageid}&pdl=jianyu&sign=${sign}`);
-    const crowd_funding_floor = pageData.data.data.floors.find((floor) => floor.module_key === 'crowding');
-    const query_list = crowd_funding_floor.query_list;
+    const pageData = await got(`${base_url}/mtop/navi/venue/page?page_id=${pageid}&pdl=jianyu&sign=${sign}`)
+    const crowd_funding_floor = pageData.data.data.floors.find((floor) => floor.module_key === 'crowding')
+    const query_list = crowd_funding_floor.query_list
 
     // 2. fetchFloorDetailData
     const floor_detail_data = await got.post(`${base_url}/mtop/navi/venue/batch?page_id=${pageid}&pdl=jianyu&sign=${sign}`, {
         json: {
             query_list,
         },
-    });
+    })
 
-    const goodsList = floor_detail_data.data.data.result_list[0].list;
+    const goodsList = floor_detail_data.data.data.result_list[0].list
     const items = goodsList.map((e) => {
-        const goods = e.value.goods;
+        const goods = e.value.goods
         return {
             title: goods.name,
             guid: `xiaomiyoupin:${goods.gid}`,
             description: renderGoods(goods),
             link: goods.jump_url,
             pubDate: new Date(goods.fist_release_time * 1000).toUTCString(),
-        };
-    });
+        }
+    })
     return {
         title: '小米有品众筹',
         link: site_url,
         description: '小米有品众筹',
         item: items,
-    };
+    }
 }

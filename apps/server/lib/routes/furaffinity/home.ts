@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/home/:category/:mode?',
@@ -28,13 +28,13 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'artwork', mode = 'sfw' } = ctx.req.param();
-    let url = 'https://faexport.spangle.org.uk/home.json?sfw=1';
+    const { category = 'artwork', mode = 'sfw' } = ctx.req.param()
+    let url = 'https://faexport.spangle.org.uk/home.json?sfw=1'
     if (mode === 'nsfw') {
-        url = 'https://faexport.spangle.org.uk/home.json';
+        url = 'https://faexport.spangle.org.uk/home.json'
     }
 
     const data = await ofetch(url, {
@@ -42,25 +42,25 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://faexport.spangle.org.uk/',
         },
-    });
+    })
 
-    let dataSelect;
+    let dataSelect
 
     switch (category) {
         case 'artwork':
-            dataSelect = data.artwork;
-            break;
+            dataSelect = data.artwork
+            break
         case 'writing':
-            dataSelect = data.writing;
-            break;
+            dataSelect = data.writing
+            break
         case 'music':
-            dataSelect = data.music;
-            break;
+            dataSelect = data.music
+            break
         case 'crafts':
-            dataSelect = data.crafts;
-            break;
+            dataSelect = data.crafts
+            break
         default:
-            dataSelect = data.artwork;
+            dataSelect = data.artwork
     }
 
     const items = dataSelect.map((item) => ({
@@ -70,12 +70,12 @@ async function handler(ctx) {
         description: `<img src="${item.thumbnail}">`,
         // 由于源API未提供日期，故无pubDate
         author: item.name,
-    }));
+    }))
 
     return {
         title: 'Fur Affinity | Home',
         link: 'https://www.furaffinity.net/',
         description: `Fur Affinity Index`,
         item: items,
-    };
+    }
 }

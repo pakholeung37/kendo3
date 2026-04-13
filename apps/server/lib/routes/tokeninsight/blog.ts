@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseURL = 'https://www.tokeninsight.com/';
-const title = 'TokenInsight';
-const link = 'https://www.tokeninsight.com/';
+const baseURL = 'https://www.tokeninsight.com/'
+const title = 'TokenInsight'
+const link = 'https://www.tokeninsight.com/'
 
 export const route: Route = {
     path: '/blog/:lang?',
@@ -31,13 +31,13 @@ export const route: Route = {
     name: 'Blogs',
     maintainers: ['fuergaosi233'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang') ?? 'zh';
+    const lang = ctx.req.param('lang') ?? 'zh'
 
     const getBlogs = async () => {
-        const url = `${baseURL}api/user/search/getAllList`;
+        const url = `${baseURL}api/user/search/getAllList`
         const response = (
             await got.post(url, {
                 form: {
@@ -45,19 +45,19 @@ async function handler(ctx) {
                     language: lang === 'zh' ? 'cn' : lang,
                 },
             })
-        ).data;
-        return response.data.blogsList;
-    };
+        ).data
+        return response.data.blogsList
+    }
 
     const getBlogInfomation = async (blog) => {
-        const { publishDate, title, id } = blog;
-        const blogUrl = `${baseURL}${lang}/blogs/${id}`;
+        const { publishDate, title, id } = blog
+        const blogUrl = `${baseURL}${lang}/blogs/${id}`
         const description = await cache.tryGet(blogUrl, async () => {
-            const res = await got(blogUrl);
-            const $ = load(res.data);
-            const description = $('.detail_html_box').html();
-            return description;
-        });
+            const res = await got(blogUrl)
+            const $ = load(res.data)
+            const description = $('.detail_html_box').html()
+            return description
+        })
         return {
             // 文章标题
             title,
@@ -67,14 +67,14 @@ async function handler(ctx) {
             pubDate: parseDate(publishDate),
             // 文章链接
             link: blogUrl,
-        };
-    };
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30;
-    const blogs = (await getBlogs()).slice(0, limit);
-    const list = await Promise.all(blogs.map((element) => getBlogInfomation(element)));
+        }
+    }
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30
+    const blogs = (await getBlogs()).slice(0, limit)
+    const list = await Promise.all(blogs.map((element) => getBlogInfomation(element)))
     return {
         title: `${lang === 'zh' ? '博客' : 'Blogs'} | ${title}`,
         link: `${link}${lang}/blogs`,
         item: list,
-    };
+    }
 }

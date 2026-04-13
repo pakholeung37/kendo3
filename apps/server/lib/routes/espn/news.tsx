@@ -1,9 +1,9 @@
-import * as cheerio from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 const renderMedia = (media) => {
     const video = {
@@ -11,13 +11,13 @@ const renderMedia = (media) => {
         src: media.links?.source.mezzanine?.href || media.links?.source.HD?.href || media.links?.source.full?.href || media.links?.source.href,
         title: media.title,
         description: media.description,
-    };
+    }
     const image = {
         src: media.url,
         alt: media.alt,
         caption: media.caption,
         credit: media.credit,
-    };
+    }
 
     return renderToString(
         <>
@@ -45,12 +45,12 @@ const renderMedia = (media) => {
                     {image.credit ? <cite>{image.credit}</cite> : null}
                 </figure>
             ) : null}
-        </>
-    );
-};
+        </>,
+    )
+}
 
-const junkPattern = /inline\d+|alsosee/;
-const mediaPattern = /(photo|video)(\d+)/;
+const junkPattern = /inline\d+|alsosee/
+const mediaPattern = /(photo|video)(\d+)/
 
 export const route: Route = {
     path: '/news/:sport',
@@ -77,19 +77,19 @@ export const route: Route = {
         },
     ],
     handler: async (ctx) => {
-        const { sport = 'nba' } = ctx.req.param();
+        const { sport = 'nba' } = ctx.req.param()
         const response = await ofetch(`https://onefeed.fan.api.espn.com/apis/v3/cached/contentEngine/oneFeed/leagues/${sport}?offset=0`, {
             headers: {
                 accept: 'application/json',
             },
-        });
+        })
 
-        const handledTypes = new Set(['HeadlineNews', 'Story', 'Media', 'Shortstop']);
+        const handledTypes = new Set(['HeadlineNews', 'Story', 'Media', 'Shortstop'])
         const list = response.feed
             .filter((item) => handledTypes.has(item.data.now[0].type))
             .map((item) => {
-                const itemDetail = item.data.now[0];
-                const itemType = itemDetail.type;
+                const itemDetail = item.data.now[0]
+                const itemType = itemDetail.type
 
                 return {
                     title: itemDetail.headline,
@@ -98,8 +98,8 @@ export const route: Route = {
                     pubDate: item.date,
                     // for videos and shortstops, no need to extract full text below
                     description: itemType === 'Media' ? renderMedia(itemDetail.video[0]) : itemType === 'Shortstop' ? itemDetail.headline : '',
-                };
-            });
+                }
+            })
 
         const items = await Promise.all(
             list.map((item) =>
@@ -109,37 +109,37 @@ export const route: Route = {
                             headers: {
                                 accept: 'application/json',
                             },
-                        });
+                        })
 
-                        const $ = cheerio.load(article.content.story, null, false);
+                        const $ = cheerio.load(article.content.story, null, false)
                         $('*').each((_, ele) => {
                             if (junkPattern.test(ele.name)) {
-                                $(ele).remove();
+                                $(ele).remove()
                             }
                             if (mediaPattern.test(ele.name)) {
-                                const mediaType = ele.name.match(mediaPattern)[1] === 'photo' ? 'images' : 'video';
-                                const mediaIndex = Number.parseInt(ele.name.match(mediaPattern)[2]) - 1;
-                                const media = article.content[mediaType][mediaIndex];
+                                const mediaType = ele.name.match(mediaPattern)[1] === 'photo' ? 'images' : 'video'
+                                const mediaIndex = Number.parseInt(ele.name.match(mediaPattern)[2]) - 1
+                                const media = article.content[mediaType][mediaIndex]
                                 if (media) {
-                                    $(ele).replaceWith(renderMedia(media));
+                                    $(ele).replaceWith(renderMedia(media))
                                 } else {
-                                    $(ele).remove();
+                                    $(ele).remove()
                                 }
                             }
-                        });
+                        })
 
-                        item.description = $.html();
+                        item.description = $.html()
                     }
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: `ESPN ${sport.toUpperCase()} News`,
             link: `https://www.espn.com/espn/rss/${sport}/news`,
             item: items,
-        };
+        }
     },
-};
+}

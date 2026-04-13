@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type MediaProps = {
-    youTube?: string;
-    img?: string;
-    video?: string;
-};
+    youTube?: string
+    img?: string
+    video?: string
+}
 
 const Media = ({ youTube, img, video }: MediaProps) => (
     <>
@@ -16,6 +16,6 @@ const Media = ({ youTube, img, video }: MediaProps) => (
             <video src={video} controls></video>
         ) : null}
     </>
-);
+)
 
-export const renderMedia = (props: MediaProps): string => renderToString(<Media {...props} />);
+export const renderMedia = (props: MediaProps): string => renderToString(<Media {...props} />)

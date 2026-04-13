@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://hk01.com';
-const apiRootUrl = 'https://web-data.api.hk01.com';
+const rootUrl = 'https://hk01.com'
+const apiRootUrl = 'https://web-data.api.hk01.com'
 
 const renderDescription = ({ image, teasers, blocks }) =>
     renderToString(
@@ -26,22 +26,22 @@ const renderDescription = ({ image, teasers, blocks }) =>
                                       <p>{summary}</p>
                                   ))}
                               </backquote>
-                          );
+                          )
                       }
 
                       if (block.blockType === 'text') {
                           return block.htmlTokens?.map((tokens) =>
                               tokens.map((token) => {
                                   if (token.type === 'text') {
-                                      return <p>{token.content}</p>;
+                                      return <p>{token.content}</p>
                                   }
 
                                   if (token.type === 'link') {
-                                      return <a href={token.link}>{token.content}</a>;
+                                      return <a href={token.link}>{token.content}</a>
                                   }
 
                                   if (token.type === 'boldText') {
-                                      return <b>{token.content}</b>;
+                                      return <b>{token.content}</b>
                                   }
 
                                   if (token.type === 'boldLink') {
@@ -49,12 +49,12 @@ const renderDescription = ({ image, teasers, blocks }) =>
                                           <a href={token.link}>
                                               <b>{token.content}</b>
                                           </a>
-                                      );
+                                      )
                                   }
 
-                                  return null;
-                              })
-                          );
+                                  return null
+                              }),
+                          )
                       }
 
                       if (block.blockType === 'quote') {
@@ -62,18 +62,18 @@ const renderDescription = ({ image, teasers, blocks }) =>
                               <q>
                                   {block.message} —— {block.author}
                               </q>
-                          );
+                          )
                       }
 
                       if (block.blockType === 'image') {
-                          const { image: blockImage } = block;
+                          const { image: blockImage } = block
 
                           return blockImage ? (
                               <figure>
                                   <figurecaption>{blockImage.caption}</figurecaption>
                                   <img src={blockImage.cdnUrl} alt={blockImage.caption} height={blockImage.originalHeight} width={blockImage.originalWidth} />
                               </figure>
-                          ) : null;
+                          ) : null
                       }
 
                       if (block.blockType === 'gallery') {
@@ -82,14 +82,14 @@ const renderDescription = ({ image, teasers, blocks }) =>
                                   <figurecaption>{blockImage.caption}</figurecaption>
                                   <img src={blockImage.cdnUrl} alt={blockImage.caption} height={blockImage.originalHeight} width={blockImage.originalWidth} />
                               </figure>
-                          ));
+                          ))
                       }
 
-                      return null;
+                      return null
                   })
                 : null}
-        </>
-    );
+        </>,
+    )
 
 const ProcessItems = (items, limit, tryGet) =>
     Promise.all(
@@ -108,19 +108,19 @@ const ProcessItems = (items, limit, tryGet) =>
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = JSON.parse(detailResponse.data.match(/"__NEXT_DATA__" type="application\/json">({"props":.*})<\/script>/)[1]);
+                    const content = JSON.parse(detailResponse.data.match(/"__NEXT_DATA__" type="application\/json">({"props":.*})<\/script>/)[1])
 
                     item.description = renderDescription({
                         image: content.props.initialProps.pageProps.article.originalImage.cdnUrl,
                         teasers: content.props.initialProps.pageProps.article.teaser,
                         blocks: content.props.initialProps.pageProps.article.blocks,
-                    });
+                    })
 
-                    return item;
-                })
-            )
-    );
+                    return item
+                }),
+            ),
+    )
 
-export { apiRootUrl, ProcessItems, rootUrl };
+export { apiRootUrl, ProcessItems, rootUrl }

@@ -1,10 +1,10 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { queryToBoolean } from '@/utils/readable-social';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { queryToBoolean } from '@/utils/readable-social'
 
-import getComments from './comments';
-import getEps from './ep';
-import getFromAPI from './offcial-subject-api';
+import getComments from './comments'
+import getEps from './ep'
+import getFromAPI from './offcial-subject-api'
 
 export const route: Route = {
     path: '/subject/:id/:type?/:showOriginalName?',
@@ -31,28 +31,28 @@ export const route: Route = {
     description: `::: warning
   此通用路由仅用于对路由参数的描述，具体信息请查看下方与条目相关的路由
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const type = ctx.req.param('type') || 'ep';
-    const showOriginalName = queryToBoolean(ctx.req.param('showOriginalName'));
-    let response;
+    const id = ctx.req.param('id')
+    const type = ctx.req.param('type') || 'ep'
+    const showOriginalName = queryToBoolean(ctx.req.param('showOriginalName'))
+    let response
     switch (type) {
         case 'ep':
-            response = await getEps(id, showOriginalName);
-            break;
+            response = await getEps(id, showOriginalName)
+            break
         case 'comments':
-            response = await getComments(id, Number(ctx.req.query('minLength')) || 0);
-            break;
+            response = await getComments(id, Number(ctx.req.query('minLength')) || 0)
+            break
         case 'blogs':
-            response = await getFromAPI('blog')(id, showOriginalName);
-            break;
+            response = await getFromAPI('blog')(id, showOriginalName)
+            break
         case 'topics':
-            response = await getFromAPI('topic')(id, showOriginalName);
-            break;
+            response = await getFromAPI('topic')(id, showOriginalName)
+            break
         default:
-            throw new InvalidParameterError(`暂不支持对${type}的订阅`);
+            throw new InvalidParameterError(`暂不支持对${type}的订阅`)
     }
-    return response;
+    return response
 }

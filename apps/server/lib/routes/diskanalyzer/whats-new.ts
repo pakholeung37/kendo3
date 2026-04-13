@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/whats-new',
@@ -26,36 +26,36 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'diskanalyzer.com/whats-new',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://diskanalyzer.com';
-    const currentUrl = `${rootUrl}/whats-new`;
+    const rootUrl = 'https://diskanalyzer.com'
+    const currentUrl = `${rootUrl}/whats-new`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('.blog-content h4')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.text();
+            const title = item.text()
 
-            let description = '';
+            let description = ''
             item.nextUntil('h4').each(function () {
-                description += $(this).html();
-            });
+                description += $(this).html()
+            })
             if (description === '') {
                 item.parent()
                     .nextUntil('h4')
                     .each(function () {
-                        description += $(this).html();
-                    });
+                        description += $(this).html()
+                    })
             }
 
             return {
@@ -64,12 +64,12 @@ async function handler() {
                 description,
                 pubDate: parseDate(title.match(/\((.*)\)/)[1], ['D MMMM YYYY', 'D MMM YYYY']),
                 guid: title,
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

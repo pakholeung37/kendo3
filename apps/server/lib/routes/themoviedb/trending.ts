@@ -1,13 +1,13 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import apiKey from './api-key';
-import { MEDIA_TYPE_TO_ITEM_HANDLE } from './utils';
+import apiKey from './api-key'
+import { MEDIA_TYPE_TO_ITEM_HANDLE } from './utils'
 
 const MEDIA_TYPE_TO_TITLE = {
     tv: 'TV Shows',
     movie: 'Movies',
-};
+}
 
 export const route: Route = {
     path: '/trending/:mediaType/:timeWindow/:lang?',
@@ -25,20 +25,20 @@ export const route: Route = {
     name: 'Trending',
     maintainers: ['x2cf'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { mediaType, timeWindow, lang } = ctx.req.param();
+    const { mediaType, timeWindow, lang } = ctx.req.param()
     const { data } = await got(`https://api.themoviedb.org/3/trending/${mediaType}/${timeWindow}`, {
         searchParams: {
             language: lang,
             api_key: apiKey(),
         },
-    });
+    })
 
     return {
         title: `Popular ${MEDIA_TYPE_TO_TITLE[mediaType]} — TMDB`,
         link: `https://www.themoviedb.org/${mediaType}`,
         item: data.results.map((item) => MEDIA_TYPE_TO_ITEM_HANDLE[mediaType](item, lang)),
-    };
+    }
 }

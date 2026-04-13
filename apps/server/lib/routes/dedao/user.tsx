@@ -1,21 +1,21 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const types = {
     0: '动态',
     7: '书评',
     12: '视频',
-};
+}
 
-const mentionPattern = /<\u2267\u2746>{"name":"(.*?)","uid":"\d+","at":"1"}<\/\u2266\u2746>/g;
+const mentionPattern = /<\u2267\u2746>{"name":"(.*?)","uid":"\d+","at":"1"}<\/\u2266\u2746>/g
 
-const formatNoteText = (text = '') => text.replaceAll('\n\n', '</p><p>').replaceAll(mentionPattern, ' @$1');
+const formatNoteText = (text = '') => text.replaceAll('\n\n', '</p><p>').replaceAll(mentionPattern, ' @$1')
 
-const extractImageUrl = (value?: string) => value?.match(/"url":"(.*?)"/)?.[1];
+const extractImageUrl = (value?: string) => value?.match(/"url":"(.*?)"/)?.[1]
 
 export const route: Route = {
     path: '/user/:id/:type?',
@@ -36,17 +36,17 @@ export const route: Route = {
     description: `| 动态 | 书评 | 视频 |
 | ---- | ---- | ---- |
 | 0    | 7    | 12   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
-    const type = ctx.req.param('type') ? Number.parseInt(ctx.req.param('type')) : 0;
-    const count = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100;
+    const id = ctx.req.param('id') ?? ''
+    const type = ctx.req.param('type') ? Number.parseInt(ctx.req.param('type')) : 0
+    const count = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 100
 
-    const rootUrl = 'https://m.igetget.com';
-    const currentUrl = `${rootUrl}/native/mine/account#/user/detail?enId=${id}`;
-    const apiUrl = `${rootUrl}/native/api/homePage/topicNote`;
-    const infoUrl = `${rootUrl}/native/api/homePage/userInfo`;
+    const rootUrl = 'https://m.igetget.com'
+    const currentUrl = `${rootUrl}/native/mine/account#/user/detail?enId=${id}`
+    const apiUrl = `${rootUrl}/native/api/homePage/topicNote`
+    const infoUrl = `${rootUrl}/native/api/homePage/userInfo`
 
     const detailResponse = await got({
         method: 'post',
@@ -54,13 +54,13 @@ async function handler(ctx) {
         json: {
             hazy: id,
         },
-    });
+    })
 
-    const data = detailResponse.data;
+    const data = detailResponse.data
 
-    const author = data.c.nickname;
-    const image = data.c.avatar;
-    const description = `${data.c.v_info}: ${data.c.slogan}`;
+    const author = data.c.nickname
+    const image = data.c.avatar
+    const description = `${data.c.v_info}: ${data.c.slogan}`
 
     const response = await got({
         method: 'post',
@@ -79,7 +79,7 @@ async function handler(ctx) {
             with_highlight: true,
             hazy: id,
         },
-    });
+    })
 
     const items = response.data.c.list.map((item) => ({
         author,
@@ -119,25 +119,25 @@ async function handler(ctx) {
                         ) : null}
                         {item.extra.images
                             ? item.extra.images.map((image) => {
-                                  const imageUrl = extractImageUrl(image);
-                                  return imageUrl ? <img src={imageUrl} /> : null;
+                                  const imageUrl = extractImageUrl(image)
+                                  return imageUrl ? <img src={imageUrl} /> : null
                               })
                             : null}
                         {item.video.video_cover
                             ? (() => {
-                                  const imageUrl = extractImageUrl(item.video.video_cover);
+                                  const imageUrl = extractImageUrl(item.video.video_cover)
                                   return imageUrl ? (
                                       <figure>
                                           <img src={imageUrl} />
                                       </figure>
-                                  ) : null;
+                                  ) : null
                               })()
                             : null}
                     </>
                 ) : null}
-            </>
+            </>,
         ),
-    }));
+    }))
 
     return {
         title: `${author}的得到主页 - ${types[type]}`,
@@ -146,5 +146,5 @@ async function handler(ctx) {
         image,
         description,
         allowEmpty: true,
-    };
+    }
 }

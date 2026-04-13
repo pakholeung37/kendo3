@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/archive',
@@ -24,10 +24,10 @@ export const route: Route = {
     maintainers: ['Levix'],
     handler,
     url: 'luxiangdong.com/',
-};
+}
 
 async function handler() {
-    const { data } = await got(`https://www.luxiangdong.com/content.json?t=${Date.now()}`);
+    const { data } = await got(`https://www.luxiangdong.com/content.json?t=${Date.now()}`)
 
     const items = data.posts.map((item) => ({
         // 文章标题
@@ -40,7 +40,7 @@ async function handler() {
         author: data.meta.author,
         // 如果有的话，文章分类
         category: item.tags.map((tag) => tag.name),
-    }));
+    }))
 
     return {
         // 源标题
@@ -49,5 +49,5 @@ async function handler() {
         link: 'https://www.luxiangdong.com/',
         // 源文章
         item: items,
-    };
+    }
 }

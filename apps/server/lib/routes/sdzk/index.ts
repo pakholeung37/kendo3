@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:bcid?/:cid?',
@@ -26,32 +26,32 @@ export const route: Route = {
 
   若订阅 [通知公告](https://www.sdzk.cn/NewsList.aspx?BCID=1&CID=16)，网址为 \`https://www.sdzk.cn/NewsList.aspx?BCID=1&CID=16\`。截取 \`BCID=1\` 与 \`CID=16\` 作为参数，此时路由为 [\`/sdzk/1/16\`](https://rsshub.app/sdzk/1/16)。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const bcid = ctx.req.param('bcid') ?? '1';
-    const cid = ctx.req.param('cid') ?? '16';
+    const bcid = ctx.req.param('bcid') ?? '1'
+    const cid = ctx.req.param('cid') ?? '16'
 
-    const rootUrl = 'https://www.sdzk.cn';
-    const currentUrl = `${rootUrl}/NewsList.aspx?BCID=${bcid}${cid ? `&CID=${cid}` : ''}`;
+    const rootUrl = 'https://www.sdzk.cn'
+    const currentUrl = `${rootUrl}/NewsList.aspx?BCID=${bcid}${cid ? `&CID=${cid}` : ''}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('a[title]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: new URL(item.attr('href'), rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -59,23 +59,23 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                const info = content('div.laylist-r em').text();
+                const info = content('div.laylist-r em').text()
 
-                item.description = content('.txt').html();
-                item.pubDate = parseDate(info.split('发布时间：').pop());
+                item.description = content('.txt').html()
+                item.pubDate = parseDate(info.split('发布时间：').pop())
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

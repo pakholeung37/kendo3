@@ -1,21 +1,21 @@
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { fetchNewsItems } from './utils';
+import { fetchNewsItems } from './utils'
 
 export const handler = async (): Promise<Data> => {
-    const rootUrl = 'https://www.landiannews.com/';
-    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed=author,wp:term`;
+    const rootUrl = 'https://www.landiannews.com/'
+    const postApiUrl = `${rootUrl}wp-json/wp/v2/posts?_embed=author,wp:term`
 
-    const items: DataItem[] = await fetchNewsItems(postApiUrl);
+    const items: DataItem[] = await fetchNewsItems(postApiUrl)
 
     return {
         title: '蓝点网',
         description: '给你感兴趣的内容!',
         link: rootUrl,
         item: items,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/',
@@ -43,4 +43,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import Parser from 'rss-parser';
+import { load } from 'cheerio'
+import Parser from 'rss-parser'
 
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-type CustomItem = { issued: string };
+type CustomItem = { issued: string }
 const parser = new Parser<any, CustomItem>({
     customFields: {
         item: ['issued'],
     },
-});
+})
 
 export const route: Route = {
     path: '/articles',
@@ -33,29 +33,29 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const rsp = await got('https://ntrblog.com/atom.xml');
-    const feed = await parser.parseString(rsp.data);
+    const rsp = await got('https://ntrblog.com/atom.xml')
+    const feed = await parser.parseString(rsp.data)
 
     const items = await Promise.all(
         feed.items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
             return cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
-                const content = $('div.article-body');
-                content.find('#twitter-widget-1').remove();
-                content.find('[id^="ldblog_related_articles_"]').remove();
-                content.find('#ad2').remove();
-                item.content = `<div lang="ja">${content.html()}</div>`;
-                return item;
-            });
-        })
-    );
+                const { data: response } = await got(item.link)
+                const $ = load(response)
+                const content = $('div.article-body')
+                content.find('#twitter-widget-1').remove()
+                content.find('[id^="ldblog_related_articles_"]').remove()
+                content.find('#ad2').remove()
+                item.content = `<div lang="ja">${content.html()}</div>`
+                return item
+            })
+        }),
+    )
 
     return {
         title: feed.title || 'NTR BLOG（寝取られブログ）',
@@ -71,8 +71,8 @@ async function handler(): Promise<Data> {
                 description: item.content || '',
                 image: item.enclosure?.url,
                 guid: item.guid,
-            })
+            }),
         ),
         language: 'ja',
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/liuyan/:id/:state?',
@@ -30,16 +30,16 @@ export const route: Route = {
     description: `| 全部 | 待回复 | 办理中 | 已办理 |
 | ---- | ------ | ------ | ------ |
 | 1    | 2      | 3      | 4      |`,
-};
+}
 
 async function handler(ctx) {
-    const fid = ctx.req.param('id');
-    const state = ctx.req.param('state') ?? '1';
+    const fid = ctx.req.param('id')
+    const state = ctx.req.param('state') ?? '1'
 
-    const rootUrl = 'http://liuyan.people.com.cn';
-    const currentUrl = `${rootUrl}/threads/list?fid=${fid}#state=${state}`;
+    const rootUrl = 'http://liuyan.people.com.cn'
+    const currentUrl = `${rootUrl}/threads/list?fid=${fid}#state=${state}`
 
-    let currentForum;
+    let currentForum
 
     const apiResponse = await got({
         method: 'post',
@@ -49,14 +49,14 @@ async function handler(ctx) {
             state,
             lastItem: 0,
         },
-    });
+    })
 
     const list = apiResponse.data.responseData.map((item) => ({
         title: item.subject,
         author: item.nickName,
         link: `${rootUrl}/threads/content?tid=${item.tid}`,
         pubDate: parseDate(item.threadsCheckTime * 1000),
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -64,21 +64,21 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.content').html();
-                currentForum = currentForum ?? content('#currentForum').text();
+                item.description = content('.content').html()
+                currentForum = currentForum ?? content('#currentForum').text()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${currentForum} - 领导留言板 - 人民网`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

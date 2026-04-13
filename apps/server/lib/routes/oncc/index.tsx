@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const rootUrl = 'https://hk.on.cc';
+const rootUrl = 'https://hk.on.cc'
 
 const languageMap = {
     'zh-hans': '_cn',
     'zh-hant': '',
-};
+}
 
 const channelMap = {
     news: {
@@ -35,7 +35,7 @@ const channelMap = {
         'zh-hans': '产经',
         'zh-hant': '產經',
     },
-};
+}
 
 export const route: Route = {
     path: '/:language/:channel?',
@@ -58,54 +58,54 @@ export const route: Route = {
   \`https://hk.on.cc/hk/finance/index_cn.html\` 对应 \`/oncc/zh-hans/finance\`
 
   \`https://hk.on.cc/hk/finance/index.html\` 对应 \`/oncc/zh-hant/finance\``,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language');
-    const channel = ctx.req.param('channel') ?? 'news';
-    const newsUrl = `${rootUrl}/hk/${channel}/index${languageMap[language]}.html`;
+    const language = ctx.req.param('language')
+    const channel = ctx.req.param('channel') ?? 'news'
+    const newsUrl = `${rootUrl}/hk/${channel}/index${languageMap[language]}.html`
 
-    const response = await got.get(newsUrl);
-    const $ = load(response.data);
+    const response = await got.get(newsUrl)
+    const $ = load(response.data)
     const list = $('#focusNews > div.focusItem[type=article]')
         .toArray()
         .map((item) => {
-            const title = $(item).find('div.focusTitle > span').text();
-            const link = rootUrl + $(item).find('a:nth-child(1)').attr('href');
-            const pubDate = parseDate($(item).attr('edittime'), 'YYYYMMDDHHmmss');
+            const title = $(item).find('div.focusTitle > span').text()
+            const link = rootUrl + $(item).find('a:nth-child(1)').attr('href')
+            const pubDate = parseDate($(item).attr('edittime'), 'YYYYMMDDHHmmss')
 
             return {
                 title,
                 link,
                 pubDate,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map(async (item) => {
             const desc = await cache.tryGet(item.link, async () => {
-                const detailResponse = await got.get(item.link);
-                const $ = load(detailResponse.data);
-                const imageUrl = rootUrl + $('img').eq(0).attr('src');
-                const content = $('div.breakingNewsContent').html();
+                const detailResponse = await got.get(item.link)
+                const $ = load(detailResponse.data)
+                const imageUrl = rootUrl + $('img').eq(0).attr('src')
+                const content = $('div.breakingNewsContent').html()
                 const description = renderArticleDescription({
                     imageUrl,
                     content,
-                });
+                })
 
-                return description;
-            });
-            item.description = desc;
+                return description
+            })
+            item.description = desc
 
-            return item;
-        })
-    );
+            return item
+        }),
+    )
 
     return {
         title: `東網 - ${channelMap[channel][language]}`,
         link: newsUrl,
         item: items,
-    };
+    }
 }
 
 const renderArticleDescription = ({ imageUrl, content }: { imageUrl: string; content?: string }): string =>
@@ -113,5 +113,5 @@ const renderArticleDescription = ({ imageUrl, content }: { imageUrl: string; con
         <>
             <img src={imageUrl} />
             {content ? raw(content) : null}
-        </>
-    );
+        </>,
+    )

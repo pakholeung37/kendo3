@@ -1,10 +1,10 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-const currentURL = (catagory: string, page: number) => (catagory === '_all' ? `https://www.csie.ncku.edu.tw/zh-hant/news?page=${page}` : `https://www.csie.ncku.edu.tw/zh-hant/news/${catagory}?page=${page}`);
+const currentURL = (catagory: string, page: number) => (catagory === '_all' ? `https://www.csie.ncku.edu.tw/zh-hant/news?page=${page}` : `https://www.csie.ncku.edu.tw/zh-hant/news/${catagory}?page=${page}`)
 
 const catagories = {
     _all: '全部資訊',
@@ -15,7 +15,7 @@ const catagories = {
     awards: '獲獎資訊',
     scholarship: '獎助學金',
     jobs: '徵人資訊',
-};
+}
 
 export const route: Route = {
     'zh-TW': {
@@ -47,20 +47,20 @@ export const route: Route = {
     ],
     maintainers: ['simbafs'],
     handler: async (ctx) => {
-        let catagory = ctx.req.param('catagory') ?? '_all';
+        let catagory = ctx.req.param('catagory') ?? '_all'
         if (catagories[catagory] === undefined) {
-            catagory = 'normal';
+            catagory = 'normal'
         }
 
-        const base = 1; // get from query
-        const limit = 3; // get from query
+        const base = 1 // get from query
+        const limit = 3 // get from query
 
         const item = (
             await Promise.allSettled(
                 Array.from({ length: limit }).map(async (_, i) => {
                     const $ = await ofetch<CheerioAPI>(currentURL(catagory, base + i), {
                         parseResponse: load,
-                    });
+                    })
 
                     return $('.list-title > li')
                         .toArray()
@@ -69,17 +69,17 @@ export const route: Route = {
                             pubDate: new Date($('small', e).text()),
                             link: `https://www.csie.ncku.edu.tw${$('a', e).attr('href')}`,
                             catagory: $('span:nth-child(2)', e).text(),
-                        }));
-                })
+                        }))
+                }),
             )
         )
             .filter((item) => item.status === 'fulfilled')
-            .flatMap((item) => item.value);
+            .flatMap((item) => item.value)
 
         return {
             title: `成大資訊系公告 - ${catagories[catagory]}`,
             link: currentURL(catagory, base),
             item,
-        };
+        }
     },
-};
+}

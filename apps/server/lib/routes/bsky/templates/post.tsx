@@ -1,32 +1,32 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ImageEmbed = {
-    fullsize: string;
-    alt?: string | null;
-};
+    fullsize: string
+    alt?: string | null
+}
 
 type ExternalEmbed = {
-    uri: string;
-    title?: string;
-    description?: string;
-};
+    uri: string
+    title?: string
+    description?: string
+}
 
 type VideoEmbed = {
-    thumbnail?: string;
-    playlist?: string;
-};
+    thumbnail?: string
+    playlist?: string
+}
 
 type Embed = {
-    $type?: string;
-    images?: ImageEmbed[];
-    external?: ExternalEmbed;
-} & VideoEmbed;
+    $type?: string
+    images?: ImageEmbed[]
+    external?: ExternalEmbed
+} & VideoEmbed
 
 type PostProps = {
-    text?: string;
-    embed?: Embed;
-};
+    text?: string
+    embed?: Embed
+}
 
 export const renderPost = ({ text, embed }: PostProps): string =>
     renderToString(
@@ -63,5 +63,5 @@ export const renderPost = ({ text, embed }: PostProps): string =>
                     ) : null}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const mainCategories = {
     local: 119,
@@ -12,13 +12,13 @@ const mainCategories = {
     life: 501,
     technology: 502,
     finance: 121,
-};
+}
 
 const categories = {
     tracker: 123,
     feature: 124,
     opinion: 125,
-};
+}
 
 export const route: Route = {
     path: '/news/:category?/:id?',
@@ -60,33 +60,33 @@ export const route: Route = {
 | 事件追蹤 | 評論節目 | 新聞專題 |
 | -------- | -------- | -------- |
 | tracker  | feature  | opinion  |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = '', id = '' } = ctx.req.param();
-    const limit = Number.parseInt(ctx.req.query('limit') || '20', 10);
-    const hasTopicId = id && Object.hasOwn(categories, category);
+    const { category = '', id = '' } = ctx.req.param()
+    const limit = Number.parseInt(ctx.req.query('limit') || '20', 10)
+    const hasTopicId = id && Object.hasOwn(categories, category)
 
-    const rootUrl = 'https://news.now.com';
+    const rootUrl = 'https://news.now.com'
 
-    const pageUrl = hasTopicId ? `${rootUrl}/home/${category}/detail?catCode=${categories[category]}&topicId=${id}` : `${rootUrl}/home${category ? `/${category}` : ''}`;
+    const pageUrl = hasTopicId ? `${rootUrl}/home/${category}/detail?catCode=${categories[category]}&topicId=${id}` : `${rootUrl}/home${category ? `/${category}` : ''}`
 
-    let apiUrl;
+    let apiUrl
     if (hasTopicId) {
-        apiUrl = pageUrl;
+        apiUrl = pageUrl
     } else if (category === 'sports') {
-        apiUrl = `https://sportsapi.now.com/api/getNewsList?pageSize=${limit}&pageNo=1&searchTagsKey=allSportsSearchTags`;
+        apiUrl = `https://sportsapi.now.com/api/getNewsList?pageSize=${limit}&pageNo=1&searchTagsKey=allSportsSearchTags`
     } else if (category) {
-        apiUrl = `https://d3sli7vh0lsda4.cloudfront.net/api/getNewsList?category=${mainCategories[category]}&pageNo=1&pageSize=${limit}`;
+        apiUrl = `https://d3sli7vh0lsda4.cloudfront.net/api/getNewsList?category=${mainCategories[category]}&pageNo=1&pageSize=${limit}`
     } else {
-        apiUrl = pageUrl;
+        apiUrl = pageUrl
     }
 
-    const response = await ofetch(apiUrl);
-    const isApi = typeof response === 'object' && Array.isArray(response);
-    const $ = load(response);
+    const response = await ofetch(apiUrl)
+    const isApi = typeof response === 'object' && Array.isArray(response)
+    const $ = load(response)
 
-    let list;
+    let list
     if (isApi) {
         list =
             category === 'sports'
@@ -94,7 +94,7 @@ async function handler(ctx) {
                       const image = item.newsPhotos
                           ?.filter((p) => p.sizeType === '3')
                           ?.map((p) => `<img src="${p.imageFileUrl}">`)
-                          .join('');
+                          .join('')
                       return {
                           title: item.headlineChi,
                           description: image,
@@ -103,10 +103,10 @@ async function handler(ctx) {
                           category: [...item.sportTypes.map((t) => t.sportTypeNameChi), ...item.players.map((p) => p.playerFullNameChi), ...item.teams.map((t) => t.teamCodeChi)],
                           image: item.newsPhotos?.find((p) => p.sizeType === '3')?.imageUrl,
                           newsId: item.newsId,
-                      };
+                      }
                   })
                 : response.map((item) => {
-                      const image = item.image2Url ?? item.imageUrl ?? item.image3Url;
+                      const image = item.image2Url ?? item.imageUrl ?? item.image3Url
                       return {
                           title: item.title,
                           description: (image ? `<img src="${image}">` : '') + item.leading + item.summary,
@@ -115,51 +115,51 @@ async function handler(ctx) {
                           updated: parseDate(item.lastModifyDate, 'x'),
                           category: item.newsTags.map((t) => t.tag),
                           image,
-                      };
-                  });
+                      }
+                  })
     } else {
         list = $(`${category === '' ? '.homeFeaturedNews ' : '.newsCategoryColLeft '}.newsTitle`)
             .toArray()
             .slice(0, limit)
             .map((item) => {
-                item = $(item);
+                item = $(item)
 
                 return {
                     title: item.text(),
                     link: `${rootUrl}${item.parent().parent().attr('href')}`,
-                };
-            });
+                }
+            })
     }
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.pubDate || item.newsId) {
-                    const detailResponse = await ofetch(item.link);
-                    const $ = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $ = load(detailResponse)
 
                     const newsData = JSON.parse(
                         $('script:contains("var newsData")')
                             .text()
-                            .match(/var newsData = (.*?);/)?.[1] || '{}'
-                    );
+                            .match(/var newsData = (.*?);/)?.[1] || '{}',
+                    )
 
-                    const images = newsData.imageList ? newsData.imageList.map((img) => `<img src="${img.image2Url}">`).join('') : '';
+                    const images = newsData.imageList ? newsData.imageList.map((img) => `<img src="${img.image2Url}">`).join('') : ''
 
-                    item.description = item.description ? item.description + ($('.img_caption').prop('outerHTML') ?? '') + $('.newsLeading').html() : images + $('.newsLeading').html();
-                    item.pubDate ||= parseDate(newsData.publishDate, 'x');
-                    item.updated ||= parseDate(newsData.lastModifyDate, 'x');
-                    item.category ||= [...new Set([newsData.categoryName, ...newsData.newsTags.map((t) => t.tag), ...newsData.newsTopics.map((t) => t.topicName)])];
+                    item.description = item.description ? item.description + ($('.img_caption').prop('outerHTML') ?? '') + $('.newsLeading').html() : images + $('.newsLeading').html()
+                    item.pubDate ||= parseDate(newsData.publishDate, 'x')
+                    item.updated ||= parseDate(newsData.lastModifyDate, 'x')
+                    item.category ||= [...new Set([newsData.categoryName, ...newsData.newsTags.map((t) => t.tag), ...newsData.newsTopics.map((t) => t.topicName)])]
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: Object.hasOwn(categories, category) ? $('title').text() : ($('.smallSpace.active').text() || '首頁') + ' | Now 新聞',
         link: pageUrl,
         item: items,
-    };
+    }
 }

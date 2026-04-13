@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '国门传媒在线',
@@ -6,4 +6,4 @@ export const namespace: Namespace = {
     categories: ['journal'],
     description: '',
     lang: 'zh-CN',
-};
+}

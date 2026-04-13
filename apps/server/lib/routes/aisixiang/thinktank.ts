@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { ossUrl, ProcessFeed, rootUrl } from './utils';
+import { ossUrl, ProcessFeed, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/thinktank/:id/:type?',
@@ -25,41 +25,41 @@ export const route: Route = {
     handler,
     description: `| 论文 | 时评 | 随笔 | 演讲 | 访谈 | 著作 | 读书 | 史论 | 译作 | 诗歌 | 书信 | 科学 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |`,
-};
+}
 
 async function handler(ctx) {
-    const { id, type = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { id, type = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const currentUrl = new URL(`thinktank/${id}.html`, rootUrl).href;
+    const currentUrl = new URL(`thinktank/${id}.html`, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const title = `${$('h2').first().text().trim()}${type}`;
+    const title = `${$('h2').first().text().trim()}${type}`
 
-    let items = [];
+    let items = []
 
     const targetList = $('h3')
         .toArray()
-        .filter((h) => (type ? $(h).text() === type : true));
+        .filter((h) => (type ? $(h).text() === type : true))
     if (!targetList) {
-        throw new InvalidParameterError(`Not found ${type} in ${id}: ${currentUrl}`);
+        throw new InvalidParameterError(`Not found ${type} in ${id}: ${currentUrl}`)
     }
 
     for (const l of targetList) {
-        items = [...items, ...$(l).parent().find('ul li a').toArray()];
+        items = [...items, ...$(l).parent().find('ul li a').toArray()]
     }
 
     items = items.slice(0, limit).map((item) => {
-        item = $(item);
+        item = $(item)
 
         return {
             title: item.text().split('：').pop(),
             link: new URL(item.prop('href'), rootUrl).href,
-        };
-    });
+        }
+    })
 
     return {
         item: await ProcessFeed(limit, cache.tryGet, items),
@@ -69,5 +69,5 @@ async function handler(ctx) {
         language: 'zh-cn',
         image: new URL('images/logo_thinktank.jpg', ossUrl).href,
         subtitle: title,
-    };
+    }
 }

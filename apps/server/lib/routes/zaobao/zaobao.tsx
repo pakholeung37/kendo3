@@ -1,4 +1,4 @@
-import type { ImageData } from './util';
+import type { ImageData } from './util'
 
 function zaobao({ imageDataArray, articleBody }) {
     return (
@@ -13,11 +13,11 @@ function zaobao({ imageDataArray, articleBody }) {
                             <figcaption>{imageData.title}</figcaption>
                         </figure>
                     )
-                )
+                ),
             )}
             {articleBody && <div dangerouslySetInnerHTML={{ __html: articleBody }} />}
         </>
-    );
+    )
 }
 
-export default zaobao;
+export default zaobao

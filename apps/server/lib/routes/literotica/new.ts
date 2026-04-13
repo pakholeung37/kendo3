@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/new',
@@ -28,25 +28,25 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'literotica.com/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.literotica.com';
-    const currentUrl = `${rootUrl}/stories/new_submissions.php`;
+    const rootUrl = 'https://www.literotica.com'
+    const currentUrl = `${rootUrl}/stories/new_submissions.php`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.b-46t')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const a = item.find('.p-48y');
+            const a = item.find('.p-48y')
 
             return {
                 title: a.text(),
@@ -59,8 +59,8 @@ async function handler() {
                     .text()
                     .replace(/Submitted by/, '')
                     .trim(),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -68,20 +68,20 @@ async function handler() {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.aa_ht').html();
+                item.description = content('.aa_ht').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

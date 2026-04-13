@@ -1,33 +1,33 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '12', 10);
+    const { id } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '12', 10)
 
-    const baseUrl = 'https://www.scientificamerican.com';
-    const targetUrl: string = new URL(`podcast${id ? `/${id}` : 's'}/`, baseUrl).href;
+    const baseUrl = 'https://www.scientificamerican.com'
+    const targetUrl: string = new URL(`podcast${id ? `/${id}` : 's'}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language: string = $('html').attr('lang') ?? 'en';
-    const data: string | undefined = response.match(/window\.__DATA__=JSON\.parse\(`(.*?)`\)/)?.[1];
-    const parsedData = data ? JSON.parse(data.replaceAll(String.raw`\\`, '\\')) : undefined;
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language: string = $('html').attr('lang') ?? 'en'
+    const data: string | undefined = response.match(/window\.__DATA__=JSON\.parse\(`(.*?)`\)/)?.[1]
+    const parsedData = data ? JSON.parse(data.replaceAll(String.raw`\\`, '\\')) : undefined
 
     let items: DataItem[] = parsedData
         ? parsedData.initialData.props.results.slice(0, limit).map((item): DataItem => {
-              const title: string = item.title;
-              const image: string | undefined = item.image_url;
+              const title: string = item.title
+              const image: string | undefined = item.image_url
               const description: string = renderDescription({
                   images: image
                       ? [
@@ -40,17 +40,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         ]
                       : undefined,
                   intro: item.summary,
-              });
-              const pubDate: number | string = item.date_published;
-              const linkUrl: string | undefined = item.url;
-              const categories: string[] = [...new Set([item.category, item.subtype, item.column, item.digital_column].filter(Boolean))];
+              })
+              const pubDate: number | string = item.date_published
+              const linkUrl: string | undefined = item.url
+              const categories: string[] = [...new Set([item.category, item.subtype, item.column, item.digital_column].filter(Boolean))]
               const authors: DataItem['author'] = item.authors.map((author) => ({
                   name: author.name,
                   url: author.url ? new URL(author.url, baseUrl).href : undefined,
                   avatar: author.picture_file,
-              }));
-              const guid = `-${item.id}`;
-              const updated: number | string = item.release_date ?? pubDate;
+              }))
+              const guid = `-${item.id}`
+              const updated: number | string = item.release_date ?? pubDate
 
               let processedItem: DataItem = {
                   title,
@@ -70,12 +70,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                   banner: image,
                   updated: updated ? timezone(parseDate(updated), +8) : undefined,
                   language,
-              };
+              }
 
-              const enclosureUrl: string | undefined = item.media_url;
+              const enclosureUrl: string | undefined = item.media_url
 
               if (enclosureUrl) {
-                  const enclosureType = `audio/${enclosureUrl.replace(/\?.*$/, '').split(/\./).pop()}`;
+                  const enclosureType = `audio/${enclosureUrl.replace(/\?.*$/, '').split(/\./).pop()}`
 
                   processedItem = {
                       ...processedItem,
@@ -83,34 +83,34 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       enclosure_type: enclosureType,
                       enclosure_title: title,
                       itunes_item_image: image,
-                  };
+                  }
               }
 
-              return processedItem;
+              return processedItem
           })
-        : [];
+        : []
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
+                    const detailResponse = await ofetch(item.link)
 
-                    const detailData: string | undefined = detailResponse.match(/window\.__DATA__=JSON\.parse\(`(.*?)`\)/)?.[1];
-                    const parsedDetailData = detailData ? JSON.parse(detailData.replaceAll(String.raw`\\`, '\\')) : undefined;
+                    const detailData: string | undefined = detailResponse.match(/window\.__DATA__=JSON\.parse\(`(.*?)`\)/)?.[1]
+                    const parsedDetailData = detailData ? JSON.parse(detailData.replaceAll(String.raw`\\`, '\\')) : undefined
 
                     if (!parsedDetailData) {
-                        return item;
+                        return item
                     }
 
-                    const articleData = parsedDetailData.initialData.article;
+                    const articleData = parsedDetailData.initialData.article
 
-                    const title: string = articleData.title;
-                    const image: string | undefined = articleData.image_url;
+                    const title: string = articleData.title
+                    const image: string | undefined = articleData.image_url
                     const description: string = renderDescription({
                         images: image
                             ? [
@@ -124,16 +124,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             : undefined,
                         intro: articleData.summary,
                         content: articleData.content,
-                    });
-                    const pubDate: number | string = articleData.published_at_date_time;
-                    const categories: string[] = [...new Set([articleData.display_category, articleData.primary_category, articleData.subcategory, ...(articleData.categories ?? []), articleData.podcast_series_name])];
+                    })
+                    const pubDate: number | string = articleData.published_at_date_time
+                    const categories: string[] = [...new Set([articleData.display_category, articleData.primary_category, articleData.subcategory, ...(articleData.categories ?? []), articleData.podcast_series_name])]
                     const authors: DataItem['author'] = articleData.authors.map((author) => ({
                         name: author.name,
                         url: author.url ? new URL(author.url, baseUrl).href : undefined,
                         avatar: author.picture_file,
-                    }));
-                    const guid = `scientificamerican-${articleData.id}`;
-                    const updated: number | string = articleData.updated_at_date_time ?? pubDate;
+                    }))
+                    const guid = `scientificamerican-${articleData.id}`
+                    const updated: number | string = articleData.updated_at_date_time ?? pubDate
 
                     let processedItem: DataItem = {
                         title,
@@ -152,12 +152,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         banner: image,
                         updated: updated ? timezone(parseDate(updated), +8) : undefined,
                         language,
-                    };
+                    }
 
-                    const enclosureUrl: string | undefined = articleData.media_url;
+                    const enclosureUrl: string | undefined = articleData.media_url
 
                     if (enclosureUrl) {
-                        const enclosureType = `audio/${enclosureUrl.replace(/\?.*$/, '').split(/\./).pop()}`;
+                        const enclosureType = `audio/${enclosureUrl.replace(/\?.*$/, '').split(/\./).pop()}`
 
                         processedItem = {
                             ...processedItem,
@@ -165,17 +165,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             enclosure_type: enclosureType,
                             enclosure_title: title,
                             itunes_item_image: image,
-                        };
+                        }
                     }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -190,8 +190,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         itunes_author: $('meta[property="og:site_name"]').attr('content'),
         itunes_category: 'Science',
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/podcast/:id?',
@@ -225,9 +225,9 @@ If you subscribe to [Science Quickly](https://www.scientificamerican.com/podcast
         {
             source: ['www.scientificamerican.com/podcasts/', 'www.scientificamerican.com/podcast/:id'],
             target: (params) => {
-                const id: string = params.id;
+                const id: string = params.id
 
-                return `/scientificamerican/podcast${id ? `/${id}` : ''}`;
+                return `/scientificamerican/podcast${id ? `/${id}` : ''}`
             },
         },
         {
@@ -262,4 +262,4 @@ If you subscribe to [Science Quickly](https://www.scientificamerican.com/podcast
 |      | science-quickly | science-talk |
 `,
     },
-};
+}

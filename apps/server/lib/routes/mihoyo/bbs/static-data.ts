@@ -120,7 +120,7 @@ const DATA_MAP = {
             },
         },
     },
-};
+}
 
 // 排行榜分类
 const RANKING_TYPE_MAP = {
@@ -136,6 +136,6 @@ const RANKING_TYPE_MAP = {
         id: 3,
         title: '月榜',
     },
-};
+}
 
-export { DATA_MAP, RANKING_TYPE_MAP };
+export { DATA_MAP, RANKING_TYPE_MAP }

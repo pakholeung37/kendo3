@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { category } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'http://banshujiang.cn';
-    const targetUrl: string = new URL(`${category ? 'e_books' : `category/${category}`}/page/1`, baseUrl).href;
+    const baseUrl = 'http://banshujiang.cn'
+    const targetUrl: string = new URL(`${category ? 'e_books' : `category/${category}`}/page/1`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('ul.small-list li.row')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('span.book-property__title').first().next('a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('span.book-property__title').first().next('a')
 
-            const title: string = $aEl.text().trim();
-            const image: string | undefined = $el.find('meta[property="og:image"]').attr('content') ?? $el.find('img').attr('src');
+            const title: string = $aEl.text().trim()
+            const image: string | undefined = $el.find('meta[property="og:image"]').attr('content') ?? $el.find('img').attr('src')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -41,13 +41,13 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       ]
                     : undefined,
                 description: $el.find('div.small-list__item-desc').html(),
-            });
-            const pubDateStr: string | undefined = image?.split(/\?timestamp=/).pop();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = $el.find('span.book-property__title').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).next('span').text()).filter(Boolean))];
-            const authors: DataItem['author'] = $el.find('span.book-property__title').eq(1).text();
-            const upDatedStr: string | undefined = pubDateStr;
+            })
+            const pubDateStr: string | undefined = image?.split(/\?timestamp=/).pop()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = $el.find('span.book-property__title').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).next('span').text()).filter(Boolean))]
+            const authors: DataItem['author'] = $el.find('span.book-property__title').eq(1).text()
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -64,23 +64,23 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr, 'x') : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('div.ebook-title').text().trim();
-                const image: string | undefined = $$('div.span6 img').attr('src');
+                const title: string = $$('div.ebook-title').text().trim()
+                const image: string | undefined = $$('div.span6 img').attr('src')
                 const description: string | undefined = renderDescription({
                     images: image
                         ? [
@@ -91,22 +91,22 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           ]
                         : undefined,
                     description: ($$('table').first().parent().html() ?? '') + ($$('div.ebook-markdown').html() ?? ''),
-                });
+                })
 
-                $$('ul.inline').parent().parent().remove();
+                $$('ul.inline').parent().parent().remove()
 
-                const pubDateStr: string | undefined = image?.split(/\?timestamp=/).pop();
-                const linkUrl: string | undefined = $$('div.ebook-title a').attr('href');
+                const pubDateStr: string | undefined = image?.split(/\?timestamp=/).pop()
+                const linkUrl: string | undefined = $$('div.ebook-title a').attr('href')
                 const categories: string[] = [
                     ...new Set(
                         $$('table tr')
                             .toArray()
                             .map((el) => $$(el).find('td').last().text())
-                            .filter(Boolean)
+                            .filter(Boolean),
                     ),
-                ];
-                const authors: DataItem['author'] = $$('table tr').first().find('td').last().text();
-                const upDatedStr: string | undefined = pubDateStr;
+                ]
+                const authors: DataItem['author'] = $$('table tr').first().find('td').last().text()
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -123,19 +123,19 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     banner: image,
                     updated: upDatedStr ? parseDate(upDatedStr, 'x') : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     const title: string = $('title')
         .text()
-        .replace(/第1页\s-\s/, '');
+        .replace(/第1页\s-\s/, '')
 
     return {
         title,
@@ -147,8 +147,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('a.brand').text(),
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -487,9 +487,9 @@ export const route: Route = {
         {
             source: ['banshujiang.cn/:category?'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/banshujiang${category ? `/${category}` : ''}`;
+                return `/banshujiang${category ? `/${category}` : ''}`
             },
         },
         {
@@ -759,4 +759,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

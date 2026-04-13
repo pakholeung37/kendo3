@@ -1,38 +1,38 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'gzdt' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = 'gzdt' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'http://www.gjs.moa.gov.cn';
-    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href;
+    const baseUrl = 'http://www.gjs.moa.gov.cn'
+    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     let items: DataItem[] = $('ul#div li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const aEl: Cheerio<Element> = $el.find('a');
+            const aEl: Cheerio<Element> = $el.find('a')
 
-            const title: string = aEl.attr('title') ?? $el.find('span.sj_gztzle').text();
-            const pubDateStr: string | undefined = $el.find('span.sj_gztzri').text();
-            const linkUrl: string | undefined = aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = aEl.attr('title') ?? $el.find('span.sj_gztzle').text()
+            const pubDateStr: string | undefined = $el.find('span.sj_gztzri').text()
+            const linkUrl: string | undefined = aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -40,30 +40,30 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl ? new URL(linkUrl, targetUrl).href : undefined,
                 updated: parseDate(upDatedStr),
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('meta[name="ArticleTitle"]').attr('content') ?? '';
-                    const description: string = $$('div.TRS_Editor').html() ?? '';
-                    const pubDateStr: string | undefined = $$('meta[name="PubDate"]').attr('content');
-                    const linkUrl: string | undefined = $$('meta[name="Url"]').attr('content');
-                    const categoryEls: Element[] = $$('meta[name="ColumnName"], meta[name="ContentSource"], meta[name="Keywords"]').toArray();
-                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).attr('content') as string).filter(Boolean))];
-                    const authors: DataItem['author'] = $$('meta[name="Author"]').attr('content');
-                    const upDatedStr: string | undefined = pubDateStr;
+                    const title: string = $$('meta[name="ArticleTitle"]').attr('content') ?? ''
+                    const description: string = $$('div.TRS_Editor').html() ?? ''
+                    const pubDateStr: string | undefined = $$('meta[name="PubDate"]').attr('content')
+                    const linkUrl: string | undefined = $$('meta[name="Url"]').attr('content')
+                    const categoryEls: Element[] = $$('meta[name="ColumnName"], meta[name="ContentSource"], meta[name="Keywords"]').toArray()
+                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).attr('content') as string).filter(Boolean))]
+                    const authors: DataItem['author'] = $$('meta[name="Author"]').attr('content')
+                    const upDatedStr: string | undefined = pubDateStr
 
                     let processedItem: DataItem = {
                         title,
@@ -78,34 +78,34 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                         language,
-                    };
+                    }
 
-                    const $enclosureEl: Cheerio<Element> = $$('div.sj_fujianxia_right ul li a').first();
-                    const enclosureUrl: string | undefined = $enclosureEl.attr('href');
+                    const $enclosureEl: Cheerio<Element> = $$('div.sj_fujianxia_right ul li a').first()
+                    const enclosureUrl: string | undefined = $enclosureEl.attr('href')
 
                     if (enclosureUrl) {
-                        const enclosureType = `application/${enclosureUrl.split('.').pop()}`;
-                        const enclosureTitle: string = $enclosureEl.text();
+                        const enclosureType = `application/${enclosureUrl.split('.').pop()}`
+                        const enclosureTitle: string = $enclosureEl.text()
 
                         processedItem = {
                             ...processedItem,
                             enclosure_url: new URL(enclosureUrl, item.link).href,
                             enclosure_type: enclosureType,
                             enclosure_title: enclosureTitle || title,
-                        };
+                        }
                     }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const author = '中华人民共和国农业农村部国际合作司';
-    const description: string = $('meta[name="ColumnName"]').attr('content') ?? '';
+    const author = '中华人民共和国农业农村部国际合作司'
+    const description: string = $('meta[name="ColumnName"]').attr('content') ?? ''
 
     return {
         title: `${author} - ${description}`,
@@ -116,8 +116,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         image: new URL('images/logo-china.png', baseUrl).href,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/moa/gjs/:category{.+}?',
@@ -175,9 +175,9 @@ export const route: Route = {
         {
             source: ['www.gjs.moa.gov.cn/:category{.+}?'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/gov/moa/gjs${category ? `/${category}` : ''}`;
+                return `/gov/moa/gjs${category ? `/${category}` : ''}`
             },
         },
         {
@@ -207,4 +207,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

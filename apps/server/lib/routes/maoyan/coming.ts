@@ -1,20 +1,20 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 interface MovieItem {
-    id: number;
-    nm: string;
-    img: string;
-    sc: number;
-    star: string;
-    rt: string;
-    showInfo?: string;
-    wish: number;
-    comingTitle: string;
+    id: number
+    nm: string
+    img: string
+    sc: number
+    star: string
+    rt: string
+    showInfo?: string
+    wish: number
+    comingTitle: string
 }
 
 interface ComingResponse {
-    coming: MovieItem[];
+    coming: MovieItem[]
 }
 
 export const route: Route = {
@@ -39,14 +39,14 @@ export const route: Route = {
     name: '即将上映',
     maintainers: ['JackyST0'],
     handler,
-};
+}
 
 async function handler() {
-    const apiUrl = 'https://m.maoyan.com/ajax/comingList?ci=1&limit=30&movieIds=&token=';
+    const apiUrl = 'https://m.maoyan.com/ajax/comingList?ci=1&limit=30&movieIds=&token='
 
-    const response = await ofetch<ComingResponse>(apiUrl);
+    const response = await ofetch<ComingResponse>(apiUrl)
 
-    const movies = response.coming || [];
+    const movies = response.coming || []
 
     const items = movies.map((movie) => ({
         title: `[${movie.comingTitle}] ${movie.nm}`,
@@ -59,12 +59,12 @@ async function handler() {
             <p>想看人数：${movie.wish}</p>
             ${movie.showInfo ? `<p>${movie.showInfo}</p>` : ''}
         `,
-    }));
+    }))
 
     return {
         title: '猫眼电影 - 即将上映',
         link: 'https://www.maoyan.com/films?showType=2',
         description: '猫眼电影即将上映列表',
         item: items,
-    };
+    }
 }

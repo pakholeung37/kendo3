@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import locations from './locations';
-import { renderDescription } from './templates/description';
+import locations from './locations'
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/discover/:query?/:subCate?/:hasVideo?/:city?/:college?/:recommendLevel?/:sort?',
@@ -147,7 +147,7 @@ export const route: Route = {
 | 全部 | 编辑精选 | 首页推荐 | 全部推荐 |
 | ---- | -------- | -------- | -------- |
 | 0    | 2        | 3        | 1        |`,
-};
+}
 
 async function handler(ctx) {
     const categories = {
@@ -166,7 +166,7 @@ async function handler(ctx) {
         611: '手工艺',
         613: '服装',
         44: '其他',
-    };
+    }
 
     const subCategories = {
         0: { 617: '运营设计', 9: '包装', 30: '动画/影视', 34: '人像摄影', 2: '商业插画', 616: '电商', 757: 'APP界面', 292: '艺术插画', 637: '家装设计', 10: '海报', 809824: '文章' },
@@ -184,7 +184,7 @@ async function handler(ctx) {
         611: { 654: '工艺品设计', 656: '手办/模玩', 756: '首饰设计', 658: '其他手工艺', 816: '文章' },
         613: { 672: '休闲/流行服饰', 671: '正装/礼服', 814: '传统/民族服饰', 677: '配饰', 676: '鞋履设计', 673: '儿童服饰', 680: '其他服装', 815: '文章' },
         44: { 417: '文案/策划', 798: 'VR设计', 683: '独立游戏', 45: '其他', 824: '文章' },
-    };
+    }
 
     const queries = {
         cate: '0',
@@ -194,51 +194,51 @@ async function handler(ctx) {
         recommendLevel: ctx.req.param('recommendLevel') ?? '2',
         sort: ctx.req.param('sort') ?? '9',
         limit: ctx.req.query('limit') ?? '25',
-    };
+    }
 
-    let query = ctx.req.param('query') ?? '';
+    let query = ctx.req.param('query') ?? ''
 
     if (query.includes('=')) {
         for (const q of query.split('&')) {
-            const kv = q.split('=');
-            queries[kv[0]] = kv[1];
+            const kv = q.split('=')
+            queries[kv[0]] = kv[1]
         }
-        queries.limit = '25';
-        queries.page = '1';
+        queries.limit = '25'
+        queries.page = '1'
     } else {
         switch (query) {
             case 'home':
-                queries.recommendLevel = '3';
-                break;
+                queries.recommendLevel = '3'
+                break
             case 'all':
-                queries.recommendLevel = '1';
-                break;
+                queries.recommendLevel = '1'
+                break
             case 'article':
-                queries.subCate = '809824';
-                queries.recommendLevel = '2';
-                break;
+                queries.subCate = '809824'
+                queries.recommendLevel = '2'
+                break
             case 'editor':
             case 'edit':
-                queries.recommendLevel = '2';
-                break;
+                queries.recommendLevel = '2'
+                break
             default:
-                queries.cate = ctx.req.param('query') ?? '0';
+                queries.cate = ctx.req.param('query') ?? '0'
         }
     }
 
-    query = '';
+    query = ''
 
     for (const q in queries) {
         if (q === 'city') {
-            queries[q] = queries[q] in locations ? locations[queries.city].toString() : (queries[q] = '0');
+            queries[q] = queries[q] in locations ? locations[queries.city].toString() : (queries[q] = '0')
         }
-        query += `${q}=${queries[q]}&`;
+        query += `${q}=${queries[q]}&`
     }
 
-    query = query.slice(0, Math.max(0, query.length - 1));
+    query = query.slice(0, Math.max(0, query.length - 1))
 
-    const rootUrl = 'https://www.zcool.com.cn';
-    const currentUrl = `${rootUrl}/p1/discover/list?${query}`;
+    const rootUrl = 'https://www.zcool.com.cn'
+    const currentUrl = `${rootUrl}/p1/discover/list?${query}`
 
     const response = await got({
         method: 'get',
@@ -246,7 +246,7 @@ async function handler(ctx) {
         headers: {
             Referer: rootUrl,
         },
-    });
+    })
 
     const list = response.data.datas.map((item) => ({
         title: item.content.title,
@@ -254,7 +254,7 @@ async function handler(ctx) {
         pubDate: parseDate(item.content.publishTime),
         author: item.content.creatorObj.username,
         category: item.content.tags,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -262,39 +262,39 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const content = load(detailResponse.data);
+                })
+                const content = load(detailResponse.data)
 
-                content('.prism-player, .image-info-icons').remove();
+                content('.prism-player, .image-info-icons').remove()
 
-                const videos = detailResponse.data.match(/source: '(https:\/\/video\.zcool\.cn\/.*)',/g);
+                const videos = detailResponse.data.match(/source: '(https:\/\/video\.zcool\.cn\/.*)',/g)
 
                 if (videos) {
                     content('.video-content-box').each(function (i) {
                         if (i >= videos.length) {
-                            return;
+                            return
                         }
 
                         content(this).append(
                             renderDescription({
                                 video: videos[i].match(/source: '(https:\/\/video\.zcool\.cn\/.*)'/)[1],
-                            })
-                        );
-                    });
+                            }),
+                        )
+                    })
                 }
 
                 item.description = renderDescription({
                     description: item.link.includes('article') ? (content('.articleContentWrapper').html() ?? undefined) : (content('.workShowBox').parent().html() ?? undefined),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `站酷 - ${categories[queries.cate]}${queries.subCate === '0' ? '' : ` - ${subCategories[queries.cate][queries.subCate]}`}`,
         link: `${rootUrl}/discover?${query}`,
         item: items,
-    };
+    }
 }

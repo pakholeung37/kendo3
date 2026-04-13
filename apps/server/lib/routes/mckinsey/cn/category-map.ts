@@ -68,4 +68,4 @@ export const categories = {
         name: '全球基础材料',
         slug: '全球基础材料',
     },
-};
+}

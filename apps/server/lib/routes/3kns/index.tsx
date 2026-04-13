@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:filters?/:order?',
@@ -55,41 +55,41 @@ export const route: Route = {
 | 不限 | 舞力全开 | 马里奥 | 生化危机 | 炼金工房 | 最终幻想 | 塞尔达 | 宝可梦 | 勇者斗恶龙 | 模拟器 | 秋之回忆 | 第一方 | 体感健身 | 开放世界 | 儿童乐园 |
 | ---- | -------- | ------ | -------- | -------- | -------- | ------ | ------ | ---------- | ------ | -------- | ------ | -------- | -------- | -------- |
 | all  | 1        | 2      | 3        | 4        | 5        | 6      | 7      | 8          | 9      | 10       | 11     | 12       | 13       | 14       |`,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const filters = new URLSearchParams(ctx.req.param('filters'));
-    const order = ctx.req.param('order');
+    const filters = new URLSearchParams(ctx.req.param('filters'))
+    const order = ctx.req.param('order')
 
-    const category = filters.get('category') ?? 'all';
-    const language = filters.get('language') ?? 'all';
-    const tag = filters.get('tag') ?? 'all';
-    const pubDate = filters.get('pubDate') ?? 'all';
-    const collection = filters.get('collection') ?? 'all';
+    const category = filters.get('category') ?? 'all'
+    const language = filters.get('language') ?? 'all'
+    const tag = filters.get('tag') ?? 'all'
+    const pubDate = filters.get('pubDate') ?? 'all'
+    const collection = filters.get('collection') ?? 'all'
 
-    const baseUrl = 'https://www.3kns.com/';
-    const currentUrl = new URL(`${baseUrl}forum.php?mod=forumdisplay&fid=2&filter=sortid&typeid=0&sortid=1&searchsort=1&orderbystr=0`);
-    currentUrl.searchParams.set('dztgeshi', category);
-    currentUrl.searchParams.set('dztfenlei', language);
-    currentUrl.searchParams.set('nex_sg_tags', tag);
-    currentUrl.searchParams.set('deanbgbs', pubDate);
-    currentUrl.searchParams.set('nex_sg_stars', collection);
+    const baseUrl = 'https://www.3kns.com/'
+    const currentUrl = new URL(`${baseUrl}forum.php?mod=forumdisplay&fid=2&filter=sortid&typeid=0&sortid=1&searchsort=1&orderbystr=0`)
+    currentUrl.searchParams.set('dztgeshi', category)
+    currentUrl.searchParams.set('dztfenlei', language)
+    currentUrl.searchParams.set('nex_sg_tags', tag)
+    currentUrl.searchParams.set('deanbgbs', pubDate)
+    currentUrl.searchParams.set('nex_sg_stars', collection)
     if (order !== undefined) {
-        currentUrl.searchParams.set('ascdescstr', order);
-        currentUrl.searchParams.set('orderbystr', 'nex_sg_score');
+        currentUrl.searchParams.set('ascdescstr', order)
+        currentUrl.searchParams.set('orderbystr', 'nex_sg_score')
     }
 
-    const response = await got(currentUrl);
-    const $ = load(response.data as any);
+    const response = await got(currentUrl)
+    const $ = load(response.data as any)
 
-    const selector = `form .newItem`;
+    const selector = `form .newItem`
     const items: DataItem[] = $(selector)
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const title = $item.find('.showname a').text().trim();
-            const category = $item.find('.showtype').text().trim();
-            const pubDate = ($item.find('.showdate').contents()[0] as any).data.trim();
+            const $item = $(item)
+            const title = $item.find('.showname a').text().trim()
+            const category = $item.find('.showtype').text().trim()
+            const pubDate = ($item.find('.showdate').contents()[0] as any).data.trim()
             return {
                 title,
                 link: baseUrl + $item.find('.entry-media a').attr('href')!,
@@ -107,17 +107,17 @@ async function handler(ctx: Context): Promise<Data> {
                             system={$item.find('.jb-youxxx').text().trim()}
                             score={$item.find('.shownamep').text().trim()}
                             version={$item.find('.jb-youxbb').text().trim()}
-                        />
+                        />,
                     ) ?? '',
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         link: currentUrl.toString(),
         allowEmpty: true,
         item: items,
-    };
+    }
 }
 
 const ThreeKnsDescription = ({
@@ -131,15 +131,15 @@ const ThreeKnsDescription = ({
     score,
     version,
 }: {
-    cover?: string;
-    title: string;
-    tid: string;
-    category: string;
-    language: string;
-    pubDate: string;
-    system: string;
-    score: string;
-    version: string;
+    cover?: string
+    title: string
+    tid: string
+    category: string
+    language: string
+    pubDate: string
+    system: string
+    score: string
+    version: string
 }) => (
     <>
         <img src={cover} />
@@ -152,4 +152,4 @@ const ThreeKnsDescription = ({
         <p>{score}</p>
         <p>游戏版本：{version}</p>
     </>
-);
+)

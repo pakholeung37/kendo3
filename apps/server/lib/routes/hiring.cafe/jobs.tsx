@@ -1,70 +1,70 @@
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
 const CONFIG = {
     DEFAULT_PAGE_SIZE: 20,
     MAX_PAGE_SIZE: 100,
-} as const;
+} as const
 
 const API = {
     BASE_URL: 'https://hiring.cafe/api/search-jobs',
     HEADERS: {
         'Content-Type': 'application/json',
     },
-} as const;
+} as const
 
 interface GeoLocation {
-    readonly lat: number;
-    readonly lon: number;
+    readonly lat: number
+    readonly lon: number
 }
 
 interface JobInformation {
-    readonly title: string;
-    readonly description: string;
+    readonly title: string
+    readonly description: string
 }
 
 interface ProcessedJobData {
-    readonly company_name: string;
-    readonly is_compensation_transparent: boolean;
-    readonly yearly_min_compensation?: number;
-    readonly yearly_max_compensation?: number;
-    readonly workplace_type?: string;
-    readonly requirements_summary?: string;
-    readonly job_category: string;
-    readonly role_activities: readonly string[];
-    readonly formatted_workplace_location?: string;
-    readonly estimated_publish_date_millis: string;
+    readonly company_name: string
+    readonly is_compensation_transparent: boolean
+    readonly yearly_min_compensation?: number
+    readonly yearly_max_compensation?: number
+    readonly workplace_type?: string
+    readonly requirements_summary?: string
+    readonly job_category: string
+    readonly role_activities: readonly string[]
+    readonly formatted_workplace_location?: string
+    readonly estimated_publish_date_millis: string
 }
 
 interface JobResult {
-    readonly id: string;
-    readonly apply_url: string;
-    readonly job_information: JobInformation;
-    readonly v5_processed_job_data: ProcessedJobData;
-    readonly _geoloc: readonly GeoLocation[];
+    readonly id: string
+    readonly apply_url: string
+    readonly job_information: JobInformation
+    readonly v5_processed_job_data: ProcessedJobData
+    readonly _geoloc: readonly GeoLocation[]
 }
 
 interface ApiResponse {
-    readonly results: readonly JobResult[];
-    readonly total: number;
+    readonly results: readonly JobResult[]
+    readonly total: number
 }
 
 interface SearchParams {
-    readonly keywords: string;
-    readonly page?: number;
-    readonly size?: number;
-    readonly sortBy?: 'date' | 'default' | 'compensation_desc' | 'experience_asc';
+    readonly keywords: string
+    readonly page?: number
+    readonly size?: number
+    readonly sortBy?: 'date' | 'default' | 'compensation_desc' | 'experience_asc'
 }
 
 const validateSearchParams = ({ keywords, page = 0, size = CONFIG.DEFAULT_PAGE_SIZE }: SearchParams): SearchParams => ({
     keywords: keywords.trim(),
     page: Math.max(0, Math.floor(Number(page))),
     size: Math.min(Math.max(1, Math.floor(Number(size))), CONFIG.MAX_PAGE_SIZE),
-});
+})
 
 const fetchJobs = async (searchParams: SearchParams): Promise<ApiResponse> => {
     const payload = {
@@ -74,19 +74,19 @@ const fetchJobs = async (searchParams: SearchParams): Promise<ApiResponse> => {
             searchQuery: searchParams.keywords,
             sortBy: searchParams.sortBy || 'date',
         },
-    };
+    }
 
     return await ofetch<ApiResponse>(API.BASE_URL, {
         method: 'POST',
         body: payload,
         headers: API.HEADERS,
-    });
-};
+    })
+}
 
 const renderJobDescription = (jobInfo: JobInformation, processedData: ProcessedJobData): string => {
-    const isCompensationTransparent = Boolean(processedData.is_compensation_transparent && processedData.yearly_min_compensation && processedData.yearly_max_compensation);
-    const companyInfoDescription = (jobInfo as { company_info_description?: string }).company_info_description;
-    const hasCompanyInfo = Boolean(companyInfoDescription);
+    const isCompensationTransparent = Boolean(processedData.is_compensation_transparent && processedData.yearly_min_compensation && processedData.yearly_max_compensation)
+    const companyInfoDescription = (jobInfo as { company_info_description?: string }).company_info_description
+    const hasCompanyInfo = Boolean(companyInfoDescription)
 
     return renderToString(
         <>
@@ -114,12 +114,12 @@ const renderJobDescription = (jobInfo: JobInformation, processedData: ProcessedJ
                     {raw(companyInfoDescription as string)}
                 </>
             ) : null}
-        </>
-    );
-};
+        </>,
+    )
+}
 
 const transformJobItem = (item: JobResult) => {
-    const { job_information: jobInfo, v5_processed_job_data: processedData, apply_url, id } = item;
+    const { job_information: jobInfo, v5_processed_job_data: processedData, apply_url, id } = item
 
     return {
         title: `${jobInfo.title} - ${processedData.company_name}`,
@@ -129,16 +129,16 @@ const transformJobItem = (item: JobResult) => {
         category: [processedData.job_category, ...processedData.role_activities, processedData.workplace_type].filter((x): x is string => !!x),
         author: processedData.company_name,
         guid: id,
-    };
-};
+    }
+}
 
 async function handler(ctx: Context) {
     const searchParams = validateSearchParams({
         keywords: ctx.req.param('keywords'),
-    });
+    })
 
-    const response = await fetchJobs(searchParams);
-    const items = response.results.map((item) => transformJobItem(item));
+    const response = await fetchJobs(searchParams)
+    const items = response.results.map((item) => transformJobItem(item))
 
     return {
         title: `HiringCafe Jobs: ${searchParams.keywords}`,
@@ -146,7 +146,7 @@ async function handler(ctx: Context) {
         link: `https://hiring.cafe/jobs?q=${encodeURIComponent(searchParams.keywords)}`,
         item: items,
         total: response.total,
-    };
+    }
 }
 
 export const route: Route = {
@@ -170,4 +170,4 @@ export const route: Route = {
     name: 'Jobs',
     maintainers: ['mintyfrankie'],
     handler,
-};
+}

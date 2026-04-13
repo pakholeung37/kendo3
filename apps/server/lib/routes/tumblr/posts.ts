@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Data, Route } from '@/types';
-import got from '@/utils/got';
-import { fallback, queryToInteger } from '@/utils/readable-social';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Data, Route } from '@/types'
+import got from '@/utils/got'
+import { fallback, queryToInteger } from '@/utils/readable-social'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/posts/:blog',
@@ -43,15 +43,15 @@ export const route: Route = {
 Tumblr provides official RSS feeds for non "dashboard only" blogs, for instance [https://biketouring-nearby.tumblr.com](https://biketouring-nearby.tumblr.com/rss).
 :::`,
     handler,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
     if (!config.tumblr || !config.tumblr.clientId) {
-        throw new ConfigNotFoundError('Tumblr RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('Tumblr RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
 
-    const blogIdentifier = ctx.req.param('blog');
-    const limit = fallback(undefined, queryToInteger(ctx.req.query('limit')), 20);
+    const blogIdentifier = ctx.req.param('blog')
+    const limit = fallback(undefined, queryToInteger(ctx.req.query('limit')), 20)
 
     const response = await got.get(`https://api.tumblr.com/v2/blog/${blogIdentifier}/posts`, {
         searchParams: {
@@ -59,10 +59,10 @@ async function handler(ctx: Context): Promise<Data> {
             limit,
         },
         headers: await utils.generateAuthHeaders(),
-    });
+    })
 
-    const blog = response.data.response.blog;
-    const posts = response.data.response.posts.map((post: any) => utils.processPost(post));
+    const blog = response.data.response.blog
+    const posts = response.data.response.posts.map((post: any) => utils.processPost(post))
 
     return {
         title: `Tumblr - ${blogIdentifier} - Posts`,
@@ -72,5 +72,5 @@ async function handler(ctx: Context): Promise<Data> {
         allowEmpty: true,
         image: blog?.avatar?.slice(-1)?.url,
         description: blog?.description,
-    };
+    }
 }

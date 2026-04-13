@@ -1,7 +1,7 @@
-import type { DataItem, Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { getMylist, renderVideo } from './utils';
+import { getMylist, renderVideo } from './utils'
 
 export const route: Route = {
     name: 'Mylist',
@@ -16,9 +16,9 @@ export const route: Route = {
         },
     ],
     handler: async (ctx) => {
-        const { id } = ctx.req.param();
+        const { id } = ctx.req.param()
 
-        const mylist = await getMylist(id);
+        const mylist = await getMylist(id)
 
         return {
             title: `マイリスト ${mylist.name}‐ニコニコ動画`,
@@ -32,8 +32,8 @@ export const route: Route = {
                     author: [{ name: item.video.owner.name, avatar: item.video.owner.iconUrl, url: `https://www.nicovideo.jp/user/${item.video.owner.id}` }],
                     description: renderVideo(item.video, false),
                     image: item.video.thumbnail.nHdUrl ?? item.video.thumbnail.largeUrl ?? item.video.thumbnail.middleUrl ?? undefined,
-                })
+                }),
             ),
-        };
+        }
     },
-};
+}

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/article',
@@ -27,16 +27,16 @@ export const route: Route = {
     maintainers: ['Dlouxgit'],
     handler,
     url: 'csgo.5eplay.com/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://csgo.5eplay.com/';
-    const apiUrl = `${rootUrl}api/article?page=1&type_id=0&time=0&order_by=0`;
+    const rootUrl = 'https://csgo.5eplay.com/'
+    const apiUrl = `${rootUrl}api/article?page=1&type_id=0&time=0&order_by=0`
 
     const { data: response } = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const items = await Promise.all(
         response.data.list.map((item) =>
@@ -44,34 +44,34 @@ async function handler() {
                 const { data: detailResponse } = await got({
                     method: 'get',
                     url: item.jump_link,
-                });
-                const $ = load(detailResponse);
+                })
+                const $ = load(detailResponse)
 
-                const content = $('.article-text');
-                const res: string[] = [];
+                const content = $('.article-text')
+                const res: string[] = []
 
                 content.find('> p, > blockquote').each((i, e) => {
-                    res.push($(e).text());
-                    const src = $(e).find('img').first().attr('src');
+                    res.push($(e).text())
+                    const src = $(e).find('img').first().attr('src')
                     if (src && !src.includes('data:image/png;base64')) {
                         // drop base64 img
-                        res.push(`<img src=${src} />`);
+                        res.push(`<img src=${src} />`)
                     }
-                });
+                })
 
                 return {
                     title: item.title,
                     description: res.join('<br />'),
                     pubDate: parseDate(item.dateline * 1000),
                     link: item.jump_link,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: '5EPLAY',
         link: 'https://csgo.5eplay.com/article',
         item: items,
-    };
+    }
 }

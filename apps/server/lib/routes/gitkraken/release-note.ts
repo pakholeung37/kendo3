@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import sanitizeHtml from 'sanitize-html';
+import { load } from 'cheerio'
+import sanitizeHtml from 'sanitize-html'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/release-note',
@@ -29,19 +29,19 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     url: 'help.gitkraken.com/gitkraken-desktop/current/',
     handler,
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://help.gitkraken.com';
-    const link = `${baseUrl}/gitkraken-desktop/current/`;
-    const response = await ofetch(`${baseUrl}/wp-json/wp/v2/posts/1964`);
+    const baseUrl = 'https://help.gitkraken.com'
+    const link = `${baseUrl}/gitkraken-desktop/current/`
+    const response = await ofetch(`${baseUrl}/wp-json/wp/v2/posts/1964`)
 
-    const $ = load(response.content.rendered, null, false);
+    const $ = load(response.content.rendered, null, false)
 
     const items = $('h2')
         .toArray()
         .map((item) => {
-            const $item = $(item);
+            const $item = $(item)
 
             return {
                 title: $item.text(),
@@ -53,13 +53,13 @@ async function handler() {
                     .join(''),
                 link: `${link}#${$item.prev().find('a[id]').attr('id')}`,
                 pubDate: parseDate($item.next().find('kbd').text()?.split('day, ')[1].trim(), 'MMMM Do, YYYY', 'en'),
-            };
-        });
+            }
+        })
 
     return {
         title: response.title.rendered,
         description: sanitizeHtml(response.excerpt.rendered, { allowedTags: [], allowedAttributes: {} }),
         link,
         item: items,
-    };
+    }
 }

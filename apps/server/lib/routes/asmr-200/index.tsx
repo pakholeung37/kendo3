@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Result, Work } from '@/routes/asmr-200/type';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Result, Work } from '@/routes/asmr-200/type'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const render = (work: Work, link: string) =>
     renderToString(
@@ -39,8 +39,8 @@ const render = (work: Work, link: string) =>
                 <b>声优：</b>
                 {work.cv}
             </p>
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/works/:order?/:subtitle?/:sort?',
@@ -73,13 +73,13 @@ export const route: Route = {
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | release | create_date | dl_count | price | rate_average_2dp | random | id |`,
     handler: async (ctx) => {
-        const { order = 'create_date', sort = 'desc', subtitle = '0' } = ctx.req.param();
-        const res = await ofetch<Result>('https://api.asmr-200.com/api/works', { query: { order, sort, page: 1, subtitle } });
+        const { order = 'create_date', sort = 'desc', subtitle = '0' } = ctx.req.param()
+        const res = await ofetch<Result>('https://api.asmr-200.com/api/works', { query: { order, sort, page: 1, subtitle } })
 
         const items: DataItem[] = res.works.map((each) => {
-            const category = each.tags.map((tag) => tag.name);
-            each.category = category.join('，');
-            each.cv = each.vas.map((cv) => cv.name).join('，');
+            const category = each.tags.map((tag) => tag.name)
+            each.category = category.join('，')
+            each.cv = each.vas.map((cv) => cv.name).join('，')
             return {
                 title: each.title,
                 image: each.mainCoverUrl,
@@ -88,13 +88,13 @@ export const route: Route = {
                 pubDate: timezone(parseDate(each.release, 'YYYY-MM-DD'), +8),
                 category,
                 description: render(each, `https://asmr-200.com/work/${each.source_id}`),
-            };
-        });
+            }
+        })
 
         return {
             title: '最新收录 - ASMR Online',
             link: 'https://asmr-200.com/',
             item: items,
-        };
+        }
     },
-};
+}

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/date/:date?',
@@ -24,10 +24,10 @@ export const route: Route = {
     name: '归档',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const date = ctx.req.param('date') ?? `${new Date().getFullYear()}/${new Date().getMonth()}`;
+    const date = ctx.req.param('date') ?? `${new Date().getFullYear()}/${new Date().getMonth()}`
 
-    return await utils(ctx, `books/date/${date.replace('-', '/')}`);
+    return await utils(ctx, `books/date/${date.replace('-', '/')}`)
 }

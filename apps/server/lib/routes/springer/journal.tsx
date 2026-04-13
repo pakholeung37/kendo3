@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
 export const route: Route = {
     path: '/journal/:journal',
@@ -26,12 +26,12 @@ export const route: Route = {
     name: 'Journal',
     maintainers: ['Derekmini', 'TonyRL', 'xiahaoyun'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const host = 'https://link.springer.com';
-    const journal = ctx.req.param('journal');
-    const jrnlUrl = `${host}/journal/${journal}/volumes-and-issues`;
+    const host = 'https://link.springer.com'
+    const journal = ctx.req.param('journal')
+    const jrnlUrl = `${host}/journal/${journal}/volumes-and-issues`
 
     const authorizeResponse = await ofetch.raw('https://idp.springer.com/authorize', {
         query: {
@@ -40,47 +40,47 @@ async function handler(ctx) {
             redirect_uri: jrnlUrl,
         },
         redirect: 'manual',
-    });
+    })
     const authorizeCookie = authorizeResponse.headers
         .getSetCookie()
         .map((c) => c.split(';')[0])
-        .join('; ');
+        .join('; ')
 
     await ofetch(authorizeResponse.headers.get('location'), {
         headers: {
             cookie: authorizeCookie,
         },
         redirect: 'manual',
-    });
+    })
 
     const response = await ofetch(jrnlUrl, {
         headers: {
             cookie: authorizeCookie,
         },
-    });
-    const $ = load(response);
-    const jrnlName = $('span.app-journal-masthead__title').text().trim();
-    const issueUrl = `${host}${$('li.c-list-group__item:first-of-type').find('a').attr('href')}`;
+    })
+    const $ = load(response)
+    const jrnlName = $('span.app-journal-masthead__title').text().trim()
+    const issueUrl = `${host}${$('li.c-list-group__item:first-of-type').find('a').attr('href')}`
 
     const response2 = await ofetch(issueUrl, {
         headers: {
             cookie: authorizeCookie,
         },
-    });
-    const $2 = load(response2);
-    const issue = $2('h2.app-journal-latest-issue__heading').text();
+    })
+    const $2 = load(response2)
+    const issue = $2('h2.app-journal-latest-issue__heading').text()
     const list = $2('ol.u-list-reset > li')
         .toArray()
         .map((item) => {
-            const title = $(item).find('h3.app-card-open__heading').find('a').text().trim();
-            const link = $(item).find('h3.app-card-open__heading').find('a').attr('href');
-            const doi = link.replace('https://link.springer.com/article/', '');
-            const img = $(item).find('img').attr('src');
+            const title = $(item).find('h3.app-card-open__heading').find('a').text().trim()
+            const link = $(item).find('h3.app-card-open__heading').find('a').attr('href')
+            const doi = link.replace('https://link.springer.com/article/', '')
+            const img = $(item).find('img').attr('src')
             const authors = $(item)
                 .find('li')
                 .toArray()
                 .map((item) => $(item).text().trim())
-                .join('; ');
+                .join('; ')
             return {
                 title,
                 link: link.startsWith('http') ? link : `${host}${link}`,
@@ -88,8 +88,8 @@ async function handler(ctx) {
                 issue,
                 img,
                 authors,
-            };
-        });
+            }
+        })
 
     const renderDesc = (item) =>
         renderToString(
@@ -125,8 +125,8 @@ async function handler(ctx) {
                     <span>{item.abstract}</span>
                     <br />
                 </p>
-            </>
-        );
+            </>,
+        )
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
@@ -134,17 +134,17 @@ async function handler(ctx) {
                     headers: {
                         cookie: authorizeCookie,
                     },
-                });
-                const $3 = load(response3);
-                item.abstract = $3('div#Abs1-content > p:first-of-type').text();
-                item.description = renderDesc(item);
-                return item;
-            })
-        )
-    );
+                })
+                const $3 = load(response3)
+                item.abstract = $3('div#Abs1-content > p:first-of-type').text()
+                item.description = renderDesc(item)
+                return item
+            }),
+        ),
+    )
     return {
         title: jrnlName,
         link: jrnlUrl,
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { ENDPOINT, getPosts } from './utils';
+import { ENDPOINT, getPosts } from './utils'
 
 export const route: Route = {
     path: '/posts/:routeParams?',
@@ -25,11 +25,11 @@ export const route: Route = {
     name: 'Posts',
     maintainers: ['Urabartin'],
     handler: async (ctx) => {
-        const { routeParams = '' } = ctx.req.param();
+        const { routeParams = '' } = ctx.req.param()
         return {
             title: `MissKON - ${routeParams || 'Posts'}`,
             link: `${ENDPOINT}/posts` + (routeParams ? `?${routeParams}` : ''),
             item: await getPosts(routeParams),
-        };
+        }
     },
-};
+}

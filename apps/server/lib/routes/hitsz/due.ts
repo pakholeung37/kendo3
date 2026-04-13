@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx) => {
-    const baseUrl = 'http://due.hitsz.edu.cn';
+    const baseUrl = 'http://due.hitsz.edu.cn'
 
     // 按类型分组（可直接用于 handler 中的逻辑判断）
     const categoryGroups = {
@@ -37,50 +37,50 @@ export const handler = async (ctx) => {
             'xwgl/ssxwpy/ktyzj', // 硕士学位培养
             'xwgl/bsxwpy/qqhj1', // 博士学位培养
         ],
-    };
+    }
 
     // 修改：将 query 参数改为 path 参数（PR评论要求：Use path parameter instead of search query）
-    const { type = 'all' } = ctx.req.param(); // 从路径参数获取，默认值 'all'
-    const validTypes = Object.keys(categoryGroups);
-    const validType = validTypes.includes(type) ? type : 'all'; // 容错：无效类型默认走 all
+    const { type = 'all' } = ctx.req.param() // 从路径参数获取，默认值 'all'
+    const validTypes = Object.keys(categoryGroups)
+    const validType = validTypes.includes(type) ? type : 'all' // 容错：无效类型默认走 all
 
     // 根据类型选择对应栏目组
-    const categories = validType === 'all' ? Object.values(categoryGroups).flat() : categoryGroups[validType];
+    const categories = validType === 'all' ? Object.values(categoryGroups).flat() : categoryGroups[validType]
 
     // 并发抓取所有栏目的第一页
     // 修复 ESLint：替换 .catch(() => null) 为带日志的try/catch
     const pagePromises = categories.map(async (category) => {
-        const pageUrl = new URL(`${category}.htm`, baseUrl).href;
+        const pageUrl = new URL(`${category}.htm`, baseUrl).href
         try {
-            return await got(pageUrl);
+            return await got(pageUrl)
         } catch {
-            return null;
+            return null
         }
-    });
-    const pageResponses = await Promise.all(pagePromises);
+    })
+    const pageResponses = await Promise.all(pagePromises)
 
     // 提取所有文章链接
     // 修复：用flatMap替代for循环+push（同步逻辑优化）
     const articlePromises = pageResponses.flatMap((response, i) => {
         if (!response) {
-            return [];
+            return []
         }
 
-        const category = categories[i];
-        const $ = load(response.data);
-        const listItemsOnPage = $('ul.box-main-list li, .list-main li, .list-main-modular li').toArray();
+        const category = categories[i]
+        const $ = load(response.data)
+        const listItemsOnPage = $('ul.box-main-list li, .list-main li, .list-main-modular li').toArray()
 
         // 原map逻辑不变
         return listItemsOnPage
             .map((el) => {
-                const $el = $(el);
-                const linkUrl = $el.find('a').attr('href');
+                const $el = $(el)
+                const linkUrl = $el.find('a').attr('href')
                 if (!linkUrl) {
-                    return null;
+                    return null
                 } // 过滤无链接项
 
-                const title = $el.find('span').text().trim();
-                const pubDateStr = $el.find('label').text().trim();
+                const title = $el.find('span').text().trim()
+                const pubDateStr = $el.find('label').text().trim()
 
                 return {
                     title,
@@ -88,16 +88,16 @@ export const handler = async (ctx) => {
                     pubDate: pubDateStr ? timezone(parseDate(pubDateStr), 8) : null,
                     category,
                     description: title, // 使用标题作为描述
-                };
+                }
             })
-            .filter(Boolean); // 过滤 null 项
-    });
+            .filter(Boolean) // 过滤 null 项
+    })
 
     // 获取所有文章详情
-    const allResolvedItems = articlePromises.filter(Boolean);
+    const allResolvedItems = articlePromises.filter(Boolean)
 
     // 排序和截取
-    const filteredItems = allResolvedItems.filter((item) => !item.title.includes('统一身份认证平台'));
+    const filteredItems = allResolvedItems.filter((item) => !item.title.includes('统一身份认证平台'))
 
     return {
         title: '哈尔滨工业大学（深圳）教务部-教务学务与学位管理-所有栏目新闻汇总',
@@ -105,8 +105,8 @@ export const handler = async (ctx) => {
         link: 'http://due.hitsz.edu.cn/jwxw/jwgl.htm',
         item: filteredItems,
         author: '哈尔滨工业大学（深圳）教务部',
-    };
-};
+    }
+}
 
 export const route: Route = {
     // 修改：path 增加可选参数 :type?（适配路径参数逻辑）
@@ -170,4 +170,4 @@ export const route: Route = {
             target: '/hitsz/due/general',
         },
     ],
-};
+}

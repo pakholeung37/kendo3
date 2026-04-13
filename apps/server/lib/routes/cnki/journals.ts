@@ -1,15 +1,15 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import logger from '@/utils/logger';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import logger from '@/utils/logger'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
-import { ProcessItem } from './utils';
+import { ProcessItem } from './utils'
 
-const rootUrl = 'https://navi.cnki.net';
+const rootUrl = 'https://navi.cnki.net'
 
 export const route: Route = {
     path: '/journals/:name',
@@ -32,16 +32,16 @@ export const route: Route = {
     name: '期刊',
     maintainers: ['Fatpandac', 'Derekmini', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const name = ctx.req.param('name');
-    const rssUrl = `https://rss.cnki.net/kns/rss.aspx?Journal=${name}&Virtual=knavi`;
+    const name = ctx.req.param('name')
+    const rssUrl = `https://rss.cnki.net/kns/rss.aspx?Journal=${name}&Virtual=knavi`
 
-    const rssResponse = await got.get(rssUrl);
+    const rssResponse = await got.get(rssUrl)
 
     try {
-        const feed = await parser.parseString(rssResponse.data);
+        const feed = await parser.parseString(rssResponse.data)
 
         if (feed.items && feed.items.length !== 0) {
             const items = feed.items.map((item) => ({
@@ -50,54 +50,54 @@ async function handler(ctx) {
                 pubDate: parseDate(item.pubDate),
                 link: item.link,
                 author: item.author,
-            }));
+            }))
 
             return {
                 title: feed.title,
                 link: feed.link,
                 description: feed.description,
                 item: items,
-            };
+            }
         }
     } catch (error) {
-        logger.error(error);
+        logger.error(error)
     }
 
-    const journalUrl = `${rootUrl}/knavi/journals/${name}/detail`;
-    const title = await got.get(journalUrl).then((res) => load(res.data)('head > title').text());
+    const journalUrl = `${rootUrl}/knavi/journals/${name}/detail`
+    const title = await got.get(journalUrl).then((res) => load(res.data)('head > title').text())
 
-    const yearListUrl = `${rootUrl}/knavi/journals/${name}/yearList?pIdx=0`;
+    const yearListUrl = `${rootUrl}/knavi/journals/${name}/yearList?pIdx=0`
 
     const { code, date } = await got.get(yearListUrl).then((res) => {
-        const $ = load(res.data);
-        const code = $('.yearissuepage').find('dl').first().find('dd').find('a').first().attr('value');
-        const date = parseDate($('.yearissuepage').find('dl').first().find('dd').find('a').first().attr('id').replace('yq', ''), 'YYYYMM');
-        return { code, date };
-    });
+        const $ = load(res.data)
+        const code = $('.yearissuepage').find('dl').first().find('dd').find('a').first().attr('value')
+        const date = parseDate($('.yearissuepage').find('dl').first().find('dd').find('a').first().attr('id').replace('yq', ''), 'YYYYMM')
+        return { code, date }
+    })
 
-    const yearIssueUrl = `${rootUrl}/knavi/journals/${name}/papers?yearIssue=${code}&pageIdx=0&pcode=CJFD,CCJD`;
-    const response = await got.post(yearIssueUrl);
+    const yearIssueUrl = `${rootUrl}/knavi/journals/${name}/papers?yearIssue=${code}&pageIdx=0&pcode=CJFD,CCJD`
+    const response = await got.post(yearIssueUrl)
 
-    const $ = load(response.data);
-    const publications = $('dd');
+    const $ = load(response.data)
+    const publications = $('dd')
 
     const list = publications.toArray().map((publication) => {
-        const title = $(publication).find('a').first().text();
-        const filename = $(publication).find('b').attr('id');
-        const link = `https://cnki.net/kcms/detail/detail.aspx?filename=${filename}&dbcode=CJFD`;
+        const title = $(publication).find('a').first().text()
+        const filename = $(publication).find('b').attr('id')
+        const link = `https://cnki.net/kcms/detail/detail.aspx?filename=${filename}&dbcode=CJFD`
 
         return {
             title,
             link,
             pubDate: date,
-        };
-    });
+        }
+    })
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => ProcessItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => ProcessItem(item))))
 
     return {
         title: String(title),
         link: journalUrl,
         item: items,
-    };
+    }
 }

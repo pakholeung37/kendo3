@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const host = 'https://chaping.cn';
+const host = 'https://chaping.cn'
 
 export const route: Route = {
     path: '/newsflash',
@@ -26,12 +26,12 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'chaping.cn/newsflash',
-};
+}
 
 async function handler() {
-    const newflashAPI = `${host}/api/official/information/newsflash?page=1&limit=21`;
-    const response = await ofetch(newflashAPI);
-    const data = response.data;
+    const newflashAPI = `${host}/api/official/information/newsflash?page=1&limit=21`
+    const response = await ofetch(newflashAPI)
+    const data = response.data
 
     return {
         title: '差评 快讯',
@@ -44,5 +44,5 @@ async function handler() {
                 pubDate: parseDate(item.time_publish_timestamp * 1000),
                 link: item.origin_url,
             })),
-    };
+    }
 }

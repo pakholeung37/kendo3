@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { PRESETS } from '@/utils/header-generator';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { PRESETS } from '@/utils/header-generator'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/snb/:id',
@@ -24,31 +24,31 @@ export const route: Route = {
     name: '组合最新调仓信息',
     maintainers: ['ZhishanZhang'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const url = 'https://xueqiu.com/p/' + id;
+    const id = ctx.req.param('id')
+    const url = 'https://xueqiu.com/p/' + id
 
     const response = await got(url, {
         headerGeneratorOptions: PRESETS.MODERN_ANDROID,
-    });
+    })
 
-    const data = response.data;
-    const pattern = /SNB.cubeInfo = {(.+)}/;
-    const info = pattern.exec(data);
-    const obj = JSON.parse('{' + info[1] + '}');
-    const rebalancing_histories = obj.sell_rebalancing.rebalancing_histories;
-    const snb_title = obj.name + ' 的调仓历史';
-    const snb_description = obj.description;
+    const data = response.data
+    const pattern = /SNB.cubeInfo = {(.+)}/
+    const info = pattern.exec(data)
+    const obj = JSON.parse('{' + info[1] + '}')
+    const rebalancing_histories = obj.sell_rebalancing.rebalancing_histories
+    const snb_title = obj.name + ' 的调仓历史'
+    const snb_description = obj.description
 
-    const title = obj.name + ' 的上一笔调仓';
-    let description = '';
+    const title = obj.name + ' 的上一笔调仓'
+    let description = ''
     for (const some_detail of rebalancing_histories) {
-        const prev_weight_adjusted = some_detail.prev_weight_adjusted ?? 0;
-        description += some_detail.stock_name + ' from ' + prev_weight_adjusted + ' to ' + some_detail.target_weight + '，\n';
+        const prev_weight_adjusted = some_detail.prev_weight_adjusted ?? 0
+        description += some_detail.stock_name + ' from ' + prev_weight_adjusted + ' to ' + some_detail.target_weight + '，\n'
     }
-    const time = obj.sell_rebalancing.updated_at;
+    const time = obj.sell_rebalancing.updated_at
 
     const single = {
         title,
@@ -56,12 +56,12 @@ async function handler(ctx) {
         pubDate: parseDate(time),
         link: url,
         guid: `xueqiu::snb::${id}::${time}`,
-    };
+    }
 
     return {
         title: snb_title,
         link: url,
         description: snb_description,
         item: [single],
-    };
+    }
 }

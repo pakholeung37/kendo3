@@ -1,29 +1,29 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const domain = 'theblockbeats.info';
-const rootUrl = `https://www.${domain}`;
-const apiBase = `https://api.blockbeats.cn`;
+const domain = 'theblockbeats.info'
+const rootUrl = `https://www.${domain}`
+const apiBase = `https://api.blockbeats.cn`
 
 const render = (data: { image?: string; description?: string }) => {
-    const html = renderToString(<BlockBeatsDescription image={data.image} description={data.description} />);
-    const $ = load(html, null, false);
+    const html = renderToString(<BlockBeatsDescription image={data.image} description={data.description} />)
+    const $ = load(html, null, false)
 
     $('img').each((_, e) => {
-        const $e = $(e);
-        const src = $e.attr('src');
-        $e.attr('src', src?.split('?')[0]);
-    });
+        const $e = $(e)
+        const src = $e.attr('src')
+        $e.attr('src', src?.split('?')[0])
+    })
 
-    return $.html();
-};
+    return $.html()
+}
 
 const BlockBeatsDescription = ({ image, description }: { image?: string; description?: string }) => (
     <>
@@ -35,7 +35,7 @@ const BlockBeatsDescription = ({ image, description }: { image?: string; descrip
         ) : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
 const channelMap = {
     newsflash: {
@@ -48,7 +48,7 @@ const channelMap = {
         link: `${rootUrl}/article`,
         api: `${apiBase}/v2/article/list`,
     },
-};
+}
 
 export const route: Route = {
     path: '/:channel?/:original?',
@@ -97,17 +97,17 @@ export const route: Route = {
 | 全部 | 深度 | 精选 | 热点追踪 |
 | :--: | :--: | :--: | :---: |
 |     | -2  | 1    |  2     |`,
-};
+}
 
 async function handler(ctx) {
-    const { channel = 'newsflash', original } = ctx.req.param();
+    const { channel = 'newsflash', original } = ctx.req.param()
 
     const response = await ofetch(channelMap[channel].api, {
         query: {
             limit: ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 20,
             original: channel === 'article' ? original : undefined,
         },
-    });
+    })
 
     let list = response.data.list.map((item) => ({
         title: item.title,
@@ -117,27 +117,27 @@ async function handler(ctx) {
         author: item.author?.nickname,
         category: item.tag_list,
         imgUrl: item.img_url,
-    }));
+    }))
 
     if (channel !== 'newsflash') {
         list = await Promise.all(
             list.map((item) =>
                 cache.tryGet(`theblockbeats:${item.link}`, async () => {
-                    const response = await ofetch(item.link);
-                    const $ = load(response);
+                    const response = await ofetch(item.link)
+                    const $ = load(response)
                     item.description = render({
                         image: item.imgUrl,
                         description: $('div.news-content').html(),
-                    });
-                    return item;
-                })
-            )
-        );
+                    })
+                    return item
+                }),
+            ),
+        )
     }
 
     return {
         title: `TheBlockBeats - ${channelMap[channel].title}`,
         link: channelMap[channel].link,
         item: list,
-    };
+    }
 }

@@ -1,28 +1,28 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 interface AuthorData {
-    fullname?: string;
-    name: string;
+    fullname?: string
+    name: string
 }
 
 interface BlogItem {
-    slug: string;
-    title: string;
-    publishedAt: string;
-    authorsData: AuthorData[];
-    upvotes: number;
-    thumbnail: string;
-    tags: string[];
-    url: string;
+    slug: string
+    title: string
+    publishedAt: string
+    authorsData: AuthorData[]
+    upvotes: number
+    thumbnail: string
+    tags: string[]
+    url: string
 }
 
 interface BlogApiResponse {
-    allBlogs: BlogItem[];
+    allBlogs: BlogItem[]
 }
 
 export const route: Route = {
@@ -47,12 +47,12 @@ export const route: Route = {
     maintainers: ['cesaryuan', 'zcf0508'],
     handler,
     url: 'huggingface.co/blog',
-};
+}
 
 async function handler() {
-    const response = await ofetch<BlogApiResponse>('https://huggingface.co/api/blog');
+    const response = await ofetch<BlogApiResponse>('https://huggingface.co/api/blog')
 
-    const { allBlogs } = response;
+    const { allBlogs } = response
 
     const lists = allBlogs.map((blog) => ({
         title: blog.title,
@@ -64,25 +64,25 @@ async function handler() {
         upvotes: blog.upvotes,
         image: blog.thumbnail ? new URL(blog.thumbnail, 'https://huggingface.co').toString() : undefined,
         category: blog.tags,
-    }));
+    }))
 
     const items: DataItem[] = await Promise.all(
         lists.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await ofetch(item.link);
-                const $ = load(response);
-                $('.mb-4, .mb-6, .not-prose, h1').remove();
+                const response = await ofetch(item.link)
+                const $ = load(response)
+                $('.mb-4, .mb-6, .not-prose, h1').remove()
                 return {
                     ...item,
                     description: $('.blog-content').html() ?? undefined,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: 'Huggingface 英文博客',
         link: 'https://huggingface.co/blog',
         item: items,
-    };
+    }
 }

@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { Event } from './types';
-import { GAMMA_API } from './types';
-import { formatOddsDisplay } from './utils';
+import type { Event } from './types'
+import { GAMMA_API } from './types'
+import { formatOddsDisplay } from './utils'
 
 export const route: Route = {
     path: '/event/:slug',
@@ -31,15 +31,15 @@ export const route: Route = {
     url: 'polymarket.com',
     maintainers: ['heqi201255'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const slug = ctx.req.param('slug');
+    const slug = ctx.req.param('slug')
 
-    const event = await ofetch<Event>(`${GAMMA_API}/events/slug/${slug}`);
+    const event = await ofetch<Event>(`${GAMMA_API}/events/slug/${slug}`)
 
     if (!event) {
-        throw new Error('Event not found');
+        throw new Error('Event not found')
     }
 
     const items = event.markets.map((market) => ({
@@ -53,12 +53,12 @@ async function handler(ctx) {
         link: `https://polymarket.com/event/${event.slug}`,
         pubDate: market.startDate || event.startDate ? parseDate(market.startDate || event.startDate!) : undefined,
         category: event.tags?.map((t) => t.label).filter(Boolean) as string[],
-    }));
+    }))
 
     return {
         title: event.title,
         link: `https://polymarket.com/event/${event.slug}`,
         item: items,
         description: event.description,
-    };
+    }
 }

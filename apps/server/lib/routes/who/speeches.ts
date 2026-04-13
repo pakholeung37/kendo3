@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/speeches/:language?',
@@ -33,25 +33,25 @@ export const route: Route = {
 | English | العربية | 中文 | Français | Русский | Español | Português |
 | ------- | ------- | ---- | -------- | ------- | ------- | --------- |
 | en      | ar      | zh   | fr       | ru      | es      | pt        |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') || 'en';
+    const language = ctx.req.param('language') || 'en'
 
-    const rootUrl = 'https://www.who.int';
-    const currentUrl = `${rootUrl}/${language === 'en' ? '' : `${language}/`}director-general/speeches`;
-    const apiUrl = `${rootUrl}/api/hubs/speeches?sf_culture=${language}&$orderby=PublicationDateAndTime%20desc&$select=Title,PublicationDateAndTime,ItemDefaultUrl`;
+    const rootUrl = 'https://www.who.int'
+    const currentUrl = `${rootUrl}/${language === 'en' ? '' : `${language}/`}director-general/speeches`
+    const apiUrl = `${rootUrl}/api/hubs/speeches?sf_culture=${language}&$orderby=PublicationDateAndTime%20desc&$select=Title,PublicationDateAndTime,ItemDefaultUrl`
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     const list = response.data.value.map((item) => ({
         title: item.Title,
         link: `${currentUrl}/detail/${item.ItemDefaultUrl}`,
         pubDate: parseDate(item.PublicationDateAndTime),
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -59,20 +59,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('.sf-detail-body-wrapper').html();
+                item.description = content('.sf-detail-body-wrapper').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'Speeches - WHO',
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const baseUrl = 'https://www.openrice.com';
+const baseUrl = 'https://www.openrice.com'
 
 export const route: Route = {
     path: '/:lang/hongkong/promos',
@@ -20,55 +20,55 @@ export const route: Route = {
 | ----- | ------ | ----- |
 | zh-cn | zh | en |
   `,
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang') ?? 'zh';
+    const lang = ctx.req.param('lang') ?? 'zh'
 
-    let urlPath;
+    let urlPath
     switch (lang) {
         case 'zh-cn':
-            urlPath = '/zh-cn/hongkong/promos';
-            break;
+            urlPath = '/zh-cn/hongkong/promos'
+            break
         case 'en':
-            urlPath = '/en/hongkong/promos';
-            break;
+            urlPath = '/en/hongkong/promos'
+            break
         case 'zh':
         default:
-            urlPath = '/zh/hongkong/promos';
-            break;
+            urlPath = '/zh/hongkong/promos'
+            break
     }
-    const response = await ofetch(baseUrl + urlPath, {});
-    const $ = load(response);
+    const response = await ofetch(baseUrl + urlPath, {})
+    const $ = load(response)
 
-    const title = $('title').text() ?? "Openrice - What's Hot";
-    const description = $('meta[name="description"]').attr('content') ?? "What's Hot from Openrice";
+    const title = $('title').text() ?? "Openrice - What's Hot"
+    const description = $('meta[name="description"]').attr('content') ?? "What's Hot from Openrice"
 
-    const data = $('.article-listing-content-cell-wrapper');
+    const data = $('.article-listing-content-cell-wrapper')
     const resultList = data.toArray().map((item) => {
-        const $item = $(item);
-        const title = $item.find('.title-name').text() ?? '';
-        const link = $item.find('a.sr1-listing-content-cell').attr('href') ?? '';
+        const $item = $(item)
+        const title = $item.find('.title-name').text() ?? ''
+        const link = $item.find('a.sr1-listing-content-cell').attr('href') ?? ''
         const coverImg =
             $item
                 .find('.cover-photo')
                 .attr('style')
-                ?.match(/url\(['"]?(.*?)['"]?\)/)?.[1] ?? null;
+                ?.match(/url\(['"]?(.*?)['"]?\)/)?.[1] ?? null
         const description = renderDescription({
             description: $item.find('.article-details .desc').text() ?? '',
             image: coverImg,
-        });
+        })
         return {
             title,
             description,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title,
         link: baseUrl + urlPath,
         description,
         item: resultList,
-    };
+    }
 }

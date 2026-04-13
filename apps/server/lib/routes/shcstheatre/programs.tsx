@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/programs',
@@ -30,18 +30,18 @@ export const route: Route = {
     maintainers: ['fuzy112'],
     handler,
     url: 'www.shcstheatre.com/Program/programList.aspx',
-};
+}
 
 async function handler() {
-    const url = 'https://www.shcstheatre.com/Program/programList.aspx';
-    const res = await got.get(url);
-    const $ = load(res.data);
-    const baseUrl = 'https://www.shcstheatre.com';
+    const url = 'https://www.shcstheatre.com/Program/programList.aspx'
+    const res = await got.get(url)
+    const $ = load(res.data)
+    const baseUrl = 'https://www.shcstheatre.com'
     const splitImages = (value?: string) =>
         value
             ?.split(';')
             .map((item) => item.trim())
-            .filter(Boolean) ?? [];
+            .filter(Boolean) ?? []
     const renderDescription = (data) => {
         const {
             SCS_PC_YMXQ_PIC,
@@ -60,7 +60,7 @@ async function handler() {
             SCS_PC_LUNBO_HJJL_PIC,
             SCS_PC_LUNBO_MTPL_EDITOR,
             SCS_PC_LUNBO_MTPL_PIC,
-        } = data;
+        } = data
 
         return renderToString(
             <div>
@@ -125,35 +125,35 @@ async function handler() {
                         <div>{raw(SCS_PC_LUNBO_MTPL_EDITOR)}</div>
                     </>
                 ) : null}
-            </div>
-        );
-    };
+            </div>,
+        )
+    }
 
     const items = await Promise.all(
         $('#datarow .program-name a').map((_, elem) => {
-            const link = new URL($(elem).attr('href'), url);
+            const link = new URL($(elem).attr('href'), url)
             return cache.tryGet(link.toString(), async () => {
-                const id = link.searchParams.get('id');
+                const id = link.searchParams.get('id')
                 const res2 = await got.post('https://www.shcstheatre.com/webapi.ashx?op=GettblprogramCache', {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
                     form: { id },
-                });
-                const data = res2.data.data.tblprogram[0];
+                })
+                const data = res2.data.data.tblprogram[0]
                 return {
                     title: data.SCS_WEB_BRIEFNAME,
                     link: link.toString(),
                     description: renderDescription(data),
                     pubDate: timezone(parseDate(data.SJ_DATE_PC), +8),
-                };
-            });
-        })
-    );
-    const image = $('.menu-logo img').attr('src');
+                }
+            })
+        }),
+    )
+    const image = $('.menu-logo img').attr('src')
 
     return {
         title: '上海文化广场 - 节目列表',
         link: url,
         image,
         item: items,
-    };
+    }
 }

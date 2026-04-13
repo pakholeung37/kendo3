@@ -1,12 +1,12 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { baseUrl, getPlurk } from './utils';
+import { baseUrl, getPlurk } from './utils'
 
-const categoryList = new Set(['topReplurks', 'topFavorites', 'topResponded']);
+const categoryList = new Set(['topReplurks', 'topFavorites', 'topResponded'])
 
 export const route: Route = {
     path: '/top/:category?/:lang?',
@@ -32,12 +32,12 @@ export const route: Route = {
 | English | 中文（繁體） |
 | ------- | ------------ |
 | en      | zh           |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'topReplurks', lang = 'en' } = ctx.req.param();
+    const { category = 'topReplurks', lang = 'en' } = ctx.req.param()
     if (!categoryList.has(category)) {
-        throw new InvalidParameterError(`Invalid category: ${category}`);
+        throw new InvalidParameterError(`Invalid category: ${category}`)
     }
 
     const { data: apiResponse } = await got(`${baseUrl}/Stats/${category}`, {
@@ -46,9 +46,9 @@ async function handler(ctx) {
             lang,
             limit: ctx.req.query('limit') ? Number(ctx.req.query('limit')) : 90,
         },
-    });
+    })
 
-    const items = await Promise.all(apiResponse.stats.map((item) => item[1]).map((item) => getPlurk(`plurk:${item.plurk_id}`, item, item.owner.display_name, cache.tryGet)));
+    const items = await Promise.all(apiResponse.stats.map((item) => item[1]).map((item) => getPlurk(`plurk:${item.plurk_id}`, item, item.owner.display_name, cache.tryGet)))
 
     return {
         title: 'Top Plurk - Plurk',
@@ -56,5 +56,5 @@ async function handler(ctx) {
         link: `${baseUrl}/top#${category}`,
         item: items,
         language: lang,
-    };
+    }
 }

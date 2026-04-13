@@ -1,14 +1,14 @@
-import xxhash from 'xxhash-wasm';
+import xxhash from 'xxhash-wasm'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import wait from '@/utils/wait';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import wait from '@/utils/wait'
 
-import type { Post, Profile, Pull, Status, Story } from './types';
+import type { Post, Profile, Pull, Status, Story } from './types'
 
 export const route: Route = {
     path: '/user/:id/:type?',
@@ -38,42 +38,42 @@ export const route: Route = {
     handler,
     view: ViewType.Pictures,
     url: 'picnob.info',
-};
+}
 
-const renderVideo = (video, poster) => `<video controls poster="${poster}"><source src="${video}" type="video/mp4"></video>`;
-const renderImage = (src) => `<img src="${src}">`;
+const renderVideo = (video, poster) => `<video controls poster="${poster}"><source src="${video}" type="video/mp4"></video>`
+const renderImage = (src) => `<img src="${src}">`
 const renderDescription = (type: Post['postType'], item: Post | Story) => {
-    let media: string;
+    let media: string
     switch (type) {
         case 'carousel':
             media = item.albumItems
                 ?.map((albumItem: any) => {
                     if (albumItem.mediaType === 'video') {
-                        return renderVideo(albumItem.videoUrl, albumItem.thumbnailImageUrl);
+                        return renderVideo(albumItem.videoUrl, albumItem.thumbnailImageUrl)
                     }
-                    return renderImage(albumItem.thumbnailImageUrl);
+                    return renderImage(albumItem.thumbnailImageUrl)
                 })
-                .join('<br>');
-            break;
+                .join('<br>')
+            break
         case 'video':
-            media = renderVideo(item.videoUrl, item.thumbnailImageUrl);
-            break;
+            media = renderVideo(item.videoUrl, item.thumbnailImageUrl)
+            break
         default:
             // image
-            media = renderImage(item.thumbnailImageUrl);
+            media = renderImage(item.thumbnailImageUrl)
     }
-    return `${media}<br>${item.text?.replaceAll('\n', '<br>') ?? ''}`;
-};
+    return `${media}<br>${item.text?.replaceAll('\n', '<br>') ?? ''}`
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://picnob.info';
-    const id = ctx.req.param('id');
-    const type = ctx.req.param('type') ?? 'posts';
-    const INSTALKER_BACK_API_KEY = '1263fd960207e2d481eff2c60feeae1541f6e90419283f7e674a36d8ac706462';
-    const { h64ToString } = await xxhash();
+    const baseUrl = 'https://picnob.info'
+    const id = ctx.req.param('id')
+    const type = ctx.req.param('type') ?? 'posts'
+    const INSTALKER_BACK_API_KEY = '1263fd960207e2d481eff2c60feeae1541f6e90419283f7e674a36d8ac706462'
+    const { h64ToString } = await xxhash()
 
     if (type !== 'posts' && type !== 'stories') {
-        throw new Error('Invalid type parameter. Allowed values are "posts" and "stories".');
+        throw new Error('Invalid type parameter. Allowed values are "posts" and "stories".')
     }
 
     // SHA256(id)
@@ -86,12 +86,12 @@ async function handler(ctx) {
                 },
                 method: 'POST',
                 body: { account: id, type: 'all', isPrivate: false },
-            });
-            return pullInfo.request_hash;
+            })
+            return pullInfo.request_hash
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     for (let attempt = 0; attempt < 10; attempt++) {
         // eslint-disable-next-line no-await-in-loop
@@ -99,14 +99,14 @@ async function handler(ctx) {
             headers: {
                 'x-api-key': INSTALKER_BACK_API_KEY,
             },
-        });
-        const allSuccess = Array.isArray(status) && status.every((item) => item.status === 'success');
+        })
+        const allSuccess = Array.isArray(status) && status.every((item) => item.status === 'success')
         if (allSuccess) {
-            break;
+            break
         }
         if (attempt < 9) {
             // eslint-disable-next-line no-await-in-loop
-            await wait(3000);
+            await wait(3000)
         }
     }
 
@@ -118,8 +118,8 @@ async function handler(ctx) {
                     'x-api-key': INSTALKER_BACK_API_KEY,
                 },
             }),
-        config.cache.contentExpire
-    );
+        config.cache.contentExpire,
+    )
     const data = await cache.tryGet(
         `picnob.info:${type}:${id}`,
         () =>
@@ -129,8 +129,8 @@ async function handler(ctx) {
                 },
             }),
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = data.map((item) => ({
         title: item.text?.split('\n')[0],
@@ -138,7 +138,7 @@ async function handler(ctx) {
         author: item.account_name,
         pubDate: parseDate(item.takenAt),
         description: renderDescription(item.postType ?? item.mediaType, item),
-    }));
+    }))
 
     return {
         title: `${profile.fullName} (@${id}) ${type === 'stories' ? 'story' : 'public'} posts - Picnob`,
@@ -146,5 +146,5 @@ async function handler(ctx) {
         link: `https://www.instagram.com/${id}/`,
         image: profile.profilePicHdImageId ?? profile.profilePicImageId,
         item: items,
-    };
+    }
 }

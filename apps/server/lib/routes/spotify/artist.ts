@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/artist/:id',
@@ -36,24 +36,24 @@ export const route: Route = {
     name: 'Artist Albums',
     maintainers: ['outloudvi'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const token = await utils.getPublicToken();
-    const id = ctx.req.param('id');
+    const token = await utils.getPublicToken()
+    const id = ctx.req.param('id')
     const meta = await ofetch(`https://api.spotify.com/v1/artists/${id}`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
+    })
     const itemsResponse = await ofetch(`https://api.spotify.com/v1/artists/${id}/albums`, {
         method: 'GET',
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
-    const albums = itemsResponse.items;
+    })
+    const albums = itemsResponse.items
 
     return {
         title: `Albums of ${meta.name}`,
@@ -67,5 +67,5 @@ async function handler(ctx) {
             link: x.external_urls.spotify,
         })),
         image: meta.images.length ? meta.images[0].url : undefined,
-    };
+    }
 }

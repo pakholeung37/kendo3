@@ -1,17 +1,17 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 const notice_type = {
     jx: { title: '中国科学技术大学 - 教学类通知', url: 'https://ustc.edu.cn/tzgg/jxltz.htm' },
     ky: { title: '中国科学技术大学 - 科研类通知', url: 'https://ustc.edu.cn/tzgg/kyltz.htm' },
     gl: { title: '中国科学技术大学 - 管理类通知', url: 'https://ustc.edu.cn/tzgg/glltz.htm' },
     fw: { title: '中国科学技术大学 - 服务类通知', url: 'https://ustc.edu.cn/tzgg/fwltz.htm' },
-};
+}
 
 // 对防抓的措施
 // function getCookie(ctx) {
@@ -54,10 +54,10 @@ export const route: Route = {
     description: `| 教学类 | 科研类 | 管理类 | 服务类 |
 | ------ | ------ | ------ | ------ |
 | jx     | ky     | gl     | fw     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'gl';
+    const type = ctx.req.param('type') ?? 'gl'
     // 发起 HTTP GET 请求
     const response = await got({
         method: 'get',
@@ -67,20 +67,20 @@ async function handler(ctx) {
             cookie: await getCookie(ctx),
         }, */
         url: notice_type[type].url,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     let items = $('table[portletmode=simpleList] > tbody > tr.light')
         .toArray()
         .map((element) => {
-            const child = $(element).children();
+            const child = $(element).children()
             const info = {
                 title: $(child[1]).find('a').attr('title'),
                 link: $(child[1]).find('a').attr('href').startsWith('../') ? new URL($(child[1]).find('a').attr('href'), notice_type[type].url).href : $(child[1]).find('a').attr('href'),
                 pubDate: timezone(parseDate($(child[2]).text(), 'YYYY-MM-DD'), +8),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     items = await Promise.all(
         items
@@ -88,22 +88,22 @@ async function handler(ctx) {
             .map((item) =>
                 cache.tryGet(item.link, async () => {
                     try {
-                        const response = await got(item.link);
-                        const $ = load(response.data);
+                        const response = await got(item.link)
+                        const $ = load(response.data)
 
-                        item.description = $('div.v_news_content').html();
+                        item.description = $('div.v_news_content').html()
                     } catch {
                         // intranet contents
                     }
-                    return item;
-                })
-            )
-    );
+                    return item
+                }),
+            ),
+    )
 
     return {
         title: notice_type[type].title,
         description: notice_type[type].title,
         link: notice_type[type].url,
         item: items,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import logger from '@/utils/logger';
+import logger from '@/utils/logger'
 
-import getIllustDetail from '../../api/get-illust-detail';
-import pixivUtils from '../../utils';
+import getIllustDetail from '../../api/get-illust-detail'
+import pixivUtils from '../../utils'
 
 export function convertPixivProtocolExtended(caption: string): string {
     const protocolMap = new Map([
@@ -11,13 +11,13 @@ export function convertPixivProtocolExtended(caption: string): string {
         [/pixiv:\/\/illusts\/(\d+)/g, 'https://www.pixiv.net/artworks/$1'],
         [/pixiv:\/\/users\/(\d+)/g, 'https://www.pixiv.net/users/$1'],
         [/pixiv:\/\/novel\/series\/(\d+)/g, 'https://www.pixiv.net/novel/series/$1'],
-    ]);
+    ])
 
-    let convertedText = caption;
+    let convertedText = caption
     for (const [pattern, replacement] of protocolMap) {
-        convertedText = convertedText.replace(pattern, replacement);
+        convertedText = convertedText.replace(pattern, replacement)
     }
-    return convertedText;
+    return convertedText
 }
 
 // docs: https://www.pixiv.help/hc/ja/articles/235584168-小説作品の本文内に使える特殊タグとは
@@ -26,40 +26,40 @@ export async function parseNovelContent(content: string, images: Record<string, 
         // 如果有 token，處理 pixiv 圖片引用
         // If token exists, process pixiv image references
         if (token) {
-            const imageMatches = [...content.matchAll(/\[pixivimage:(\d+)(?:-(\d+))?\]/g)];
-            const imageIdToUrl = new Map<string, string>();
+            const imageMatches = [...content.matchAll(/\[pixivimage:(\d+)(?:-(\d+))?\]/g)]
+            const imageIdToUrl = new Map<string, string>()
 
             // 批量獲取圖片資訊
             // Batch fetch image information
             await Promise.all(
                 imageMatches.map(async ([, illustId, pageNum]) => {
                     if (!illustId) {
-                        return;
+                        return
                     }
 
                     try {
-                        const illust = (await getIllustDetail(illustId, token)).data.illust;
-                        const pixivimages = pixivUtils.getImgs(illust).map((img) => img.match(/src="([^"]+)"/)?.[1] || '');
+                        const illust = (await getIllustDetail(illustId, token)).data.illust
+                        const pixivimages = pixivUtils.getImgs(illust).map((img) => img.match(/src="([^"]+)"/)?.[1] || '')
 
-                        const imageUrl = pixivimages[Number(pageNum) || 0];
+                        const imageUrl = pixivimages[Number(pageNum) || 0]
                         if (imageUrl) {
-                            imageIdToUrl.set(pageNum ? `${illustId}-${pageNum}` : illustId, imageUrl);
+                            imageIdToUrl.set(pageNum ? `${illustId}-${pageNum}` : illustId, imageUrl)
                         }
                     } catch (error) {
                         // 記錄錯誤但不中斷處理
                         // Log error but don't interrupt processing
-                        logger.warn(`Failed to fetch illust detail for ID ${illustId}: ${error instanceof Error ? error.message : String(error)}`);
+                        logger.warn(`Failed to fetch illust detail for ID ${illustId}: ${error instanceof Error ? error.message : String(error)}`)
                     }
-                })
-            );
+                }),
+            )
 
             // 替換 pixiv 圖片引用為 img 標籤
             // Replace pixiv image references with img tags
             content = content.replaceAll(/\[pixivimage:(\d+)(?:-(\d+))?\]/g, (match, illustId, pageNum) => {
-                const key = pageNum ? `${illustId}-${pageNum}` : illustId;
-                const imageUrl = imageIdToUrl.get(key);
-                return imageUrl ? `<img src="${imageUrl}" alt="pixiv illustration ${illustId}${pageNum ? ` page ${pageNum}` : ''}">` : match;
-            });
+                const key = pageNum ? `${illustId}-${pageNum}` : illustId
+                const imageUrl = imageIdToUrl.get(key)
+                return imageUrl ? `<img src="${imageUrl}" alt="pixiv illustration ${illustId}${pageNum ? ` page ${pageNum}` : ''}">` : match
+            })
         } else {
             /*
              * 處理 get-novels-sfw 的情況
@@ -70,17 +70,17 @@ export async function parseNovelContent(content: string, images: Record<string, 
              * When PIXIV_REFRESHTOKEN is not available, convert [pixivimage:(\d+)] format to artwork link
              * Provide direct link to original artwork page since artwork details cannot be retrieved
              */
-            content = content.replaceAll(/\[pixivimage:(\d+)(?:-(\d+))?\]/g, (_, illustId) => `<a href="https://www.pixiv.net/artworks/${illustId}" target="_blank" rel="noopener noreferrer">Pixiv Artwork #${illustId}</a>`);
+            content = content.replaceAll(/\[pixivimage:(\d+)(?:-(\d+))?\]/g, (_, illustId) => `<a href="https://www.pixiv.net/artworks/${illustId}" target="_blank" rel="noopener noreferrer">Pixiv Artwork #${illustId}</a>`)
         }
 
         // 處理作者上傳的圖片
         // Process author uploaded images
         content = content.replaceAll(/\[uploadedimage:(\d+)\]/g, (match, imageId) => {
             if (images[imageId]) {
-                return `<img src="${pixivUtils.getProxiedImageUrl(images[imageId])}" alt="novel illustration ${imageId}">`;
+                return `<img src="${pixivUtils.getProxiedImageUrl(images[imageId])}" alt="novel illustration ${imageId}">`
             }
-            return match;
-        });
+            return match
+        })
 
         // 基本格式處理
         // Basic formatting
@@ -105,32 +105,32 @@ export async function parseNovelContent(content: string, images: Record<string, 
             .replaceAll(/\[chapter:(.*?)\]/g, '<h2>$1</h2>')
             // 分頁符
             // page breaks
-            .replaceAll('[newpage]', '<hr>');
+            .replaceAll('[newpage]', '<hr>')
 
         // 使用 cheerio 進行 HTML 清理和優化
         // Use cheerio for HTML cleanup and optimization
-        const $content = load(`<article><p>${content}</p></article>`);
+        const $content = load(`<article><p>${content}</p></article>`)
 
         // 處理嵌套段落：移除多餘的嵌套
         // Handle nested paragraphs: remove unnecessary nesting
         $content('p p').each((_, elem) => {
-            const $elem = $content(elem);
-            $elem.replaceWith($elem.html() || '');
-        });
+            const $elem = $content(elem)
+            $elem.replaceWith($elem.html() || '')
+        })
 
         // 處理段落中的標題：確保正確的 HTML 結構
         // Handle headings in paragraphs: ensure correct HTML structure
         $content('p h2').each((_, elem) => {
-            const $elem = $content(elem);
-            const $parent = $elem.parent('p');
-            const html = $elem.prop('outerHTML');
+            const $elem = $content(elem)
+            const $parent = $elem.parent('p')
+            const html = $elem.prop('outerHTML')
             if ($parent.length && html) {
-                $parent.replaceWith(`</p>${html}<p>`);
+                $parent.replaceWith(`</p>${html}<p>`)
             }
-        });
+        })
 
-        return $content.html() || '';
+        return $content.html() || ''
     } catch (error) {
-        throw new Error(`Error parsing novel content: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+        throw new Error(`Error parsing novel content: ${error instanceof Error ? error.message : String(error)}`, { cause: error })
     }
 }

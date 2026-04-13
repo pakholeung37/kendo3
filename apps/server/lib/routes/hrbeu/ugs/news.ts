@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'http://ugs.hrbeu.edu.cn';
+const baseUrl = 'http://ugs.hrbeu.edu.cn'
 
 const authorMap = {
     gztz: {
@@ -53,7 +53,7 @@ const authorMap = {
         all: '/3211',
         lxkc: '/lxkc',
     },
-};
+}
 
 export const route: Route = {
     path: '/ugs/news/:author?/:category?',
@@ -126,49 +126,49 @@ export const route: Route = {
 | lxkc     |
 
   工作通知：无`,
-};
+}
 
 async function handler(ctx) {
-    const author = ctx.req.param('author') || 'gztz';
-    const category = ctx.req.param('category') || 'all';
-    const link = baseUrl + authorMap[author][category] + '/list.htm';
+    const author = ctx.req.param('author') || 'gztz'
+    const category = ctx.req.param('category') || 'all'
+    const link = baseUrl + authorMap[author][category] + '/list.htm'
     const response = await got(link, {
         headers: {
             Referer: baseUrl,
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     const list = $('.wp_article_list_table .border9')
         .toArray()
         .map((e) => {
-            e = $(e);
+            e = $(e)
             return {
                 title: e.find('a').attr('title'),
                 link: new URL(e.find('a').attr('href'), baseUrl).href,
                 pubDate: parseDate(e.find('.date').text()),
-            };
-        });
+            }
+        })
 
     const out = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (item.link.includes('.htm')) {
-                    const response = await got(item.link);
-                    const $ = load(response.data);
+                    const response = await got(item.link)
+                    const $ = load(response.data)
 
-                    item.description = $('.wp_articlecontent').html().trim();
+                    item.description = $('.wp_articlecontent').html().trim()
                 } else {
-                    item.description = '此链接为文件，请点击下载';
+                    item.description = '此链接为文件，请点击下载'
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '哈尔滨工程大学本科生院工作通知',
         link,
         item: out,
-    };
+    }
 }

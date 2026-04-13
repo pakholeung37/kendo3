@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/loginonline',
@@ -26,39 +26,39 @@ export const route: Route = {
     name: ';login:',
     maintainers: ['wu-yufei'],
     handler,
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.usenix.org';
-    const { data: response } = await got(`${baseUrl}/publications/loginonline`);
-    const $ = load(response);
+    const baseUrl = 'https://www.usenix.org'
+    const { data: response } = await got(`${baseUrl}/publications/loginonline`)
+    const $ = load(response)
     const list = $('div.views-row')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.views-field-title').text().trim(),
                 link: `${baseUrl}${item.find('a').attr('href')}`,
                 pubDate: parseDate(item.find('.views-field-field-lv2-publication-date').text()),
                 author: item.find('.views-field-pseudo-author-list').text().trim().replace('Authors: ', ''),
-            };
-        });
+            }
+        })
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
-                item.description = $('.group-article-body-wrapper').html();
+                const { data: response } = await got(item.link)
+                const $ = load(response)
+                item.description = $('.group-article-body-wrapper').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'USENIX ;login:',
         link: `${baseUrl}/publications/loginonline`,
         description: 'An open access publication driven by the USENIX community',
         item: items,
-    };
+    }
 }

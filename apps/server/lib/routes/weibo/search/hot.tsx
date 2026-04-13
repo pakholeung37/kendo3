@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import weiboUtils from '../utils';
+import weiboUtils from '../utils'
 
 // Default hide all picture
-let wpic = 'false';
-let fullpic = 'false';
+let wpic = 'false'
+let fullpic = 'false'
 
 export const route: Route = {
     path: '/search/hot/:fulltext?',
@@ -51,11 +51,11 @@ export const route: Route = {
     maintainers: ['xyqfer', 'shinemoon'],
     handler,
     url: 's.weibo.com/top/summary',
-};
+}
 
 async function handler(ctx) {
-    wpic = ctx.req.query('pic') ?? 'false';
-    fullpic = ctx.req.query('fullpic') ?? 'false';
+    wpic = ctx.req.query('pic') ?? 'false'
+    fullpic = ctx.req.query('fullpic') ?? 'false'
     const {
         data: { data },
     } = await weiboUtils.tryWithCookies(async (cookies, verifier) => {
@@ -67,46 +67,46 @@ async function handler(ctx) {
                 Cookie: cookies,
                 ...weiboUtils.apiHeaders,
             },
-        });
-        verifier(_r);
-        return _r;
-    });
+        })
+        verifier(_r)
+        return _r
+    })
 
-    let resultItems: DataItem[];
+    let resultItems: DataItem[]
     if (ctx.req.param('fulltext') === 'fulltext') {
-        const cardslist = data.cards[0].card_group;
+        const cardslist = data.cards[0].card_group
         // Topic List
         const tlist = cardslist.map((item) => {
-            const title = item.desc;
-            const link = `https://m.weibo.cn/search?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`;
-            const plink = `https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`;
+            const title = item.desc
+            const link = `https://m.weibo.cn/search?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`
+            const plink = `https://m.weibo.cn/api/container/getIndex?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`
             return {
                 title,
                 link,
                 plink,
-            };
-        });
+            }
+        })
 
         resultItems = await Promise.all(
             tlist.map((i) =>
                 cache.tryGet(i.plink, async () => {
-                    const pInfo = await fetchContent(i.plink);
-                    i.description = pInfo.content;
-                    return i;
-                })
-            )
-        );
+                    const pInfo = await fetchContent(i.plink)
+                    i.description = pInfo.content
+                    return i
+                }),
+            ),
+        )
     } else {
         resultItems = data.cards[0].card_group.map((item) => {
-            const title = item.desc;
-            const link = `https://m.weibo.cn/search?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`;
-            const description = item.desc;
+            const title = item.desc
+            const link = `https://m.weibo.cn/search?containerid=100103type%3D1%26q%3D${encodeURIComponent(item.desc)}`
+            const description = item.desc
             return {
                 title,
                 description,
                 link,
-            };
-        });
+            }
+        })
     }
 
     return {
@@ -114,36 +114,36 @@ async function handler(ctx) {
         link: 'https://s.weibo.com/top/summary?cate=realtimehot',
         description: '实时热点，每分钟更新一次',
         item: resultItems,
-    };
+    }
 }
 
 async function fetchContent(url) {
     // Fetch the subpageinof
-    const cookieString = config.weibo.cookies ?? '';
+    const cookieString = config.weibo.cookies ?? ''
     const subres = await got(url, {
         headers: {
             Cookie: cookieString,
         },
-    });
-    let demostr = '';
+    })
+    let demostr = ''
     try {
-        const rdata = subres.data;
-        const cards = rdata.data.cards;
+        const rdata = subres.data
+        const cards = rdata.data.cards
         // Need to find one cards with 'type ==9'
-        demostr = seekContent(cards);
+        demostr = seekContent(cards)
     } catch {
         // console.log(e);
         // console.log(url);
     }
-    const ret = demostr;
+    const ret = demostr
     return {
         content: ret,
-    };
+    }
 }
 
 function seekContent(clist) {
-    const $ = load('<div id="wbcontent"></div>');
-    const stub = $('#wbcontent');
+    const $ = load('<div id="wbcontent"></div>')
+    const stub = $('#wbcontent')
 
     const renderDigest = ({ author, msg, link, postinfo, pics }) =>
         renderToString(
@@ -170,22 +170,22 @@ function seekContent(clist) {
                     </>
                 ) : null}
                 <hr />
-            </>
-        );
+            </>,
+        )
 
     // To for..of per reviewers comment
     // Need to find one clist with 'type ==9'
     for (const curitem of clist) {
         if (curitem.card_type === 9) {
-            const tbpic = curitem.mblog.thumbnail_pic ?? '';
-            const index = tbpic.lastIndexOf('/');
-            const thumbfolder = tbpic.slice(0, index + 1);
+            const tbpic = curitem.mblog.thumbnail_pic ?? ''
+            const index = tbpic.lastIndexOf('/')
+            const thumbfolder = tbpic.slice(0, index + 1)
 
-            const curcontent = load(curitem.mblog.text);
+            const curcontent = load(curitem.mblog.text)
             if (wpic === 'true') {
-                curcontent('img').attr('width', '1em').attr('height', '1em');
+                curcontent('img').attr('width', '1em').attr('height', '1em')
             } else {
-                curcontent('img').remove();
+                curcontent('img').remove()
             }
             const section = renderDigest({
                 author: {
@@ -199,16 +199,16 @@ function seekContent(clist) {
                     wpic === 'true' && curitem.mblog.pic_num > 0
                         ? curitem.mblog.pics.map((item) => {
                               // Get thumbnail_pic instead of orginal ones
-                              const pid = item.pid;
-                              return fullpic === 'false' ? { url: thumbfolder + pid + '.jpg', rurl: item.url } : { url: item.url, rurl: item.url };
+                              const pid = item.pid
+                              return fullpic === 'false' ? { url: thumbfolder + pid + '.jpg', rurl: item.url } : { url: item.url, rurl: item.url }
                           })
                         : [],
-            });
-            stub.append(section);
+            })
+            stub.append(section)
         }
         if (curitem.card_type === 11) {
-            stub.append(seekContent(curitem.card_group));
+            stub.append(seekContent(curitem.card_group))
         }
     }
-    return stub.html();
+    return stub.html()
 }

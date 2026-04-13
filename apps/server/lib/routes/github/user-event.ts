@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
-import { filterEvents } from './eventapi';
+import { filterEvents } from './eventapi'
 
 export const route: Route = {
     path: '/user_event/:username/:types?',
@@ -110,17 +110,17 @@ export const route: Route = {
     name: 'User Event',
     maintainers: ['mslxl'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('username');
-    const types = ctx.req.param('types') || 'all';
+    const username = ctx.req.param('username')
+    const types = ctx.req.param('types') || 'all'
 
-    const isAuthenticated = config.github && config.github.access_token;
+    const isAuthenticated = config.github && config.github.access_token
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {}
     if (isAuthenticated) {
-        headers.Authorization = `token ${config.github.access_token}`;
+        headers.Authorization = `token ${config.github.access_token}`
     }
 
     const response = await got({
@@ -130,15 +130,15 @@ async function handler(ctx) {
         searchParams: {
             per_page: 100,
         },
-    });
+    })
 
-    const items = filterEvents(types, response.data);
-    const typeFilter = types === 'all' ? 'All Events' : `Events: ${types}`;
+    const items = filterEvents(types, response.data)
+    const typeFilter = types === 'all' ? 'All Events' : `Events: ${types}`
 
     return {
         title: `${username} GitHub User Feed - ${typeFilter}`,
         link: `https://github.com/${username}`,
         description: `GitHub events received by ${username}${types === 'all' ? '' : ` (filtered: ${types})`}${isAuthenticated ? ' - includes private events' : ' - public events only'}`,
         item: items,
-    };
+    }
 }

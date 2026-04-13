@@ -1,39 +1,39 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx) => {
-    const { tag } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const { tag } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const rootUrl = 'https://news.10jqka.com.cn';
-    const apiUrl = new URL('tapp/news/push/stock', rootUrl).href;
-    const currentUrl = new URL('realtimenews.html', rootUrl).href;
+    const rootUrl = 'https://news.10jqka.com.cn'
+    const apiUrl = new URL('tapp/news/push/stock', rootUrl).href
+    const currentUrl = new URL('realtimenews.html', rootUrl).href
 
     const { data: currentResponse } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(currentResponse, 'gbk'));
+    const $ = load(iconv.decode(currentResponse, 'gbk'))
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
             page: 1,
             tag: tag ?? '',
         },
-    });
+    })
 
     const items =
         response.data?.list.slice(0, limit).map((item) => {
-            const title = item.title;
-            const description = item.digest;
-            const guid = `10jqka-${item.seq}`;
-            const image = item.picUrl;
+            const title = item.title
+            const description = item.digest
+            const guid = `10jqka-${item.seq}`
+            const image = item.picUrl
 
             return {
                 title,
@@ -52,11 +52,11 @@ export const handler = async (ctx) => {
                 banner: item.picUrl,
                 updated: parseDate(item.rtime, 'X'),
                 language,
-            };
-        }) ?? [];
+            }
+        }) ?? []
 
-    const title = $('title').text();
-    const image = $('h1 a img').prop('src');
+    const title = $('title').text()
+    const image = $('h1 a img').prop('src')
 
     return {
         title,
@@ -67,8 +67,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/realtimenews/:tag?',
@@ -140,4 +140,4 @@ export const route: Route = {
             target: '/realtimenews/公告',
         },
     ],
-};
+}

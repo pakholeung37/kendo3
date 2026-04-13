@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderEshopJpDescription } from './templates/eshop-jp';
+import { renderEshopJpDescription } from './templates/eshop-jp'
 
 export const route: Route = {
     path: '/eshop/jp',
@@ -15,7 +15,7 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'nintendo.co.jp/software/switch/index.html',
-};
+}
 
 async function handler(ctx) {
     const response = await got('https://search.nintendo.jp/nintendo_soft/search.json', {
@@ -29,8 +29,8 @@ async function handler(ctx) {
             opt_hard: '1_HAC',
             sort: 'sodate desc,score',
         },
-    });
-    const data = response.data.result.items;
+    })
+    const data = response.data.result.items
 
     return {
         title: 'Nintendo eShop（日服）新游戏',
@@ -42,5 +42,5 @@ async function handler(ctx) {
             link: `https://ec.nintendo.com/JP/ja/titles/${item.id}`,
             pubDate: parseDate(item.pdate),
         })),
-    };
+    }
 }

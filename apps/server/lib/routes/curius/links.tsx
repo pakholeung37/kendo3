@@ -1,9 +1,9 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/links/:name',
@@ -26,27 +26,27 @@ export const route: Route = {
     name: 'User',
     maintainers: ['Ovler-Young'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const username = ctx.req.param('name');
+    const username = ctx.req.param('name')
 
     const name_response = await got(`https://curius.app/api/users/${username}`, {
         headers: {
             Referer: `https://curius.app/${username}`,
         },
-    });
+    })
 
-    const data = name_response.data;
+    const data = name_response.data
 
-    const uid = data.user.id;
-    const name = `${data.user.firstName} ${data.user.lastName}`;
+    const uid = data.user.id
+    const name = `${data.user.firstName} ${data.user.lastName}`
 
     const response = await got(`https://curius.app/api/users/${uid}/links?page=0`, {
         headers: {
             Referer: `https://curius.app/${username}`,
         },
-    });
+    })
 
     const items = response.data.userSaved.map((item) => ({
         title: item.title,
@@ -54,7 +54,7 @@ async function handler(ctx) {
         link: item.link,
         pubDate: parseDate(item.createdDate),
         guid: `curius:${username}:${item.id}`,
-    }));
+    }))
 
     return {
         title: `${name} - Curius`,
@@ -62,12 +62,12 @@ async function handler(ctx) {
         description: `${name} - Curius`,
         allowEmpty: true,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (item): string => {
-    const fullText = item.metadata?.full_text ? item.metadata.full_text.replaceAll('\n', '<br>') : '';
-    const firstComment = item.comments?.length ? item.comments[0].text.slice(0, 100) : '';
+    const fullText = item.metadata?.full_text ? item.metadata.full_text.replaceAll('\n', '<br>') : ''
+    const firstComment = item.comments?.length ? item.comments[0].text.slice(0, 100) : ''
 
     return renderToString(
         <>
@@ -102,10 +102,10 @@ const renderDescription = (item): string => {
                                 标注：{highlight.highlight}
                                 <br />
                             </span>
-                        )
+                        ),
                     )}
                 </>
             ) : null}
-        </>
-    );
-};
+        </>,
+    )
+}

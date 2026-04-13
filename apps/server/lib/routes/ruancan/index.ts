@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import fetchFeed from './utils';
+import fetchFeed from './utils'
 
 export const route: Route = {
     path: '/',
@@ -14,10 +14,10 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'ruancan.com/',
-};
+}
 
 async function handler(ctx) {
-    const currentUrl = '';
+    const currentUrl = ''
 
-    return await fetchFeed(ctx, currentUrl);
+    return await fetchFeed(ctx, currentUrl)
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/',
@@ -14,15 +14,15 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'weekendhk.com/',
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://www.weekendhk.com';
+    const baseUrl = 'https://www.weekendhk.com'
     const response = await got(`${baseUrl}/wp-json/wp/v2/posts`, {
         searchParams: {
             per_page: ctx.req.query('limit') ?? 100,
         },
-    });
+    })
 
     const items = response.data.map((item) => ({
         title: item.title.rendered,
@@ -31,7 +31,7 @@ async function handler(ctx) {
         description: item.content.rendered,
         pubDate: parseDate(item.date_gmt),
         author: item.creator_editor,
-    }));
+    }))
 
     return {
         title: '新假期周刊',
@@ -40,5 +40,5 @@ async function handler(ctx) {
         language: 'zh-HK',
         image: `${baseUrl}/wp-content/themes/bucket/theme-content/images/196x196.png`,
         item: items,
-    };
+    }
 }

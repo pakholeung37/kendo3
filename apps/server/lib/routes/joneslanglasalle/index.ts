@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const searchApiUrl = 'https://www.jll.com/api/search/template';
-const subscriptionKey = '8f6a4de5b0144673acaa89b03aac035e';
+const searchApiUrl = 'https://www.jll.com/api/search/template'
+const subscriptionKey = '8f6a4de5b0144673acaa89b03aac035e'
 
 interface LocaleConfig {
-    apiLang: string;
-    countries: string[];
-    insightsUrl: string;
-    title: string;
+    apiLang: string
+    countries: string[]
+    insightsUrl: string
+    title: string
 }
 
 // Reason: each locale maps to a different country filter, API language code, and site URL
@@ -41,13 +41,13 @@ const localeMap: Record<string, LocaleConfig> = {
         insightsUrl: 'https://www.jll.com/en-hk/insights',
         title: 'Insights - JLL Hong Kong',
     },
-};
+}
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { language: lang = 'zh' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '12', 10);
+    const { language: lang = 'zh' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '12', 10)
 
-    const locale = localeMap[lang] || localeMap.zh;
+    const locale = localeMap[lang] || localeMap.zh
 
     // Reason: site rebuilt with search API; old HTML scraping no longer works.
     // Using the public search API (Elasticsearch-backed) with subscription key from page JS.
@@ -69,10 +69,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 boostCountry: '',
             },
         },
-    });
+    })
 
     const items: DataItem[] = (response.hits?.hits || []).map((hit) => {
-        const source = hit._source;
+        const source = hit._source
         return {
             title: source.title,
             description: source.description || source.subTitle || '',
@@ -82,8 +82,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
             image: source.imageUrl,
             banner: source.imageUrl,
             language: source.language,
-        };
-    });
+        }
+    })
 
     return {
         title: locale.title,
@@ -91,8 +91,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         item: items,
         allowEmpty: true,
         language: locale.apiLang,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:language?/:category{.+}?',
@@ -130,10 +130,10 @@ If you subscribe to [Trends & Insights (China)](https://www.joneslanglasalle.com
         {
             source: ['joneslanglasalle.com.cn/:language/:category'],
             target: (params) => {
-                const language = params.language;
-                const category = params.category;
+                const language = params.language
+                const category = params.category
 
-                return language ? `/${language}${category ? `/${category}` : ''}` : '';
+                return language ? `/${language}${category ? `/${category}` : ''}` : ''
             },
         },
         {
@@ -180,4 +180,4 @@ If you subscribe to [Trends & Insights (China)](https://www.joneslanglasalle.com
 | 香港   | English | en-hk |
 `,
     },
-};
+}

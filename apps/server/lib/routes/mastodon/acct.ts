@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/acct/:acct/statuses/:only_media?',
@@ -33,15 +33,15 @@ export const route: Route = {
     description: `Started from Mastodon v4.0.0, the use of the \`search\` API in the route no longer requires a user token.
 If the domain of your Webfinger account URI is the same as the API host of the instance (i.e., no delegation called in some other protocols), then no configuration is required and the route is available out of the box.
 However, you can still specify these route-specific configurations if you need to override them.`,
-};
+}
 
 async function handler(ctx) {
-    const acct = ctx.req.param('acct');
-    const only_media = ctx.req.param('only_media') === 'true' ? 'true' : 'false';
+    const acct = ctx.req.param('acct')
+    const only_media = ctx.req.param('only_media') === 'true' ? 'true' : 'false'
 
-    const { site, account_id } = await utils.getAccountIdByAcct(acct);
+    const { site, account_id } = await utils.getAccountIdByAcct(acct)
 
-    const { account_data, data } = await utils.getAccountStatuses(site, account_id, only_media);
+    const { account_data, data } = await utils.getAccountStatuses(site, account_id, only_media)
 
     return {
         title: `${account_data.display_name} (@${account_data.acct})`,
@@ -49,5 +49,5 @@ async function handler(ctx) {
         description: account_data.note,
         item: utils.parseStatuses(data),
         allowEmpty: true,
-    };
+    }
 }

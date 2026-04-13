@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'xwdt/gzdt' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '17', 10);
+    const { id = 'xwdt/gzdt' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '17', 10)
 
-    const baseUrl = 'https://www.samrdprc.org.cn';
-    const targetUrl: string = new URL(id.endsWith('/') ? id : `${id}/`, baseUrl).href;
+    const baseUrl = 'https://www.samrdprc.org.cn'
+    const targetUrl: string = new URL(id.endsWith('/') ? id : `${id}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('div.boxl_ul ul li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a').first();
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a').first()
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('span').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('span').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -38,26 +38,26 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl ? new URL(linkUrl, targetUrl).href : undefined,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('div.show_tit').text();
-                const description: string | undefined = $$('div.TRS_Editor div.TRS_Editor').html() ?? undefined;
-                const pubDateStr: string | undefined = $$('div.show_tit2').text().split(/：/).pop()?.trim();
-                const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? [];
-                const upDatedStr: string | undefined = pubDateStr;
+                const title: string = $$('div.show_tit').text()
+                const description: string | undefined = $$('div.TRS_Editor div.TRS_Editor').html() ?? undefined
+                const pubDateStr: string | undefined = $$('div.show_tit2').text().split(/：/).pop()?.trim()
+                const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? []
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -70,15 +70,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: $('title').text(),
@@ -90,8 +90,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="keyword"]').attr('content')?.split(/,/)[0],
         language,
         id: $('meta[property="og:url"]').attr('content'),
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:id{.+}?',
@@ -237,4 +237,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

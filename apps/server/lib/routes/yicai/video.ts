@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { ProcessItems, rootUrl } from './utils';
+import { ProcessItems, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/video/:id?',
@@ -63,19 +63,19 @@ export const route: Route = {
 | sanrenxing           | 价值三人行                   |
 | yuandongli           | 中国源动力                   |
 | pioneerzone          | 直击引领区                   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
+    const id = ctx.req.param('id') ?? ''
 
-    let channel;
+    let channel
     if (id) {
-        const navUrl = `${rootUrl}/api/ajax/getnavs`;
+        const navUrl = `${rootUrl}/api/ajax/getnavs`
 
         const response = await got({
             method: 'get',
             url: navUrl,
-        });
+        })
 
         for (const c of response.data.header.video) {
             if (c.EnglishName === id || c.ChannelID === id) {
@@ -83,20 +83,20 @@ async function handler(ctx) {
                     id: c.ChannelID,
                     name: c.ChannelName,
                     slug: c.EnglishName,
-                };
-                break;
+                }
+                break
             }
         }
     }
 
-    const currentUrl = `${rootUrl}/video${id ? `/${channel.slug}` : ''}`;
-    const apiUrl = `${rootUrl}/api/ajax/${id ? `getlistbycid?cid=${channel.id}` : 'getjuhelist?action=video'}&page=1&pagesize=${ctx.req.query('limit') ?? 30}`;
+    const currentUrl = `${rootUrl}/video${id ? `/${channel.slug}` : ''}`
+    const apiUrl = `${rootUrl}/api/ajax/${id ? `getlistbycid?cid=${channel.id}` : 'getjuhelist?action=video'}&page=1&pagesize=${ctx.req.query('limit') ?? 30}`
 
-    const items = await ProcessItems(apiUrl, cache.tryGet);
+    const items = await ProcessItems(apiUrl, cache.tryGet)
 
     return {
         title: `第一财经 - ${channel?.name ?? '视听'}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

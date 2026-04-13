@@ -1,66 +1,66 @@
-import { config } from '@/config';
-import logger from '@/utils/logger';
+import { config } from '@/config'
+import logger from '@/utils/logger'
 
-import type CacheModule from './base';
-import memory from './memory';
-import redis from './redis';
+import type CacheModule from './base'
+import memory from './memory'
+import redis from './redis'
 
 const globalCache: {
-    get: (key: string) => Promise<string | null | undefined> | string | null | undefined;
-    has: (key: string) => Promise<boolean> | boolean;
-    set: (key: string, value?: string | Record<string, any>, maxAge?: number) => any;
+    get: (key: string) => Promise<string | null | undefined> | string | null | undefined
+    has: (key: string) => Promise<boolean> | boolean
+    set: (key: string, value?: string | Record<string, any>, maxAge?: number) => any
 } = {
     get: () => null,
     has: () => false,
     set: () => null,
-};
+}
 
-let cacheModule: CacheModule;
+let cacheModule: CacheModule
 
 if (config.cache.type === 'redis') {
-    cacheModule = redis;
-    cacheModule.init();
-    const { redisClient } = cacheModule.clients;
+    cacheModule = redis
+    cacheModule.init()
+    const { redisClient } = cacheModule.clients
     globalCache.get = async (key) => {
         if (key && cacheModule.status.available && redisClient) {
-            const value = await redisClient.get(key);
-            return value;
+            const value = await redisClient.get(key)
+            return value
         }
-    };
+    }
     globalCache.has = async (key) => {
         if (key && cacheModule.status.available && redisClient) {
-            const result = await redisClient.exists(key);
-            return result > 0;
+            const result = await redisClient.exists(key)
+            return result > 0
         }
-        return false;
-    };
-    globalCache.set = cacheModule.set;
+        return false
+    }
+    globalCache.set = cacheModule.set
 } else if (config.cache.type === 'memory') {
-    cacheModule = memory;
-    cacheModule.init();
-    const { memoryCache } = cacheModule.clients;
+    cacheModule = memory
+    cacheModule.init()
+    const { memoryCache } = cacheModule.clients
     globalCache.get = (key) => {
         if (key && cacheModule.status.available && memoryCache) {
-            return memoryCache.get(key, { updateAgeOnGet: false }) as string | undefined;
+            return memoryCache.get(key, { updateAgeOnGet: false }) as string | undefined
         }
-    };
+    }
     globalCache.has = (key) => {
         if (key && cacheModule.status.available && memoryCache) {
-            return memoryCache.has(key);
+            return memoryCache.has(key)
         }
-        return false;
-    };
+        return false
+    }
     globalCache.set = (key, value, maxAge = config.cache.routeExpire) => {
         if (!value || value === 'undefined') {
-            value = '';
+            value = ''
         }
         if (typeof value === 'object') {
-            value = JSON.stringify(value);
+            value = JSON.stringify(value)
         }
         if (key && memoryCache) {
-            return memoryCache.set(key, value, { ttl: maxAge * 1000 });
+            return memoryCache.set(key, value, { ttl: maxAge * 1000 })
         }
-    };
+    }
 } else {
     cacheModule = {
         init: () => null,
@@ -71,8 +71,8 @@ if (config.cache.type === 'redis') {
             available: false,
         },
         clients: {},
-    };
-    logger.error('Cache not available, concurrent requests are not limited. This could lead to bad behavior.');
+    }
+    logger.error('Cache not available, concurrent requests are not limited. This could lead to bad behavior.')
 }
 
 // only give cache string, as the `!` condition tricky
@@ -90,27 +90,27 @@ export default {
      */
     tryGet: async <T extends string | Record<string, any>>(key: string, getValueFunc: () => Promise<T>, maxAge = config.cache.contentExpire, refresh = true) => {
         if (typeof key !== 'string') {
-            throw new TypeError('Cache key must be a string');
+            throw new TypeError('Cache key must be a string')
         }
-        let v = await cacheModule.get(key, refresh);
+        let v = await cacheModule.get(key, refresh)
         if (v) {
-            let parsed;
+            let parsed
             try {
-                parsed = JSON.parse(v);
+                parsed = JSON.parse(v)
             } catch {
-                parsed = null;
+                parsed = null
             }
             if (parsed) {
-                v = parsed;
+                v = parsed
             }
 
-            return v as T;
+            return v as T
         } else {
-            const value = await getValueFunc();
-            cacheModule.set(key, value, maxAge);
+            const value = await getValueFunc()
+            cacheModule.set(key, value, maxAge)
 
-            return value;
+            return value
         }
     },
     globalCache,
-};
+}

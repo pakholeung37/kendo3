@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/:caty',
@@ -22,23 +22,23 @@ export const route: Route = {
     name: '学会动态',
     maintainers: ['tudou027'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const base = utils.urlBase(ctx.req.param('caty'));
-    const res = await got(base);
-    const info = utils.fetchAllArticles(res.data);
-    const $ = load(res.data);
+    const base = utils.urlBase(ctx.req.param('caty'))
+    const res = await got(base)
+    const info = utils.fetchAllArticles(res.data)
+    const $ = load(res.data)
 
-    const details = await Promise.all(info.map((e) => utils.detailPage(e, cache)));
+    const details = await Promise.all(info.map((e) => utils.detailPage(e, cache)))
 
     ctx.set('json', {
         info,
-    });
+    })
 
     return {
         title: '中国人工智能学会 - ' + $('.article-list h1').text(),
         link: base,
         item: details,
-    };
+    }
 }

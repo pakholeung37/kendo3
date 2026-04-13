@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { cookieJar, processArticle } from './utils';
+import { cookieJar, processArticle } from './utils'
 
-const baseUrl = 'http://stno1.playno1.com';
+const baseUrl = 'http://stno1.playno1.com'
 
 export const route: Route = {
     path: '/st/:catid?',
@@ -35,34 +35,34 @@ export const route: Route = {
     description: `| 全部文章 | 情趣體驗報告 | 情趣新聞 | 情趣研究所 |
 | -------- | ------------ | -------- | ---------- |
 | all      | experience   | news     | graduate   |`,
-};
+}
 
 async function handler(ctx) {
-    const { catid = 'all' } = ctx.req.param();
-    const url = `${baseUrl}/stno1/${catid}/`;
+    const { catid = 'all' } = ctx.req.param()
+    const url = `${baseUrl}/stno1/${catid}/`
     const response = await got(url, {
         cookieJar,
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     let items = $('.fallsBox')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.ftitle a').attr('title'),
                 link: item.find('.ftitle a').attr('href'),
                 pubDate: timezone(parseDate(item.find('.dateBox').text(), 'YYYY-MM-DD HH:mm'), 8),
                 author: item.find('.dateBox span a').eq(0).text().trim(),
-            };
-        });
+            }
+        })
 
-    items = await processArticle(items, cache);
+    items = await processArticle(items, cache)
 
     return {
         title: $('head title').text(),
         link: url,
         item: items,
         language: 'zh-TW',
-    };
+    }
 }

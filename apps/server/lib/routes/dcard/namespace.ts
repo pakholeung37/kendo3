@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Dcard',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 僅能透過台灣 IP 抓取。
 :::`,
     lang: 'zh-TW',
-};
+}

@@ -1,14 +1,14 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import md5 from '@/utils/md5';
+import md5 from '@/utils/md5'
 
 const generateRequestHeaders = () => {
-    const now = Math.round(Date.now() / 1000);
+    const now = Math.round(Date.now() / 1000)
     return {
         'X-Client-Platform': 'WechatMiniprogram',
         'X-Client-DeviceId': md5(now.toString()),
-    };
-};
+    }
+}
 
 const generateProductItem = (product) => {
     const {
@@ -18,8 +18,8 @@ const generateProductItem = (product) => {
         measureText,
         priceDisplay: { currentPrice, originalPrice },
         images,
-    } = product;
-    const isFamilyOffer = currentPrice && originalPrice;
+    } = product
+    const isFamilyOffer = currentPrice && originalPrice
 
     return {
         title: `${name} ${productType} - \u{000A5}${currentPrice}`,
@@ -41,10 +41,10 @@ const generateProductItem = (product) => {
                         <img src={image.url} />
                     ))}
                 </p>
-            </>
+            </>,
         ),
         link: `https://www.ikea.cn/cn/zh/p/${productFullId}`,
-    };
-};
+    }
+}
 
-export { generateProductItem, generateRequestHeaders };
+export { generateProductItem, generateRequestHeaders }

@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const titleMap = {
     date: 'Newest',
@@ -12,7 +12,7 @@ const titleMap = {
     trending: 'Trending',
     alpha: 'Name',
     style: 'Number of styles',
-};
+}
 
 export const route: Route = {
     path: '/fonts/:sort?',
@@ -42,21 +42,21 @@ export const route: Route = {
 ::: warning
   This route requires API key, therefore it's only available when self-hosting, refer to the [Deploy Guide](https://docs.rsshub.app/deploy/config#route-specific-configurations) for route-specific configurations.
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') ?? 'date';
-    const limit = ctx.req.param('limit') ?? 25;
+    const sort = ctx.req.param('sort') ?? 'date'
+    const limit = ctx.req.param('limit') ?? 25
 
-    const API_KEY = config.google.fontsApiKey;
+    const API_KEY = config.google.fontsApiKey
     if (!API_KEY) {
-        throw new ConfigNotFoundError('Google Fonts API key is required.');
+        throw new ConfigNotFoundError('Google Fonts API key is required.')
     }
 
-    const googleFontsAPI = `https://www.googleapis.com/webfonts/v1/webfonts?sort=${sort}&key=${API_KEY}`;
+    const googleFontsAPI = `https://www.googleapis.com/webfonts/v1/webfonts?sort=${sort}&key=${API_KEY}`
 
-    const response = await got.get(googleFontsAPI);
-    const data = response.data.items.slice(0, limit);
+    const response = await got.get(googleFontsAPI)
+    const data = response.data.items.slice(0, limit)
 
     return {
         title: `Google Fonts - ${titleMap[sort]}`,
@@ -69,7 +69,7 @@ async function handler(ctx) {
                 link: `https://fonts.google.com/specimen/${item.family.replaceAll(/\s/g, '+')}`,
                 pubDate: parseDate(item.lastModified, 'YYYY-MM-DD'),
             })),
-    };
+    }
 }
 
 const renderDescription = (item): string =>
@@ -92,5 +92,5 @@ const renderDescription = (item): string =>
                     <a href={value}>{key}</a>&nbsp;&nbsp;
                 </>
             ))}
-        </>
-    );
+        </>,
+    )

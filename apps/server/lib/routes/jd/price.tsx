@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/price/:id',
@@ -22,28 +22,28 @@ export const route: Route = {
     description: `::: tip
   如商品 \`https://item.jd.com/526835.html\` 中的 id 为 \`526835\`，所以路由为 [\`/jd/price/526835\`](https://rsshub.app/jd/price/526835)
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://item.jd.com';
-    const currentUrl = `${rootUrl}/${id}.html`;
-    const apiUrl = `http://p.3.cn/prices/mgets?skuIds=J_${id}`;
+    const rootUrl = 'https://item.jd.com'
+    const currentUrl = `${rootUrl}/${id}.html`
+    const apiUrl = `http://p.3.cn/prices/mgets?skuIds=J_${id}`
 
     const apiResponse = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
-    const data = apiResponse.data[0];
+    const data = apiResponse.data[0]
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const title = response.data.match(/name: '(.*?)'/)[1];
+    const title = response.data.match(/name: '(.*?)'/)[1]
 
     return {
         title: `京东商品价格 - ${title}`,
@@ -64,9 +64,9 @@ async function handler(ctx) {
                         <p>
                             最高价：<b>{data.m}</b>
                         </p>
-                    </>
+                    </>,
                 ),
             },
         ],
-    };
+    }
 }

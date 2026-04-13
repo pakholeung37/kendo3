@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import sanitizeHtml from 'sanitize-html';
+import { load } from 'cheerio'
+import sanitizeHtml from 'sanitize-html'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/transform/html/:url/:routeParams',
@@ -60,69 +60,69 @@ Specify options (in the format of query string) in parameter \`routeParams\` par
 | \`item\`    | \`div[class='post-content'] p a\` |`,
     handler: async (ctx) => {
         if (!config.feature.allow_user_supply_unsafe_domain) {
-            throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`);
+            throw new ConfigNotFoundError(`This RSS is disabled unless 'ALLOW_USER_SUPPLY_UNSAFE_DOMAIN' is set to 'true'.`)
         }
-        const url = ctx.req.param('url');
+        const url = ctx.req.param('url')
         const response = await got({
             method: 'get',
             url,
             responseType: 'arrayBuffer',
-        });
+        })
 
-        const routeParams = new URLSearchParams(ctx.req.param('routeParams'));
-        const encoding = routeParams.get('encoding') || 'utf-8';
-        const decoder = new TextDecoder(encoding);
+        const routeParams = new URLSearchParams(ctx.req.param('routeParams'))
+        const encoding = routeParams.get('encoding') || 'utf-8'
+        const decoder = new TextDecoder(encoding)
 
-        const $ = load(decoder.decode(response.data));
-        const rssTitle = routeParams.get('title') || $('title').text();
-        const item = routeParams.get('item') || 'html';
+        const $ = load(decoder.decode(response.data))
+        const rssTitle = routeParams.get('title') || $('title').text()
+        const item = routeParams.get('item') || 'html'
         let items: DataItem[] = $(item)
             .toArray()
             .slice(0, 20)
             .map((item) => {
                 try {
-                    item = $(item);
+                    item = $(item)
 
-                    const titleEle = routeParams.get('itemTitle') ? item.find(routeParams.get('itemTitle')) : item;
-                    const title = routeParams.get('itemTitleAttr') ? titleEle.attr(routeParams.get('itemTitleAttr')) : titleEle.text();
+                    const titleEle = routeParams.get('itemTitle') ? item.find(routeParams.get('itemTitle')) : item
+                    const title = routeParams.get('itemTitleAttr') ? titleEle.attr(routeParams.get('itemTitleAttr')) : titleEle.text()
 
-                    let link;
-                    const linkEle = routeParams.get('itemLink') ? item.find(routeParams.get('itemLink')) : item;
+                    let link
+                    const linkEle = routeParams.get('itemLink') ? item.find(routeParams.get('itemLink')) : item
                     if (routeParams.get('itemLinkAttr')) {
-                        link = linkEle.attr(routeParams.get('itemLinkAttr'));
+                        link = linkEle.attr(routeParams.get('itemLinkAttr'))
                     } else {
-                        link = linkEle.is('a') ? linkEle.attr('href') : linkEle.find('a').attr('href');
+                        link = linkEle.is('a') ? linkEle.attr('href') : linkEle.find('a').attr('href')
                     }
                     // 补全绝对链接或相对链接
-                    link = link.trim();
+                    link = link.trim()
                     if (link && !link.startsWith('http')) {
-                        link = new URL(link, url).href;
+                        link = new URL(link, url).href
                     }
 
-                    const descEle = routeParams.get('itemDesc') ? item.find(routeParams.get('itemDesc')) : item;
-                    const desc = routeParams.get('itemDescAttr') ? descEle.attr(routeParams.get('itemDescAttr')) : descEle.html();
+                    const descEle = routeParams.get('itemDesc') ? item.find(routeParams.get('itemDesc')) : item
+                    const desc = routeParams.get('itemDescAttr') ? descEle.attr(routeParams.get('itemDescAttr')) : descEle.html()
 
-                    const pubDateEle = routeParams.get('itemPubDate') ? item.find(routeParams.get('itemPubDate')) : item;
-                    const pubDate = routeParams.get('itemPubDateAttr') ? pubDateEle.attr(routeParams.get('itemPubDateAttr')) : pubDateEle.html();
+                    const pubDateEle = routeParams.get('itemPubDate') ? item.find(routeParams.get('itemPubDate')) : item
+                    const pubDate = routeParams.get('itemPubDateAttr') ? pubDateEle.attr(routeParams.get('itemPubDateAttr')) : pubDateEle.html()
 
                     return {
                         title,
                         link,
                         description: desc,
                         pubDate,
-                    };
+                    }
                 } catch {
-                    return null;
+                    return null
                 }
             })
-            .filter((i) => !!i);
+            .filter((i) => !!i)
 
-        const itemContentSelector = routeParams.get('itemContent');
+        const itemContentSelector = routeParams.get('itemContent')
         if (itemContentSelector) {
             items = await Promise.all(
                 items.map((item) => {
                     if (!item.link) {
-                        return item;
+                        return item
                     }
 
                     return cache.tryGet(`transform:${item.link}:${itemContentSelector}`, async () => {
@@ -130,23 +130,23 @@ Specify options (in the format of query string) in parameter \`routeParams\` par
                             method: 'get',
                             url: item.link,
                             responseType: 'arrayBuffer',
-                        });
+                        })
                         if (!response || typeof response === 'string') {
-                            return item;
+                            return item
                         }
 
-                        const $ = load(decoder.decode(response.data));
-                        const content = $(itemContentSelector).html();
+                        const $ = load(decoder.decode(response.data))
+                        const content = $(itemContentSelector).html()
                         if (!content) {
-                            return item;
+                            return item
                         }
 
-                        item.description = sanitizeHtml(content, { allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img'] });
+                        item.description = sanitizeHtml(content, { allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img'] })
 
-                        return item;
-                    });
-                })
-            );
+                        return item
+                    })
+                }),
+            )
         }
 
         return {
@@ -154,6 +154,6 @@ Specify options (in the format of query string) in parameter \`routeParams\` par
             link: url,
             description: `Proxy ${url}`,
             item: items,
-        };
+        }
     },
-};
+}

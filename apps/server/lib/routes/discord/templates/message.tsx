@@ -1,12 +1,12 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DiscordMessageData = {
-    message: any;
-    guildInfo: any;
-};
+    message: any
+    guildInfo: any
+}
 
-const renderWithLineBreaks = (text?: string) => (text ? raw(text.replaceAll('\n', '<br>')) : null);
+const renderWithLineBreaks = (text?: string) => (text ? raw(text.replaceAll('\n', '<br>')) : null)
 
 const DiscordMessage = ({ message, guildInfo }: DiscordMessageData) => (
     <>
@@ -28,14 +28,14 @@ const DiscordMessage = ({ message, guildInfo }: DiscordMessageData) => (
             </>
         ))}
         {message.sticker_items?.map((sticker) => {
-            const src = sticker.format_type < 3 ? `https://cdn.discordapp.com/stickers/${sticker.id}.png` : sticker.format_type === 4 ? `https://media.discordapp.net/stickers/${sticker.id}.gif` : null;
+            const src = sticker.format_type < 3 ? `https://cdn.discordapp.com/stickers/${sticker.id}.png` : sticker.format_type === 4 ? `https://media.discordapp.net/stickers/${sticker.id}.gif` : null
 
             return src ? (
                 <>
                     <img src={src} alt={sticker.name} />
                     <br />
                 </>
-            ) : null;
+            ) : null
         })}
         {message.embeds?.map((embed) => (
             <>
@@ -102,6 +102,6 @@ const DiscordMessage = ({ message, guildInfo }: DiscordMessageData) => (
             </>
         ))}
     </>
-);
+)
 
-export const renderDescription = (data: DiscordMessageData) => renderToString(<DiscordMessage {...data} />);
+export const renderDescription = (data: DiscordMessageData) => renderToString(<DiscordMessage {...data} />)

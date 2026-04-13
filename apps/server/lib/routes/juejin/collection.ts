@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getCollection, parseList, ProcessFeed } from './utils';
+import { getCollection, parseList, ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/collection/:collectionId',
@@ -23,16 +23,16 @@ export const route: Route = {
     name: '单个收藏夹',
     maintainers: ['yang131323'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const collectionId = ctx.req.param('collectionId');
+    const collectionId = ctx.req.param('collectionId')
 
-    const collectPage = await getCollection(collectionId);
+    const collectPage = await getCollection(collectionId)
 
-    const items = parseList(collectPage.article_list);
+    const items = parseList(collectPage.article_list)
 
-    const result = await ProcessFeed(items);
+    const result = await ProcessFeed(items)
 
     return {
         title: `${collectPage.detail.tag_name} - ${collectPage.create_user.user_name}的收藏集 - 掘金`,
@@ -40,5 +40,5 @@ async function handler(ctx) {
         description: '掘金，用户单个收藏夹',
         item: result,
         allowEmpty: true,
-    };
+    }
 }

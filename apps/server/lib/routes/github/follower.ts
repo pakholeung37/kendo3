@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/user/followers/:user',
@@ -24,16 +24,16 @@ export const route: Route = {
     name: 'User Followers',
     maintainers: ['HenryQW'],
     handler,
-};
+}
 
 async function handler(ctx) {
     if (!config.github || !config.github.access_token) {
-        throw new ConfigNotFoundError('GitHub follower RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>');
+        throw new ConfigNotFoundError('GitHub follower RSS is disabled due to the lack of <a href="https://docs.rsshub.app/deploy/config#route-specific-configurations">relevant config</a>')
     }
-    const user = ctx.req.param('user');
+    const user = ctx.req.param('user')
 
-    const host = `https://github.com/${user}`;
-    const url = 'https://api.github.com/graphql';
+    const host = `https://github.com/${user}`
+    const url = 'https://api.github.com/graphql'
 
     const response = await got({
         method: 'post',
@@ -57,9 +57,9 @@ async function handler(ctx) {
               }
             `,
         },
-    });
+    })
 
-    const data = response.data.data.user.followers.edges;
+    const data = response.data.data.user.followers.edges
 
     return {
         allowEmpty: true,
@@ -71,5 +71,5 @@ async function handler(ctx) {
             description: `<a href="https://github.com/${follower.node.login}">${follower.node.login}</a> <br> <img sytle="width:50px;" src='${follower.node.avatarUrl}'>`,
             link: `https://github.com/${follower.node.login}`,
         })),
-    };
+    }
 }

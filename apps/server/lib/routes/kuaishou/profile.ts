@@ -1,6 +1,6 @@
-import { config } from '@/config';
-import type { Data, Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Data, Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
 export const route: Route = {
     name: 'Profile',
@@ -21,55 +21,55 @@ export const route: Route = {
 The profile page of the user, which contains the user's information, videos, and other information.
 :::`,
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { principalId } = ctx.req.param();
-    const browser = await puppeteer();
-    const page = await browser.newPage();
+    const { principalId } = ctx.req.param()
+    const browser = await puppeteer()
+    const page = await browser.newPage()
 
-    let retryCount = 0;
-    let resolve;
-    let userInfo;
+    let retryCount = 0
+    let resolve
+    let userInfo
     const promise = new Promise((res) => {
-        resolve = res;
-    });
-    await page.setRequestInterception(true);
+        resolve = res
+    })
+    await page.setRequestInterception(true)
     page.on('request', (req) => {
-        const resourceType = req.resourceType();
+        const resourceType = req.resourceType()
         if (resourceType === 'image' || resourceType === 'media' || resourceType === 'font' || resourceType === 'stylesheet' || resourceType === 'ping') {
-            req.abort();
+            req.abort()
         } else {
-            req.continue();
+            req.continue()
         }
-    });
+    })
     page.on('response', async (res) => {
         if (res.ok() && res.url().includes('/live_api/profile/public')) {
-            const resData = await res.json();
+            const resData = await res.json()
             if (resData.data.list.length > 0) {
-                resolve(resData.data);
+                resolve(resData.data)
             } else {
                 if (retryCount > config.requestRetry) {
-                    resolve({});
+                    resolve({})
                 }
                 setTimeout(() => {
-                    page.reload().then();
-                    retryCount++;
-                }, 3000);
+                    page.reload().then()
+                    retryCount++
+                }, 3000)
             }
         } else if (res.ok() && res.url().includes('/live_api/baseuser/userinfo/byid')) {
             // principalId
-            const resData = await res.json();
-            userInfo = resData.data.userInfo;
+            const resData = await res.json()
+            userInfo = resData.data.userInfo
         }
-    });
+    })
     await page.goto('https://www.kuaishou.com', {
         waitUntil: 'domcontentloaded',
-    });
-    await page.goto(`https://live.kuaishou.com/profile/${principalId}`);
-    const resData = (await promise.catch((error) => error)) as any[];
+    })
+    await page.goto(`https://live.kuaishou.com/profile/${principalId}`)
+    const resData = (await promise.catch((error) => error)) as any[]
 
-    await browser.close();
+    await browser.close()
     const data: Data = {
         title: userInfo?.name ?? `${principalId}的作品 - 快手`,
         // description: JSON.stringify(resData),
@@ -88,6 +88,6 @@ async function handler(ctx) {
                     content: { url: item.playUrl },
                 },
             })) || [],
-    };
-    return data;
+    }
+    return data
 }

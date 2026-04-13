@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/wechat2rss/:id',
@@ -18,22 +18,22 @@ export const route: Route = {
     name: '公众号（Wechat2RSS 来源）',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const baseUrl = 'https://wechat2rss.xlab.app';
-    const feedUrl = `${baseUrl}/feed/${id}.xml`;
+    const baseUrl = 'https://wechat2rss.xlab.app'
+    const feedUrl = `${baseUrl}/feed/${id}.xml`
 
-    const { title, link, description, image, items: item } = await parser.parseURL(feedUrl);
+    const { title, link, description, image, items: item } = await parser.parseURL(feedUrl)
 
     const items = item.map((i) => ({
         title: i.title,
         pubDate: parseDate(i.isoDate),
         link: i.link,
         description: i['content:encoded'] || i.content,
-    }));
+    }))
 
     return {
         title,
@@ -41,5 +41,5 @@ async function handler(ctx) {
         description,
         image: image.url,
         item: items,
-    };
+    }
 }

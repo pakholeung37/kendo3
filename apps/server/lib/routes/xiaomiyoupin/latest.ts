@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { parseFloorItem, parseModule } from './utils';
+import { parseFloorItem, parseModule } from './utils'
 
 export const route: Route = {
     path: '/latest',
@@ -25,17 +25,17 @@ export const route: Route = {
     maintainers: ['xyqfer', 'DIYgod', 'bigfei'],
     handler,
     url: 'xiaomiyoupin.com/',
-};
+}
 
 async function handler() {
-    const response = await got('https://m.xiaomiyoupin.com/homepage/main/v1005');
-    const floors = parseModule(response.data.data.homepage.floors, 'product_hot');
-    const items = parseFloorItem(floors);
+    const response = await got('https://m.xiaomiyoupin.com/homepage/main/v1005')
+    const floors = parseModule(response.data.data.homepage.floors, 'product_hot')
+    const items = parseFloorItem(floors)
 
     return {
         title: '小米有品每日上新',
         link: 'https://m.xiaomiyoupin.com/w/newproduct?pageid=1605',
         description: '小米有品每日上新',
         item: items,
-    };
+    }
 }

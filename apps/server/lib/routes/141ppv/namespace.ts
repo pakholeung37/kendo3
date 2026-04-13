@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '141PPV',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 官方提供的订阅源不支持 BT 下载订阅，地址为 [https://141ppv.com/feeds/](https://141ppv.com/feeds/)
 :::`,
     lang: 'en',
-};
+}

@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type NoteData = {
-    content?: string;
-    picture?: string;
-};
+    content?: string
+    picture?: string
+}
 
 export const renderNote = ({ content, picture }: NoteData) =>
     renderToString(
@@ -15,5 +15,5 @@ export const renderNote = ({ content, picture }: NoteData) =>
                     <img src={picture} />
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

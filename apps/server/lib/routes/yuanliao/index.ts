@@ -1,23 +1,23 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { tag } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { tag } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://yuanliao.info';
-    const apiUrl: string = new URL('api/discussions', baseUrl).href;
-    const targetUrl: string = new URL(tag ? `t/${tag}` : '', baseUrl).href;
+    const baseUrl = 'https://yuanliao.info'
+    const apiUrl: string = new URL('api/discussions', baseUrl).href
+    const targetUrl: string = new URL(tag ? `t/${tag}` : '', baseUrl).href
 
-    const targetResponse = await ofetch(targetUrl);
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const targetResponse = await ofetch(targetUrl)
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -26,28 +26,28 @@ export const handler = async (ctx: Context): Promise<Data> => {
             sort: '',
             'page[offset]': '',
         },
-    });
+    })
 
-    const includedMap = new Map<string, any>();
+    const includedMap = new Map<string, any>()
     for (const item of response.included) {
-        includedMap.set(`${item.type}-${item.id}`, item);
+        includedMap.set(`${item.type}-${item.id}`, item)
     }
 
     const items: DataItem[] = response.data.slice(0, limit).map((item): DataItem => {
-        const attributes = item.attributes;
-        const relationships = item.relationships;
+        const attributes = item.attributes
+        const relationships = item.relationships
 
-        const title: string = attributes.title;
+        const title: string = attributes.title
 
-        const firstPostData = relationships?.firstPost?.data;
+        const firstPostData = relationships?.firstPost?.data
 
-        const description: string | undefined = firstPostData?.type && firstPostData?.id ? includedMap.get(`${firstPostData.type}-${firstPostData.id}`)?.attributes?.contentHtml : undefined;
-        const pubDate: number | string = attributes.createdAt;
-        const linkUrl: string | undefined = item.id ? `d/${item.id}` : undefined;
-        const categories: string[] = [...new Set(relationships?.tags?.data?.map((tag) => `${tag.type}-${tag.id}`)?.map((key) => includedMap.get(key)?.attributes?.name))].filter(Boolean);
+        const description: string | undefined = firstPostData?.type && firstPostData?.id ? includedMap.get(`${firstPostData.type}-${firstPostData.id}`)?.attributes?.contentHtml : undefined
+        const pubDate: number | string = attributes.createdAt
+        const linkUrl: string | undefined = item.id ? `d/${item.id}` : undefined
+        const categories: string[] = [...new Set(relationships?.tags?.data?.map((tag) => `${tag.type}-${tag.id}`)?.map((key) => includedMap.get(key)?.attributes?.name))].filter(Boolean)
 
-        const userData = relationships?.user?.data;
-        const userAttributes = userData && userData.type && userData.id ? includedMap.get(`${userData.type}-${userData.id}`)?.attributes : undefined;
+        const userData = relationships?.user?.data
+        const userAttributes = userData && userData.type && userData.id ? includedMap.get(`${userData.type}-${userData.id}`)?.attributes : undefined
 
         const authors: DataItem['author'] = userAttributes
             ? [
@@ -57,9 +57,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: userAttributes.avatarUrl,
                   },
               ]
-            : undefined;
-        const guid = `yuanliao-${item.id}`;
-        const updated: number | string = attributes.lastPostedAt ?? pubDate;
+            : undefined
+        const guid = `yuanliao-${item.id}`
+        const updated: number | string = attributes.lastPostedAt ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -76,10 +76,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
             },
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     return {
         title: $('title').text(),
@@ -91,8 +91,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('img.Header-logo').attr('alt'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:tag?',
@@ -169,9 +169,9 @@ export const route: Route = {
         {
             source: ['yuanliao.info', 'yuanliao.info/t/:tag'],
             target: (params) => {
-                const tag: string = params.tag;
+                const tag: string = params.tag
 
-                return `/yuanliao${tag ? `/${tag}` : ''}`;
+                return `/yuanliao${tag ? `/${tag}` : ''}`
             },
         },
         {
@@ -216,4 +216,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

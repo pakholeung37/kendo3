@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const renderDescription = (desc: { imglink: string }) => renderToString(<img src={desc.imglink} />);
+const renderDescription = (desc: { imglink: string }) => renderToString(<img src={desc.imglink} />)
 
 export const route: Route = {
     path: '/news/:abbr?/:category?/:option?',
@@ -44,37 +44,37 @@ export const route: Route = {
 | Category Name       | 全てのニュース        | 音楽商品 | アニメ映像商品 | キャスト映像商品 | 劇場    | アニメ放送 / 配信 | キャスト配信 / ラジオ | ライブ / イベント | ブック | グッズ | ゲーム | メディア | ご当地情報 | キャンペーン | その他 |
 | ------------------- | --------------------- | -------- | -------------- | ---------------- | ------- | ----------------- | --------------------- | ----------------- | ------ | ------ | ------ | -------- | ---------- | ------ | ------------ |
 | \`category\`parameter | <u>*No parameter*</u> | music    | anime_movie   | cast_movie      | theater | onair             | radio                 | event             | books  | goods  | game   | media    | local      | campaign  | other   |`,
-};
+}
 
 async function handler(ctx) {
-    const abbr = ctx.req.param('abbr');
-    const category = ctx.req.param('category');
-    const option = ctx.req.param('option');
+    const abbr = ctx.req.param('abbr')
+    const category = ctx.req.param('category')
+    const option = ctx.req.param('option')
 
-    const isDetail = abbr === 'detail' || category === 'detail' || option === 'detail';
-    let series = '';
-    let subcategory = '';
+    const isDetail = abbr === 'detail' || category === 'detail' || option === 'detail'
+    let series = ''
+    let subcategory = ''
 
     if (abbr && abbr !== 'detail') {
-        series = abbr;
+        series = abbr
         if (category && category !== 'detail') {
-            subcategory = category;
+            subcategory = category
         }
     }
 
-    const limit = 20;
+    const limit = 20
 
-    let url = `https://www.lovelive-anime.jp/common/templates/api/article_list.php?limit=${limit}&data=`;
-    const params: { category: string[]; series?: string[]; subcategory?: string[] } = { category: ['NEWS'] };
+    let url = `https://www.lovelive-anime.jp/common/templates/api/article_list.php?limit=${limit}&data=`
+    const params: { category: string[]; series?: string[]; subcategory?: string[] } = { category: ['NEWS'] }
     if (series) {
-        params.series = [series];
+        params.series = [series]
     }
     if (subcategory) {
-        params.subcategory = [subcategory];
+        params.subcategory = [subcategory]
     }
-    url += encodeURIComponent(JSON.stringify(params));
+    url += encodeURIComponent(JSON.stringify(params))
 
-    const data = await ofetch(url);
+    const data = await ofetch(url)
 
     const articles = data.data.article_list.map((item) => ({
         title: item.title,
@@ -84,31 +84,31 @@ async function handler(ctx) {
         }),
         pubDate: timezone(parseDate(item.dspdate), +9),
         category: item.categories.subcategory.map((category) => category.name),
-    }));
+    }))
 
-    let items = articles;
+    let items = articles
 
     if (isDetail) {
         items = await Promise.all(
             articles.map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const detailResp = await got(item.link);
-                    const $ = load(detailResp.data);
+                    const detailResp = await got(item.link)
+                    const $ = load(detailResp.data)
 
-                    const content = $('.p-article__content');
+                    const content = $('.p-article__content')
                     for (const v of content.find('img')) {
-                        v.attribs.src = 'https://www.lovelive-anime.jp' + v.attribs.src;
+                        v.attribs.src = 'https://www.lovelive-anime.jp' + v.attribs.src
                     }
-                    item.description = content.html();
-                    return item;
-                })
-            )
-        );
+                    item.description = content.html()
+                    return item
+                }),
+            ),
+        )
     }
 
     return {
         title: 'lovelive official website news',
         link: 'https://www.lovelive-anime.jp/news/',
         item: items,
-    };
+    }
 }

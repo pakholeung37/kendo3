@@ -1,8 +1,8 @@
-import { config } from '@/config';
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
+import { config } from '@/config'
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { fetchData, processItems } from './utils';
+import { fetchData, processItems } from './utils'
 
 export const route: Route = {
     path: '/:type',
@@ -47,39 +47,39 @@ export const route: Route = {
 | 急上昇 | 週間 | 月間 | 新着 |
 | ----- | ---- | ---- | ---- |
 | hot | week | month| latest |`,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const type = ctx.req.param('type');
-    const baseUrl = 'https://api.twieromanga.com/api/hotv2';
+    const type = ctx.req.param('type')
+    const baseUrl = 'https://api.twieromanga.com/api/hotv2'
     const typeMap = {
         hot: '急上昇',
         week: '週間',
         month: '月間',
         latest: '新着',
-    };
+    }
     const linkMap = {
         hot: '',
         week: '?term=week',
         month: '?term=month',
         latest: '?term=latest',
-    };
+    }
 
-    const url = `${baseUrl}?type=${type}`;
+    const url = `${baseUrl}?type=${type}`
 
     const items = await cache.tryGet(
         url,
         async () => {
-            const data = await fetchData(url);
-            return processItems(data, 'index');
+            const data = await fetchData(url)
+            return processItems(data, 'index')
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     return {
         title: `Skebetter - ${typeMap[type]}`,
         link: `https://skebetter.com/${linkMap[type]}`,
         item: items as DataItem[],
-    };
+    }
 }

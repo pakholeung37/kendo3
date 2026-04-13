@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: "Xi'an Jiaotong-Liverpool University",
@@ -8,4 +8,4 @@ export const namespace: Namespace = {
     zh: {
         name: '西交利物浦大学',
     },
-};
+}

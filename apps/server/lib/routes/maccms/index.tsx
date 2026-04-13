@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Result, Vod } from '@/routes/maccms/type';
-import type { DataItem, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Result, Vod } from '@/routes/maccms/type'
+import type { DataItem, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const render = (vod: Vod, link: string) => renderToString(<VodDescription vod={vod} link={link} />);
+const render = (vod: Vod, link: string) => renderToString(<VodDescription vod={vod} link={link} />)
 
 const VodDescription = ({ vod, link }: { vod: Vod; link: string }) => (
     <>
@@ -54,7 +54,7 @@ const VodDescription = ({ vod, link }: { vod: Vod; link: string }) => (
         </p>
         <h3>剧情介绍</h3>
     </>
-);
+)
 
 export const route: Route = {
     path: '/:domain/:type?/:size?',
@@ -87,15 +87,15 @@ export const route: Route = {
 | 森林资源网          | [slapibf.com](https://slapibf.com)               | 天空资源采集网   | [api.tiankongapi.com](https://api.tiankongapi.com) | 百度云资源     | [api.apibdzy.com](https://api.apibdzy.com)      |
 | 红牛资源站          | [www.hongniuzy2.com](https://www.hongniuzy2.com) | 乐视资源网       | [leshiapi.com](https://leshiapi.com)               | 暴风资源       | [bfzyapi.com](https://bfzyapi.com)              |`,
     handler: async (ctx) => {
-        const { domain, type = '0', size = '30' } = ctx.req.param();
+        const { domain, type = '0', size = '30' } = ctx.req.param()
         if (!list.has(domain)) {
-            throw new Error('非法域名！');
+            throw new Error('非法域名！')
         }
 
         const res = await ofetch<Result>(`https://${domain}/api.php/provide/vod`, {
             parseResponse: JSON.parse,
             query: { ac: 'detail', t: type, pagesize: Number.parseInt(size) > 100 ? 100 : size },
-        });
+        })
 
         const items: DataItem[] = res.list.map((each) => ({
             title: each.vod_name,
@@ -105,15 +105,15 @@ export const route: Route = {
             pubDate: timezone(parseDate(each.vod_time, 'YYYY-MM-DD HH:mm:ss'), +8),
             category: [each.type_name, ...each.vod_class!.split(',')],
             description: render(each, `https://${domain}/vod/${each.vod_id}/`) + each.vod_content,
-        }));
+        }))
 
         return {
             title: `最新${type !== '0' && items.length ? items[0].category![0] : '资源'} - ${domain}`,
             link: `https://${domain}`,
             allowEmpty: true,
             item: items,
-        };
+        }
     },
-};
+}
 
-const list = new Set(['moduzy.net', 'hw8.live', '360zy.com', 'ikunzyapi.com', 'aosikazy.com', 'www.feisuzyapi.com', 'slapibf.com', 'api.tiankongapi.com', 'api.apibdzy.com', 'www.hongniuzy2.com', 'leshiapi.com', 'bfzyapi.com']);
+const list = new Set(['moduzy.net', 'hw8.live', '360zy.com', 'ikunzyapi.com', 'aosikazy.com', 'www.feisuzyapi.com', 'slapibf.com', 'api.tiankongapi.com', 'api.apibdzy.com', 'www.hongniuzy2.com', 'leshiapi.com', 'bfzyapi.com'])

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { processItems } from './utils';
+import { processItems } from './utils'
 
-const baseURL = 'https://www.hao6v.tv/gvod/dsj.html';
+const baseURL = 'https://www.hao6v.tv/gvod/dsj.html'
 
 export const route: Route = {
     path: '/latestTVSeries',
@@ -26,15 +26,15 @@ export const route: Route = {
     maintainers: ['tc9011'],
     handler,
     url: 'hao6v.com/',
-};
+}
 
 async function handler(ctx) {
-    const item = await processItems(ctx, baseURL, []);
+    const item = await processItems(ctx, baseURL, [])
 
     return {
         title: '6v电影-最新电影',
         link: baseURL,
         description: '6v最新电影RSS',
         item,
-    };
+    }
 }

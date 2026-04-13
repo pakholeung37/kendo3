@@ -1,19 +1,19 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionImage = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 type DescriptionRenderOptions = {
-    category?: string;
-    catalogue?: string;
-    title?: string;
-    size?: string;
-    date?: string;
-    images?: DescriptionImage[];
-};
+    category?: string
+    catalogue?: string
+    title?: string
+    size?: string
+    date?: string
+    images?: DescriptionImage[]
+}
 
 export const renderDescription = ({ category, catalogue, title, size, date, images }: DescriptionRenderOptions): string =>
     renderToString(
@@ -59,7 +59,7 @@ export const renderDescription = ({ category, catalogue, title, size, date, imag
                     <figure>
                         <img src={image.src} alt={image.alt ?? undefined} />
                     </figure>
-                ) : null
+                ) : null,
             )}
-        </>
-    );
+        </>,
+    )

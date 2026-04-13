@@ -1,20 +1,20 @@
-import { load } from 'cheerio';
-import CryptoJS from 'crypto-js';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import CryptoJS from 'crypto-js'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const getRequestToken = () => {
-    const e = 'sgn51n6r6q97o6g3';
-    const t = 'jzhotdata';
-    return CryptoJS.DES.encrypt(`${Date.now().toString()}-${e}`, t).toString();
-};
+    const e = 'sgn51n6r6q97o6g3'
+    const t = 'jzhotdata'
+    return CryptoJS.DES.encrypt(`${Date.now().toString()}-${e}`, t).toString()
+}
 
-const baseUrl = 'https://vp.fact.qq.com';
+const baseUrl = 'https://vp.fact.qq.com'
 
 export const route: Route = {
     path: '/fact',
@@ -38,7 +38,7 @@ export const route: Route = {
     maintainers: ['hoilc'],
     handler,
     url: 'vp.fact.qq.com/home',
-};
+}
 
 async function handler() {
     const { data: response } = await got(`${baseUrl}/api/article/list`, {
@@ -50,7 +50,7 @@ async function handler() {
             locale: 'zh-CN',
             token: getRequestToken(),
         },
-    });
+    })
 
     const list = response.data.list.map((item) => ({
         title: `【${item.explain}】${item.title}`,
@@ -59,34 +59,34 @@ async function handler() {
         author: `${item.Author.name} - ${item.Author.desc}`,
         category: item.tag,
         link: `${baseUrl}/article?id=${item.id}`,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await got(item.link);
-                const $ = load(response.data);
+                const response = await got(item.link)
+                const $ = load(response.data)
 
-                const nextData = JSON.parse($('#__NEXT_DATA__').text());
-                const { initialState } = nextData.props.pageProps;
+                const nextData = JSON.parse($('#__NEXT_DATA__').text())
+                const { initialState } = nextData.props.pageProps
 
-                item.description = renderToString(<QqFactDescription data={initialState} />);
-                item.pubDate = parseDate(initialState.createdAt);
+                item.description = renderToString(<QqFactDescription data={initialState} />)
+                item.pubDate = parseDate(initialState.createdAt)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '较真查证平台 - 腾讯新闻',
         link: `${baseUrl}/home`,
         item: items,
-    };
+    }
 }
 
 const QqFactDescription = ({ data }: { data: any }) => {
-    const cover = data.cover?.startsWith('//') ? `https:${data.cover}` : data.cover?.startsWith('http') ? data.cover : data.cover ? `https://${data.cover}` : undefined;
+    const cover = data.cover?.startsWith('//') ? `https:${data.cover}` : data.cover?.startsWith('http') ? data.cover : data.cover ? `https://${data.cover}` : undefined
 
     return (
         <>
@@ -104,5 +104,5 @@ const QqFactDescription = ({ data }: { data: any }) => {
             ) : null}
             {data.content ? <div class="dangerouslySet">{raw(data.content)}</div> : null}
         </>
-    );
-};
+    )
+}

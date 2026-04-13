@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:url',
@@ -27,14 +27,14 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const endpoint = 'https://api.lu.ma/url?url=' + ctx.req.param('url');
+    const endpoint = 'https://api.lu.ma/url?url=' + ctx.req.param('url')
 
-    const response = await ofetch(endpoint);
+    const response = await ofetch(endpoint)
 
-    let items;
+    let items
 
     switch (response.kind) {
         case 'calendar':
@@ -46,8 +46,8 @@ async function handler(ctx) {
                 pubDate: parseDate(item.event.start_at),
                 itunes_item_image: item.event.cover_url,
                 itunes_duration: (new Date(item.event.end_at).getTime() - new Date(item.event.start_at).getTime()) / 1000,
-            }));
-            break;
+            }))
+            break
         case 'event':
             items = [
                 {
@@ -59,8 +59,8 @@ async function handler(ctx) {
                     itunes_item_image: response.data.event.cover_url,
                     itunes_duration: (new Date(response.data.event.end_at).getTime() - new Date(response.data.event.start_at).getTime()) / 1000,
                 },
-            ];
-            break;
+            ]
+            break
         case 'discover-place':
             items = response.data.events.map((item) => ({
                 title: item.event.name,
@@ -70,16 +70,16 @@ async function handler(ctx) {
                 pubDate: parseDate(item.event.start_at),
                 itunes_item_image: item.event.cover_url,
                 itunes_duration: (new Date(item.event.end_at).getTime() - new Date(item.event.start_at).getTime()) / 1000,
-            }));
-            break;
+            }))
+            break
         default:
             items = [
                 {
                     title: 'Not Found',
                     link: 'Not Found',
                 },
-            ];
-            break;
+            ]
+            break
     }
 
     return {
@@ -88,5 +88,5 @@ async function handler(ctx) {
         link: 'https://lu.ma/' + ctx.req.param('url'),
         image: response.data.calendar ? response.data.calendar.cover_url : response.data.place.cover_url,
         item: items,
-    };
+    }
 }

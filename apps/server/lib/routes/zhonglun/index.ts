@@ -1,32 +1,32 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { language = 'zh' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { language = 'zh' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = `https://${language === 'zh' ? 'www' : language.replaceAll(/[^\dA-Za-z-]/g, '')}.zhonglun.com`;
-    const currentUrl = new URL('research/articles', rootUrl).href;
+    const rootUrl = `https://${language === 'zh' ? 'www' : language.replaceAll(/[^\dA-Za-z-]/g, '')}.zhonglun.com`
+    const currentUrl = new URL('research/articles', rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     let items = $('div#dataList > dl > dd, div#dataList > ul > li')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             const description = renderDescription({
                 intro: item.find('p').text(),
-            });
+            })
 
             return {
                 title: item.find('h3 > a').text(),
@@ -34,42 +34,42 @@ export const handler = async (ctx) => {
                 pubDate: parseDate(item.find('span').text()),
                 link: item.find('h3 > a').prop('href'),
                 language,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('div.news_dtitle h2').text();
+                const title = $$('div.news_dtitle h2').text()
                 const description =
                     item.description +
                     renderDescription({
                         description: $$('div.edit_con_original').html(),
-                    });
-                const image = $$('img.raw-image').first().prop('src');
+                    })
+                const image = $$('img.raw-image').first().prop('src')
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('span.posttime').text());
-                item.author = $$('span.author').text().split(/：/).pop();
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('span.posttime').text())
+                item.author = $$('span.author').text().split(/：/).pop()
                 item.content = {
                     html: description,
                     text: $$('div.edit_con_original').text(),
-                };
-                item.image = image;
-                item.banner = image;
-                item.language = language;
+                }
+                item.image = image
+                item.banner = image
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('header.header h1 a img').prop('src'), rootUrl).href;
+    const image = new URL($('header.header h1 a img').prop('src'), rootUrl).href
 
     return {
         title: `${$('title').text()} - ${$('div.siteban_text').text()}`,
@@ -80,8 +80,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[name="author"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/research/article/:language?',
@@ -129,4 +129,4 @@ export const route: Route = {
             target: '/research/article/kr',
         },
     ],
-};
+}

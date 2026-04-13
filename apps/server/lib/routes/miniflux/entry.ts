@@ -1,7 +1,7 @@
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Data, DataItem, Route } from '@/types';
-import got from '@/utils/got';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Data, DataItem, Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/entry/:feeds/:parameters?',
@@ -46,45 +46,45 @@ export const route: Route = {
     name: 'Feed entry',
     maintainers: ['emdoe', 'DIYgod'],
     handler,
-};
+}
 
 async function handler(ctx) {
     // Unchanged entries status after fetching.
     // mark = unchanged | read | removed | unread
-    let mark = 'unchanged';
+    let mark = 'unchanged'
     // Return shared link as default behavior
     // link = shared | original
     // let link = 'shared';
     // Add feed's name to each article, default is off.
-    let addFeedName = 0;
+    let addFeedName = 0
     // Here we use `limit` to temporarily store the limit number.
-    let limit = 0;
+    let limit = 0
 
-    const instance = config.miniflux.instance;
-    const token = config.miniflux.token;
+    const instance = config.miniflux.instance
+    const token = config.miniflux.token
 
     if (!token) {
-        throw new ConfigNotFoundError('This RSS feed is disabled due to its incorrect configuration: the token is missing.');
+        throw new ConfigNotFoundError('This RSS feed is disabled due to its incorrect configuration: the token is missing.')
     }
 
     // In this function, var`mark`, `link`, and `limit`, `addFeedName`
     // could be changed.
     function filterHandler(item) {
         if (item.search('=') === -1) {
-            return '';
+            return ''
         }
 
-        const filter = item.slice(0, item.indexOf('='));
-        const option = item.slice(item.lastIndexOf('=') + 1);
+        const filter = item.slice(0, item.indexOf('='))
+        const option = item.slice(item.lastIndexOf('=') + 1)
 
         switch (filter) {
             case 'mark':
                 if ((option === 'read' || option === 'removed' || option === 'unread') && !setMark.length) {
-                    mark = option;
-                    setMark.push(1);
+                    mark = option
+                    setMark.push(1)
                 }
-                item = '';
-                break;
+                item = ''
+                break
             // case 'link':
             //     (option == 'original') ?
             //         link = option :
@@ -93,114 +93,114 @@ async function handler(ctx) {
             //     break;
             case 'feed_name':
                 if (Number.parseInt(option) === 1 && !setFeedName.length) {
-                    addFeedName = 1;
-                    setFeedName.push(1);
+                    addFeedName = 1
+                    setFeedName.push(1)
                 }
-                item = '';
-                break;
+                item = ''
+                break
             case 'direction':
                 if (option !== 'asc') {
-                    item = 'direction=desc';
+                    item = 'direction=desc'
                 }
-                break;
+                break
             // If user mistakenly set `category=Int`
             case 'category':
-                Number.isNaN(Number.parseInt(option)) ? (item = '') : (item = `category_id=${option}`);
-                break;
+                Number.isNaN(Number.parseInt(option)) ? (item = '') : (item = `category_id=${option}`)
+                break
             case 'order':
                 if (option !== 'id' && option !== 'category_title' && option !== 'published_at' && option !== 'status' && option !== 'category_id') {
-                    item = '';
+                    item = ''
                 }
-                break;
+                break
             // Program should behave differently for `limit` parameter in
             // each mode. So currently we only save the (last & existed)
             // parameter, since user may mistakenly input this parameter
             // several times.
             case 'limit':
                 if (!Number.isNaN(option) && !setLimit.length) {
-                    limit = option;
-                    setLimit.push(1);
+                    limit = option
+                    setLimit.push(1)
                 }
-                item = '';
-                break;
+                item = ''
+                break
             default:
-                break;
+                break
         }
-        return item;
+        return item
     }
 
-    const entriesID = [];
-    const feedsName = [];
-    const articles: DataItem[] = [];
+    const entriesID = []
+    const feedsName = []
+    const articles: DataItem[] = []
 
     // MiniFlux will only preserve the *first* valid filter option
     // for each parameter, in order to matching the default behavior
     // here we use arrays to track the setting for `limit`,
     // `mark` and `feed_name`.
-    const setLimit = [];
-    const setMark = [];
-    const setFeedName = [];
+    const setLimit = []
+    const setMark = []
+    const setFeedName = []
 
-    const feeds = ctx.req.param('feeds');
+    const feeds = ctx.req.param('feeds')
 
-    let parameters = ctx.req.param('parameters');
+    let parameters = ctx.req.param('parameters')
     // Set default direction
     if (parameters.search('direction=') === -1) {
-        parameters += '&direction=desc';
+        parameters += '&direction=desc'
     }
 
     parameters = parameters
         .split('&')
         .map((item) => filterHandler(item))
         .filter(Boolean)
-        .join('&');
+        .join('&')
 
-    let queryLimit = ctx.req.query('limit');
-    let result: Data;
+    let queryLimit = ctx.req.query('limit')
+    let result: Data
     if (feeds.search(/feeds?=/g) !== -1 || !Number.isNaN(Number.parseInt(feeds.split('&').join('')))) {
-        const feedsID = feeds.replaceAll(/feeds?=/g, '');
-        const feedsList = [feedsID.split('&')].flat();
+        const feedsID = feeds.replaceAll(/feeds?=/g, '')
+        const feedsList = [feedsID.split('&')].flat()
 
         if (limit && queryLimit) {
             if (limit >= queryLimit) {
-                const eachLimit = Number.parseInt(queryLimit / feedsList.length);
-                limit = eachLimit || 1;
+                const eachLimit = Number.parseInt(queryLimit / feedsList.length)
+                limit = eachLimit || 1
             }
-            parameters += `&limit=${limit}`;
+            parameters += `&limit=${limit}`
         } else if (limit) {
-            parameters += `&limit=${limit}`;
+            parameters += `&limit=${limit}`
         } else if (queryLimit) {
-            const eachLimit = Number.parseInt(queryLimit / feedsList.length);
-            limit = eachLimit || 1;
-            parameters += `&limit=${limit}`;
+            const eachLimit = Number.parseInt(queryLimit / feedsList.length)
+            limit = eachLimit || 1
+            parameters += `&limit=${limit}`
         }
 
         await Promise.all(
             feedsList.map(async (feed) => {
-                const url = `${instance}/v1/feeds/${feed}/entries?${parameters}`;
+                const url = `${instance}/v1/feeds/${feed}/entries?${parameters}`
                 const response = await got({
                     method: 'get',
                     url,
                     headers: {
                         'X-Auth-Token': token,
                     },
-                });
+                })
 
-                const entries = response.data.entries;
+                const entries = response.data.entries
                 // Whether or not get the title of this feed
-                let getFeedTitle = 0;
+                let getFeedTitle = 0
                 // entries.map(item => {
                 for (const entry of entries) {
-                    entriesID.push(entry.id);
+                    entriesID.push(entry.id)
                     if (!getFeedTitle) {
-                        feedsName.push(entry.feed.title);
-                        getFeedTitle = 1;
+                        feedsName.push(entry.feed.title)
+                        getFeedTitle = 1
                     }
                     // Whether or not user would like to add the feed's name
                     // to the title of article.
-                    let entryTitle = entry.title;
+                    let entryTitle = entry.title
                     if (addFeedName) {
-                        entryTitle += ` | ${entry.feed.title}`;
+                        entryTitle += ` | ${entry.feed.title}`
                     }
                     // let entryURL = `${instance}/share/${entry.share_code}`;
                     // if (link == 'original') {
@@ -212,22 +212,22 @@ async function handler(ctx) {
                         pubDate: entry.published_at,
                         description: entry.content,
                         link: entry.url,
-                    });
+                    })
                 }
-            })
-        );
+            }),
+        )
 
-        const feedsNumber = feedsName.length;
-        let agTitle, agInfo;
+        const feedsNumber = feedsName.length
+        let agTitle, agInfo
         if (feedsNumber > 2) {
-            agTitle = `MiniFlux | Aggregator For ${feedsNumber} Feeds`;
-            agInfo = `An aggregator powered by MiniFlux and RSSHub. This aggregator truthfully preserves the contents in ${feedsNumber} feeds, including: <li>${feedsName.join('<li></li>')}</li>`;
+            agTitle = `MiniFlux | Aggregator For ${feedsNumber} Feeds`
+            agInfo = `An aggregator powered by MiniFlux and RSSHub. This aggregator truthfully preserves the contents in ${feedsNumber} feeds, including: <li>${feedsName.join('<li></li>')}</li>`
         } else if (feedsNumber) {
-            agTitle = `MiniFlux | ${feedsName.join(', ')}`;
-            agInfo = `A RSS feed powered by MiniFlux and RSSHub effortlessly republishes the contents in "${feedsName.join('" & "')}".`;
+            agTitle = `MiniFlux | ${feedsName.join(', ')}`
+            agInfo = `A RSS feed powered by MiniFlux and RSSHub effortlessly republishes the contents in "${feedsName.join('" & "')}".`
         } else {
-            agTitle = `MiniFlux | Feeds Aggregator`;
-            agInfo = 'An aggregator powered by MiniFlux and RSSHub with empty content. If this is not your intention, please double-check your setting for parameters.';
+            agTitle = `MiniFlux | Feeds Aggregator`
+            agInfo = 'An aggregator powered by MiniFlux and RSSHub with empty content. If this is not your intention, please double-check your setting for parameters.'
         }
 
         result = {
@@ -236,31 +236,31 @@ async function handler(ctx) {
             description: agInfo,
             item: articles,
             allowEmpty: true,
-        };
+        }
     } else {
         if (limit && queryLimit) {
             if (limit < queryLimit) {
-                queryLimit = limit;
+                queryLimit = limit
             }
             // Here we could add a '&' since parameter(s) list must not empty.
-            parameters += `&limit=${queryLimit}`;
+            parameters += `&limit=${queryLimit}`
         } else if (queryLimit) {
-            parameters += `&limit=${queryLimit}`;
+            parameters += `&limit=${queryLimit}`
         } else if (limit) {
-            parameters += `&limit=${limit}`;
+            parameters += `&limit=${limit}`
         }
 
         const response = await got.get(`${instance}/v1/entries?${parameters}`, {
             headers: { 'X-Auth-Token': token },
-        });
+        })
 
-        const entries = response.data.entries;
-        const articles: DataItem[] = [];
+        const entries = response.data.entries
+        const articles: DataItem[] = []
         for (const entry of entries) {
-            entriesID.push(entry.id);
-            let entryTitle = entry.title;
+            entriesID.push(entry.id)
+            let entryTitle = entry.title
             if (addFeedName) {
-                entryTitle += ` | ${entry.feed.title}`;
+                entryTitle += ` | ${entry.feed.title}`
             }
             // let entryURL = `${instance}/share/${entry.share_code}`;
             // if (link == 'original') {
@@ -272,7 +272,7 @@ async function handler(ctx) {
                 pubDate: entry.published_at,
                 description: entry.content,
                 link: entry.url,
-            });
+            })
         }
 
         result = {
@@ -281,7 +281,7 @@ async function handler(ctx) {
             description: `All feeds on ${instance} powered by MiniFlux`,
             item: articles,
             allowEmpty: true,
-        };
+        }
     }
 
     if (mark !== 'unchanged') {
@@ -296,8 +296,8 @@ async function handler(ctx) {
                 entry_ids: entriesID,
                 status: mark,
             },
-        });
+        })
     }
 
-    return result;
+    return result
 }

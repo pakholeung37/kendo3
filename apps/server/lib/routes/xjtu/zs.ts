@@ -1,39 +1,39 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'zsxx1/zskx' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { category = 'zsxx1/zskx' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://zs.xjtu.edu.cn';
-    const targetUrl: string = new URL(`${category}.htm`, baseUrl).href;
+    const baseUrl = 'https://zs.xjtu.edu.cn'
+    const targetUrl: string = new URL(`${category}.htm`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('section.TextList ul li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a.flex');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a.flex')
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('b').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = $el.find('i.zc').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('b').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = $el.find('i.zc').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -42,30 +42,30 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 category: categories,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.show01 h5').text();
-                    const description: string | undefined = $$('div.v_news_content').html();
+                    const title: string = $$('div.show01 h5').text()
+                    const description: string | undefined = $$('div.v_news_content').html()
                     const pubDateStr: string | undefined = $$('div.show01 i')
                         .text()
-                        ?.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/)?.[1];
-                    const categoryEls: Element[] = $$('div.mianbao a').toArray().slice(1);
-                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))];
-                    const upDatedStr: string | undefined = pubDateStr;
+                        ?.match(/(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})/)?.[1]
+                    const categoryEls: Element[] = $$('div.mianbao a').toArray().slice(1)
+                    const categories: string[] = [...new Set(categoryEls.map((el) => $$(el).text()).filter(Boolean))]
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -78,18 +78,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -101,8 +101,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('META[Name="keywords"]').attr('Content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/zs/:category{.+}?',
@@ -160,11 +160,11 @@ export const route: Route = {
         {
             source: ['zs.xjtu.edu.cn/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/xjtu/zs${category ? `/${category}` : ''}`;
+                return `/xjtu/zs${category ? `/${category}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

@@ -1,15 +1,15 @@
-import * as cheerio from 'cheerio';
-import type { Context } from 'hono';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import type { Context } from 'hono'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://kpmg.com';
+const baseUrl = 'https://kpmg.com'
 const payload = {
     query: '',
     filters: {
@@ -44,7 +44,7 @@ const payload = {
     },
     page: { size: 20, current: 1 },
     sort: { kpmg_filter_date: 'desc' },
-};
+}
 const endpoints = {
     en: {
         title: 'Insights - KPMG ',
@@ -56,8 +56,8 @@ const endpoints = {
         link: `${baseUrl}/cn/zh/home/insights.html`,
         api: `${baseUrl}/esearch/cn-zh`,
     },
-};
-const render = (data: { image?: string; alt?: string; content?: string; pdf?: string }) => renderToString(<KpmgDescription {...data} />);
+}
+const render = (data: { image?: string; alt?: string; content?: string; pdf?: string }) => renderToString(<KpmgDescription {...data} />)
 
 const KpmgDescription = ({ image, alt, content, pdf }: { image?: string; alt?: string; content?: string; pdf?: string }) => (
     <>
@@ -75,20 +75,20 @@ const KpmgDescription = ({ image, alt, content, pdf }: { image?: string; alt?: s
             </>
         ) : null}
     </>
-);
+)
 
 const handler = async (ctx: Context) => {
-    const { lang = 'en' } = ctx.req.param();
-    const endpoint = endpoints[lang];
+    const { lang = 'en' } = ctx.req.param()
+    const endpoint = endpoints[lang]
     if (!endpoint) {
-        throw new InvalidParameterError('Invalid language');
+        throw new InvalidParameterError('Invalid language')
     }
-    const link = endpoint.link;
+    const link = endpoint.link
 
     const response = await ofetch(endpoint.api, {
         method: 'POST',
         body: payload,
-    });
+    })
 
     const list = response.results.map((item) => ({
         title: item.kpmg_title.raw,
@@ -97,44 +97,44 @@ const handler = async (ctx: Context) => {
         pubDate: parseDate(item.kpmg_article_date_time.raw),
         image: item.kpmg_image.raw,
         imageAlt: item.kpmg_image_alt?.raw,
-    }));
+    }))
 
     const item = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await ofetch(item.link);
-                const $ = cheerio.load(response);
+                const response = await ofetch(item.link)
+                const $ = cheerio.load(response)
 
                 const content = $('.bodytext-data')
                     .toArray()
                     .map((item) => {
-                        const element = $(item);
-                        element.find('.hidden-xs, .sr-only').remove();
-                        return element.parent().html();
+                        const element = $(item)
+                        element.find('.hidden-xs, .sr-only').remove()
+                        return element.parent().html()
                     })
-                    .join('');
+                    .join('')
 
-                const pdfDetails = $('.pdfdetails').parent().parent().parent();
-                pdfDetails.find('.hidden-xs, .sr-only').remove();
+                const pdfDetails = $('.pdfdetails').parent().parent().parent()
+                pdfDetails.find('.hidden-xs, .sr-only').remove()
 
                 item.description = render({
                     image: item.image,
                     alt: item.imageAlt,
                     content,
                     pdf: pdfDetails.prop('outerHTML'),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'KPMG Insights',
         link,
         item,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/insights/:lang?',
@@ -157,4 +157,4 @@ export const route: Route = {
     zh: {
         name: '洞察',
     },
-};
+}

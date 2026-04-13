@@ -1,37 +1,37 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = '9' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id = '9' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://dbaplus.cn';
-    const targetUrl: string = new URL(`news-${id}-1.html`, baseUrl).href;
+    const baseUrl = 'https://dbaplus.cn'
+    const targetUrl: string = new URL(`news-${id}-1.html`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     let items: DataItem[] = $('ul.media-list li.media')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('h3.media-heading a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('h3.media-heading a')
 
-            const title: string = $aEl.text();
-            const image: string | undefined = $el.find('img.media-object').attr('src');
+            const title: string = $aEl.text()
+            const image: string | undefined = $el.find('img.media-object').attr('src')
             const description: string | undefined = renderDescription({
                 images: image
                     ? [
@@ -42,24 +42,24 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       ]
                     : undefined,
                 intro: $el.find('div.mt10').html(),
-            });
+            })
             const pubDateStr: string | undefined = $el
                 .find('span.time')
                 .text()
                 .replaceAll(/(年|月)/g, '-')
-                .replace('日', '');
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const authorEls: Element[] = $el.find('span.user').toArray();
+                .replace('日', '')
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const authorEls: Element[] = $el.find('span.user').toArray()
             const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                const $authorEl: Cheerio<Element> = $(authorEl);
+                const $authorEl: Cheerio<Element> = $(authorEl)
 
                 return {
                     name: $authorEl.text(),
                     url: undefined,
                     avatar: undefined,
-                };
-            });
-            const upDatedStr: string | undefined = pubDateStr;
+                }
+            })
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -75,40 +75,40 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailResponse = await ofetch(item.link);
-                const $$: CheerioAPI = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $$: CheerioAPI = load(detailResponse)
 
-                const title: string = $$('h2.title').text();
+                const title: string = $$('h2.title').text()
                 const description: string | undefined =
                     item.description +
                     renderDescription({
                         description: $$('div.new-detailed').html(),
-                    });
-                const pubDateStr: string | undefined = $$('span.time').first().text();
-                const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(',') ?? [];
-                const authorEls: Element[] = $$('span.user').toArray();
+                    })
+                const pubDateStr: string | undefined = $$('span.time').first().text()
+                const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(',') ?? []
+                const authorEls: Element[] = $$('span.user').toArray()
                 const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                    const $$authorEl: Cheerio<Element> = $$(authorEl);
+                    const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                     return {
                         name: $$authorEl.text(),
                         url: undefined,
                         avatar: undefined,
-                    };
-                });
-                const upDatedStr: string | undefined = pubDateStr;
+                    }
+                })
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -122,17 +122,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const description: string = $('meta[name="description"]').attr('content') ?? '';
+    const description: string = $('meta[name="description"]').attr('content') ?? ''
 
     return {
         title: $('title').text().split(/：/)[0],
@@ -144,8 +144,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: description.split(/：/)[0],
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news/:id?',
@@ -284,11 +284,11 @@ export const route: Route = {
         {
             source: ['dbaplus.cn/news*'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const href: string = urlObj.href;
-                const id: string | undefined = href.match(/-(\d+)-\.html/)?.[1];
+                const urlObj: URL = new URL(url)
+                const href: string = urlObj.href
+                const id: string | undefined = href.match(/-(\d+)-\.html/)?.[1]
 
-                return `/dbaplus/news${id ? `/${id}` : ''}`;
+                return `/dbaplus/news${id ? `/${id}` : ''}`
             },
         },
         {
@@ -388,4 +388,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

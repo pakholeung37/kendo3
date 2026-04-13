@@ -1,12 +1,12 @@
-import * as cheerio from 'cheerio';
-import CryptoJS from 'crypto-js';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import CryptoJS from 'crypto-js'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/mp/:xpt',
@@ -25,52 +25,52 @@ export const route: Route = {
     description: `搜狐号 ID 可以通过以下方式获取：
   1.  通过浏览器搜索相关搜狐号 \`果壳 site: mp.sohu.com\`。
   2.  通过浏览器控制台执行 \`window.globalConst.mkeyConst_mkey\`，返回的即为搜狐号 ID。`,
-};
+}
 
 function randomString(length = 32) {
-    let r = '';
-    const e = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678';
-    const n = e.length;
+    let r = ''
+    const e = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678'
+    const n = e.length
     for (let i = 0; i < length; i++) {
-        r += e.charAt(Math.floor(Math.random() * n));
+        r += e.charAt(Math.floor(Math.random() * n))
     }
-    return r;
+    return r
 }
-const defaultSUV = '1612268936507kas0gk';
+const defaultSUV = '1612268936507kas0gk'
 
 function decryptImageUrl(cipherText) {
-    const key = CryptoJS.enc.Utf8.parse('www.sohu.com6666');
+    const key = CryptoJS.enc.Utf8.parse('www.sohu.com6666')
     const cipher = CryptoJS.AES.decrypt(cipherText, key, {
         mode: CryptoJS.mode.ECB,
         padding: CryptoJS.pad.Pkcs7,
-    });
-    return cipher.toString(CryptoJS.enc.Utf8);
+    })
+    return cipher.toString(CryptoJS.enc.Utf8)
 }
 
 function createAuthToken() {
-    const t = Date.now();
-    const e = 't' + t;
-    return 'v1' + t + CryptoJS.HmacSHA1(e, '439642a904ef43d092d45509cdc4391c').toString();
+    const t = Date.now()
+    const e = 't' + t
+    return 'v1' + t + CryptoJS.HmacSHA1(e, '439642a904ef43d092d45509cdc4391c').toString()
 }
 
 function fetchArticle(item) {
     return cache.tryGet(item.link, async () => {
-        const response = await ofetch(item.link);
-        const $ = cheerio.load(response);
+        const response = await ofetch(item.link)
+        const $ = cheerio.load(response)
 
-        $('.original-title, .lookall-box').remove();
-        item.author = item.author || $('span[data-role="original-link"] a').text();
-        item.pubDate = timezone(parseDate($('meta[itemprop="dateUpdate"]').attr('content')), 8);
+        $('.original-title, .lookall-box').remove()
+        item.author = item.author || $('span[data-role="original-link"] a').text()
+        item.pubDate = timezone(parseDate($('meta[itemprop="dateUpdate"]').attr('content')), 8)
 
         if (/window\.sohu_mp\.article_video/.test($('script').text())) {
             const videoSrc = $('script')
                 .text()
-                .match(/\s*url: "(.*?)",/)?.[1];
+                .match(/\s*url: "(.*?)",/)?.[1]
             const poster = $('script')
                 .text()
-                .match(/cover: "(.*?)",/)?.[1];
-            const type = videoSrc?.split('.').pop()?.toLowerCase();
-            const source = type ? <source src={videoSrc} type={`video/${type}`} /> : <source src={videoSrc} />;
+                .match(/cover: "(.*?)",/)?.[1]
+            const type = videoSrc?.split('.').pop()?.toLowerCase()
+            const source = type ? <source src={videoSrc} type={`video/${type}`} /> : <source src={videoSrc} />
             item.description = renderToString(
                 poster ? (
                     <video controls poster={poster}>
@@ -78,53 +78,53 @@ function fetchArticle(item) {
                     </video>
                 ) : (
                     <video controls>{source}</video>
-                )
-            );
+                ),
+            )
         } else {
-            const article = $('#mp-editor');
+            const article = $('#mp-editor')
 
             article.find('#backsohucom, p[data-role="editor-name"]').each((i, e) => {
-                $(e).remove();
-            });
+                $(e).remove()
+            })
             article.find('img').each((_, e) => {
-                const $e = $(e);
+                const $e = $(e)
                 if ($e.attr('data-src') && !$e.attr('src')) {
-                    $e.attr('src', decryptImageUrl($e.attr('data-src')));
-                    $e.removeAttr('data-src');
+                    $e.attr('src', decryptImageUrl($e.attr('data-src')))
+                    $e.removeAttr('data-src')
                 }
-            });
+            })
 
-            item.description = article.html();
+            item.description = article.html()
         }
 
-        return item;
-    });
+        return item
+    })
 }
 
 async function handler(ctx) {
-    const xpt = ctx.req.param('xpt');
-    const isPureNumber = /^\d+$/.test(xpt);
+    const xpt = ctx.req.param('xpt')
+    const isPureNumber = /^\d+$/.test(xpt)
     if (isPureNumber) {
-        return legacyIdHandler(ctx);
+        return legacyIdHandler(ctx)
     }
 
     const pageResponse = await ofetch.raw('https://mp.sohu.com/profile', {
         query: {
             xpt,
         },
-    });
+    })
     const suv = pageResponse.headers
         ?.getSetCookie()
         .find((e) => e.startsWith('SUV'))
-        ?.split(';')[0];
-    const $ = cheerio.load(pageResponse._data);
+        ?.split(';')[0]
+    const $ = cheerio.load(pageResponse._data)
 
     const CBDRenderConst = JSON.parse(
         $('script:contains("CBDRenderConst")')
             .text()
             .trim()
-            .match(/CBDRenderConst\s=\s(.*)/)?.[1] || '{}'
-    );
+            .match(/CBDRenderConst\s=\s(.*)/)?.[1] || '{}',
+    )
     const contentData = JSON.parse(
         $('script:contains("contentData")')
             .toArray()
@@ -132,28 +132,28 @@ async function handler(ctx) {
                 (e) =>
                     $(e)
                         .text()
-                        .match(/contentData = (.*)/)?.[1]
+                        .match(/contentData = (.*)/)?.[1],
             )
-            .toSorted((a: any, b: any) => b.length - a.length)[0] || '{}'
-    );
+            .toSorted((a: any, b: any) => b.length - a.length)[0] || '{}',
+    )
     const blockRenderData = JSON.parse(
         $('script:contains("column_2_text")')
             .text()
-            .match(/({.*})/)?.[1]
-    );
-    const renderData = blockRenderData[Object.keys(blockRenderData).find((e) => e.startsWith('FeedSlideloadAuthor'))];
-    const briefIntroductionCard = blockRenderData[Object.keys(blockRenderData).find((e) => e.startsWith('BriefIntroductionCard'))].param.data.list[0];
+            .match(/({.*})/)?.[1],
+    )
+    const renderData = blockRenderData[Object.keys(blockRenderData).find((e) => e.startsWith('FeedSlideloadAuthor'))]
+    const briefIntroductionCard = blockRenderData[Object.keys(blockRenderData).find((e) => e.startsWith('BriefIntroductionCard'))].param.data.list[0]
 
     const globalConst = JSON.parse(
         $('script:contains("globalConst")')
             .text()
-            .match(/globalConst\s=\s(.*)/)?.[1] || '{}'
-    );
+            .match(/globalConst\s=\s(.*)/)?.[1] || '{}',
+    )
     const originalRequest = JSON.parse(
         $('script:contains("originalRequest")')
             .text()
-            .match(/originalRequest\s=\s(.*)/)?.[1] || '{}'
-    );
+            .match(/originalRequest\s=\s(.*)/)?.[1] || '{}',
+    )
 
     const blockData = await ofetch('https://odin.sohu.com/odin/api/blockdata', {
         method: 'POST',
@@ -204,15 +204,15 @@ async function handler(ctx) {
             ],
             asId: createAuthToken(),
         },
-    });
+    })
 
     const list = blockData.data[renderData.param.data2.reqParam.tplCompKey].list.map((item) => ({
         title: item.title,
         description: item.brief,
         link: `https://www.sohu.com/a/${item.id}_${globalConst.mkeyConst_mkey}`,
-    }));
+    }))
 
-    const items = await Promise.all(list.map((e) => fetchArticle(e)));
+    const items = await Promise.all(list.map((e) => fetchArticle(e)))
 
     return {
         title: `搜狐号 - ${globalConst.title}`,
@@ -220,24 +220,24 @@ async function handler(ctx) {
         link: originalRequest.url,
         image: briefIntroductionCard.column_2_image.startsWith('http') ? briefIntroductionCard.column_2_image.replace('http:', 'https:') : `https:${briefIntroductionCard.column_2_image}`,
         item: items,
-    };
+    }
 }
 
 async function legacyIdHandler(ctx) {
-    const id = ctx.req.param('xpt');
-    const authorArticleAPI = `https://v2.sohu.com/author-page-api/author-articles/pc/${id}`;
+    const id = ctx.req.param('xpt')
+    const authorArticleAPI = `https://v2.sohu.com/author-page-api/author-articles/pc/${id}`
 
-    const response = await ofetch(authorArticleAPI);
+    const response = await ofetch(authorArticleAPI)
     const list = response.data.pcArticleVOS.map((item) => ({
         title: item.title,
         link: item.link.startsWith('http') ? item.link : `https://${item.link}`,
         pubDate: parseDate(item.publicTime),
-    }));
+    }))
 
-    const items = await Promise.all(list.map((e) => fetchArticle(e)));
+    const items = await Promise.all(list.map((e) => fetchArticle(e)))
 
     return {
         title: `搜狐号 - ${id}`,
         item: items,
-    };
+    }
 }

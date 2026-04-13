@@ -1,15 +1,15 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const apiUrl = 'https://jobs.b-ite.com/api/v1/postings/search';
+const apiUrl = 'https://jobs.b-ite.com/api/v1/postings/search'
 
 // Helper: find the display label for a value.
 function findLabel(value: string, options: Array<{ value: string; label: string }>): string {
-    const option = options.find((option) => option.value === value);
-    return option?.label ?? value; // Fall back to the raw value if no match.
+    const option = options.find((option) => option.value === value)
+    return option?.label ?? value // Fall back to the raw value if no match.
 }
 
 async function handler() {
@@ -40,34 +40,34 @@ async function handler() {
             'content-type': 'application/json',
             'bite-jobsapi-client': 'v5-20230925-9df79de',
         },
-    });
+    })
 
-    const jobPostings = response.jobPostings;
-    const bereichOptions = response.fields['custom.bereich'].options;
-    const verguetungOptions = response.fields['custom.verguetung'].options;
+    const jobPostings = response.jobPostings
+    const bereichOptions = response.fields['custom.bereich'].options
+    const verguetungOptions = response.fields['custom.verguetung'].options
 
     const items = jobPostings.map((job) => {
-        const pubDate = parseDate(job.createdOn, 'YYYY-MM-DDTHH:mm:ssZ');
+        const pubDate = parseDate(job.createdOn, 'YYYY-MM-DDTHH:mm:ssZ')
 
         // Resolve Institution label.
-        const institutionLabel = findLabel(job.custom.bereich, bereichOptions);
-        const RemunerationGroupLabel = findLabel(job.custom.verguetung, verguetungOptions);
+        const institutionLabel = findLabel(job.custom.bereich, bereichOptions)
+        const RemunerationGroupLabel = findLabel(job.custom.verguetung, verguetungOptions)
 
-        const description = renderDescription(institutionLabel, RemunerationGroupLabel, job);
+        const description = renderDescription(institutionLabel, RemunerationGroupLabel, job)
 
         return {
             title: job.title,
             link: job.url,
             description,
             pubDate,
-        };
-    });
+        }
+    })
 
     return {
         title: 'LMU Academic Staff Job Openings',
         link: 'https://www.lmu.de/en/about-lmu/working-at-lmu/job-portal/academic-staff/',
         item: items,
-    };
+    }
 }
 
 const renderDescription = (institutionLabel: string, RemunerationGroupLabel: string, job): string =>
@@ -103,8 +103,8 @@ const renderDescription = (institutionLabel: string, RemunerationGroupLabel: str
             <p>
                 <strong>Contact:</strong> {job.custom?.kontakt || ''}
             </p>
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/jobs',
@@ -121,4 +121,4 @@ export const route: Route = {
     ],
     description: 'RSS feed for LMU academic staff job openings.',
     handler,
-};
+}

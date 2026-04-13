@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const homeUrl = 'http://bio.pku.edu.cn/homes/Index/news_jz/7/7.html';
-const baseUrl = 'http://bio.pku.edu.cn';
+const homeUrl = 'http://bio.pku.edu.cn/homes/Index/news_jz/7/7.html'
+const baseUrl = 'http://bio.pku.edu.cn'
 
 export const route: Route = {
     path: '/cls/lecture',
@@ -29,12 +29,12 @@ export const route: Route = {
     maintainers: ['TPOB'],
     handler,
     url: 'bio.pku.edu.cn/homes/Index/news_jz/7/7.html',
-};
+}
 
 async function handler() {
-    const response = await got(homeUrl);
+    const response = await got(homeUrl)
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     return {
         title: `北京大学生命科学学院近期讲座`,
         link: homeUrl,
@@ -47,5 +47,5 @@ async function handler() {
                 pubDate: parseDate($(item).find('.date').text()),
                 link: baseUrl + $('a.clearfix').attr('href'),
             })),
-    };
+    }
 }

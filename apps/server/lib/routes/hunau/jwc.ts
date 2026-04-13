@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import getContent from './utils/common';
+import getContent from './utils/common'
 
 export const route: Route = {
     path: '/jwc/:category?/:page?',
@@ -28,7 +28,7 @@ export const route: Route = {
     description: `| 分类 | 通知公告 | 教务动态 | 其他教务通知... |
 | ---- | -------- | -------- | --------------- |
 | 参数 | tzgg     | jwds     | 对应 URL        |`,
-};
+}
 
 async function handler(ctx) {
     await getContent(ctx, {
@@ -36,5 +36,5 @@ async function handler(ctx) {
         baseCategory: 'tzgg', // 默认：通知公告
         baseTitle: '湖南农业大学教务处',
         baseDeparment: 'jwc',
-    });
+    })
 }

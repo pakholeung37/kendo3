@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/video_codes/:code/:filter?',
@@ -35,13 +35,13 @@ export const route: Route = {
     description: `| 全部 | 可播放   | 單體作品 | 可下載   | 字幕  | 預覽圖  |
 | ---- | -------- | -------- | -------- | ----- | ------- |
 |      | playable | single   | download | cnsub | preview |`,
-};
+}
 
 async function handler(ctx) {
-    const code = ctx.req.param('code');
-    const filter = ctx.req.param('filter') ?? '';
+    const code = ctx.req.param('code')
+    const filter = ctx.req.param('filter') ?? ''
 
-    const currentUrl = `/video_codes/${code}${filter ? `?f=${filter}` : ''}`;
+    const currentUrl = `/video_codes/${code}${filter ? `?f=${filter}` : ''}`
 
     const filters = {
         '': '',
@@ -50,9 +50,9 @@ async function handler(ctx) {
         download: '可下載',
         cnsub: '字幕',
         preview: '預覽圖',
-    };
+    }
 
-    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} `;
+    const title = `JavDB${filters[filter] === '' ? '' : ` - ${filters[filter]}`} `
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

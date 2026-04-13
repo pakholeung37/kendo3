@@ -1,18 +1,18 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 const extractDoc = (data) =>
     data
         .map((item) => {
-            const type = item.type;
+            const type = item.type
             if (type === 'video') {
-                return renderVideo(item.data);
+                return renderVideo(item.data)
             }
             if (type === 'text') {
-                return item.data.replaceAll(/data-lazyload=(.+?) src=(.+?) style=".+?"/g, 'src=$1');
+                return item.data.replaceAll(/data-lazyload=(.+?) src=(.+?) style=".+?"/g, 'src=$1')
             }
-            return '';
+            return ''
         })
-        .join('<br>');
+        .join('<br>')
 
 const renderVideo = (videoInfo) =>
     renderToString(
@@ -20,7 +20,7 @@ const renderVideo = (videoInfo) =>
             <video controls poster={videoInfo.bigPosterUrl} preload="metadata">
                 <source src={videoInfo.mobileUrl} type="video/mp4" />
             </video>
-        ) : null
-    );
+        ) : null,
+    )
 
-export { extractDoc, renderVideo };
+export { extractDoc, renderVideo }

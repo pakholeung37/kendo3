@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/doodles/:language?',
@@ -19,14 +19,14 @@ export const route: Route = {
     name: 'Update',
     maintainers: ['xyqfer'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { language = 'zh-CN' } = ctx.req.param();
-    const current = new Date();
-    const year = current.getFullYear();
-    const month = current.getMonth() + 1;
-    const link = `https://www.google.com/doodles?hl=${language}`;
+    const { language = 'zh-CN' } = ctx.req.param()
+    const current = new Date()
+    const year = current.getFullYear()
+    const month = current.getMonth() + 1
+    const link = `https://www.google.com/doodles?hl=${language}`
 
     const { data } = await got({
         method: 'get',
@@ -34,7 +34,7 @@ async function handler(ctx) {
         headers: {
             Referer: link,
         },
-    });
+    })
 
     return {
         title: 'Google Doodles',
@@ -42,7 +42,7 @@ async function handler(ctx) {
         item:
             data &&
             data.map((item) => {
-                const date = `${item.run_date_array[0]}-${item.run_date_array[1]}-${item.run_date_array[2]}`;
+                const date = `${item.run_date_array[0]}-${item.run_date_array[1]}-${item.run_date_array[2]}`
 
                 return {
                     title: item.title,
@@ -50,7 +50,7 @@ async function handler(ctx) {
                     pubDate: new Date(date).toUTCString(),
                     guid: item.url,
                     link: `https://www.google.com/search?q=${encodeURIComponent(item.query)}`,
-                };
+                }
             }),
-    };
+    }
 }

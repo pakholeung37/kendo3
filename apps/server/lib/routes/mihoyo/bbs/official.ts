@@ -1,10 +1,10 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import logger from '@/utils/logger';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import logger from '@/utils/logger'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderOfficialDescription } from '../templates/official';
+import { renderOfficialDescription } from '../templates/official'
 
 // 游戏id
 const GITS_MAP = {
@@ -14,14 +14,14 @@ const GITS_MAP = {
     4: '未定事件簿',
     6: '崩坏：星穹铁道',
     8: '绝区零',
-};
+}
 
 // 公告类型
 const TYPE_MAP = {
     1: '公告',
     2: '活动',
     3: '资讯',
-};
+}
 
 // 游戏缩写
 const GAME_SHORT_MAP = {
@@ -31,7 +31,7 @@ const GAME_SHORT_MAP = {
     4: 'wd',
     6: 'sr',
     8: 'zzz',
-};
+}
 // 游戏官方页所属分区
 const OFFICIAL_PAGE_MAP = {
     1: '6',
@@ -40,12 +40,12 @@ const OFFICIAL_PAGE_MAP = {
     4: '33',
     6: '53',
     8: '58',
-};
+}
 
 class MiHoYoOfficialError extends Error {
     constructor(message) {
-        super(message);
-        this.name = 'MiHoYoOfficialError';
+        super(message)
+        this.name = 'MiHoYoOfficialError'
     }
 }
 
@@ -56,36 +56,36 @@ const getNewsList = async ({ gids, type, page_size, last_id }) => {
         type,
         page_size,
         last_id,
-    }).toString();
-    const url = `https://bbs-api-static.miyoushe.com/painter/wapi/getNewsList?${query}`;
+    }).toString()
+    const url = `https://bbs-api-static.miyoushe.com/painter/wapi/getNewsList?${query}`
     const response = await got({
         method: 'get',
         url,
-    });
-    const list = response?.data?.data?.list;
-    return list;
-};
+    })
+    const list = response?.data?.data?.list
+    return list
+}
 
 const getPostContent = async (row, default_gid = '2') => {
-    const post = row.post;
-    const post_id = post.post_id;
+    const post = row.post
+    const post_id = post.post_id
     const query = new URLSearchParams({
         post_id,
-    }).toString();
-    const url = `https://bbs-api.miyoushe.com/post/wapi/getPostFull?${query}`;
+    }).toString()
+    const url = `https://bbs-api.miyoushe.com/post/wapi/getPostFull?${query}`
     return await cache.tryGet(url, async () => {
-        const res = await got(url);
-        const fullRow = res?.data?.data?.post;
+        const res = await got(url)
+        const fullRow = res?.data?.data?.post
         if (!fullRow) {
             // throw an error to prevent an empty item from being cached and returned
-            throw new MiHoYoOfficialError(`mihoyo/bbs/official: getPostContent failed: ${url} - ${JSON.stringify(res)}`);
+            throw new MiHoYoOfficialError(`mihoyo/bbs/official: getPostContent failed: ${url} - ${JSON.stringify(res)}`)
         }
         // default_gid should be useless since the above error-throwing line, but just in case
-        const gid = fullRow?.post?.game_id || default_gid;
-        const author = fullRow?.user?.nickname || '';
-        const content = fullRow?.post?.content || '';
-        const tags = fullRow?.topics?.map((item) => item.name) || [];
-        const description = renderOfficialDescription(post.has_cover, row.cover_list, content);
+        const gid = fullRow?.post?.game_id || default_gid
+        const author = fullRow?.user?.nickname || ''
+        const content = fullRow?.post?.content || ''
+        const tags = fullRow?.topics?.map((item) => item.name) || []
+        const description = renderOfficialDescription(post.has_cover, row.cover_list, content)
         return {
             // 文章标题
             title: post.subject,
@@ -98,22 +98,22 @@ const getPostContent = async (row, default_gid = '2') => {
             // 文章标签
             category: tags,
             author,
-        };
-    });
-};
+        }
+    })
+}
 
 const getPostContents = (list, default_gid = '2') =>
     Promise.all(
         list.map((item) =>
             getPostContent(item, default_gid).catch((error) => {
                 if (error instanceof MiHoYoOfficialError) {
-                    logger.error(error.message);
-                    return null; // skip it now and pray that it will be available next time
+                    logger.error(error.message)
+                    return null // skip it now and pray that it will be available next time
                 }
-                throw error;
-            })
-        )
-    ).then((items) => items.filter(Boolean));
+                throw error
+            }),
+        ),
+    ).then((items) => items.filter(Boolean))
 
 export const route: Route = {
     path: '/bbs/official/:gids/:type?/:page_size?/:last_id?',
@@ -142,20 +142,20 @@ export const route: Route = {
 | 公告 | 活动 | 资讯 |
 | ---- | ---- | ---- |
 | 1    | 2    | 3    |`,
-};
+}
 
 async function handler(ctx) {
-    const { gids, type = '2', page_size = '20', last_id = '' } = ctx.req.param();
+    const { gids, type = '2', page_size = '20', last_id = '' } = ctx.req.param()
 
-    const list = await getNewsList({ gids, type, page_size, last_id });
-    const items = await getPostContents(list, gids);
-    const title = `米游社 - ${GITS_MAP[gids] || ''} - ${TYPE_MAP[type] || ''}`;
-    const url = `https://www.miyoushe.com/${GAME_SHORT_MAP[gids]}/home/${OFFICIAL_PAGE_MAP[gids]}?type=${type}`;
+    const list = await getNewsList({ gids, type, page_size, last_id })
+    const items = await getPostContents(list, gids)
+    const title = `米游社 - ${GITS_MAP[gids] || ''} - ${TYPE_MAP[type] || ''}`
+    const url = `https://www.miyoushe.com/${GAME_SHORT_MAP[gids]}/home/${OFFICIAL_PAGE_MAP[gids]}?type=${type}`
     const data = {
         title,
         link: url,
         item: items,
-    };
+    }
 
-    return data;
+    return data
 }

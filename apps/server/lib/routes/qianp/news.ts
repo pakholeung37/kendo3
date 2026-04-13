@@ -1,62 +1,62 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getTokenAndSecret } from './utils';
+import { getTokenAndSecret } from './utils'
 
 export const route: Route = {
     path: '/news/:path{.+}?',
     name: 'Unknown',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://qianp.com';
-    const { path = 'news/recommend' } = ctx.req.param();
-    const url = `${baseUrl}/${path}/`;
+    const baseUrl = 'https://qianp.com'
+    const { path = 'news/recommend' } = ctx.req.param()
+    const url = `${baseUrl}/${path}/`
 
-    const { token, secret } = await getTokenAndSecret(cache.tryGet);
+    const { token, secret } = await getTokenAndSecret(cache.tryGet)
     const headers = {
         cookie: token ? `t=${token}; r=${secret - 100}` : undefined,
-    };
+    }
     const { data: response } = await got(url, {
         headers,
-    });
-    const $ = load(response);
+    })
+    const $ = load(response)
 
     const list = $('.newslist .infor')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a').first();
+            item = $(item)
+            const a = item.find('a').first()
             return {
                 title: a.attr('title'),
                 link: a.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: response } = await got(item.link, {
                     headers,
-                });
-                const $ = load(response);
+                })
+                const $ = load(response)
 
-                item.category = [...new Set($('meta[name=keywords]').attr('content').split('，'))];
-                item.author = $('meta[name=author]').attr('content');
-                item.pubDate = parseDate($('meta[property="bytedance:published_time"]').attr('content'));
+                item.category = [...new Set($('meta[name=keywords]').attr('content').split('，'))]
+                item.author = $('meta[name=author]').attr('content')
+                item.pubDate = parseDate($('meta[property="bytedance:published_time"]').attr('content'))
 
-                item.description = $('.news_center').html();
+                item.description = $('.news_center').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
@@ -64,5 +64,5 @@ async function handler(ctx) {
         link: url,
         image: `${baseUrl}/favicon.ico`,
         item: items,
-    };
+    }
 }

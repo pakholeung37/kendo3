@@ -1,11 +1,11 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import type { NewsDetail, NewsInfo } from './types';
-import { sign } from './utils';
+import type { NewsDetail, NewsInfo } from './types'
+import { sign } from './utils'
 
 export const route: Route = {
     path: '/news',
@@ -20,22 +20,22 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'www.jingzhengu.com',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://www.jingzhengu.com';
+    const baseUrl = 'https://www.jingzhengu.com'
 
     const payload = new Map<string, any>([
         ['pageNo', 1],
         ['middleware', String(Date.now())],
-    ]);
+    ])
     const response = await ofetch<NewsInfo>(`${baseUrl}/news/makeNewsInfo`, {
         method: 'POST',
         body: {
             ...Object.fromEntries(payload),
             sign: sign(payload),
         },
-    });
+    })
 
     const list = response.data.articles.map((item) => ({
         title: item.title,
@@ -44,7 +44,7 @@ async function handler() {
         pubDate: timezone(parseDate(item.addDate, 'YYYY-MM-DD HH:mm:ss'), 8),
         author: item.author,
         id: item.id,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -52,7 +52,7 @@ async function handler() {
                 const payload = new Map<string, any>([
                     ['id', item.id],
                     ['middleware', String(Date.now())],
-                ]);
+                ])
 
                 const response = await ofetch<NewsDetail>(`${baseUrl}/news/makeNewsDetail`, {
                     method: 'POST',
@@ -60,18 +60,18 @@ async function handler() {
                         ...Object.fromEntries(payload),
                         sign: sign(payload),
                     },
-                });
+                })
 
-                item.description = response.data.content;
+                item.description = response.data.content
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '精真估 > 资讯',
         link: `${baseUrl}/#/index/boot`,
         item: items,
-    };
+    }
 }

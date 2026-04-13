@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/cmse/fxrw',
@@ -29,23 +29,23 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'www.cmse.gov.cn/fxrw',
-};
+}
 
 async function handler() {
-    const rootUrl = 'http://www.cmse.gov.cn';
-    const currentUrl = `${rootUrl}/fxrw/`;
+    const rootUrl = 'http://www.cmse.gov.cn'
+    const currentUrl = `${rootUrl}/fxrw/`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const items = $('#list li a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('.title').text().split('：').pop().trim(),
@@ -55,12 +55,12 @@ async function handler() {
                     image: new URL(item.find('img').attr('src'), currentUrl).href,
                     description: item.find('.info').html(),
                 }),
-            };
-        });
+            }
+        })
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

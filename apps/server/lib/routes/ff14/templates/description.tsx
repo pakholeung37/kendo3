@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionProps = {
-    image?: string;
-    description?: string;
-};
+    image?: string
+    description?: string
+}
 
 const Description = ({ image, description }: DescriptionProps) => (
     <>
@@ -15,6 +15,6 @@ const Description = ({ image, description }: DescriptionProps) => (
         ) : null}
         {description}
     </>
-);
+)
 
-export const renderDescription = (props: DescriptionProps): string => renderToString(<Description {...props} />);
+export const renderDescription = (props: DescriptionProps): string => renderToString(<Description {...props} />)

@@ -1,27 +1,27 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'hourly-temperature/html' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { id = 'hourly-temperature/html' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const baseUrl = 'https://www.nmc.cn';
-    const pathSegment: string = id.split(/\//).pop() === 'htm' ? 'htm' : 'html';
-    const targetUrl: string = new URL(`publish/${id.replace(new RegExp(String.raw`\/${pathSegment}$`), '')}.${pathSegment}`, baseUrl).href;
+    const baseUrl = 'https://www.nmc.cn'
+    const pathSegment: string = id.split(/\//).pop() === 'htm' ? 'htm' : 'html'
+    const targetUrl: string = new URL(`publish/${id.replace(new RegExp(String.raw`\/${pathSegment}$`), '')}.${pathSegment}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh'
 
     const items: DataItem[] =
         $('div#home div[data-img]').length === 0
@@ -29,20 +29,20 @@ export const handler = async (ctx: Context): Promise<Data> => {
                   .slice(0, limit)
                   .toArray()
                   .map((el): Element => {
-                      const $el: Cheerio<Element> = $(el);
+                      const $el: Cheerio<Element> = $(el)
 
                       const timeStrArray = $el
                           .find('div.author b')
                           .toArray()
-                          .map((el) => $(el).text().trim());
-                      const pubDateStr: string | undefined = `${timeStrArray.pop()}:00 ${timeStrArray.join('/')}`;
+                          .map((el) => $(el).text().trim())
+                      const pubDateStr: string | undefined = `${timeStrArray.pop()}:00 ${timeStrArray.join('/')}`
 
-                      const title = `${pubDateStr} - ${$el.find('div.title').text().replaceAll(/\s/g, '')}`;
+                      const title = `${pubDateStr} - ${$el.find('div.title').text().replaceAll(/\s/g, '')}`
                       const description: string | undefined = renderDescription({
                           description: $el.find('div.writing').html(),
-                      });
+                      })
 
-                      const linkUrl: string | undefined = targetUrl;
+                      const linkUrl: string | undefined = targetUrl
                       const authors: DataItem['author'] = $el
                           .find('div.author')
                           .contents()
@@ -54,9 +54,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                               name: name.split(/：/).pop(),
                               url: undefined,
                               avatar: undefined,
-                          }));
-                      const guid = `${linkUrl}#${pubDateStr}`;
-                      const upDatedStr: string | undefined = pubDateStr;
+                          }))
+                      const guid = `${linkUrl}#${pubDateStr}`
+                      const upDatedStr: string | undefined = pubDateStr
 
                       const processedItem: DataItem = {
                           title,
@@ -72,22 +72,22 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           },
                           updated: timezone(parseDate(upDatedStr, 'HH:mm YYYY/MM/DD'), +8),
                           language,
-                      };
+                      }
 
-                      return processedItem;
+                      return processedItem
                   })
             : $('div[data-img]')
                   .slice(0, limit)
                   .toArray()
                   .map((el): Element => {
-                      const $el: Cheerio<Element> = $(el);
+                      const $el: Cheerio<Element> = $(el)
 
-                      const image: string | undefined = $el.attr('data-img');
+                      const image: string | undefined = $el.attr('data-img')
 
                       const title = `${$el.find('div').text().trim()} - ${$('div.nav1 a.actived, div#menuNavBar button.dropdown-toggle')
                           .toArray()
                           .map((el) => $(el).text().trim())
-                          .join(' - ')}`;
+                          .join(' - ')}`
                       const description: string | undefined = renderDescription({
                           images: image
                               ? [
@@ -97,12 +97,12 @@ export const handler = async (ctx: Context): Promise<Data> => {
                                     },
                                 ]
                               : undefined,
-                      });
-                      const year: string | undefined = image?.match(/product\/(\d{4})\//)?.[1];
-                      const pubDateStr: string | undefined = `${year ? `${year}/` : ''}${$el.attr('data-time')}`;
-                      const linkUrl: string | undefined = targetUrl;
-                      const guid = `${linkUrl}#${pubDateStr}`;
-                      const upDatedStr: string | undefined = pubDateStr;
+                      })
+                      const year: string | undefined = image?.match(/product\/(\d{4})\//)?.[1]
+                      const pubDateStr: string | undefined = `${year ? `${year}/` : ''}${$el.attr('data-time')}`
+                      const linkUrl: string | undefined = targetUrl
+                      const guid = `${linkUrl}#${pubDateStr}`
+                      const upDatedStr: string | undefined = pubDateStr
 
                       const processedItem: DataItem = {
                           title,
@@ -119,10 +119,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                           banner: image,
                           updated: timezone(parseDate(upDatedStr), +8),
                           language,
-                      };
+                      }
 
-                      return processedItem;
-                  });
+                      return processedItem
+                  })
 
     return {
         title: $('title').text(),
@@ -134,8 +134,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="description"]').attr('content'),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/publish/:id{.+}?',
@@ -581,11 +581,11 @@ export const route: Route = {
         {
             source: [String.raw`www.nmc.cn/publish/$:path(.*)\.(:ext(html|htm))`],
             target: (params) => {
-                const path: string | undefined = params.path;
-                const ext: string | undefined = params.ext;
-                const id: string | undefined = path && ext ? `${path}/${ext}` : undefined;
+                const path: string | undefined = params.path
+                const ext: string | undefined = params.ext
+                const id: string | undefined = path && ext ? `${path}/${ext}` : undefined
 
-                return `/nmc/publish${id ? `/${id}` : ''}`;
+                return `/nmc/publish${id ? `/${id}` : ''}`
             },
         },
         {
@@ -955,4 +955,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

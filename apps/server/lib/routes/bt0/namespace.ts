@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '不太灵影视',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
   (1-9)bt0.com 都指向同一个
 :::`,
     lang: 'zh-CN',
-};
+}

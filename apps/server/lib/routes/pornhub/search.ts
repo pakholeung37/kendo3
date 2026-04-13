@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { defaultDomain, renderDescription } from './utils';
+import { defaultDomain, renderDescription } from './utils'
 
 export const route: Route = {
     path: '/search/:keyword/:img?',
@@ -23,14 +23,14 @@ export const route: Route = {
     name: 'Keyword Search',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { keyword, img } = ctx.req.param();
-    const currentUrl = `${defaultDomain}/webmasters/search?search=${keyword}`;
-    const response = await got(currentUrl);
+    const { keyword, img } = ctx.req.param()
+    const currentUrl = `${defaultDomain}/webmasters/search?search=${keyword}`
+    const response = await got(currentUrl)
 
-    const showImages = img === 'img=1';
+    const showImages = img === 'img=1'
 
     const list = response.data.videos.map((item) => ({
         title: item.title,
@@ -38,11 +38,11 @@ async function handler(ctx) {
         description: renderDescription({ thumbs: item.thumbs }, showImages),
         pubDate: parseDate(item.publish_date),
         category: [...new Set([...item.tags.map((t) => t.tag_name), ...item.categories.map((c) => c.category)])],
-    }));
+    }))
 
     return {
         title: `Pornhub - ${keyword}`,
         link: currentUrl,
         item: list,
-    };
+    }
 }

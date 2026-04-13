@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://jwc.xidian.edu.cn';
+const baseUrl = 'https://jwc.xidian.edu.cn'
 
 export const route: Route = {
     path: '/jwc/:category?',
@@ -27,28 +27,28 @@ export const route: Route = {
     description: `| 教学信息 | 教学研究 | 实践教学 | 质量监控 | 通知公告 |
 | :------: | :------: | :------: | :------: | :------: |
 |   jxxx   |   jxyj   |   sjjx   |   zljk   |   tzgg   |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'tzgg' } = ctx.req.param();
-    const url = `${baseUrl}/${category}.htm`;
+    const { category = 'tzgg' } = ctx.req.param()
+    const url = `${baseUrl}/${category}.htm`
     const response = await got(url, {
         headers: {
             referer: baseUrl,
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     let items = $('.list ul li')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').attr('title'),
                 link: new URL(item.find('a').attr('href'), baseUrl).href,
                 pubDate: parseDate(item.find('.con span').text()),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -57,18 +57,18 @@ async function handler(ctx) {
                     headers: {
                         referer: url,
                     },
-                });
-                const content = load(detailResponse.data);
-                content('.tit, .zd, #div_vote_id').remove();
-                item.description = content('.con').html();
-                return item;
-            })
-        )
-    );
+                })
+                const content = load(detailResponse.data)
+                content('.tit, .zd, #div_vote_id').remove()
+                item.description = content('.con').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: url,
         item: items,
-    };
+    }
 }

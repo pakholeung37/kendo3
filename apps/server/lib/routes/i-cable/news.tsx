@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -38,20 +38,20 @@ export const route: Route = {
 ::: tip
 分類只可用分類名稱，如：新聞資訊/港聞
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '新聞資訊';
-    const limit = ctx.req.query('limit') ?? 20;
-    const root = 'https://www.i-cable.com/wp-json/wp/v2';
+    const category = ctx.req.param('category') ?? '新聞資訊'
+    const limit = ctx.req.query('limit') ?? 20
+    const root = 'https://www.i-cable.com/wp-json/wp/v2'
 
-    const response = await cache.tryGet(`${root}/categories?slug=${category}`, async () => await got(`${root}/categories?slug=${category}`), config.cache.routeExpire, false);
+    const response = await cache.tryGet(`${root}/categories?slug=${category}`, async () => await got(`${root}/categories?slug=${category}`), config.cache.routeExpire, false)
     if (response.data.length < 1) {
-        throw new InvalidParameterError(`Invalid Category: ${category}`);
+        throw new InvalidParameterError(`Invalid Category: ${category}`)
     }
-    const metadata = response.data[0];
+    const metadata = response.data[0]
 
-    const list = await got(`${root}/posts?_embed=1&categories=${metadata.id}&per_page=${limit}`);
+    const list = await got(`${root}/posts?_embed=1&categories=${metadata.id}&per_page=${limit}`)
     const items = list.data.map((item) => {
         const description = renderToString(
             <>
@@ -63,21 +63,21 @@ async function handler(ctx) {
                       ))
                     : null}
                 {item.content.rendered ? raw(item.content.rendered) : null}
-            </>
-        );
+            </>,
+        )
         return {
             title: item.title.rendered,
             link: item.link,
             pubDate: item.date_gmt,
             description,
             category: item._embedded['wp:term'][0].map((term) => term.name) ?? [],
-        };
-    });
+        }
+    })
 
     return {
         title: `有線新聞 - ${metadata.name}`,
         description: metadata.description,
         link: metadata.link,
         item: items,
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { extractInitialData, fetchBbcContent } from './utils';
+import { extractInitialData, fetchBbcContent } from './utils'
 
 export const route: Route = {
     path: '/sport/:sport',
@@ -22,17 +22,17 @@ export const route: Route = {
         },
     ],
     categories: ['traditional-media'],
-};
+}
 
 async function handler(ctx) {
-    const { sport } = ctx.req.param();
-    const link = `https://www.bbc.com/sport/${sport}`;
+    const { sport } = ctx.req.param()
+    const link = `https://www.bbc.com/sport/${sport}`
 
-    const response = await ofetch(link);
-    const $ = load(response);
+    const response = await ofetch(link)
+    const $ = load(response)
 
-    const initialData = extractInitialData($);
-    const { page } = initialData.stores.metadata;
+    const initialData = extractInitialData($)
+    const { page } = initialData.stores.metadata
 
     const list: DataItem[] = Object.values(initialData.data)
         .filter((d) => d.name === 'hierarchical-promo-collection' && d.props.title !== 'Elsewhere on the BBC')
@@ -43,20 +43,20 @@ async function handler(ctx) {
             link: `https://www.bbc.com${item.url}`,
             pubDate: item.lastPublished ? parseDate(item.lastPublished) : undefined,
             image: item.image?.src.replace('/480/', '/1536/'),
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link!, async () => {
-                const { category, description } = await fetchBbcContent(item.link!, item);
+                const { category, description } = await fetchBbcContent(item.link!, item)
 
-                item.category = category;
-                item.description = description;
+                item.category = category
+                item.description = description
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: page.title,
@@ -64,5 +64,5 @@ async function handler(ctx) {
         link,
         image: 'https://www.bbc.com/favicon.ico',
         item: items,
-    };
+    }
 }

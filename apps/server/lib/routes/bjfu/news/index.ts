@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import util from './utils';
+import util from './utils'
 
 export const route: Route = {
     path: '/news/:type',
@@ -31,58 +31,58 @@ export const route: Route = {
     description: `| 绿色要闻 | 校园动态 | 教学科研 | 党建思政 | 一周排行 |
 | -------- | -------- | -------- | -------- | -------- |
 | lsyw     | xydt     | jxky     | djsz     | yzph     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    let title, path;
+    const type = ctx.req.param('type')
+    let title, path
     switch (type) {
         case 'xydt':
-            title = '校园动态';
-            path = 'lsxy/';
-            break;
+            title = '校园动态'
+            path = 'lsxy/'
+            break
         case 'jxky':
-            title = '教学科研';
-            path = 'jxky/';
-            break;
+            title = '教学科研'
+            path = 'jxky/'
+            break
         case 'djsz':
-            title = '党建思政';
-            path = 'djsz/';
-            break;
+            title = '党建思政'
+            path = 'djsz/'
+            break
         case 'yzph':
-            title = '一周排行';
-            path = 'yzph/';
-            break;
+            title = '一周排行'
+            path = 'yzph/'
+            break
         case 'lsyw':
         default:
-            title = '绿色要闻';
-            path = 'lsyw/';
+            title = '绿色要闻'
+            path = 'lsyw/'
     }
-    const base = 'http://news.bjfu.edu.cn/' + path;
+    const base = 'http://news.bjfu.edu.cn/' + path
 
     const response = await got({
         method: 'get',
         responseType: 'buffer',
         url: base,
-    });
+    })
 
-    const data = response.data;
-    let $ = load(iconv.decode(data, 'utf-8'));
+    const data = response.data
+    let $ = load(iconv.decode(data, 'utf-8'))
     const charset = $('meta[http-equiv="Content-Type"]')
         .attr('content')
-        .match(/charset=(.*)/)?.[1];
+        .match(/charset=(.*)/)?.[1]
     if (charset?.toLowerCase() !== 'utf-8') {
-        $ = load(iconv.decode(data, charset ?? 'utf-8'));
+        $ = load(iconv.decode(data, charset ?? 'utf-8'))
     }
 
-    const list = $('.news_ul li').slice(0, 12).toArray();
+    const list = $('.news_ul li').slice(0, 12).toArray()
 
-    const result = await util.ProcessFeed(base, list, cache); // 感谢@hoilc指导
+    const result = await util.ProcessFeed(base, list, cache) // 感谢@hoilc指导
 
     return {
         title: '北林新闻- ' + title,
         link: 'http://news.bjfu.edu.cn/' + path,
         description: '绿色新闻网 - ' + title,
         item: result,
-    };
+    }
 }

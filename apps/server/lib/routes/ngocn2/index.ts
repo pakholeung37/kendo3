@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:category?',
@@ -30,32 +30,32 @@ export const route: Route = {
     description: `| 所有文章 | 早报        | 热点     |
 | -------- | ----------- | -------- |
 | article  | daily-brief | trending |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'article';
+    const category = ctx.req.param('category') ?? 'article'
 
-    const rootUrl = 'https://ngocn2.org';
-    const currentUrl = `${rootUrl}/${category}`;
+    const rootUrl = 'https://ngocn2.org'
+    const currentUrl = `${rootUrl}/${category}`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     const list = $('.articleroll__article a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('.title').text(),
                 link: `${rootUrl}${item.attr('href')}`,
                 pubDate: parseDate(item.find('.meta').text()),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
@@ -63,24 +63,24 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
                 content('.gatsby-resp-image-link').each(function () {
-                    content(this).html(`<img src="${content(this).find('img').attr('src')}">`);
-                });
+                    content(this).html(`<img src="${content(this).find('img').attr('src')}">`)
+                })
 
-                item.description = content('.article__content').html();
+                item.description = content('.article__content').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('.sectitle__content').text()} - NGOCN`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

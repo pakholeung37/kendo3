@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
 
-import type { DataItem, Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/zj/search/:websiteid?/:word/:cateid?',
@@ -39,7 +39,7 @@ export const route: Route = {
 | 按时间     | 2  |
     `,
     async handler(ctx) {
-        const { websiteid = '330201000000000', word = '人才', cateid = 658, sortType = 2 } = ctx.req.param();
+        const { websiteid = '330201000000000', word = '人才', cateid = 658, sortType = 2 } = ctx.req.param()
         const {
             data: { result: list },
         } = await got.post('https://search.zj.gov.cn/jsearchfront/interfaces/cateSearch.do', {
@@ -58,30 +58,30 @@ export const route: Route = {
                 pos: 'title,content,keyword',
                 sortType,
             },
-        });
+        })
         const items =
             list?.map((item: string) => {
-                const $ = load(item);
-                const title = $('.titleWrapper>a');
-                const footer = $('.sourceTime>span');
+                const $ = load(item)
+                const title = $('.titleWrapper>a')
+                const footer = $('.sourceTime>span')
                 return {
                     title: title.text().trim() || '',
                     link: title.attr('href') || '',
                     pubDate: parseDate(footer.eq(1).text().trim().replace('时间:', '')) || '',
                     author: footer.eq(0).text().trim().replace('来源:', '') || '',
                     description: $('.newsDescribe>a').text() || '',
-                };
-            }) || [];
-        const res = {};
+                }
+            }) || []
+        const res = {}
         for (const current of items) {
             if (!res[current.link]) {
-                res[current.link] = current;
+                res[current.link] = current
             }
         }
         return {
             title: '浙江省人民政府-全省政府网站统一搜索',
             link: 'https://search.zj.gov.cn/jsearchfront/search.do',
             item: Object.entries(res).map(([, value]) => value) as DataItem[],
-        };
+        }
     },
-};
+}

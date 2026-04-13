@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { toTitleCase } from '@/utils/common-utils';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { toTitleCase } from '@/utils/common-utils'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/mayors-office-news/:types?/:categories?',
@@ -60,81 +60,81 @@ Categories
         },
     ],
     handler: async (ctx) => {
-        const { types: typesParam = 'all', categories: categoriesParam = 'all' } = ctx.req.param();
-        const types = typesParam === 'all' ? '' : typesParam;
-        const categories = categoriesParam === 'all' ? '' : categoriesParam;
+        const { types: typesParam = 'all', categories: categoriesParam = 'all' } = ctx.req.param()
+        const types = typesParam === 'all' ? '' : typesParam
+        const categories = categoriesParam === 'all' ? '' : categoriesParam
 
-        const baseUrl = 'https://www.nyc.gov';
+        const baseUrl = 'https://www.nyc.gov'
 
-        const data = await ofetch(`https://www.nyc.gov/bin/nyc/articlesearch.json?pageSize=10&currentPage=1&types=${types}&categories=${categories}`);
+        const data = await ofetch(`https://www.nyc.gov/bin/nyc/articlesearch.json?pageSize=10&currentPage=1&types=${types}&categories=${categories}`)
         const list = data.results.map((item) => {
-            const imageUrl = item.articleImage ? baseUrl + item.articleImage : undefined;
-            const imageExtension = item.articleImage ? item.articleImage.split('.')[1] : undefined;
+            const imageUrl = item.articleImage ? baseUrl + item.articleImage : undefined
+            const imageExtension = item.articleImage ? item.articleImage.split('.')[1] : undefined
 
             return {
                 title: item.title,
                 link: baseUrl + item.link.replace('.html', ''),
                 pubDate: timezone(parseDate(item.articleDate), -5),
                 media: item.articleImage ? { content: { url: imageUrl, type: `image/${imageExtension === 'jpg' ? 'jpeg' : imageExtension}` }, thumbnail: { url: imageUrl } } : undefined,
-            };
-        });
+            }
+        })
 
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const response = await ofetch(item.link);
-                    const $ = load(response);
+                    const response = await ofetch(item.link)
+                    const $ = load(response)
 
                     // Remove "Media Contact" banner
-                    $('.teaser').remove();
+                    $('.teaser').remove()
 
                     // Remove `iframe` (e.g. YouTube embeds)
-                    $('iframe').remove();
+                    $('iframe').remove()
 
-                    item.description = $('#body-text-section').first().html();
+                    item.description = $('#body-text-section').first().html()
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
 
-        const cleanedTypes = types.replaceAll(',', ', ').replaceAll('-', ' ');
+        const cleanedTypes = types.replaceAll(',', ', ').replaceAll('-', ' ')
         const fixedCategories = categories
             .split(',')
             .map((category) => fixCategoryName(category))
             .join(', ')
-            .replaceAll('-', ' ');
+            .replaceAll('-', ' ')
 
         // Title
-        let title = '';
+        let title = ''
         if (types) {
-            title = spacedToTitleCase(cleanedTypes);
+            title = spacedToTitleCase(cleanedTypes)
         }
 
         if (categories) {
-            title = types ? `${title} (` : 'All (';
-            title = `${title}${spacedToTitleCase(fixedCategories)})`;
+            title = types ? `${title} (` : 'All ('
+            title = `${title}${spacedToTitleCase(fixedCategories)})`
         }
 
         // Description
-        let description: string;
-        description = types ? toTitleCase(cleanedTypes) : 'News';
+        let description: string
+        description = types ? toTitleCase(cleanedTypes) : 'News'
 
         if (categories) {
-            description = `${description} categorized as ${fixedCategories}`;
+            description = `${description} categorized as ${fixedCategories}`
         }
 
         // Link
-        let link = 'https://www.nyc.gov/mayors-office/news/?';
+        let link = 'https://www.nyc.gov/mayors-office/news/?'
         if (types) {
-            link = `${link}types=${types.replaceAll(',', '&types=')}`;
+            link = `${link}types=${types.replaceAll(',', '&types=')}`
         }
 
         if (categories) {
             if (types) {
-                link = `${link}&`;
+                link = `${link}&`
             }
-            link = `${link}categories=${categories.replaceAll(',', '&categories=')}`;
+            link = `${link}categories=${categories.replaceAll(',', '&categories=')}`
         }
 
         return {
@@ -142,14 +142,14 @@ Categories
             description: `${description} from the NYC Office of the Mayor`,
             link,
             item: items,
-        };
+        }
     },
-};
+}
 
-const fixCategoryName = (categoryName: string) => (categoryName === 'housing-development' || categoryName === 'culture-recreation' ? categoryName.replace('-', ' and ') : categoryName);
+const fixCategoryName = (categoryName: string) => (categoryName === 'housing-development' || categoryName === 'culture-recreation' ? categoryName.replace('-', ' and ') : categoryName)
 
 const spacedToTitleCase = (s: string) =>
     s
         .split(' ')
         .map((part) => toTitleCase(part))
-        .join(' ');
+        .join(' ')

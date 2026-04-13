@@ -1,50 +1,50 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const BASE_URL = 'https://www.txks.org.cn/index/work.html';
+const BASE_URL = 'https://www.txks.org.cn/index/work.html'
 
 const removeFontPresetting = (html: string = ''): string => {
-    const $ = load(html);
+    const $ = load(html)
     $('[style]').each((_, element) => {
-        const style = $(element).attr('style') || '';
-        const cleanedStyle = style.replaceAll(/font-family:[^;]*;?/gi, '').trim();
-        $(element).attr('style', cleanedStyle || null);
-    });
+        const style = $(element).attr('style') || ''
+        const cleanedStyle = style.replaceAll(/font-family:[^;]*;?/gi, '').trim()
+        $(element).attr('style', cleanedStyle || null)
+    })
     $('style').each((_, styleElement) => {
-        const cssText = $(styleElement).html() || '';
-        const cleanedCssText = cssText.replaceAll(/font-family:[^;]*;?/gi, '');
-        $(styleElement).html(cleanedCssText);
-    });
+        const cssText = $(styleElement).html() || ''
+        const cleanedCssText = cssText.replaceAll(/font-family:[^;]*;?/gi, '')
+        $(styleElement).html(cleanedCssText)
+    })
 
-    return $.html();
-};
+    return $.html()
+}
 
 const handler: Route['handler'] = async () => {
     // Fetch the index page
-    const { data: listResponse } = await got(BASE_URL);
-    const $ = load(listResponse);
+    const { data: listResponse } = await got(BASE_URL)
+    const $ = load(listResponse)
 
     // Select all list items containing news information
-    const ITEM_SELECTOR = 'ul[class*="newsList"] > li';
-    const listItems = $(ITEM_SELECTOR);
+    const ITEM_SELECTOR = 'ul[class*="newsList"] > li'
+    const listItems = $(ITEM_SELECTOR)
 
     // Map through each list item to extract details
     const contentLinkList = listItems.toArray().map((element) => {
-        const date = $(element).find('label.time').text().trim().slice(1, -1);
-        const title = $(element).find('a').attr('title')!;
-        const link = $(element).find('a').attr('href')!;
+        const date = $(element).find('label.time').text().trim().slice(1, -1)
+        const title = $(element).find('a').attr('title')!
+        const link = $(element).find('a').attr('href')!
 
-        const formattedDate = parseDate(date);
+        const formattedDate = parseDate(date)
         return {
             date: formattedDate,
             title,
             link,
-        };
-    });
+        }
+    })
 
     return {
         title: '全国通信专业技术人员职业水平考试',
@@ -54,10 +54,10 @@ const handler: Route['handler'] = async () => {
         item: (await Promise.all(
             contentLinkList.map((item) =>
                 cache.tryGet(item.link, async () => {
-                    const CONTENT_SELECTOR = '#contentTxt';
-                    const { data: contentResponse } = await got(item.link);
-                    const contentPage = load(contentResponse);
-                    const content = removeFontPresetting(contentPage(CONTENT_SELECTOR).html() || '');
+                    const CONTENT_SELECTOR = '#contentTxt'
+                    const { data: contentResponse } = await got(item.link)
+                    const contentPage = load(contentResponse)
+                    const content = removeFontPresetting(contentPage(CONTENT_SELECTOR).html() || '')
                     return {
                         title: item.title,
                         pubDate: item.date,
@@ -70,16 +70,16 @@ const handler: Route['handler'] = async () => {
                         content,
                         updated: item.date,
                         language: 'zh-CN',
-                    };
-                })
-            )
+                    }
+                }),
+            ),
         )) as DataItem[],
         allowEmpty: true,
         language: 'zh-CN',
         feedLink: 'https://rsshub.app/txks/news',
         id: 'https://rsshub.app/txks/news',
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/news',
@@ -105,4 +105,4 @@ export const route: Route = {
         },
     ],
     example: '/txks/news',
-};
+}

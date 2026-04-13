@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type QuestionDescriptionProps = {
     question: {
-        difficulty: string;
-        date: string;
-        tags: string;
-    };
-};
+        difficulty: string
+        date: string
+        tags: string
+    }
+}
 
 const QuestionDescription = ({ question }: QuestionDescriptionProps) => (
     <div>
@@ -17,6 +17,6 @@ const QuestionDescription = ({ question }: QuestionDescriptionProps) => (
         <br />
         <br />
     </div>
-);
+)
 
-export const renderQuestionDescription = (props: QuestionDescriptionProps): string => renderToString(<QuestionDescription {...props} />);
+export const renderQuestionDescription = (props: QuestionDescriptionProps): string => renderToString(<QuestionDescription {...props} />)

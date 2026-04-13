@@ -1,38 +1,38 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'ywgg/tzgg' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10);
+    const { category = 'ywgg/tzgg' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10)
 
-    const baseUrl = 'https://www.cccmc.org.cn';
-    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href;
+    const baseUrl = 'https://www.cccmc.org.cn'
+    const targetUrl: string = new URL(category.endsWith('/') ? category : `${category}/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
-    const regex = /\{url:'(.*)',title:'(.*)',time:'(.*)'\},/g;
+    const regex = /\{url:'(.*)',title:'(.*)',time:'(.*)'\},/g
 
     let items: DataItem[] =
         response
             .match(regex)
             ?.slice(0, limit)
             .map((item): DataItem => {
-                const matches = item.match(/'(.*?)'/);
+                const matches = item.match(/'(.*?)'/)
 
-                const title: string = matches?.[2] ?? '';
-                const pubDateStr: string | undefined = matches?.[3];
-                const linkUrl: string | undefined = matches?.[1];
-                const upDatedStr: string | undefined = pubDateStr;
+                const title: string = matches?.[2] ?? ''
+                const pubDateStr: string | undefined = matches?.[3]
+                const linkUrl: string | undefined = matches?.[1]
+                const upDatedStr: string | undefined = pubDateStr
 
                 const processedItem: DataItem = {
                     title,
@@ -40,34 +40,34 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     link: linkUrl ? new URL(linkUrl, baseUrl).href : undefined,
                     updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                     language,
-                };
+                }
 
-                return processedItem;
-            }) ?? [];
+                return processedItem
+            }) ?? []
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.title').text();
-                    const description: string = $$('div#article-content').html() ?? '';
-                    const pubDateStr: string | undefined = $$('span.time').text().split(/：/).pop();
-                    const authorEls: Element[] = $$('span.form, span.from').toArray();
+                    const title: string = $$('div.title').text()
+                    const description: string = $$('div#article-content').html() ?? ''
+                    const pubDateStr: string | undefined = $$('span.time').text().split(/：/).pop()
+                    const authorEls: Element[] = $$('span.form, span.from').toArray()
                     const authors: DataItem['author'] = authorEls.map((authorEl) => {
-                        const $$authorEl: Cheerio<Element> = $$(authorEl);
+                        const $$authorEl: Cheerio<Element> = $$(authorEl)
 
                         return {
                             name: $$authorEl.text().split(/：/).pop() ?? $$authorEl.text(),
-                        };
-                    });
-                    const upDatedStr: string | undefined = pubDateStr;
+                        }
+                    })
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -80,18 +80,18 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -103,8 +103,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/-/)?.pop()?.trim(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -168,9 +168,9 @@ export const route: Route = {
         {
             source: ['www.cccmc.org.cn/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/cccmc${category ? `/${category}` : ''}`;
+                return `/cccmc${category ? `/${category}` : ''}`
             },
         },
         {
@@ -260,4 +260,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

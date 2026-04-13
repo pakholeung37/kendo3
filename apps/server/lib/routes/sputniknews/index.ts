@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 const languages = {
     english: 'https://sputniknews.com',
@@ -36,7 +36,7 @@ const languages = {
     japanese: 'https://jp.sputniknews.com',
     chinese: 'http://sputniknews.cn',
     portuguese: 'https://br.sputniknews.com',
-};
+}
 
 export const route: Route = {
     path: '/:category?/:language?',
@@ -100,32 +100,32 @@ export const route: Route = {
 | Japanese    | japanese    |
 | Chinese     | chinese     |
 | Portuguese  | portuguese  |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'news';
-    const language = ctx.req.param('language') ?? 'english';
+    const category = ctx.req.param('category') ?? 'news'
+    const language = ctx.req.param('language') ?? 'english'
 
-    const rootUrl = languages[language];
-    const currentUrl = `${rootUrl}/services/${category}/more.html`;
+    const rootUrl = languages[language]
+    const currentUrl = `${rootUrl}/services/${category}/more.html`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.list__title')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${rootUrl}${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -133,29 +133,29 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.pubDate = parseDate(content('a[data-unixtime]').attr('data-unixtime') * 1000);
+                item.pubDate = parseDate(content('a[data-unixtime]').attr('data-unixtime') * 1000)
 
                 item.category = content('.tag__text')
                     .toArray()
-                    .map((tag) => content(tag).text());
+                    .map((tag) => content(tag).text())
 
-                content('.article__meta, .article__title, .article__info, .article__quote-bg, .article__google-news, .article__footer, .m-buy, .photoview__ext-link').remove();
-                content('div[data-type="article"]').remove();
+                content('.article__meta, .article__title, .article__info, .article__quote-bg, .article__google-news, .article__footer, .m-buy, .photoview__ext-link').remove()
+                content('div[data-type="article"]').remove()
 
-                item.description = content('.article').html();
+                item.description = content('.article').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${category} - Sputnik News`,
         link: `${rootUrl}/${category}`,
         item: items,
-    };
+    }
 }

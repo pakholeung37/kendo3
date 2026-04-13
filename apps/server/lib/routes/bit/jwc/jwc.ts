@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import util from './utils';
+import util from './utils'
 
 export const route: Route = {
     path: '/jwc',
@@ -28,25 +28,25 @@ export const route: Route = {
     maintainers: ['sinofp'],
     handler,
     url: 'jwc.bit.edu.cn/tzgg',
-};
+}
 
 async function handler() {
-    const link = 'https://jwc.bit.edu.cn/tzgg/';
+    const link = 'https://jwc.bit.edu.cn/tzgg/'
     const response = await got({
         method: 'get',
         url: link,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
-    const list = $('li.gpTextArea').toArray();
+    const list = $('li.gpTextArea').toArray()
 
-    const result = await util.ProcessFeed(list, cache);
+    const result = await util.ProcessFeed(list, cache)
 
     return {
         title: $('title').text(),
         link,
         description: '北京理工大学教务部',
         item: result,
-    };
+    }
 }

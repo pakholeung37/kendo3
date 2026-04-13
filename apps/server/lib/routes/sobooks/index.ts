@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/:category?',
@@ -34,10 +34,10 @@ export const route: Route = {
 | 学习教育 | xuexijiaoyu      |
 | 生活时尚 | shenghuoshishang |
 | 英文原版 | yingwenyuanban   |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
+    const category = ctx.req.param('category') ?? ''
 
-    return await utils(ctx, category);
+    return await utils(ctx, category)
 }

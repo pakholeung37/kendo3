@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/blog'],
@@ -25,7 +25,7 @@ export const route: Route = {
             source: ['cohere.com'],
         },
     ],
-};
+}
 
 async function handler() {
     const { posts: data } = await ofetch('https://cohere-ai.ghost.io/ghost/api/content/posts', {
@@ -35,7 +35,7 @@ async function handler() {
             include: ['authors', 'tags'],
             filter: 'tag:-hash-hidden+tag:-llmu',
         },
-    });
+    })
 
     const items = data.map((item) => ({
         title: item.title,
@@ -44,11 +44,11 @@ async function handler() {
         pubDate: parseDate(item.published_at),
         author: item.authors.map((author) => author.name).join(', '),
         category: item.tags.map((tag) => tag.name),
-    }));
+    }))
 
     return {
         title: 'The Cohere Blog',
         link: 'https://cohere.com/blog',
         item: items,
-    };
+    }
 }

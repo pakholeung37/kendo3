@@ -1,48 +1,48 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
-import { renderDescriptionSub } from './templates/description-sub';
+import { renderDescription } from './templates/description'
+import { renderDescriptionSub } from './templates/description-sub'
 
-export const baseUrl = 'https://visionias.in';
+export const baseUrl = 'https://visionias.in'
 
 export async function extractNews(item, selector) {
     if (item.link === '') {
-        return item;
+        return item
     }
     return await cache.tryGet(item.link, async () => {
-        const response = await ofetch(item.link || '');
-        const $$ = load(response);
-        const postedDate = String($$('meta[property="article:published_time"]').attr('content'));
-        const updatedDate = String($$('meta[property="article:modified_time"]').attr('content'));
+        const response = await ofetch(item.link || '')
+        const $$ = load(response)
+        const postedDate = String($$('meta[property="article:published_time"]').attr('content'))
+        const updatedDate = String($$('meta[property="article:modified_time"]').attr('content'))
         const tags = $$('meta[property="article:tag"]')
             .toArray()
-            .map((tag) => $$(tag).attr('content'));
-        const content = $$(selector);
-        const heading = content.find('div.space-y-4 > h1').text();
-        const mainGroup = content.find('div.flex > div.w-full');
+            .map((tag) => $$(tag).attr('content'))
+        const content = $$(selector)
+        const heading = content.find('div.space-y-4 > h1').text()
+        const mainGroup = content.find('div.flex > div.w-full')
 
-        const shortArticles = mainGroup.find('[x-data^="{isShortArticleOpen"]');
-        const sections = mainGroup.find('[x-data^="{isSectionOpen"]');
+        const shortArticles = mainGroup.find('[x-data^="{isShortArticleOpen"]')
+        const sections = mainGroup.find('[x-data^="{isSectionOpen"]')
         if (shortArticles.length !== 0) {
             const items = shortArticles.toArray().map((element) => {
-                const mainDiv = $$(element);
-                const title = mainDiv.find('a > div > h2').text().trim();
-                const id = mainDiv.find('a').attr('href');
-                const htmlContent = extractArticle(mainDiv.html());
+                const mainDiv = $$(element)
+                const title = mainDiv.find('a > div > h2').text().trim()
+                const id = mainDiv.find('a').attr('href')
+                const htmlContent = extractArticle(mainDiv.html())
                 const innerTags = mainDiv
                     .find('ul > li:contains("Tags :")')
                     ?.nextAll('li')
                     .toArray()
-                    .map((tag) => $$(tag).text());
+                    .map((tag) => $$(tag).text())
                 const description = renderDescription({
                     heading: title,
                     articleContent: htmlContent,
-                });
+                })
                 return {
                     title: `${title} | ${heading}`,
                     pubDate: parseDate(postedDate),
@@ -50,15 +50,15 @@ export async function extractNews(item, selector) {
                     description,
                     link: `${item.link}${id}`,
                     author: 'Vision IAS',
-                } as DataItem;
-            });
-            return items;
+                } as DataItem
+            })
+            return items
         } else if (sections.length === 0) {
-            const htmlContent = extractArticle(mainGroup.html());
+            const htmlContent = extractArticle(mainGroup.html())
             const description = renderDescription({
                 heading,
                 articleContent: htmlContent,
-            });
+            })
             return {
                 title: item.title,
                 pubDate: parseDate(postedDate),
@@ -67,22 +67,22 @@ export async function extractNews(item, selector) {
                 link: item.link,
                 updated: updatedDate ? parseDate(updatedDate) : null,
                 author: 'Vision IAS',
-            } as DataItem;
+            } as DataItem
         } else {
             const items = sections.toArray().map((element) => {
-                const mainDiv = $$(element);
-                const title = mainDiv.find('a > div > h2').text().trim();
-                const htmlContent = extractArticle(mainDiv.html(), 'div.ck-content');
+                const mainDiv = $$(element)
+                const title = mainDiv.find('a > div > h2').text().trim()
+                const htmlContent = extractArticle(mainDiv.html(), 'div.ck-content')
                 const description = renderDescriptionSub({
                     heading: title,
                     articleContent: htmlContent,
-                });
-                return { description };
-            });
+                })
+                return { description }
+            })
             const description = renderDescription({
                 heading,
                 subItems: items,
-            });
+            })
             return {
                 title: heading,
                 pubDate: parseDate(postedDate),
@@ -91,18 +91,18 @@ export async function extractNews(item, selector) {
                 link: item.link,
                 updated: updatedDate ? parseDate(updatedDate) : null,
                 author: 'Vision IAS',
-            } as DataItem;
+            } as DataItem
         }
-    });
+    })
 }
 
 function extractArticle(articleDiv, selectorString: string = 'div.ck-content') {
-    const $ = load(articleDiv, null, false);
-    const articleDiv$ = $(articleDiv);
-    const articleContent = articleDiv$.find(String(selectorString));
+    const $ = load(articleDiv, null, false)
+    const articleDiv$ = $(articleDiv)
+    const articleContent = articleDiv$.find(String(selectorString))
     articleContent.find('figure').each((_, element) => {
-        $(element).css('width', '');
-    });
-    const htmlContent = articleContent.html();
-    return htmlContent;
+        $(element).css('width', '')
+    })
+    const htmlContent = articleContent.html()
+    return htmlContent
 }

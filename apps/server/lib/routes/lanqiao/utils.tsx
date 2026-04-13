@@ -1,4 +1,4 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 const courseDesc = (picurl, desc) =>
     renderToString(
@@ -6,7 +6,7 @@ const courseDesc = (picurl, desc) =>
             <img src={picurl} />
             <br />
             {desc}
-        </>
-    );
+        </>,
+    )
 
-export default { courseDesc };
+export default { courseDesc }

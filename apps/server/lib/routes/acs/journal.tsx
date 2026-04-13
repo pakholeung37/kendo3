@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
 export const route: Route = {
     path: '/journal/:id',
@@ -18,44 +18,44 @@ export const route: Route = {
     name: 'Unknown',
     maintainers: ['nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '';
+    const id = ctx.req.param('id') ?? ''
 
-    const rootUrl = 'https://pubs.acs.org';
-    const currentUrl = `${rootUrl}/toc/${id}/0/0`;
+    const rootUrl = 'https://pubs.acs.org'
+    const currentUrl = `${rootUrl}/toc/${id}/0/0`
 
-    let title = '';
+    let title = ''
 
-    const browser = await puppeteer();
+    const browser = await puppeteer()
     const items = await cache.tryGet(
         currentUrl,
         async () => {
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
+            const page = await browser.newPage()
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
-            });
+                request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort()
+            })
             await page.goto(currentUrl, {
                 waitUntil: 'domcontentloaded',
-            });
-            await page.waitForSelector('.toc');
+            })
+            await page.waitForSelector('.toc')
 
-            const html = await page.evaluate(() => document.documentElement.innerHTML);
-            await page.close();
+            const html = await page.evaluate(() => document.documentElement.innerHTML)
+            await page.close()
 
-            const $ = load(html);
+            const $ = load(html)
 
-            title = $('meta[property="og:title"]').attr('content');
+            title = $('meta[property="og:title"]').attr('content')
 
             return $('.issue-item')
                 .toArray()
                 .map((item) => {
-                    item = $(item);
+                    item = $(item)
 
-                    const a = item.find('.issue-item_title a');
-                    const doi = item.find('input[name="doi"]').attr('value');
+                    const a = item.find('.issue-item_title a')
+                    const doi = item.find('input[name="doi"]').attr('value')
 
                     return {
                         doi,
@@ -69,20 +69,20 @@ async function handler(ctx) {
                             .map((a) => $(a).text())
                             .join(', '),
                         description: renderDescription(item.find('.issue-item_img').html(), item.find('.hlFld-Abstract').html()),
-                    };
-                });
+                    }
+                })
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    await browser.close();
+    await browser.close()
 
     return {
         title,
         link: currentUrl,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (image: string | null, description: string | null): string =>
@@ -90,5 +90,5 @@ const renderDescription = (image: string | null, description: string | null): st
         <>
             {image ? raw(image) : null}
             {description ? raw(description) : null}
-        </>
-    );
+        </>,
+    )

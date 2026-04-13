@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:id',
@@ -31,29 +31,29 @@ export const route: Route = {
 ::: tip
   More jounals can be found in [Browse Journals](https://www.annualreviews.org/action/showPublications).
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://www.annualreviews.org';
-    const apiRootUrl = `https://api.crossref.org`;
-    const feedUrl = `${rootUrl}/r/${id}_rss`;
-    const currentUrl = `${rootUrl}/toc/${id}/current`;
+    const rootUrl = 'https://www.annualreviews.org'
+    const apiRootUrl = `https://api.crossref.org`
+    const feedUrl = `${rootUrl}/r/${id}_rss`
+    const currentUrl = `${rootUrl}/toc/${id}/current`
 
     const response = await got({
         method: 'get',
         url: feedUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('entry')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const doi = item.find('id').text().split('doi=').pop();
+            const doi = item.find('id').text().split('doi=').pop()
 
             return {
                 doi,
@@ -67,25 +67,25 @@ async function handler(ctx) {
                     .toArray()
                     .map((a) => $(a).text())
                     .join(', '),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.guid, async () => {
-                const apiUrl = `${apiRootUrl}/works/${item.doi}`;
+                const apiUrl = `${apiRootUrl}/works/${item.doi}`
 
                 const detailResponse = await got({
                     method: 'get',
                     url: apiUrl,
-                });
+                })
 
-                item.description = detailResponse.data.message.abstract.replaceAll('jats:p>', 'p>');
+                item.description = detailResponse.data.message.abstract.replaceAll('jats:p>', 'p>')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title')
@@ -96,5 +96,5 @@ async function handler(ctx) {
         link: currentUrl,
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }

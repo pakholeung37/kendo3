@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:channel',
@@ -31,11 +31,11 @@ export const route: Route = {
 | 广州   | 353 |
 | 湾区   | 360 |
 | 天下   | 355 |`,
-};
+}
 
 async function handler(ctx) {
-    const channel = ctx.req.param('channel') ?? 350;
-    const currentUrl = `https://www.xkb.com.cn/xkbapp/fundapi/article/api/articles?chnlId=${channel}&visibility=1&page=0&size=20&keyword=`;
+    const channel = ctx.req.param('channel') ?? 350
+    const currentUrl = `https://www.xkb.com.cn/xkbapp/fundapi/article/api/articles?chnlId=${channel}&visibility=1&page=0&size=20&keyword=`
 
     const { data: response } = await got({
         method: 'get',
@@ -43,7 +43,7 @@ async function handler(ctx) {
         headers: {
             siteId: 35,
         },
-    });
+    })
 
     const list = response.data
         .filter((i) => i.contentUrl) // Remove "专题报道" (special report)
@@ -57,16 +57,16 @@ async function handler(ctx) {
                             <br />
                         </>
                     ) : null}
-                </>
+                </>,
             ),
             pubDate: timezone(parseDate(item.operTime), +8),
             link: 'https://www.xkb.com.cn/detail?id=' + item.id,
             contentUrl: item.contentUrl,
             author: item.metaInfo.author,
             chnlName: item.metaInfo.chnlName,
-        }));
+        }))
 
-    let chnlName = '';
+    let chnlName = ''
 
     const items = await Promise.all(
         list.map((item) =>
@@ -74,17 +74,17 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.contentUrl,
-                });
-                item.description += detailResponse.data.htmlContent ?? '';
-                chnlName = chnlName === '' ? item.chnlName : chnlName;
-                return item;
-            })
-        )
-    );
+                })
+                item.description += detailResponse.data.htmlContent ?? ''
+                chnlName = chnlName === '' ? item.chnlName : chnlName
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `新快报新快网 - ${chnlName}`,
         link: `https://www.xkb.com.cn/home?id=${channel}`,
         item: items,
-    };
+    }
 }

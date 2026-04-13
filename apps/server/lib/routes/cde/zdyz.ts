@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
-const baseUrl = 'https://www.cde.org.cn';
+const baseUrl = 'https://www.cde.org.cn'
 const zdyzMap = {
     zdyz: {
         domesticGuide: {
@@ -38,7 +38,7 @@ const zdyzMap = {
             },
         },
     },
-};
+}
 
 export const route: Route = {
     path: '/zdyz/:category',
@@ -59,10 +59,10 @@ export const route: Route = {
     description: `|    发布通告   |   征求意见  |
 | :-----------: | :---------: |
 | domesticGuide | opinionList |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category');
+    const category = ctx.req.param('category')
 
     const { data } = await got.post(`${baseUrl}${zdyzMap.zdyz[category].endPoint}`, {
         form: zdyzMap.zdyz[category].form,
@@ -70,13 +70,13 @@ async function handler(ctx) {
             referer: zdyzMap.zdyz[category].url,
             cookie: await utils.getCookie(ctx),
         },
-    });
+    })
 
     const list = data.data.records.map((item) => ({
         title: item.title,
         pubDate: parseDate(item.issueDate),
         link: item.externalLinks,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -86,17 +86,17 @@ async function handler(ctx) {
                         referer: zdyzMap.zdyz[category].url,
                         cookie: await utils.getCookie(ctx),
                     },
-                });
-                const $ = load(response.data);
-                item.description = $('.new_detail_content').html() + $('.relatedNews').html();
-                return item;
-            })
-        )
-    );
+                })
+                const $ = load(response.data)
+                item.description = $('.new_detail_content').html() + $('.relatedNews').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${zdyzMap.zdyz[category].title} - 国家药品监督管理局药品审评中心`,
         link: zdyzMap.zdyz[category].url,
         item: items,
-    };
+    }
 }

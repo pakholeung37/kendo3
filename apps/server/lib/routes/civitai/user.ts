@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/user/:username/articles',
@@ -19,19 +19,19 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { username } = ctx.req.param();
+    const { username } = ctx.req.param()
 
     const userProfile = await cache.tryGet(`civitai:userProfile:${username}`, async () => {
         const response = await ofetch('https://civitai.com/api/trpc/userProfile.get', {
             query: {
                 input: JSON.stringify({ json: { username } }),
             },
-        });
-        return response.result.data.json;
-    });
+        })
+        return response.result.data.json
+    })
 
     const article = await ofetch('https://civitai.com/api/trpc/article.getInfinite', {
         query: {
@@ -50,10 +50,10 @@ async function handler(ctx) {
                 meta: { values: { cursor: ['undefined'] } },
             }),
         },
-    });
+    })
 
     if (!article.result.data.json.items.length) {
-        throw new Error('This user has no articles.');
+        throw new Error('This user has no articles.')
     }
 
     const list = article.result.data.json.items.map((item) => ({
@@ -65,7 +65,7 @@ async function handler(ctx) {
         author: item.user?.username,
         category: item.tags.map((tag) => tag.name),
         image: `https://image.civitai.com/xG1nkqKTMzGDvpLrqFT7WA/${item.coverImage.url}/${item.coverImage.name}`,
-    }));
+    }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -74,14 +74,14 @@ async function handler(ctx) {
                     query: {
                         input: JSON.stringify({ json: { id: item.id } }),
                     },
-                });
+                })
 
-                item.description = response.result.data.json.content;
+                item.description = response.result.data.json.content
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${username} Creator Profile | Civitai`,
@@ -89,5 +89,5 @@ async function handler(ctx) {
         link: `https://civitai.com/user/${username}/articles`,
         image: userProfile.image,
         item: items,
-    };
+    }
 }

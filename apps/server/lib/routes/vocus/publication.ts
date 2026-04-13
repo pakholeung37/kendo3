@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiUrl, baseUrl, ProcessFeed, processList } from './utils';
+import { apiUrl, baseUrl, ProcessFeed, processList } from './utils'
 
 export const route: Route = {
     path: '/publication/:id',
@@ -25,24 +25,24 @@ export const route: Route = {
     name: '出版專題',
     maintainers: ['Maecenas'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const link = `${baseUrl}/${id}/home`;
+    const id = ctx.req.param('id')
+    const link = `${baseUrl}/${id}/home`
 
     const publicationData = await cache.tryGet(`vocus:publication:${id}`, async () => {
         const { data: publicationData } = await got(`${apiUrl}/api/publication/${id}`, {
             headers: {
                 referer: link,
             },
-        });
+        })
         return {
             _id: publicationData._id,
             title: publicationData.title,
             abstract: publicationData.abstract,
-        };
-    });
+        }
+    })
 
     const {
         data: { articles },
@@ -53,16 +53,16 @@ async function handler(ctx) {
         searchParams: {
             publicationId: publicationData._id,
         },
-    });
+    })
 
-    const list = processList(articles);
+    const list = processList(articles)
 
-    const items = await ProcessFeed(list, cache.tryGet);
+    const items = await ProcessFeed(list, cache.tryGet)
 
     return {
         title: `${publicationData.title} - 文章列表｜方格子 vocus`,
         link,
         description: publicationData.abstract,
         item: items,
-    };
+    }
 }

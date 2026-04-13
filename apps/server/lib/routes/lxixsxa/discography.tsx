@@ -1,11 +1,11 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseJSONP } from './jsonp-helper';
+import { parseJSONP } from './jsonp-helper'
 
 export const route: Route = {
     path: '/disco',
@@ -29,18 +29,18 @@ export const route: Route = {
     maintainers: ['Kiotlin'],
     handler,
     url: 'www.lxixsxa.com/',
-};
+}
 
 async function handler() {
-    const api = 'https://www.sonymusic.co.jp/json/v2/artist/lisa/discography/start/0/count/-1';
-    const url = 'https://www.sonymusic.co.jp/artist/lisa/discography';
+    const api = 'https://www.sonymusic.co.jp/json/v2/artist/lisa/discography/start/0/count/-1'
+    const url = 'https://www.sonymusic.co.jp/artist/lisa/discography'
 
-    const title = 'LATEST DISCOGRAPHY';
+    const title = 'LATEST DISCOGRAPHY'
 
     const response = await got({
         method: 'get',
         url: api,
-    });
+    })
 
     const data = parseJSONP(response.data).items.map((item) => ({
         title: item.title,
@@ -51,7 +51,7 @@ async function handler() {
         price: item.price === '' ? 'Unknown Yet' : item.price + ' (Tax Inclusive)',
         description: item.comment,
         comment: item.catch_copy === '' ? '今日もいい日だ！' : item.catch_copy,
-    }));
+    }))
 
     return {
         // the source title
@@ -72,12 +72,12 @@ async function handler() {
                     </span>
                     {item.imageLink ? <img src={item.imageLink} /> : null}
                     {item.description ? raw(item.description) : null}
-                </>
+                </>,
             ),
             // the article publish time
             pubDate: parseDate(item.releaseDate),
             // the article link
             link: `${url}/${item.referID}`,
         })),
-    };
+    }
 }

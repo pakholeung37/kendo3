@@ -1,47 +1,47 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { buildApiUrl, processItems, rootUrl } from './util';
+import { buildApiUrl, processItems, rootUrl } from './util'
 
 export const handler = async (ctx) => {
-    const { id } = ctx.req.param();
+    const { id } = ctx.req.param()
 
-    const [pid, sid] = id?.split(/-/) ?? [undefined, undefined];
+    const [pid, sid] = id?.split(/-/) ?? [undefined, undefined]
 
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const currentUrl = new URL(`discover${id ? `/${id}` : ''}`, rootUrl).href;
+    const currentUrl = new URL(`discover${id ? `/${id}` : ''}`, rootUrl).href
 
-    const currentHtml = await ofetch(currentUrl);
+    const currentHtml = await ofetch(currentUrl)
 
-    const $ = load(currentHtml);
+    const $ = load(currentHtml)
 
-    const { apiRecommListUrl, apiRecommProcUrl, apiTagProcUrl } = await buildApiUrl($);
+    const { apiRecommListUrl, apiRecommProcUrl, apiTagProcUrl } = await buildApiUrl($)
 
-    let ptag, stag;
-    let isTag = !!(pid && sid);
+    let ptag, stag
+    let isTag = !!(pid && sid)
 
     if (isTag) {
-        const apiRecommList = await ofetch(apiRecommListUrl);
+        const apiRecommList = await ofetch(apiRecommListUrl)
 
-        const recommList = apiRecommList?.data?.results ?? [];
+        const recommList = apiRecommList?.data?.results ?? []
 
-        const parentTag = recommList.find((t) => String(t.Id) === pid);
-        const subTag = parentTag ? parentTag.sublist.find((t) => String(t.Id) === sid) : undefined;
+        const parentTag = recommList.find((t) => String(t.Id) === pid)
+        const subTag = parentTag ? parentTag.sublist.find((t) => String(t.Id) === sid) : undefined
 
-        ptag = parentTag?.tag ?? parentTag?.alias ?? undefined;
-        stag = subTag?.tag ?? subTag?.alias ?? undefined;
+        ptag = parentTag?.tag ?? parentTag?.alias ?? undefined
+        stag = subTag?.tag ?? subTag?.alias ?? undefined
 
-        isTag = !!(ptag && stag);
+        isTag = !!(ptag && stag)
     }
 
     const query = {
         page: 1,
         pagesize: limit,
         ticket: '',
-    };
+    }
 
     const {
         data: { results: apiProcs },
@@ -59,13 +59,13 @@ export const handler = async (ctx) => {
                   f: 'id',
                   o: 'desc',
               },
-          }));
+          }))
 
-    const items = processItems(apiProcs?.slice(0, limit) ?? []);
+    const items = processItems(apiProcs?.slice(0, limit) ?? [])
 
-    const image = new URL($('img.logo').prop('src'), rootUrl).href;
+    const image = new URL($('img.logo').prop('src'), rootUrl).href
 
-    const author = $('title').text().split(/_/).pop();
+    const author = $('title').text().split(/_/).pop()
 
     return {
         title: `${author}${isTag ? ` | ${ptag} - ${stag}` : ''}`,
@@ -75,8 +75,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image,
         author,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/discover/:id?',
@@ -204,9 +204,9 @@ export const route: Route = {
         {
             source: ['top.aibase.com/discover/:id'],
             target: (params) => {
-                const id = params.id;
+                const id = params.id
 
-                return `/discover${id ? `/${id}` : ''}`;
+                return `/discover${id ? `/${id}` : ''}`
             },
         },
         {
@@ -385,4 +385,4 @@ export const route: Route = {
             target: '/discover/138-139',
         },
     ],
-};
+}

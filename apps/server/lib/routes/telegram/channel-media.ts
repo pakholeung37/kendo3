@@ -1,17 +1,17 @@
-import type { Context } from 'hono';
-import { stream } from 'hono/streaming';
-import type { TelegramClient } from 'telegram';
-import { Api } from 'telegram';
-import type { IterDownloadFunction } from 'telegram/client/downloads.js';
-import { returnBigInt as bigInt } from 'telegram/Helpers.js';
-import { getAppropriatedPartSize } from 'telegram/Utils.js';
+import type { Context } from 'hono'
+import { stream } from 'hono/streaming'
+import type { TelegramClient } from 'telegram'
+import { Api } from 'telegram'
+import type { IterDownloadFunction } from 'telegram/client/downloads.js'
+import { returnBigInt as bigInt } from 'telegram/Helpers.js'
+import { getAppropriatedPartSize } from 'telegram/Utils.js'
 
-import { config } from '@/config';
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cacheModule from '@/utils/cache/index';
+import { config } from '@/config'
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cacheModule from '@/utils/cache/index'
 
-import { getClient, getDocument, getFilename, unwrapMedia } from './tglib/client';
+import { getClient, getDocument, getFilename, unwrapMedia } from './tglib/client'
 
 /**
  * https://core.telegram.org/api/files#stripped-thumbnails
@@ -20,7 +20,7 @@ import { getClient, getDocument, getFilename, unwrapMedia } from './tglib/client
  */
 function ExpandInlineBytes(bytes: Buffer) {
     if (bytes.length < 3 || bytes[0] !== 0x1) {
-        throw new Error('cannot inflate a stripped jpeg');
+        throw new Error('cannot inflate a stripped jpeg')
     }
     const header = Buffer.from([
         0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x28, 0x1c, 0x1e, 0x23, 0x1e, 0x19, 0x28, 0x23, 0x21, 0x23, 0x2d, 0x2b,
@@ -40,53 +40,53 @@ function ExpandInlineBytes(bytes: Buffer) {
         0x58, 0x59, 0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a,
         0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe2,
         0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xff, 0xda, 0x00, 0x0c, 0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00,
-    ]);
-    const footer = Buffer.from([0xff, 0xd9]);
-    const real = Buffer.alloc(header.length + bytes.length + footer.length);
-    header.copy(real);
-    bytes.copy(real, header.length, 3);
-    bytes.copy(real, 164, 1, 2);
-    bytes.copy(real, 166, 2, 3);
-    footer.copy(real, header.length + bytes.length, 0);
-    return real;
+    ])
+    const footer = Buffer.from([0xff, 0xd9])
+    const real = Buffer.alloc(header.length + bytes.length + footer.length)
+    header.copy(real)
+    bytes.copy(real, header.length, 3)
+    bytes.copy(real, 164, 1, 2)
+    bytes.copy(real, 166, 2, 3)
+    footer.copy(real, header.length + bytes.length, 0)
+    return real
 }
 
 function sortThumb(thumb: Api.TypePhotoSize) {
     if (thumb instanceof Api.PhotoStrippedSize) {
-        return thumb.bytes.length;
+        return thumb.bytes.length
     }
     if (thumb instanceof Api.PhotoCachedSize) {
-        return thumb.bytes.length;
+        return thumb.bytes.length
     }
     if (thumb instanceof Api.PhotoSize) {
-        return thumb.size;
+        return thumb.size
     }
     if (thumb instanceof Api.PhotoSizeProgressive) {
-        return Math.max(...thumb.sizes);
+        return Math.max(...thumb.sizes)
     }
-    return 0;
+    return 0
 }
 
 function chooseLargestThumb(thumbs: Api.TypePhotoSize[]) {
-    thumbs = [...thumbs].toSorted((a, b) => sortThumb(a) - sortThumb(b));
-    return thumbs.pop();
+    thumbs = [...thumbs].toSorted((a, b) => sortThumb(a) - sortThumb(b))
+    return thumbs.pop()
 }
 
 export async function* streamThumbnail(client: TelegramClient, doc: Api.Document) {
     if ((doc.thumbs?.length ?? 0) > 0) {
-        const size = chooseLargestThumb(doc.thumbs!);
+        const size = chooseLargestThumb(doc.thumbs!)
         if (size instanceof Api.PhotoCachedSize || size instanceof Api.PhotoStrippedSize) {
-            yield ExpandInlineBytes(size.bytes);
+            yield ExpandInlineBytes(size.bytes)
         } else {
-            yield* streamDocument(client, doc, size && 'type' in size ? size.type : '');
+            yield* streamDocument(client, doc, size && 'type' in size ? size.type : '')
         }
-        return;
+        return
     }
-    throw new Error('no thumbnails available');
+    throw new Error('no thumbnails available')
 }
 
 export async function* streamDocument(client: TelegramClient, obj: Api.Document, thumbSize = '', offset?: bigInt.BigInteger, limit?: bigInt.BigInteger) {
-    const chunkSize = (obj.size ? getAppropriatedPartSize(obj.size) : 64) * 1024;
+    const chunkSize = (obj.size ? getAppropriatedPartSize(obj.size) : 64) * 1024
     const iterFileParams: IterDownloadFunction = {
         file: new Api.InputDocumentFileLocation({
             id: obj.id,
@@ -99,68 +99,68 @@ export async function* streamDocument(client: TelegramClient, obj: Api.Document,
         dcId: obj.dcId,
         offset: undefined,
         limit: undefined,
-    };
+    }
     if (offset) {
-        iterFileParams.offset = offset;
+        iterFileParams.offset = offset
     }
     if (limit) {
-        iterFileParams.limit = limit.valueOf();
+        iterFileParams.limit = limit.valueOf()
     }
     // console.log('starting iterDownload');
-    const stream = client.iterDownload(iterFileParams);
-    yield* stream;
-    await stream.close();
+    const stream = client.iterDownload(iterFileParams)
+    yield* stream
+    await stream.close()
 }
 
 function parseRange(range: string, length: bigInt.BigInteger) {
     if (!range) {
-        return [];
+        return []
     }
-    const [typ, segstr] = range.split('=');
+    const [typ, segstr] = range.split('=')
     if (typ !== 'bytes') {
-        throw new InvalidParameterError(`unsupported range: ${typ}`);
+        throw new InvalidParameterError(`unsupported range: ${typ}`)
     }
-    const segs = segstr.split(',').map((s) => s.trim());
-    const parsedSegs: bigInt.BigInteger[][] = [];
+    const segs = segstr.split(',').map((s) => s.trim())
+    const parsedSegs: bigInt.BigInteger[][] = []
     for (const seg of segs) {
         const range = seg
             .split('-', 2)
             .filter((v) => !!v)
-            .map((v) => bigInt(v));
+            .map((v) => bigInt(v))
         if (range.length < 2) {
             if (seg.startsWith('-')) {
-                range.unshift(bigInt(0));
+                range.unshift(bigInt(0))
             } else {
-                range.push(length.subtract(bigInt(1)));
+                range.push(length.subtract(bigInt(1)))
             }
         }
-        parsedSegs.push(range);
+        parsedSegs.push(range)
     }
-    return parsedSegs;
+    return parsedSegs
 }
 
 export async function configureMiddlewares(ctx: Context) {
     // media is too heavy to cache in memory or redis, and lock-up is not needed
-    await cacheModule.set(ctx.get('cacheControlKey'), '0', config.cache.requestTimeout);
-    ctx.req.raw.headers.delete('Accept-Encoding'); // avoid hono compress() middleware detecting Accept-Encoding on req
+    await cacheModule.set(ctx.get('cacheControlKey'), '0', config.cache.requestTimeout)
+    ctx.req.raw.headers.delete('Accept-Encoding') // avoid hono compress() middleware detecting Accept-Encoding on req
 }
 
 function streamResponse(c: Context, bodyIter: AsyncGenerator<Buffer>) {
     return stream(c, async (stream) => {
-        let aborted = false;
+        let aborted = false
         stream.onAbort(() => {
             // console.log(`stream aborted`);
-            aborted = true;
-        });
+            aborted = true
+        })
         for await (const chunk of bodyIter) {
             if (aborted) {
-                break;
+                break
             }
             // console.log(`writing ${chunk.length / 1024}kB`);
-            await stream.write(chunk);
+            await stream.write(chunk)
         }
         // console.log(`done streamResponse`);
-    });
+    })
 }
 
 export const route: Route = {
@@ -191,62 +191,62 @@ export const route: Route = {
   Serves telegram media like pictures, video or files.
 :::
 `,
-};
+}
 
 export async function handleMedia(media: Api.TypeMessageMedia, client: TelegramClient, ctx: Context) {
     if (media instanceof Api.MessageMediaPhoto) {
-        const buf = await client.downloadMedia(media);
-        return new Response(buf, { headers: { 'Content-Type': 'image/jpeg' } });
+        const buf = await client.downloadMedia(media)
+        return new Response(buf, { headers: { 'Content-Type': 'image/jpeg' } })
     }
 
-    const doc = getDocument(media);
+    const doc = getDocument(media)
     if (doc) {
         if ('thumb' in ctx.req.query()) {
-            ctx.header('Content-Type', 'image/jpeg');
-            return streamResponse(ctx, streamThumbnail(client, doc));
+            ctx.header('Content-Type', 'image/jpeg')
+            return streamResponse(ctx, streamThumbnail(client, doc))
         }
-        ctx.header('Content-Type', doc.mimeType);
-        ctx.header('Accept-Ranges', 'bytes');
-        ctx.header('Content-Security-Policy', "default-src 'self'; script-src 'none'");
+        ctx.header('Content-Type', doc.mimeType)
+        ctx.header('Accept-Ranges', 'bytes')
+        ctx.header('Content-Security-Policy', "default-src 'self'; script-src 'none'")
 
-        const rangeHeader = ctx.req.header('Range') ?? '';
-        const range = parseRange(rangeHeader, doc.size);
+        const rangeHeader = ctx.req.header('Range') ?? ''
+        const range = parseRange(rangeHeader, doc.size)
         if (range.length > 1) {
-            return ctx.text('Not Satisfiable', 416);
+            return ctx.text('Not Satisfiable', 416)
         }
 
         if (range.length === 0) {
-            ctx.header('Content-Length', doc.size.toString());
+            ctx.header('Content-Length', doc.size.toString())
             if (!doc.mimeType.startsWith('video/') && !doc.mimeType.startsWith('audio/') && !doc.mimeType.startsWith('image/')) {
-                ctx.header('Content-Disposition', `attachment; filename="${encodeURIComponent(getFilename(media))}"`);
+                ctx.header('Content-Disposition', `attachment; filename="${encodeURIComponent(getFilename(media))}"`)
             }
-            return streamResponse(ctx, streamDocument(client, doc));
+            return streamResponse(ctx, streamDocument(client, doc))
         } else {
-            const [offset, limit] = range[0];
+            const [offset, limit] = range[0]
             // console.log(`Range: ${rangeHeader}`);
-            ctx.status(206); // partial content
-            ctx.header('Content-Length', limit.subtract(offset).add(1).toString());
-            ctx.header('Content-Range', `bytes ${offset}-${limit}/${doc.size}`);
-            return streamResponse(ctx, streamDocument(client, doc, '', offset, limit));
+            ctx.status(206) // partial content
+            ctx.header('Content-Length', limit.subtract(offset).add(1).toString())
+            ctx.header('Content-Range', `bytes ${offset}-${limit}/${doc.size}`)
+            return streamResponse(ctx, streamDocument(client, doc, '', offset, limit))
         }
     }
 
-    return ctx.text(media.className, 415);
+    return ctx.text(media.className, 415)
 }
 
 export default async function handler(ctx: Context) {
-    await configureMiddlewares(ctx);
-    const client = await getClient();
+    await configureMiddlewares(ctx)
+    const client = await getClient()
 
-    const { entityName, messageId } = ctx.req.param();
-    const entity = await client.getInputEntity(entityName);
+    const { entityName, messageId } = ctx.req.param()
+    const entity = await client.getInputEntity(entityName)
     const msgs = await client.getMessages(entity, {
         ids: [Number(messageId)],
-    });
-    const media = await unwrapMedia(msgs[0]?.media);
+    })
+    const media = await unwrapMedia(msgs[0]?.media)
     if (!media) {
-        return ctx.text('Unknown media', 404);
+        return ctx.text('Unknown media', 404)
     }
 
-    return await handleMedia(media, client, ctx);
+    return await handleMedia(media, client, ctx)
 }

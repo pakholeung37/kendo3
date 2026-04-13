@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/dh/:language?',
@@ -32,33 +32,33 @@ export const route: Route = {
 | English | 中文简体 | 中文繁體 |
 | ------- | -------- | -------- |
 | english | chs      | tc_chi  |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? 'tc_chi';
+    const language = ctx.req.param('language') ?? 'tc_chi'
 
-    const rootUrl = 'https://www.dh.gov.hk';
-    const currentUrl = `${rootUrl}/${language}/press/press.html`;
-    const textonlyUrl = `${rootUrl}/textonly/${language}/press/press.html`;
+    const rootUrl = 'https://www.dh.gov.hk'
+    const currentUrl = `${rootUrl}/${language}/press/press.html`
+    const textonlyUrl = `${rootUrl}/textonly/${language}/press/press.html`
 
     const response = await got({
         method: 'get',
         url: textonlyUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('td[headers="title"]')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: item.find('a').attr('href'),
                 pubDate: parseDate(item.next().text(), language === 'english' ? 'D-MMMM-YYYY' : 'YYYY年M月D日'),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -66,20 +66,20 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('#pressrelease').html();
+                item.description = content('#pressrelease').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

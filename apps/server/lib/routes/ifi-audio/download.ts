@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-const host = 'https://ifi-audio.com';
+const host = 'https://ifi-audio.com'
 
 export const route: Route = {
     path: '/download/:val/:id',
@@ -26,12 +26,12 @@ export const route: Route = {
 2.  Select the device and the corresponding serial number in the website and click Search
 3.  Find the last request named \`https://ifi-audio.com/wp-admin/admin-ajax.php\` in the Network panel, find out the val and id in the Payload panel, and fill in the url
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { val, id } = ctx.req.param();
+    const { val, id } = ctx.req.param()
 
-    const url = host + '/wp-admin/admin-ajax.php';
+    const url = host + '/wp-admin/admin-ajax.php'
     const response = await got({
         method: 'post',
         url,
@@ -39,11 +39,11 @@ async function handler(ctx) {
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
         },
         body: 'action=ifi-ff-get-firmware&val=' + val + '&id=' + id,
-    });
-    const markup = response.data.data.markup;
-    const $ = load(markup);
-    const latestTitle = $('li[data-category=firmware]:first h4').text();
-    const latestDownloadLink = $('li[data-category=firmware]:first a').attr('href');
+    })
+    const markup = response.data.data.markup
+    const $ = load(markup)
+    const latestTitle = $('li[data-category=firmware]:first h4').text()
+    const latestDownloadLink = $('li[data-category=firmware]:first a').attr('href')
     return {
         title: 'iFi audio Download Hub',
         link: 'https://ifi-audio.com/download-hub/',
@@ -55,5 +55,5 @@ async function handler(ctx) {
                 link: latestDownloadLink,
             },
         ],
-    };
+    }
 }

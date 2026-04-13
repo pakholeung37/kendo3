@@ -1,4 +1,4 @@
-import workerFactory from './utils';
+import workerFactory from './utils'
 
 export default workerFactory(
     (ctx) => {
@@ -31,15 +31,15 @@ export default workerFactory(
                 link: 'xsb/list/3016-1-20.htm',
                 title: '本科生综合测评',
             },
-        };
+        }
 
-        const type = ctx.req.param('type') || 'all';
+        const type = ctx.req.param('type') || 'all'
 
         return {
             title: '上海交通大学电子信息与电气工程学院学生办 -- ' + config[type].title,
             local: config[type].link,
             author: '上海交通大学电子信息与电气工程学院学生工作办公室',
-        };
+        }
     },
     ($) =>
         $('.list_box_5_2 li')
@@ -48,5 +48,5 @@ export default workerFactory(
                 date: $(e).children('span').text().slice(1, -1),
                 title: $(e).children('a').text().slice(1),
                 link: $(e).children('a').attr('href'),
-            }))
-);
+            })),
+)

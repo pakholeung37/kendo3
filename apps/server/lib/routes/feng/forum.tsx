@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getForumMeta, getThread, getThreads } from './utils';
+import { baseUrl, getForumMeta, getThread, getThreads } from './utils'
 
 const renderImages = (images?: string[]) =>
     renderToString(
@@ -16,15 +16,15 @@ const renderImages = (images?: string[]) =>
                     ))}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 const deletedDescription = renderToString(
     <>
         <img src="https://www.feng.com/_nuxt/img/yishanchu.368ead2.png" alt="威锋" />
         <div align="center">帖子已被删除</div>
-    </>
-);
+    </>,
+)
 
 export const route: Route = {
     path: '/forum/:id/:type?',
@@ -51,40 +51,40 @@ export const route: Route = {
     description: `| 最新回复 | 最新发布 | 热门 | 精华    |
 | -------- | -------- | ---- | ------- |
 | newest   | all      | hot  | essence |`,
-};
+}
 
 async function handler(ctx) {
-    const topicId = Number(ctx.req.param('id'));
-    const { type = 'all' } = ctx.req.param();
+    const topicId = Number(ctx.req.param('id'))
+    const { type = 'all' } = ctx.req.param()
 
-    const forumMeta = await getForumMeta(topicId);
-    const topicMeta = forumMeta.dataList.find((data) => data.topicId === topicId);
+    const forumMeta = await getForumMeta(topicId)
+    const topicMeta = forumMeta.dataList.find((data) => data.topicId === topicId)
     const threads = (await getThreads(topicId, type)).data.dataList.map((data) => ({
         title: data.title,
         pubDate: parseDate(data.dateline * 1000),
         author: data.userBaseInfo.userName,
         link: `${baseUrl}/post/${data.tid}`,
         tid: data.tid,
-    }));
+    }))
 
     const posts = await Promise.all(
         threads.map(async (item) => {
-            const thread = await getThread(item.tid, topicId);
+            const thread = await getThread(item.tid, topicId)
             if (thread.status.code === 0) {
-                const img = renderImages(thread.data.thread.fengTalkImage.length ? thread.data.thread.fengTalkImage : undefined);
-                item.description = thread.data.thread.message + img;
+                const img = renderImages(thread.data.thread.fengTalkImage.length ? thread.data.thread.fengTalkImage : undefined)
+                item.description = thread.data.thread.message + img
             } else {
-                item.description = deletedDescription;
+                item.description = deletedDescription
             }
-            delete item.tid;
-            return item;
-        })
-    );
+            delete item.tid
+            return item
+        }),
+    )
 
     return {
         title: `${topicMeta.topicName} - 社区 - 威锋 - 千万果粉大本营`,
         description: topicMeta.topicDescription,
         link: `${baseUrl}/forum/${topicId}`,
         item: posts,
-    };
+    }
 }

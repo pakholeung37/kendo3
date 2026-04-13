@@ -1,12 +1,12 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type CoverData = {
-    img?: string;
-    videoList?: string[];
-};
+    img?: string
+    videoList?: string[]
+}
 
 export const renderCover = ({ img, videoList }: CoverData): string => {
-    const videoUrl = videoList?.[0];
+    const videoUrl = videoList?.[0]
 
     return renderToString(
         <>
@@ -30,6 +30,6 @@ export const renderCover = ({ img, videoList }: CoverData): string => {
                     视频直链
                 </a>
             ) : null}
-        </>
-    );
-};
+        </>,
+    )
+}

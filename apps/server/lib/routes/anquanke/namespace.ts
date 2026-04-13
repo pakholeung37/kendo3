@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: '安全客',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
 官方提供了混合的主页资讯 RSS: [https://api.anquanke.com/data/v1/rss](https://api.anquanke.com/data/v1/rss)
 :::`,
     lang: 'zh-CN',
-};
+}

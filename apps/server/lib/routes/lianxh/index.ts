@@ -1,16 +1,16 @@
-import * as cheerio from 'cheerio';
-import type { Context } from 'hono';
-import markdownit from 'markdown-it';
+import * as cheerio from 'cheerio'
+import type { Context } from 'hono'
+import markdownit from 'markdown-it'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = markdownit({
     html: true,
     breaks: true,
-});
+})
 
 export const route: Route = {
     path: '/:category?',
@@ -66,30 +66,30 @@ export const route: Route = {
  论文重现             | 51  |
  最新课程             | 52  |
  公开课               | 53  |`,
-};
+}
 
 async function handler(ctx: Context) {
-    const { category = 'all' } = ctx.req.param();
+    const { category = 'all' } = ctx.req.param()
 
-    const rootUrl = 'https://www.lianxh.cn';
-    const currentUrl = `${rootUrl}/blogs/${category}.html`;
+    const rootUrl = 'https://www.lianxh.cn'
+    const currentUrl = `${rootUrl}/blogs/${category}.html`
 
-    const response = await ofetch(currentUrl);
+    const response = await ofetch(currentUrl)
 
-    const $ = cheerio.load(response);
+    const $ = cheerio.load(response)
 
     const list = $('.card-body > a')
         .slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')!, 10) : 30)
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const href = $item.attr('href');
+            const $item = $(item)
+            const href = $item.attr('href')
             return {
                 title: $item.find('h5').text().trim(),
                 link: rootUrl + href,
                 id: href?.split('/').pop()?.split('.')[0],
-            };
-        }) as DataItem[];
+            }
+        }) as DataItem[]
 
     const items = await Promise.all(
         list.map((item) =>
@@ -98,20 +98,20 @@ async function handler(ctx: Context) {
                     query: {
                         id: item.id,
                     },
-                });
+                })
 
-                item.description = md.render(response.details);
-                item.pubDate = parseDate(response.release_time, 'YYYY-MM-DD');
-                item.author = response.author;
+                item.description = md.render(response.details)
+                item.pubDate = parseDate(response.release_time, 'YYYY-MM-DD')
+                item.author = response.author
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `连享会 - ${$('.card-title').text()}`,
         link: currentUrl,
         item: items as DataItem[],
-    };
+    }
 }

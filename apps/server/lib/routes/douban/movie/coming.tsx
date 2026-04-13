@@ -1,7 +1,7 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/movie/coming',
@@ -25,7 +25,7 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 const renderDescription = (info: { title?: string; cover_url?: string; pubdate?: string[]; intro?: string; directors?: string[]; actors?: string[]; genres: string[]; wish_count?: number | string }): string =>
     renderToString(
         <>
@@ -44,8 +44,8 @@ const renderDescription = (info: { title?: string; cover_url?: string; pubdate?:
                     <p>{info.intro}</p>
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 async function handler(ctx) {
     const response = await got({
@@ -54,9 +54,9 @@ async function handler(ctx) {
         headers: {
             Referer: 'https://m.douban.com/movie/',
         },
-    });
+    })
 
-    ctx.set('json', { response });
+    ctx.set('json', { response })
 
     return {
         title: '豆瓣电影-即将上映',
@@ -79,5 +79,5 @@ async function handler(ctx) {
             itunes_item_image: item?.cover_url,
             upvotes: item?.wish_count,
         })),
-    };
+    }
 }

@@ -1,41 +1,41 @@
-import type { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const pdfUrlGenerators = {
     arxiv: (id: string) => `https://arxiv.org/pdf/${id}.pdf`,
-};
+}
 
 export const handler = async (ctx) => {
-    const { keyword = 'query/Detection' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 150;
+    const { keyword = 'query/Detection' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 150
 
-    const rootUrl = 'https://papers.cool';
-    const currentUrl = new URL(`arxiv/search?highlight=1&query=${keyword}&sort=0`, rootUrl).href;
-    const feedUrl = new URL(`arxiv/search/feed?query=${keyword}`, rootUrl).href;
+    const rootUrl = 'https://papers.cool'
+    const currentUrl = new URL(`arxiv/search?highlight=1&query=${keyword}&sort=0`, rootUrl).href
+    const feedUrl = new URL(`arxiv/search/feed?query=${keyword}`, rootUrl).href
 
-    const site = keyword.split(/\//)[0];
-    const apiKimiUrl = new URL(`${site}/kimi?paper=`, rootUrl).href;
-    const feed = await parser.parseURL(feedUrl);
+    const site = keyword.split(/\//)[0]
+    const apiKimiUrl = new URL(`${site}/kimi?paper=`, rootUrl).href
+    const feed = await parser.parseURL(feedUrl)
 
-    const language = 'en';
+    const language = 'en'
 
     const items = feed.items.slice(0, limit).map((item) => {
-        const title = item.title;
-        const guid = item.guid;
+        const title = item.title
+        const guid = item.guid
 
-        const id = item.link?.split(/\//).pop() ?? '';
-        const kimiUrl = new URL(id, apiKimiUrl).href;
-        const pdfUrl = Object.hasOwn(pdfUrlGenerators, site) ? pdfUrlGenerators[site](id) : undefined;
+        const id = item.link?.split(/\//).pop() ?? ''
+        const kimiUrl = new URL(id, apiKimiUrl).href
+        const pdfUrl = Object.hasOwn(pdfUrlGenerators, site) ? pdfUrlGenerators[site](id) : undefined
 
-        const authorString = item.author;
+        const authorString = item.author
         const description = renderDescription({
             pdfUrl,
             kimiUrl,
             summary: item.summary,
-        });
+        })
 
         return {
             title,
@@ -55,8 +55,8 @@ export const handler = async (ctx) => {
             enclosure_url: pdfUrl,
             enclosure_type: 'application/pdf',
             enclosure_title: title,
-        };
-    });
+        }
+    })
 
     return {
         title: feed.title,
@@ -66,8 +66,8 @@ export const handler = async (ctx) => {
         allowEmpty: true,
         image: feed.image?.url,
         language: feed.language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/query/:keyword{.+}?',
@@ -104,4 +104,4 @@ export const route: Route = {
             target: '/papers/query/:keyword',
         },
     ],
-};
+}

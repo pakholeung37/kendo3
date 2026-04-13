@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { FetchGoItems } from './utils';
+import { FetchGoItems } from './utils'
 
 export const route: Route = {
     path: '/weekly',
@@ -18,8 +18,8 @@ export const route: Route = {
     name: '周刊',
     maintainers: ['CWeilet', 'nczitzk'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    return await FetchGoItems(ctx, 'weekly');
+    return await FetchGoItems(ctx, 'weekly')
 }

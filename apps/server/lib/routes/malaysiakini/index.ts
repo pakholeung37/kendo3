@@ -1,10 +1,10 @@
-import { FetchError } from 'ofetch';
+import { FetchError } from 'ofetch'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import parser from '@/utils/rss-parser';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/:lang/:category?',
@@ -65,25 +65,25 @@ export const route: Route = {
             target: '/:lang/:category',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const lang = ctx.req.param('lang');
-    const category = ctx.req.param('category') ?? 'news';
-    const apiKey = 'UFXL7F1EL53S8DZ5SGJUMG5IIFVRY4WI'; // Assuming the apiKey is static
+    const lang = ctx.req.param('lang')
+    const category = ctx.req.param('category') ?? 'news'
+    const apiKey = 'UFXL7F1EL53S8DZ5SGJUMG5IIFVRY4WI' // Assuming the apiKey is static
 
     const key = {
         email: config.malaysiakini.email,
         password: config.malaysiakini.password,
         apiKey,
-    };
-    const body = JSON.stringify(key);
+    }
+    const body = JSON.stringify(key)
 
-    let cookie;
+    let cookie
 
-    const cacheIn = await cache.get('malaysiakini:cookie');
+    const cacheIn = await cache.get('malaysiakini:cookie')
     if (cacheIn) {
-        cookie = cacheIn;
+        cookie = cacheIn
     }
 
     if (cookie === undefined && config.malaysiakini.email && config.malaysiakini.password) {
@@ -94,21 +94,21 @@ async function handler(ctx) {
                 Connection: 'keep-alive',
             },
             body,
-        });
+        })
         if (login.data.accessToken && login.data.refreshToken) {
-            cookie = `nl____accessToken=${login.data.accessToken}; nl____refreshToken=${login.data.refreshToken};`;
+            cookie = `nl____accessToken=${login.data.accessToken}; nl____refreshToken=${login.data.refreshToken};`
             // Refresh token should be sufficient for authenticating for full text, but access token is included for good measure.
-            cache.set('malaysiakini:cookie', cookie);
+            cache.set('malaysiakini:cookie', cookie)
         }
     }
 
     if (cookie === undefined && config.malaysiakini.refreshToken) {
-        cookie = `nl____refreshToken=${config.malaysiakini.refreshToken};`;
-        cache.set('malaysiakini:cookie', cookie);
+        cookie = `nl____refreshToken=${config.malaysiakini.refreshToken};`
+        cache.set('malaysiakini:cookie', cookie)
     }
 
-    const link = `https://www.malaysiakini.com/rss/${lang}/${category}.rss`;
-    const feed = await parser.parseURL(link);
+    const link = `https://www.malaysiakini.com/rss/${lang}/${category}.rss`
+    const feed = await parser.parseURL(link)
 
     if (cookie) {
         // Testing the cookie with the first item of the feed
@@ -119,25 +119,25 @@ async function handler(ctx) {
                 headers: {
                     Cookie: cookie,
                 },
-            });
+            })
         } catch (error) {
             if (error instanceof FetchError && error.statusCode === 401) {
-                await cache.set('malaysiakini:cookie', '');
+                await cache.set('malaysiakini:cookie', '')
             }
-            throw error;
+            throw error
         }
     }
 
     const items = await Promise.all(
         feed.items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const response = await got(`https://www.malaysiakini.com/api/content/${item.guid}`);
+                const response = await got(`https://www.malaysiakini.com/api/content/${item.guid}`)
                 if (response.data.stories.content) {
-                    item.description = response.data.stories.content;
+                    item.description = response.data.stories.content
                 } else {
-                    item.description = response.data.stories.teaser;
+                    item.description = response.data.stories.teaser
                     if (cookie) {
-                        let fullResponse;
+                        let fullResponse
                         try {
                             fullResponse = await got({
                                 method: 'get',
@@ -145,30 +145,30 @@ async function handler(ctx) {
                                 headers: {
                                     Cookie: cookie,
                                 },
-                            });
+                            })
                         } finally {
                             if (fullResponse) {
-                                item.description = fullResponse.data.content;
+                                item.description = fullResponse.data.content
                             }
                         }
                     }
                 }
                 if (response.data.stories.image_feat) {
-                    const cover = response.data.stories.image_feat;
+                    const cover = response.data.stories.image_feat
                     if (cover.length > 0) {
-                        item.description = `<img src=${cover[0]}>` + item.description;
+                        item.description = `<img src=${cover[0]}>` + item.description
                     }
                 }
                 if (response.data.stories.author) {
-                    item.author = response.data.stories.author;
+                    item.author = response.data.stories.author
                 }
                 if (response.data.stories.tags) {
-                    item.category = response.data.stories.tags;
+                    item.category = response.data.stories.tags
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: feed.title,
@@ -176,5 +176,5 @@ async function handler(ctx) {
         description: feed.description,
         language: lang,
         item: items,
-    };
+    }
 }

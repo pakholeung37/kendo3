@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
 
-import { getData, processItems, rootUrl } from './util';
+import { getData, processItems, rootUrl } from './util'
 
 export const route: Route = {
     path: ['/discover/:params?', '/:params?'],
@@ -24,22 +24,22 @@ export const route: Route = {
 
   如 [全部原创视频作品](https://www.xinpianchang.com/discover/article-0-0-all-all-0-0-score) 的 URL 为 \`https://www.xinpianchang.com/discover/article-0-0-all-all-0-0-score\`，其 \`/discover\` 到末尾的部分为 \`article-0-0-all-all-0-0-score\`，所以对应的路由为 [/xinpianchang/discover/article-0-0-all-all-0-0-score](https://rsshub.app/xinpianchang/discover/article-0-0-all-all-0-0-score)。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const { params = 'article-0-0-all-all-0-0-score' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 60;
+    const { params = 'article-0-0-all-all-0-0-score' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 60
 
-    const currentUrl = new URL(`discover/${params}`, rootUrl).href;
+    const currentUrl = new URL(`discover/${params}`, rootUrl).href
 
-    const { data, response } = await getData(currentUrl, cache.tryGet);
+    const { data, response } = await getData(currentUrl, cache.tryGet)
 
-    let items = JSON.parse(response.match(/"list":(\[.*?]),"total"/)[1]);
+    let items = JSON.parse(response.match(/"list":(\[.*?]),"total"/)[1])
 
-    items = await processItems(items.slice(0, limit), cache.tryGet);
+    items = await processItems(items.slice(0, limit), cache.tryGet)
 
     return {
         ...data,
         item: items,
-    };
+    }
 }

@@ -1,12 +1,12 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { EXP_LEVELS, EXP_LEVELS_QUERY_KEY, JOB_TYPES, JOB_TYPES_QUERY_KEY, KEYWORDS_QUERY_KEY, parseJobSearch, parseParamsToSearchParams, parseParamsToString, parseRouteParam } from './utils';
+import { EXP_LEVELS, EXP_LEVELS_QUERY_KEY, JOB_TYPES, JOB_TYPES_QUERY_KEY, KEYWORDS_QUERY_KEY, parseJobSearch, parseParamsToSearchParams, parseParamsToString, parseRouteParam } from './utils'
 
-const BASE_URL = 'https://www.linkedin.com/';
-const JOB_SEARCH_PATH = '/jobs-guest/jobs/api/seeMoreJobPostings/search';
+const BASE_URL = 'https://www.linkedin.com/'
+const JOB_SEARCH_PATH = '/jobs-guest/jobs/api/seeMoreJobPostings/search'
 
 export const route: Route = {
     path: '/jobs/:job_types/:exp_levels/:keywords?/:routeParams?',
@@ -32,19 +32,19 @@ export const route: Route = {
             source: ['www.linkedin.com/jobs/search'],
             // Migrate from https://github.com/DIYgod/RSSHub-Radar/blob/096589db99f993c262ec8edb51a5676325439bc5/src/lib/radar-rules.ts#L15501
             target: (params, url) => {
-                const searchParams = new URLSearchParams(new URL(url).search);
-                const fJT = parseRouteParam(searchParams.get('f_JT'));
-                const fE = parseRouteParam(searchParams.get('f_E'));
-                const keywords = encodeURIComponent(searchParams.get('keywords') || '');
+                const searchParams = new URLSearchParams(new URL(url).search)
+                const fJT = parseRouteParam(searchParams.get('f_JT'))
+                const fE = parseRouteParam(searchParams.get('f_E'))
+                const keywords = encodeURIComponent(searchParams.get('keywords') || '')
 
-                const newSearchParams = new URLSearchParams();
+                const newSearchParams = new URLSearchParams()
                 // Copy non-existent key-value pairs from searchParams to newSearchParams
                 for (const [key, value] of searchParams.entries()) {
                     if (!['f_JT', 'f_E', 'keywords'].includes(key)) {
-                        newSearchParams.append(key, value);
+                        newSearchParams.append(key, value)
                     }
                 }
-                return `/linkedin/jobs/${fJT}/${fE}/${keywords}/?${newSearchParams.toString()}`;
+                return `/linkedin/jobs/${fJT}/${fE}/${keywords}/?${newSearchParams.toString()}`
             },
         },
     ],
@@ -93,50 +93,50 @@ export const route: Route = {
   3.  If we want to search remote mid-senior level software engineer jobs in APAC posted within the last month, use \`/linkedin/jobs/F/4/software%20engineer/f_WT=2&geoId=91000003&f_TPR=r2592000\`
 
   **To make it easier, the recommended way is to start a search on [LinkedIn](https://www.linkedin.com/jobs/search) and use [RSSHub Radar](https://github.com/DIYgod/RSSHub-Radar) to load the specific feed.**`,
-};
+}
 
 async function handler(ctx) {
-    const jobTypesParam = parseParamsToSearchParams(ctx.req.param('job_types'), JOB_TYPES);
-    const expLevelsParam = parseParamsToSearchParams(ctx.req.param('exp_levels'), EXP_LEVELS);
-    const routeParams = new URLSearchParams(ctx.req.param('routeParams'));
+    const jobTypesParam = parseParamsToSearchParams(ctx.req.param('job_types'), JOB_TYPES)
+    const expLevelsParam = parseParamsToSearchParams(ctx.req.param('exp_levels'), EXP_LEVELS)
+    const routeParams = new URLSearchParams(ctx.req.param('routeParams'))
 
-    let url = new URL(JOB_SEARCH_PATH, BASE_URL);
+    let url = new URL(JOB_SEARCH_PATH, BASE_URL)
 
     // keep for backward compatibility
-    url.searchParams.append(KEYWORDS_QUERY_KEY, ctx.req.param('keywords') || '');
-    url.searchParams.append(JOB_TYPES_QUERY_KEY, jobTypesParam); // see JOB_TYPES in utils.js
-    url.searchParams.append(EXP_LEVELS_QUERY_KEY, expLevelsParam); // see EXPERIENCE_LEVELS in utils.js
+    url.searchParams.append(KEYWORDS_QUERY_KEY, ctx.req.param('keywords') || '')
+    url.searchParams.append(JOB_TYPES_QUERY_KEY, jobTypesParam) // see JOB_TYPES in utils.js
+    url.searchParams.append(EXP_LEVELS_QUERY_KEY, expLevelsParam) // see EXPERIENCE_LEVELS in utils.js
 
     // Add route params to URL
     for (const [key, value] of routeParams) {
         if (!url.searchParams.has(key)) {
-            url.searchParams.append(key, value);
+            url.searchParams.append(key, value)
         }
     }
-    url = url.toString();
+    url = url.toString()
 
     // Parse job search page
-    const response = await ofetch(url);
-    const jobs = parseJobSearch(response);
+    const response = await ofetch(url)
+    const jobs = parseJobSearch(response)
 
-    const jobTypes = parseParamsToString(ctx.req.param('job_types'), JOB_TYPES);
-    const expLevels = parseParamsToString(ctx.req.param('exp_levels'), EXP_LEVELS);
-    const feedTitle = 'LinkedIn Job Listing' + (jobTypes ? ` | Job Types: ${jobTypes}` : '') + (expLevels ? ` | Experience Levels: ${expLevels}` : '') + (ctx.req.param('keywords') ? ` | Keywords: ${ctx.req.param('keywords')}` : '');
+    const jobTypes = parseParamsToString(ctx.req.param('job_types'), JOB_TYPES)
+    const expLevels = parseParamsToString(ctx.req.param('exp_levels'), EXP_LEVELS)
+    const feedTitle = 'LinkedIn Job Listing' + (jobTypes ? ` | Job Types: ${jobTypes}` : '') + (expLevels ? ` | Experience Levels: ${expLevels}` : '') + (ctx.req.param('keywords') ? ` | Keywords: ${ctx.req.param('keywords')}` : '')
 
     return {
         title: feedTitle,
         link: url,
         description: 'This feed gets LinkedIn job posts',
         item: jobs.map((job) => {
-            const title = `${job.company} is hiring ${job.title}`;
-            const description = `Title: ${job.title} | Company: ${job.company} | Location: ${job.location} `;
+            const title = `${job.company} is hiring ${job.title}`
+            const description = `Title: ${job.title} | Company: ${job.company} | Location: ${job.location} `
 
             return {
                 title, // item title
                 description, // job description
                 pubDate: parseDate(job.pubDate), // data publish date
                 link: job.link, // job source link
-            };
+            }
         }),
-    };
+    }
 }

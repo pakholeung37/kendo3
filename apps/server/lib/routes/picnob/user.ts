@@ -3,8 +3,8 @@
 // import { connect } from 'puppeteer-real-browser';
 
 // import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 // import cache from '@/utils/cache';
 // import { parseRelativeDate } from '@/utils/parse-date';
 
@@ -77,11 +77,11 @@ export const route: Route = {
     maintainers: ['TonyRL', 'micheal-death', 'AiraNadih', 'DIYgod', 'hyoban', 'Rongronggg9'],
     handler,
     view: ViewType.Pictures,
-};
+}
 
 function handler(ctx) {
-    const id = ctx.req.param('id');
-    return ctx.set('redirect', `/picnob.info/user/${id}`);
+    const id = ctx.req.param('id')
+    return ctx.set('redirect', `/picnob.info/user/${id}`)
 
     // // Original puppeteer-real-browser implementation (deprecated)
     // if (!config.puppeteerRealBrowserService && !config.chromiumExecutablePath) {

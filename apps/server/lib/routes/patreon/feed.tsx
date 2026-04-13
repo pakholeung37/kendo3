@@ -1,21 +1,21 @@
-import * as cheerio from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { CreatorData, MediaRelation, PostData } from './types';
+import type { CreatorData, MediaRelation, PostData } from './types'
 
 const renderDescription = ({ attributes, relationships, included }) => {
-    const postType = attributes.post_type;
-    const imageOrder = attributes.post_metadata?.image_order ?? [];
-    const previewImage = attributes.image?.url ?? attributes.meta_image_url;
-    const audioUrl = relationships.audio?.attributes?.download_url || relationships.audio_preview?.attributes?.download_url;
-    const imageItems = imageOrder.map((mediaIdStr) => included.find((item) => item.id === mediaIdStr)).filter(Boolean);
+    const postType = attributes.post_type
+    const imageOrder = attributes.post_metadata?.image_order ?? []
+    const previewImage = attributes.image?.url ?? attributes.meta_image_url
+    const audioUrl = relationships.audio?.attributes?.download_url || relationships.audio_preview?.attributes?.download_url
+    const imageItems = imageOrder.map((mediaIdStr) => included.find((item) => item.id === mediaIdStr)).filter(Boolean)
 
     return renderToString(
         <>
@@ -78,9 +78,9 @@ const renderDescription = ({ attributes, relationships, included }) => {
                       </>
                   ))
                 : null}
-        </>
-    );
-};
+        </>,
+    )
+}
 
 export const route: Route = {
     path: '/:creator',
@@ -105,51 +105,51 @@ export const route: Route = {
     name: 'Home',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { creator } = ctx.req.param();
+    const { creator } = ctx.req.param()
 
-    const baseUrl = 'https://www.patreon.com';
-    const link = `${baseUrl}/${creator}`;
+    const baseUrl = 'https://www.patreon.com'
+    const link = `${baseUrl}/${creator}`
 
     const creatorData = (await cache.tryGet(`patreon:creator:${creator}`, async () => {
-        const response = await ofetch(link);
+        const response = await ofetch(link)
 
-        const $ = cheerio.load(response);
+        const $ = cheerio.load(response)
 
-        const ogUrl = $('meta[property="og:url"]').attr('content');
+        const ogUrl = $('meta[property="og:url"]').attr('content')
         if (ogUrl?.startsWith(`${baseUrl}/cw/`)) {
-            const ogImage = $('meta[property="og:image"]').attr('content');
-            const creatorId = decodeURIComponent(ogImage || '').match(/card-teaser-image\/creator\/(\d+?)\?/)?.[1];
+            const ogImage = $('meta[property="og:image"]').attr('content')
+            const creatorId = decodeURIComponent(ogImage || '').match(/card-teaser-image\/creator\/(\d+?)\?/)?.[1]
             if (creatorId) {
-                const creator = await ofetch(`${baseUrl}/api/campaigns/${creatorId}`);
+                const creator = await ofetch(`${baseUrl}/api/campaigns/${creatorId}`)
                 return {
                     id: creatorId,
                     attributes: creator.data.attributes,
-                };
+                }
             }
-            throw new Error('Unable to extract creator ID');
+            throw new Error('Unable to extract creator ID')
         }
 
-        const nextData = JSON.parse($('#__NEXT_DATA__').text());
-        const bootstrapEnvelope = nextData.props.pageProps.bootstrapEnvelope;
+        const nextData = JSON.parse($('#__NEXT_DATA__').text())
+        const bootstrapEnvelope = nextData.props.pageProps.bootstrapEnvelope
 
         return {
             id: bootstrapEnvelope.pageBootstrap.campaign.data.id,
             attributes: bootstrapEnvelope.pageBootstrap.campaign.data.attributes,
-        };
-    })) as CreatorData;
+        }
+    })) as CreatorData
 
     if (!creatorData.id) {
-        throw new Error('Creator not found');
+        throw new Error('Creator not found')
     }
 
-    let headers = {};
+    let headers = {}
     if (config.patreon?.sessionId) {
         headers = {
             Cookie: `session_id=${config.patreon.sessionId}`,
-        };
+        }
     }
 
     const posts = await ofetch<PostData>('https://www.patreon.com/api/posts', {
@@ -174,16 +174,16 @@ async function handler(ctx) {
             'json-api-use-default-includes': false,
             'json-api-version': '1.0',
         },
-    });
+    })
 
     const items = posts.data.map(({ attributes, relationships }) => {
         for (const [key, value] of Object.entries(relationships)) {
             if (value.data) {
-                relationships[key] = Array.isArray(value.data) ? value.data.map((item) => posts.included.find((i) => i.id === item.id)) : posts.included.find((i) => i.id === value.data.id);
+                relationships[key] = Array.isArray(value.data) ? value.data.map((item) => posts.included.find((i) => i.id === item.id)) : posts.included.find((i) => i.id === value.data.id)
             }
         }
         if (attributes.video_preview) {
-            relationships.video_preview = posts.included.find((i) => Number.parseInt(i.id) === attributes.video_preview?.media_id) as unknown as MediaRelation;
+            relationships.video_preview = posts.included.find((i) => Number.parseInt(i.id) === attributes.video_preview?.media_id) as unknown as MediaRelation
         }
 
         return {
@@ -197,8 +197,8 @@ async function handler(ctx) {
             pubDate: parseDate(attributes.published_at),
             image: attributes.thumbnail?.url ?? attributes.image?.url,
             category: relationships.user_defined_tags?.map((tag) => tag.attributes.value),
-        };
-    });
+        }
+    })
 
     return {
         title: creatorData.attributes.name,
@@ -211,5 +211,5 @@ async function handler(ctx) {
             creatorData.attributes.avatar_photo_url,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl, getNextBuildId } from './utils';
+import { baseUrl, getNextBuildId } from './utils'
 
 export const route: Route = {
     path: '/trending',
@@ -17,15 +17,15 @@ export const route: Route = {
             source: ['makerworld.com/:lang'],
         },
     ],
-};
+}
 
 async function handler() {
-    const nextBuildId = await getNextBuildId();
+    const nextBuildId = await getNextBuildId()
     const response = await ofetch(`${baseUrl}/_next/data/${nextBuildId}/en.json`, {
         headers: {
             'User-Agent': config.trueUA,
         },
-    });
+    })
 
     const items = response.pageProps.popularDesignsData.map((d) => ({
         title: d.title,
@@ -34,7 +34,7 @@ async function handler() {
         category: d.tags,
         pubDate: parseDate(d.startTime),
         description: d.designExtension.design_pictures.map((i) => `<figure><img src="${i.url}" alt="${d.name}"><figcaption>${i.name}</figcaption></figure>`).join(''),
-    }));
+    }))
 
     return {
         title: 'Trending Models - MakerWorld',
@@ -42,5 +42,5 @@ async function handler() {
         link: `${baseUrl}/en`,
         image: `${baseUrl}/favicon_new.png`,
         item: items,
-    };
+    }
 }

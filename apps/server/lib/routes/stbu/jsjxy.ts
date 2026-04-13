@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const gbk2utf8 = (s) => iconv.decode(s, 'gbk');
+const gbk2utf8 = (s) => iconv.decode(s, 'gbk')
 export const route: Route = {
     path: '/jsjxy',
     categories: ['university'],
@@ -36,43 +36,43 @@ export const route: Route = {
     description: `::: warning
 计算机学院通知公告疑似禁止了非大陆 IP 访问，使用路由需要自行 [部署](https://docs.rsshub.app/deploy/)。
 :::`,
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://jsjxy.stbu.edu.cn/news/';
+    const baseUrl = 'https://jsjxy.stbu.edu.cn/news/'
     const { data: response } = await got(baseUrl, {
         responseType: 'buffer',
-    });
-    const $ = load(gbk2utf8(response));
+    })
+    const $ = load(gbk2utf8(response))
     const list = $('.content dl h4')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a').first();
+            item = $(item)
+            const a = item.find('a').first()
             return {
                 title: a.text(),
                 link: a.attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: response } = await got(item.link, {
                     responseType: 'buffer',
-                });
-                const $ = load(gbk2utf8(response));
-                item.description = $('.content14').first().html().trim();
-                item.pubDate = timezone(parseDate($('.article .source').text().split('日期：')[1].replace('\n', '').trim()), +8);
-                return item;
-            })
-        )
-    );
+                })
+                const $ = load(gbk2utf8(response))
+                item.description = $('.content14').first().html().trim()
+                item.pubDate = timezone(parseDate($('.article .source').text().split('日期：')[1].replace('\n', '').trim()), +8)
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '四川工商学院计算机学院 - 新闻动态',
         link: baseUrl,
         description: '四川工商学院计算机学院 - 新闻动态',
         item: items,
-    };
+    }
 }

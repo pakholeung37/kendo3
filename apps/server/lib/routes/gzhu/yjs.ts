@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/yjs',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['shengmaosu'],
     handler,
     url: 'yjsy.gzhu.edu.cn/zsxx/zsdt/zsdt.htm',
-};
+}
 
 async function handler() {
-    const link = 'https://yjsy.gzhu.edu.cn/zsxx/zsdt/zsdt.htm';
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.picnews_cont li');
+    const link = 'https://yjsy.gzhu.edu.cn/zsxx/zsdt/zsdt.htm'
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.picnews_cont li')
 
     return {
         title: '广州大学研究生院',
@@ -41,13 +41,13 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
-                const a = item.find('span a');
+                item = $(item)
+                const a = item.find('span a')
                 return {
                     title: a.attr('title'),
                     link: new URL(a.attr('href'), link).href,
                     pubDate: parseDate(a.text(), 'YYYY-MM-DD'),
-                };
+                }
             }),
-    };
+    }
 }

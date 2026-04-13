@@ -1,24 +1,24 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Language, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Language, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const locale = ctx.req.param('locale');
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10);
+    const locale = ctx.req.param('locale')
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '100', 10)
 
-    const baseUrl = 'https://cursor.com';
-    const localeSegment = locale ? `/${locale}` : '';
-    const targetUrl: string = new URL(`${localeSegment}/changelog`, baseUrl).href;
+    const baseUrl = 'https://cursor.com'
+    const localeSegment = locale ? `/${locale}` : ''
+    const targetUrl: string = new URL(`${localeSegment}/changelog`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = ($('html').attr('lang') ?? 'en') as Language;
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = ($('html').attr('lang') ?? 'en') as Language
 
     const items: DataItem[] = $('main')
         .first()
@@ -26,23 +26,23 @@ export const handler = async (ctx: Context): Promise<Data> => {
         .slice(0, limit)
         .toArray()
         .map((el): DataItem => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const timeEl = $el.find('time').first();
-            const pubDateStr = timeEl.attr('datetime') || timeEl.text().trim();
-            const versionLabel = timeEl.closest('a').find('.label').text().trim();
+            const timeEl = $el.find('time').first()
+            const pubDateStr = timeEl.attr('datetime') || timeEl.text().trim()
+            const versionLabel = timeEl.closest('a').find('.label').text().trim()
 
-            const linkEl = $el.find('h1 a').first();
-            const titleText = linkEl.length ? linkEl.text().trim() : $el.find('h1').first().text().trim();
-            const title: string = versionLabel ? `[${versionLabel}] ${titleText}` : titleText;
+            const linkEl = $el.find('h1 a').first()
+            const titleText = linkEl.length ? linkEl.text().trim() : $el.find('h1').first().text().trim()
+            const title: string = versionLabel ? `[${versionLabel}] ${titleText}` : titleText
 
-            const linkUrl: string | undefined = linkEl.attr('href');
-            let guid = linkUrl ? linkUrl.split('/').pop() : 'unknown';
+            const linkUrl: string | undefined = linkEl.attr('href')
+            let guid = linkUrl ? linkUrl.split('/').pop() : 'unknown'
             if (versionLabel) {
-                guid = `cursor-changelog-${versionLabel}`;
+                guid = `cursor-changelog-${versionLabel}`
             }
 
-            const description: string = $el.find('.prose').html() || '';
+            const description: string = $el.find('.prose').html() || ''
 
             const processedItem: DataItem = {
                 title,
@@ -56,10 +56,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     text: description,
                 },
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -69,8 +69,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         image: $('meta[property="og:image"]').attr('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/changelog/:locale?',
@@ -104,4 +104,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

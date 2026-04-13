@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import puppeteer from '@/utils/puppeteer'
 
-import { BASE_URL, enhanceItemsWithSummaries, fetchPageHtml, parseArticles } from './utils';
+import { BASE_URL, enhanceItemsWithSummaries, fetchPageHtml, parseArticles } from './utils'
 
 export const route: Route = {
     path: '/tag/:tag/:sort?',
@@ -37,27 +37,27 @@ export const route: Route = {
     name: 'Tag',
     maintainers: ['TheGeeKing'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { tag, sort = 'trending' } = ctx.req.param();
-    const url = `${BASE_URL}/${tag}/${sort}`;
+    const { tag, sort = 'trending' } = ctx.req.param()
+    const url = `${BASE_URL}/${tag}/${sort}`
 
-    const browser = await puppeteer();
+    const browser = await puppeteer()
     try {
-        const html = await fetchPageHtml(browser, url, 'article');
-        const $ = load(html);
-        const list = parseArticles($, BASE_URL);
-        const items = await enhanceItemsWithSummaries(browser, list);
+        const html = await fetchPageHtml(browser, url, 'article')
+        const $ = load(html)
+        const list = parseArticles($, BASE_URL)
+        const items = await enhanceItemsWithSummaries(browser, list)
 
-        const pageTitle = $('title').text() || `DailyPush - ${tag.charAt(0).toUpperCase() + tag.slice(1)}`;
+        const pageTitle = $('title').text() || `DailyPush - ${tag.charAt(0).toUpperCase() + tag.slice(1)}`
 
         return {
             title: pageTitle,
             link: url,
             item: items,
-        };
+        }
     } finally {
-        await browser.close();
+        await browser.close()
     }
 }

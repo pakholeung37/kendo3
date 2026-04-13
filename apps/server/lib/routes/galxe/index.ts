@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/quest/:alias',
@@ -24,12 +24,12 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const url = 'https://graphigo.prd.galaxy.eco/query';
+    const url = 'https://graphigo.prd.galaxy.eco/query'
 
-    const alias = ctx.req.param('alias');
+    const alias = ctx.req.param('alias')
 
     const response = await ofetch(url, {
         method: 'POST',
@@ -73,16 +73,16 @@ async function handler(ctx) {
                 }
             `,
         },
-    });
+    })
 
-    const space = response.data.space;
+    const space = response.data.space
 
     const items = space.campaigns.list.map((campaign) => ({
         title: campaign.name,
         link: `https://app.galxe.com/quest/${alias}/${campaign.id}`,
         description: campaign.description,
         pubDate: campaign.startTime ? parseDate(campaign.startTime * 1000) : null,
-    }));
+    }))
 
     return {
         title: space.name,
@@ -90,5 +90,5 @@ async function handler(ctx) {
         link: `https://app.galxe.com/quest/${alias}`,
         item: items,
         author: space.alias,
-    };
+    }
 }

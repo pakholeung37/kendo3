@@ -1,17 +1,17 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ProductImage = {
-    urlBig?: string;
-    description?: string;
-};
+    urlBig?: string
+    description?: string
+}
 
 type WorkData = {
-    description?: string;
-    productImages?: ProductImage[];
-};
+    description?: string
+    productImages?: ProductImage[]
+}
 
-const normalizeUrl = (url: string) => (url.includes('?x-oss-process') ? url.split('?')[0] : url);
+const normalizeUrl = (url: string) => (url.includes('?x-oss-process') ? url.split('?')[0] : url)
 
 export const renderWork = (data: WorkData): string =>
     renderToString(
@@ -23,5 +23,5 @@ export const renderWork = (data: WorkData): string =>
                     {image.description ? <>{raw(image.description)}</> : null}
                 </>
             ))}
-        </>
-    );
+        </>,
+    )

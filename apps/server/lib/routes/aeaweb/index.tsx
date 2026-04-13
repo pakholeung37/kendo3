@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:id',
@@ -32,45 +32,45 @@ export const route: Route = {
 ::: tip
   More jounals can be found in [AEA Journals](https://www.aeaweb.org/journals).
 :::`,
-};
+}
 
 async function handler(ctx) {
-    let id = ctx.req.param('id');
+    let id = ctx.req.param('id')
 
-    const rootUrl = 'https://www.aeaweb.org';
-    const currentUrl = `${rootUrl}/journals/${id}`;
+    const rootUrl = 'https://www.aeaweb.org'
+    const currentUrl = `${rootUrl}/journals/${id}`
 
     let response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    let $ = load(response.data);
+    let $ = load(response.data)
 
-    $('.read-more').remove();
+    $('.read-more').remove()
 
-    id = $('input[name="journal"]').attr('value');
+    id = $('input[name="journal"]').attr('value')
 
-    const title = $('.page-title').text();
-    const description = $('.intro-copy').text();
-    const searchUrl = `${rootUrl}/journals/search-results?journal=${id}&ArticleSearch[current]=1`;
+    const title = $('.page-title').text()
+    const description = $('.intro-copy').text()
+    const searchUrl = `${rootUrl}/journals/search-results?journal=${id}&ArticleSearch[current]=1`
 
     response = await got({
         method: 'get',
         url: searchUrl,
-    });
+    })
 
-    $ = load(response.data);
+    $ = load(response.data)
 
     let items = $('h4.title a')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 link: `${rootUrl}${item.attr('href').split('&')[0]}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -78,31 +78,31 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.doi = content('meta[name="citation_doi"]').attr('content');
+                item.doi = content('meta[name="citation_doi"]').attr('content')
 
-                item.guid = item.doi;
-                item.title = content('meta[name="citation_title"]').attr('content');
+                item.guid = item.doi
+                item.title = content('meta[name="citation_title"]').attr('content')
                 item.author = content('.author')
                     .toArray()
                     .map((a) => content(a).text().trim())
-                    .join(', ');
-                item.pubDate = parseDate(content('meta[name="citation_publication_date"]').attr('content'), 'YYYY/MM');
+                    .join(', ')
+                item.pubDate = parseDate(content('meta[name="citation_publication_date"]').attr('content'), 'YYYY/MM')
                 item.description = renderToString(
                     <AeawebDescription
                         description={content('meta[name="twitter:description"]')
                             .attr('content')
                             .replace(/\(\w+ \d+\)( - )?/, '')}
-                    />
-                );
+                    />,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title,
@@ -110,7 +110,7 @@ async function handler(ctx) {
         link: currentUrl,
         item: items,
         language: $('html').attr('lang'),
-    };
+    }
 }
 
-const AeawebDescription = ({ description }: { description?: string }) => (description ? <p>{description}</p> : null);
+const AeawebDescription = ({ description }: { description?: string }) => (description ? <p>{description}</p> : null)

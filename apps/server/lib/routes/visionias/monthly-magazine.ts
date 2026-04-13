@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, extractNews } from './utils';
+import { baseUrl, extractNews } from './utils'
 
 export const route: Route = {
     path: '/monthlyMagazine',
@@ -25,12 +25,12 @@ export const route: Route = {
     name: 'Monthly Magazine',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(): Promise<Data> {
-    const response = await ofetch(`${baseUrl}/current-affairs/monthly-magazine`);
+    const response = await ofetch(`${baseUrl}/current-affairs/monthly-magazine`)
 
-    const items = await processNews(response);
+    const items = await processNews(response)
 
     return {
         title: 'Monthly Magazine | Vision IAS',
@@ -43,27 +43,27 @@ async function handler(): Promise<Data> {
         icon: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         logo: `https://cdn.visionias.in/new-system-assets/images/home_page/home/vision-logo-footer.png`,
         allowEmpty: true,
-    };
+    }
 }
 
 async function processNews(page) {
-    const $ = load(page);
-    const divItems = $(`#monthly-table-of-content>div`).toArray();
+    const $ = load(page)
+    const divItems = $(`#monthly-table-of-content>div`).toArray()
     const linkItems = divItems.flatMap((item) => {
-        const maintitle = $(item).find('button>div:nth-child(2) div.text-left').text().trim();
+        const maintitle = $(item).find('button>div:nth-child(2) div.text-left').text().trim()
         return $(item)
             .find('div>ul>li')
             .toArray()
             .map((li) => {
-                const itemTitle = $(li).find('a').text().trim();
-                const link = $(li).find('a').attr('href')?.trim() || '';
+                const itemTitle = $(li).find('a').text().trim()
+                const link = $(li).find('a').attr('href')?.trim() || ''
                 return {
                     title: `${itemTitle} - ${maintitle}`,
                     link: link.includes('https://') ? link : `${baseUrl}${link}`,
-                };
-            });
-    });
-    const newsPromises = await Promise.allSettled(linkItems.map((item) => extractNews(item, 'main > div > div.flex.flex-col> div.flex.flex-col.w-full.mt-10')));
+                }
+            })
+    })
+    const newsPromises = await Promise.allSettled(linkItems.map((item) => extractNews(item, 'main > div > div.flex.flex-col> div.flex.flex-col.w-full.mt-10')))
 
-    return newsPromises.flatMap((news) => (news.status === 'fulfilled' ? (Array.isArray(news.value) ? news.value : [news.value]) : [{ title: 'Error Parse News' }]));
+    return newsPromises.flatMap((news) => (news.status === 'fulfilled' ? (Array.isArray(news.value) ? news.value : [news.value]) : [{ title: 'Error Parse News' }]))
 }

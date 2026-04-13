@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { CookieJar } from 'tough-cookie';
+import { load } from 'cheerio'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate, parseRelativeDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate, parseRelativeDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const cookieJar = new CookieJar();
-const baseUrl = 'https://www.chinathinktanks.org.cn';
+const cookieJar = new CookieJar()
+const baseUrl = 'https://www.chinathinktanks.org.cn'
 
 export const route: Route = {
     path: '/:id',
@@ -73,27 +73,27 @@ export const route: Route = {
 | 157   | 大国关系 |
 | 158   | 地区政治 |
 | 181   | 执政能力 |`,
-};
+}
 
 async function handler(ctx) {
-    const link = `https://www.chinathinktanks.org.cn/content/list?id=${ctx.req.param('id')}&pt=1`;
+    const link = `https://www.chinathinktanks.org.cn/content/list?id=${ctx.req.param('id')}&pt=1`
 
     const response = await got(link, {
         cookieJar,
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     let items = $('.main-content-left-list-item')
         .toArray()
         .map((e) => {
-            e = $(e);
+            e = $(e)
             return {
                 title: e.find('.title span').text(),
                 link: baseUrl + e.attr('href'),
                 author: e.find('.author-by span').text(),
                 pubDate: e.find('.author-time').text(),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -101,20 +101,20 @@ async function handler(ctx) {
                 const response = await got({
                     url: item.link,
                     cookieJar,
-                });
-                const $ = load(response.data);
-                const content = $('#art');
-                item.description = content.html();
-                item.pubDate = item.pubDate.includes('-') ? timezone(parseDate(item.pubDate, 'YYYY-MM-DD'), +8) : parseRelativeDate(item.pubDate);
+                })
+                const $ = load(response.data)
+                const content = $('#art')
+                item.description = content.html()
+                item.pubDate = item.pubDate.includes('-') ? timezone(parseDate(item.pubDate, 'YYYY-MM-DD'), +8) : parseRelativeDate(item.pubDate)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `中国智库网 —— ${$('title').text().split('_中国智库网')[0]}`,
         link,
         item: items,
-    };
+    }
 }

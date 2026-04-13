@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/special/:id',
@@ -21,35 +21,35 @@ export const route: Route = {
     description: `| 新闻大爆炸 | 懂球帝十佳球 | 懂球帝本周 MVP |
 | ---------- | ------------ | -------------- |
 | 41         | 52           | 53             |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const { data: response } = await got(`https://www.dongqiudi.com/api/old/columns/${id}`);
+    const id = ctx.req.param('id')
+    const { data: response } = await got(`https://www.dongqiudi.com/api/old/columns/${id}`)
 
     const list = response.data.map((item) => ({
         title: item.title,
         link: `https://www.dongqiudi.com/articles/${item.aid}.html`,
         mobileLink: `https://m.dongqiudi.com/article/${item.aid}.html`,
         pubDate: parseDate(item.show_time, 'X'),
-    }));
+    }))
 
     const out = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.mobileLink);
+                const { data: response } = await got(item.mobileLink)
 
-                utils.ProcessFeedType3(item, response);
+                utils.ProcessFeedType3(item, response)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `懂球帝专题-${response.title}`,
         description: response.description,
         link: `https://www.dongqiudi.com/special/${id}`,
         item: out.filter(Boolean),
-    };
+    }
 }

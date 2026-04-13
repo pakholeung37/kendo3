@@ -72,10 +72,8 @@
     },
     "javascript": {
         "formatter": {
-            "arrowParentheses": "always",
             "quoteStyle": "single",
-            "semicolons": "always",
-            "trailingCommas": "es5"
+            "semicolons": "asNeeded"
         }
     },
     "css": {

@@ -1,24 +1,24 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = 'latest/news' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'latest/news' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.accessbriefing.com';
-    const currentUrl = new URL(category, rootUrl).href;
-    const apiUrl = new URL('Ajax/GetPagedArticles', rootUrl).href;
+    const rootUrl = 'https://www.accessbriefing.com'
+    const currentUrl = new URL(category, rootUrl).href
+    const apiUrl = new URL('Ajax/GetPagedArticles', rootUrl).href
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const brandId = currentResponse.match(/'BrandID':\s(\d+)/)?.[1] ?? '32';
-    const moreID = currentResponse.match(/'MoreID':\s(\d+)/)?.[1] ?? '9282';
+    const brandId = currentResponse.match(/'BrandID':\s(\d+)/)?.[1] ?? '32'
+    const moreID = currentResponse.match(/'MoreID':\s(\d+)/)?.[1] ?? '9282'
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -28,15 +28,15 @@ export const handler = async (ctx) => {
             lastpage: 0,
             pagesize: limit,
         },
-    });
+    })
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = response.slice(0, limit).map((item) => {
-        const title = item.Article_Headline;
-        const image = new URL(item.Image, rootUrl).href;
+        const title = item.Article_Headline
+        const image = new URL(item.Image, rootUrl).href
         const description = renderDescription({
             images: image
                 ? [
@@ -47,8 +47,8 @@ export const handler = async (ctx) => {
                   ]
                 : undefined,
             intro: item.Article_Intro_Plaintext,
-        });
-        const guid = `accessbriefing-${item.Article_ID}`;
+        })
+        const guid = `accessbriefing-${item.Article_ID}`
 
         return {
             title,
@@ -65,41 +65,41 @@ export const handler = async (ctx) => {
             image,
             banner: image,
             language,
-        };
-    });
+        }
+    })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.khl-article-page-title').text();
+                const title = $$('h1.khl-article-page-title').text()
                 const description =
                     item.description +
                     renderDescription({
                         description: $$('div.khl-article-page-storybody').html(),
-                    });
+                    })
 
-                item.title = title;
-                item.description = description;
+                item.title = title
+                item.description = description
                 item.category = $$('a.badge[data-id]')
                     .toArray()
-                    .map((c) => $$(c).text());
-                item.author = $$('div.authorDetails a span b').text();
+                    .map((c) => $$(c).text())
+                item.author = $$('div.authorDetails a span b').text()
                 item.content = {
                     html: description,
                     text: $$('div.khl-article-page-storybody').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const image = new URL($('a.navbar-brand img').prop('src'), rootUrl).href;
+    const image = new URL($('a.navbar-brand img').prop('src'), rootUrl).href
 
     return {
         title: $('title').text(),
@@ -110,8 +110,8 @@ export const handler = async (ctx) => {
         image,
         author: $('meta[property="og:site_name"]').prop('content'),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -212,4 +212,4 @@ export const route: Route = {
             target: '/insight/videos-and-podcasts',
         },
     ],
-};
+}

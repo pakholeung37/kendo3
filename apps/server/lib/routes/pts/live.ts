@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderLive } from './templates/live';
+import { renderLive } from './templates/live'
 
 export const route: Route = {
     path: '/live/:id',
@@ -26,24 +26,24 @@ export const route: Route = {
     name: '整理報導',
     maintainers: [],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
-    const rootUrl = 'https://news.pts.org.tw';
-    const currentUrl = `${rootUrl}/live/${id}`;
-    const apiUrl = `${rootUrl}/live/api/liveblog/${id}`;
-    const imageRootUrl = 'https://dkjm35kkdt2ag.cloudfront.net';
+    const rootUrl = 'https://news.pts.org.tw'
+    const currentUrl = `${rootUrl}/live/${id}`
+    const apiUrl = `${rootUrl}/live/api/liveblog/${id}`
+    const imageRootUrl = 'https://dkjm35kkdt2ag.cloudfront.net'
 
     const response = await got({
         method: 'get',
         url: apiUrl,
-    });
+    })
 
     let items = response.data.data.blogArticleList.slice(0, ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30).map((item) => ({
         link: `${rootUrl}/live/api/liveblog/article?articleId=${item}&model=main`,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
@@ -51,24 +51,24 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
-                const data = detailResponse.data.data;
+                })
+                const data = detailResponse.data.data
 
-                item.title = data.title;
-                item.pubDate = parseDate(data.updatedDate);
+                item.title = data.title
+                item.pubDate = parseDate(data.updatedDate)
                 item.description = renderLive({
                     images: data.content.filter((d) => d.type === 'img').map((i) => `${imageRootUrl}/${i.imgFileUrl}`),
                     texts: data.content.filter((d) => d.type === 'text').map((t) => t.content),
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `公視新聞網 PNN - ${response.data.data.title.replace(/【不斷更新】/, '')}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,14 +1,14 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www3.nhk.or.jp';
-const apiUrl = 'https://api.nhkworld.jp';
+const baseUrl = 'https://www3.nhk.or.jp'
+const apiUrl = 'https://api.nhkworld.jp'
 
 export const route: Route = {
     path: '/news/:lang?',
@@ -60,12 +60,12 @@ export const route: Route = {
     name: 'WORLD-JAPAN - Top Stories',
     maintainers: ['TonyRL', 'pseudoyu', 'cscnk52'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { lang = 'en' } = ctx.req.param();
-    const { data } = await got(`${apiUrl}/nwapi/rdnewsweb/v7b/${lang}/outline/list.json`);
-    const meta = await got(`${baseUrl}/nhkworld/common/assets/news/config/${lang}.json`);
+    const { lang = 'en' } = ctx.req.param()
+    const { data } = await got(`${apiUrl}/nwapi/rdnewsweb/v7b/${lang}/outline/list.json`)
+    const meta = await got(`${baseUrl}/nhkworld/common/assets/news/config/${lang}.json`)
 
     let items = data.data.map((item) => ({
         title: item.title,
@@ -73,16 +73,16 @@ async function handler(ctx) {
         link: `${baseUrl}${item.page_url}`,
         pubDate: parseDate(item.updated_at, 'x'),
         id: item.id,
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data } = await got(`${apiUrl}/nwapi/rdnewsweb/v6b/${lang}/detail/${item.id}.json`);
-                item.category = Object.values(data.data.categories);
-                const img = data.data.thumbnails;
-                const imageSrc = img?.large || img?.middle || img?.small || img?.min;
-                const description = data.data.detail.replaceAll('\n\n', '<br><br>');
+                const { data } = await got(`${apiUrl}/nwapi/rdnewsweb/v6b/${lang}/detail/${item.id}.json`)
+                item.category = Object.values(data.data.categories)
+                const img = data.data.thumbnails
+                const imageSrc = img?.large || img?.middle || img?.small || img?.min
+                const description = data.data.detail.replaceAll('\n\n', '<br><br>')
                 item.description = renderToString(
                     <>
                         {imageSrc ? (
@@ -92,17 +92,17 @@ async function handler(ctx) {
                             </>
                         ) : null}
                         {description ? raw(description) : null}
-                    </>
-                );
-                delete item.id;
-                return item;
-            })
-        )
-    );
+                    </>,
+                )
+                delete item.id
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${Object.values(meta.data.config.navigation.header).find((h) => h.keyname === 'topstories')?.name} | NHK WORLD-JAPAN News`,
         link: `${baseUrl}/nhkworld/${lang}/news/list/`,
         item: items,
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/homepage/:user_id',
@@ -16,15 +16,15 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { user_id } = ctx.req.param();
+    const { user_id } = ctx.req.param()
     const res = await ofetch(`https://bbs.deepin.org/api/v1/user/thread?date_type=0&limit=10&offset=0&user_id=${user_id}`, {
         headers: {
             accept: 'application/json',
         },
-    });
+    })
 
     const items = res.data.map((item) => ({
         title: item.subject,
@@ -33,11 +33,11 @@ async function handler(ctx) {
         pubDate: parseDate(item.created_at),
         author: item.user.nickname,
         category: item.forum.name,
-    }));
+    }))
 
     return {
         title: `${items[0].author}/deepin论坛主页`,
         link: `https://bbs.deepin.org/user/${user_id}`,
         item: items,
-    };
+    }
 }

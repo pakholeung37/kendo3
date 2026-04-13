@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { getSearchParams, rootUrl } from './utils';
+import { getSearchParams, rootUrl } from './utils'
 
 const categories = {
     watch: '看盘',
@@ -15,7 +15,7 @@ const categories = {
     remind: '提醒',
     fund: '基金',
     hk: '港股',
-};
+}
 
 const renderTelegraphDescription = (item) =>
     renderToString(
@@ -29,8 +29,8 @@ const renderTelegraphDescription = (item) =>
                     ))}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/telegraph/:category?',
@@ -58,18 +58,18 @@ export const route: Route = {
     description: `| 看盘  | 公司         | 解读    | 加红 | 推送  | 提醒   | 基金 | 港股 |
 | ----- | ------------ | ------- | ---- | ----- | ------ | ---- | ---- |
 | watch | announcement | explain | red  | jpush | remind | fund | hk   |`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? '';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50;
+    const category = ctx.req.param('category') ?? ''
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 50
 
-    let apiUrl = `${rootUrl}/nodeapi/updateTelegraphList`;
+    let apiUrl = `${rootUrl}/nodeapi/updateTelegraphList`
     if (category) {
-        apiUrl = `${rootUrl}/v1/roll/get_roll_list`;
+        apiUrl = `${rootUrl}/v1/roll/get_roll_list`
     }
 
-    const currentUrl = `${rootUrl}/telegraph`;
+    const currentUrl = `${rootUrl}/telegraph`
 
     const response = await got({
         method: 'get',
@@ -78,7 +78,7 @@ async function handler(ctx) {
             category,
             hasFirstVipArticle: 1,
         }),
-    });
+    })
 
     const items = response.data.data.roll_data.slice(0, limit).map((item) => ({
         title: item.title || item.content,
@@ -86,11 +86,11 @@ async function handler(ctx) {
         description: renderTelegraphDescription(item),
         pubDate: parseDate(item.ctime * 1000),
         category: item.subjects?.map((s) => s.subject_name),
-    }));
+    }))
 
     return {
         title: `财联社 - 电报${category === '' ? '' : ` - ${categories[category]}`}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

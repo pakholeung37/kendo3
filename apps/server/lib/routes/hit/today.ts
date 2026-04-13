@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/today/:category',
@@ -35,19 +35,19 @@ export const route: Route = {
 ::: warning
   部分文章需要经过统一身份认证后才能阅读全文。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const host = 'https://today.hit.edu.cn';
-    const category = ctx.req.param('category');
+    const host = 'https://today.hit.edu.cn'
+    const category = ctx.req.param('category')
 
     const response = await got(host + '/category/' + category, {
         headers: {
             Referer: host,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
     const list = $('.paragraph li')
         .toArray()
         .map((e) => ({
@@ -55,7 +55,7 @@ async function handler(ctx) {
             title: $('span span a', e).text(),
             author: $('div a', e).attr('hreflang', 'zh-hans').text(),
             pubDate: timezone(parseDate($('span span a', e).attr('href').split('/').slice(-4, -1).join(','), 'YYYYMMDD'), 8),
-        }));
+        }))
 
     const out = await Promise.all(
         list.map((item) =>
@@ -65,29 +65,29 @@ async function handler(ctx) {
                         headers: {
                             Referer: host,
                         },
-                    });
+                    })
 
-                    const $ = load(response.data);
-                    item.pubDate = timezone(parseDate($('.left-attr.first').text().trim()), 8);
+                    const $ = load(response.data)
+                    item.pubDate = timezone(parseDate($('.left-attr.first').text().trim()), 8)
                     item.description =
                         $('.article-content').html() &&
                         $('.article-content')
                             .html()
                             .replaceAll('src="/', `src="${new URL('.', host).href}`)
                             .replaceAll('href="/', `href="${new URL('.', host).href}`)
-                            .trim();
+                            .trim()
                 } catch {
                     // intranet
-                    item.description = '请进行统一身份认证后查看全文';
+                    item.description = '请进行统一身份认证后查看全文'
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text().trim(),
         link: host + '/category/' + category,
         item: out,
-    };
+    }
 }

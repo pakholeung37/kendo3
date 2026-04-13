@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:type',
@@ -37,58 +37,58 @@ export const route: Route = {
 | World News    | world-news    | Opinion      | opinion      |
 | Entertainment | entertainment |              |              |`,
     handler: async (ctx) => {
-        const type = ctx.req.param('type');
-        const baseURL = 'https://www.kelownacapnews.com';
+        const type = ctx.req.param('type')
+        const baseURL = 'https://www.kelownacapnews.com'
 
-        const response = await ofetch(`${baseURL}/${type}`);
-        const $ = load(response);
+        const response = await ofetch(`${baseURL}/${type}`)
+        const $ = load(response)
 
         const list = $('.media')
             .toArray()
             .map((item): DataItem => {
-                const a = $(item);
+                const a = $(item)
                 return {
                     title: a.find('.media-heading').text(),
                     pubDate: parseDate(a.find('.media-links time').attr('datetime')!),
                     link: baseURL + a.attr('href'),
-                };
-            });
+                }
+            })
 
         const items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link!, async () => {
-                    const response = await ofetch(item.link!);
-                    const $ = load(response);
+                    const response = await ofetch(item.link!)
+                    const $ = load(response)
 
-                    let image = $('.details-file')!;
+                    let image = $('.details-file')!
                     if (!image.length) {
-                        image = $('#sliderImgs .tablist-item .galleryWrap');
+                        image = $('#sliderImgs .tablist-item .galleryWrap')
                     }
-                    const byline = $('.details-byline');
-                    const profileTitle = byline.find('.profile-title');
+                    const byline = $('.details-byline')
+                    const profileTitle = byline.find('.profile-title')
                     if (profileTitle.length) {
-                        item.author = profileTitle.find('a').text();
+                        item.author = profileTitle.find('a').text()
                     }
-                    let label = '';
+                    let label = ''
                     if (image.length > 1) {
                         for (const e of image.toArray()) {
-                            const img = $(e);
-                            label += `<figure style="margin: 10px 0 0 0"><img src='${img.data('src')}' /><figcaption>${img.attr('title')}</figcaption></figure>`;
+                            const img = $(e)
+                            label += `<figure style="margin: 10px 0 0 0"><img src='${img.data('src')}' /><figcaption>${img.attr('title')}</figcaption></figure>`
                         }
                     } else {
-                        label = `<figure style="margin: 0">${image.html()!}</figure>`;
+                        label = `<figure style="margin: 0">${image.html()!}</figure>`
                     }
-                    item.description = label + $('.details-body').html()!;
+                    item.description = label + $('.details-body').html()!
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
 
         return {
             title: `${$('.body-title').text()} - Kelowna Capital News`,
             link: `${baseURL}/${type}`,
             item: items as DataItem[],
-        };
+        }
     },
-};
+}

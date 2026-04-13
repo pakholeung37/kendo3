@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/profile/:path',
@@ -17,18 +17,18 @@ export const route: Route = {
     name: 'Profile',
     maintainers: ['Yukaii', 'kaiix'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const path = ctx.req.param('path');
+    const path = ctx.req.param('path')
 
     const response = await got({
         method: 'get',
         url: `https://hackmd.io/api/@${path}/overview`,
-    });
-    const data = response.data;
+    })
+    const data = response.data
 
-    const profile = data.user || data.team;
+    const profile = data.user || data.team
     return {
         title: `${profile.name}'s Profile`,
         link: `https://hackmd.io/@${path}`,
@@ -39,5 +39,5 @@ async function handler(ctx) {
             pubDate: new Date(note.publishedAt).toUTCString(),
             link: `https://hackmd.io/@${path}/${note.permalink || note.shortId}`,
         })),
-    };
+    }
 }

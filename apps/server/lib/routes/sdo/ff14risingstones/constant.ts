@@ -1,4 +1,4 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
 export const REQUIRE_CONFIG: NonNullable<Route['features']>['requireConfig'] = [
     {
@@ -10,14 +10,14 @@ export const REQUIRE_CONFIG: NonNullable<Route['features']>['requireConfig'] = [
         name: 'SDO_UA',
         description: '值为与在网页端获取 Cookie 时相匹配的 User-Agent 值',
     },
-];
+]
 
-export const API_URL = 'https://apiff14risingstones.web.sdo.com/api';
+export const API_URL = 'https://apiff14risingstones.web.sdo.com/api'
 
-export const ORIGIN = 'https://ff14risingstones.web.sdo.com';
-export const INDEX_URL = `${ORIGIN}/pc/index.html`;
+export const ORIGIN = 'https://ff14risingstones.web.sdo.com'
+export const INDEX_URL = `${ORIGIN}/pc/index.html`
 
-export const LOGO_URL = `${ORIGIN}/pc/favicon.ico`;
+export const LOGO_URL = `${ORIGIN}/pc/favicon.ico`
 
 // source: /api/home/recruit/styleConfigList
 export const PLAY_STYLE = {
@@ -52,7 +52,7 @@ export const PLAY_STYLE = {
     '39': '制作',
     '41': '绝境战',
     '42': '深层迷宫挑战',
-};
+}
 
 // source: /api/home/recruit/getJobConfigList
 export const JOB = {
@@ -85,7 +85,7 @@ export const JOB = {
     '32': '任意职业',
     '33': '蝰蛇剑士',
     '34': '绘灵法师',
-};
+}
 
 // source: /api/home/posts/partList type = 1
 export const POST_PART = [
@@ -125,7 +125,7 @@ export const POST_PART = [
         value: '75',
         label: '官方讯息',
     },
-];
+]
 
 // source: /api/home/posts/partList type = 2
 export const STRAT_PART = [
@@ -313,13 +313,13 @@ export const STRAT_PART = [
         label: '其他',
         value: '72',
     },
-];
+]
 
 export const POST_TYPE = {
     top: '置顶',
     refine: '精华',
     hot: '周热门',
-};
+}
 
 export enum DynamicSource {
     General = 1,

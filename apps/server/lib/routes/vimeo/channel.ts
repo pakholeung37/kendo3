@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { PRESETS } from '@/utils/header-generator';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { PRESETS } from '@/utils/header-generator'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/channel/:channel',
@@ -29,18 +29,18 @@ export const route: Route = {
     name: 'Channel',
     maintainers: ['MisteryMonster'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const channel = ctx.req.param('channel');
-    const url = `https://vimeo.com/channels/${channel}/videos`;
+    const channel = ctx.req.param('channel')
+    const url = `https://vimeo.com/channels/${channel}/videos`
     const page1 = await got({
         method: 'get',
         url: `${url}/page:1/sort:date/format:detail`,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
         },
-    });
+    })
     const page2 =
         channel === `bestoftheyear`
             ? await got({
@@ -50,15 +50,15 @@ async function handler(ctx) {
                       'X-Requested-With': 'XMLHttpRequest',
                   },
               })
-            : '';
-    const pagedata = [...page1.data, ...page2.data];
-    const $ = load(pagedata);
-    const list = $('ol li.clearfix');
+            : ''
+    const pagedata = [...page1.data, ...page2.data]
+    const $ = load(pagedata)
+    const list = $('ol li.clearfix')
 
     const description = await Promise.all(
         list.toArray().map((item) => {
-            item = $(item);
-            const link = item.find('.more').attr('href');
+            item = $(item)
+            const link = item.find('.more').attr('href')
             return cache.tryGet(link, async () => {
                 const response2 = await got({
                     method: 'get',
@@ -67,21 +67,21 @@ async function handler(ctx) {
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                     headerGeneratorOptions: PRESETS.MODERN_IOS,
-                });
-                const articledata = response2.data;
-                const $2 = load(articledata);
-                $2('span').remove();
-                return $2.html();
-            });
-        })
-    );
+                })
+                const articledata = response2.data
+                const $2 = load(articledata)
+                $2('span').remove()
+                return $2.html()
+            })
+        }),
+    )
     return {
         title: `${channel} | Vimeo channel`,
         link: url,
         item: list.toArray().map((item, index) => {
-            item = $(item);
-            const title = item.find('.title a').text();
-            const author = item.find('.meta a').text();
+            item = $(item)
+            const title = item.find('.title a').text()
+            const author = item.find('.meta a').text()
             return {
                 title,
                 description: renderDescription({
@@ -91,7 +91,7 @@ async function handler(ctx) {
                 pubDate: parseDate(item.find('time').attr('datetime')),
                 link: `https://vimeo.com${item.find('.more').attr('href')}`,
                 author,
-            };
+            }
         }),
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getPosts, SUB_NAME_PREFIX, SUB_URL } from './utils';
+import { getPosts, SUB_NAME_PREFIX, SUB_URL } from './utils'
 
 export const route: Route = {
     path: '/',
@@ -25,14 +25,14 @@ export const route: Route = {
     maintainers: ['KotoriK'],
     handler,
     url: '8kcosplay.com/',
-};
+}
 
 async function handler(ctx) {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10);
-    const items = await getPosts(limit);
+    const limit = Number.parseInt(ctx.req.query('limit') ?? 10, 10)
+    const items = await getPosts(limit)
     return {
         title: `${SUB_NAME_PREFIX}-最新`,
         link: SUB_URL,
         item: items,
-    };
+    }
 }

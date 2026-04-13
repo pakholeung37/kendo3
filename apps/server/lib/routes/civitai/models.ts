@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/models',
@@ -25,7 +25,7 @@ export const route: Route = {
     maintainers: ['DIYgod'],
     handler,
     url: 'civitai.com/',
-};
+}
 
 async function handler() {
     const { data } = await got(`https://civitai.com/api/v1/models`, {
@@ -33,7 +33,7 @@ async function handler() {
             limit: 20,
             sort: 'Newest',
         },
-    });
+    })
 
     const items = data.items.map((item) => ({
         title: item.name,
@@ -42,11 +42,11 @@ async function handler() {
         pubDate: parseDate(item.lastVersionAt),
         author: item.creator?.username,
         category: item.tags,
-    }));
+    }))
 
     return {
         title: `Civitai latest models`,
         link: `https://civitai.com/`,
         item: items,
-    };
+    }
 }

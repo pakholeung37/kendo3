@@ -1,22 +1,22 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 // https://www.natgeomedia.com/article/
 
 async function loadContent(link) {
-    const data = await ofetch(link);
-    const $ = load(data);
-    const dtStr = $('.content-title-area').find('h6').first().text().replaceAll('&nbsp;', ' ').trim();
+    const data = await ofetch(link)
+    const $ = load(data)
+    const dtStr = $('.content-title-area').find('h6').first().text().replaceAll('&nbsp;', ' ').trim()
 
-    $('.splide__arrows, .slide-control, [class^="ad-"], style').remove();
+    $('.splide__arrows, .slide-control, [class^="ad-"], style').remove()
 
-    let description = ($('article').eq(0).html() ?? '') + ($('article').eq(1).html() ?? '');
+    let description = ($('article').eq(0).html() ?? '') + ($('article').eq(1).html() ?? '')
     if (/photo|gallery/.test(link)) {
-        description = $('#content-album').html() + description;
+        description = $('#content-album').html() + description
     }
     return {
         title: $('h1.content-title').text().trim(),
@@ -27,7 +27,7 @@ async function loadContent(link) {
             .map((i) => $(i).text()),
         link,
         image: $('link[rel="image_src"]').attr('href'),
-    };
+    }
 }
 
 export const route: Route = {
@@ -52,13 +52,13 @@ export const route: Route = {
     name: '分类',
     maintainers: ['fengkx'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? '';
-    const url = `https://www.natgeomedia.com/${ctx.req.param('cat')}/${type}`;
-    const res = await ofetch(url);
-    const $ = load(res);
+    const type = ctx.req.param('type') ?? ''
+    const url = `https://www.natgeomedia.com/${ctx.req.param('cat')}/${type}`
+    const res = await ofetch(url)
+    const $ = load(res)
 
     const urlList = $('.article-link-content h4')
         .toArray()
@@ -66,9 +66,9 @@ async function handler(ctx) {
         .map((i) => ({
             link: $(i).find('a[href]').first().attr('href'),
         }))
-        .filter((i) => i.link);
+        .filter((i) => i.link)
 
-    const out = await Promise.all(urlList.map((i) => cache.tryGet(i.link!, () => loadContent(i.link))));
+    const out = await Promise.all(urlList.map((i) => cache.tryGet(i.link!, () => loadContent(i.link))))
 
     return {
         title: $('title').text(),
@@ -76,5 +76,5 @@ async function handler(ctx) {
         link: url,
         image: 'https://www.natgeomedia.com/img/app_icon.png',
         item: out,
-    };
+    }
 }

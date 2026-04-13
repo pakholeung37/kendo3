@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Ludwig Maximilian University of Munich',
@@ -15,4 +15,4 @@ For more information about LMU and their job offerings, visit their official web
         name: '慕尼黑大学',
     },
     lang: 'de',
-};
+}

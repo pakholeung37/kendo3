@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
-import pMap from 'p-map';
+import { load } from 'cheerio'
+import pMap from 'p-map'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/posts',
@@ -28,25 +28,25 @@ export const route: Route = {
     maintainers: ['miles170'],
     handler,
     url: 'www.shoppingdesign.com.tw/post',
-};
+}
 
 async function handler() {
     // sn_f parameter is required to prevent redirection
-    const currentUrl = 'https://www.shoppingdesign.com.tw/post?sn_f=1';
-    const response = await got(currentUrl);
-    const $ = load(response.data);
+    const currentUrl = 'https://www.shoppingdesign.com.tw/post?sn_f=1'
+    const response = await got(currentUrl)
+    const $ = load(response.data)
     const items = await pMap(
         $('article-item').toArray(),
         (item) => {
-            item = $(item);
-            const link = item.attr('url');
+            item = $(item)
+            const link = item.attr('url')
             return cache.tryGet(link, async () => {
-                const response = await got(`${link}?sn_f=1`);
-                const $ = load(response.data);
-                const article = $('.left article .htmlview');
+                const response = await got(`${link}?sn_f=1`)
+                const $ = load(response.data)
+                const article = $('.left article .htmlview')
                 article.find('d-image').each(function () {
-                    $(this).replaceWith(`<img src="${$(this).attr('lg')}">`);
-                });
+                    $(this).replaceWith(`<img src="${$(this).attr('lg')}">`)
+                })
 
                 return {
                     title: $('.left article .top_info h1').text(),
@@ -55,17 +55,17 @@ async function handler() {
                     category: $('meta[name="my:category"]').attr('content'),
                     pubDate: parseDate($('meta[name="my:publish"]').attr('content')),
                     link,
-                };
-            });
+                }
+            })
         },
         // maximum parallel requests on the target website are limited to 11.
-        { concurrency: 10 }
-    );
+        { concurrency: 10 },
+    )
 
     return {
         title: $('meta[property="og:title"]').attr('content'),
         link: currentUrl,
         description: $('meta[property="og:description"]').attr('content'),
         item: items,
-    };
+    }
 }

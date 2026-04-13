@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 // journals form AAAS publishing group
 //
 // science:        Science
@@ -11,10 +11,10 @@ import type { Route } from '@/types';
 // scirobotics:    Science Robotics
 // signaling:      Science Signaling
 // stm:            Science Translational Medicine
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { baseUrl } from './utils';
+import { baseUrl } from './utils'
 
 export const route: Route = {
     path: '/cover',
@@ -41,48 +41,48 @@ export const route: Route = {
     description: `Subscribe to the cover images of Science journals, and get the latest publication updates in time.
 
   Including 'Science', 'Science Advances', 'Science Immunology', 'Science Robotics', 'Science Signaling' and 'Science Translational Medicine'.`,
-};
+}
 
 async function handler() {
-    const pageURL = `${baseUrl}/journals`;
+    const pageURL = `${baseUrl}/journals`
 
     const { data: pageResponse } = await got(pageURL, {
         headers: {
             cookie: 'cookiePolicy=iaccept;',
         },
-    });
-    const $ = load(pageResponse);
+    })
+    const $ = load(pageResponse)
 
     const items = $('.browse-journals .browse-journals__item')
         .not('.partner-journals')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const name = item.find('.row h2').first().text().trim();
+            item = $(item)
+            const name = item.find('.row h2').first().text().trim()
             const volume = item
                 .find('.row li')
                 .eq(0)
                 .text()
                 .trim()
-                .match(/Volume (\d+)/)[1];
+                .match(/Volume (\d+)/)[1]
             const issue = item
                 .find('.row li')
                 .eq(1)
                 .text()
                 .trim()
-                .match(/Issue (\d+)/)[1];
-            const date = item.find('.row li').eq(2).text().trim();
-            const coverUrl = `${baseUrl}${item.find('.cover-image__popup-moving-cover').attr('data-cover-src')}`;
-            const content = $('.cover-image__popup-view__caption-wrapper').html();
-            const link = $('.browse-journals__item__links a').eq(0).attr('href').replace('/current', '');
+                .match(/Issue (\d+)/)[1]
+            const date = item.find('.row li').eq(2).text().trim()
+            const coverUrl = `${baseUrl}${item.find('.cover-image__popup-moving-cover').attr('data-cover-src')}`
+            const content = $('.cover-image__popup-view__caption-wrapper').html()
+            const link = $('.browse-journals__item__links a').eq(0).attr('href').replace('/current', '')
 
             return {
                 title: `${name} | Volume ${volume} Issue ${issue}`,
                 description: renderDescription(coverUrl, content),
                 link: `${baseUrl}/${link}/${volume}/${issue}`,
                 pubDate: parseDate(date),
-            };
-        });
+            }
+        })
 
     return {
         title: $('head title').text(),
@@ -91,7 +91,7 @@ async function handler() {
         link: pageURL,
         language: 'en-US',
         item: items,
-    };
+    }
 }
 
 const renderDescription = (coverUrl: string, content: string | null): string =>
@@ -99,5 +99,5 @@ const renderDescription = (coverUrl: string, content: string | null): string =>
         <>
             <img src={coverUrl} />
             {content ? raw(content) : null}
-        </>
-    );
+        </>,
+    )

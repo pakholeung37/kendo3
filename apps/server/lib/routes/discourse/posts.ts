@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import RSSParser from '@/utils/rss-parser';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import RSSParser from '@/utils/rss-parser'
 
-import { getConfig } from './utils';
+import { getConfig } from './utils'
 
 export const route: Route = {
     path: '/:configId/posts',
@@ -25,10 +25,10 @@ export const route: Route = {
     name: 'Latest posts',
     maintainers: ['dzx-dzx'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { link, key } = getConfig(ctx);
+    const { link, key } = getConfig(ctx)
 
     const feed = await RSSParser.parseString(
         (
@@ -37,14 +37,14 @@ async function handler(ctx) {
                     'User-Api-Key': key,
                 },
             })
-        ).data
-    );
+        ).data,
+    )
 
     feed.items = feed.items.map((e) => ({
         description: e.content,
         author: e.creator,
         ...e,
-    }));
+    }))
 
-    return { item: feed.items, ...feed };
+    return { item: feed.items, ...feed }
 }

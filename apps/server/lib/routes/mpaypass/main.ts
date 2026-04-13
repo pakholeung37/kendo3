@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/main/:type?',
@@ -22,22 +22,22 @@ export const route: Route = {
     name: '分类',
     maintainers: ['zhuan-zhu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type = '' } = ctx.req.param();
-    const title_url = type ? `http://www.mpaypass.com.cn/${type}.html` : 'http://www.mpaypass.com.cn';
+    const { type = '' } = ctx.req.param()
+    const title_url = type ? `http://www.mpaypass.com.cn/${type}.html` : 'http://www.mpaypass.com.cn'
 
     const response = await got({
         method: 'get',
         url: title_url,
-    });
+    })
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
+    const $ = load(data)
 
-    const title_cn = type ? $(`a[href="http://www.mpaypass.com.cn/${type}.html"]`).text() : '最新文章';
+    const title_cn = type ? $(`a[href="http://www.mpaypass.com.cn/${type}.html"]`).text() : '最新文章'
     const list = $('.newslist')
         .toArray()
         .map((item) => {
@@ -50,16 +50,16 @@ async function handler(ctx) {
                     .find('a')
                     .toArray()
                     .map((e) => $(e).text().trim()),
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     const out = await Promise.all(
         list.map((info) =>
             cache.tryGet(info.link, async () => {
-                const response = await got(info.link);
-                const $ = load(response.data);
-                const newsbody = $('div.newsbody').html();
+                const response = await got(info.link)
+                const $ = load(response.data)
+                const newsbody = $('div.newsbody').html()
 
                 return {
                     title: info.title,
@@ -67,14 +67,14 @@ async function handler(ctx) {
                     pubDate: timezone(parseDate(info.time), +8),
                     description: newsbody,
                     category: info.category,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: `移动支付网-${title_cn}`,
         link: title_url,
         item: out,
-    };
+    }
 }

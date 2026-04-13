@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/blog/:language?',
@@ -43,39 +43,39 @@ export const route: Route = {
 | 简体中文 | 繁體中文 |
 | -------- | -------- |
 | zh-cn    | zh-tw    |`,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language') ?? 'en';
+    const language = ctx.req.param('language') ?? 'en'
 
-    const rootUrl = 'https://nodejs.org';
-    const currentUrl = `${rootUrl}/${language}/blog`;
+    const rootUrl = 'https://nodejs.org'
+    const currentUrl = `${rootUrl}/${language}/blog`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('article')
         .toArray()
         .map((article) => {
-            const $article = load(article);
+            const $article = load(article)
 
-            const author = $article('footer p').text();
-            const pubDate = parseDate($article('footer time').attr('datetime'));
+            const author = $article('footer p').text()
+            const pubDate = parseDate($article('footer time').attr('datetime'))
 
-            const title = $article('a[aria-label]').prop('aria-label');
-            const href = $article('a[aria-label]').attr('href');
+            const title = $article('a[aria-label]').prop('aria-label')
+            const href = $article('a[aria-label]').attr('href')
 
             return {
                 title,
                 link: `${rootUrl}${href}`,
                 author,
                 pubDate,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -83,19 +83,19 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const $content = load(detailResponse.data);
+                const $content = load(detailResponse.data)
 
-                item.description = $content('main').html();
-                return item;
-            })
-        )
-    );
+                item.description = $content('main').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: 'News - Node.js',
         link: currentUrl,
         item: items,
-    };
+    }
 }

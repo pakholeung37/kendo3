@@ -1,1 +1,1 @@
-export { namespace } from '@/routes/twitter/namespace';
+export { namespace } from '@/routes/twitter/namespace'

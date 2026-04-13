@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/release/:version?',
@@ -23,13 +23,13 @@ export const route: Route = {
     handler,
     description: `| 8.0 | 5.7 | 5.6 |
 | --- | --- | --- |`,
-};
+}
 
 async function handler(ctx) {
-    const version = ctx.req.param('version') ?? '8.0';
+    const version = ctx.req.param('version') ?? '8.0'
 
-    const rootUrl = 'https://dev.mysql.com';
-    const currentUrl = `${rootUrl}/doc/relnotes/mysql/${version}/en/`;
+    const rootUrl = 'https://dev.mysql.com'
+    const currentUrl = `${rootUrl}/doc/relnotes/mysql/${version}/en/`
 
     const response = await got({
         method: 'get',
@@ -37,21 +37,21 @@ async function handler(ctx) {
         headers: {
             'user-agent': config.trueUA,
         },
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('dt span a')
         .slice(1, -1)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.text(),
                 link: `${currentUrl}${item.attr('href')}`,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -62,24 +62,24 @@ async function handler(ctx) {
                     headers: {
                         'user-agent': config.trueUA,
                     },
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                content('.indexterm').remove();
-                content('.titlepage').first().remove();
-                content('.itemizedlist').first().remove();
+                content('.indexterm').remove()
+                content('.titlepage').first().remove()
+                content('.itemizedlist').first().remove()
 
-                item.description = content('#docs-body .section').html();
+                item.description = content('#docs-body .section').html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

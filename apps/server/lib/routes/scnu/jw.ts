@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/jw',
@@ -26,20 +26,20 @@ export const route: Route = {
     maintainers: ['fengkx'],
     handler,
     url: 'jw.scnu.edu.cn/ann/index.html',
-};
+}
 
 async function handler() {
-    const baseUrl = 'http://jw.scnu.edu.cn';
-    const url = `${baseUrl}/ann/index.html`;
+    const baseUrl = 'http://jw.scnu.edu.cn'
+    const url = `${baseUrl}/ann/index.html`
     const res = await got({
         method: 'get',
         url,
         headers: {
             Referer: baseUrl,
         },
-    });
-    const $ = load(res.data);
-    const list = $('.notice_01').find('li');
+    })
+    const $ = load(res.data)
+    const list = $('.notice_01').find('li')
 
     return {
         title: $('title').first().text(),
@@ -48,12 +48,12 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.find('a').text(),
                     pubDate: parseDate(item.find('.time').text()),
                     link: item.find('a').attr('href'),
-                };
+                }
             }),
-    };
+    }
 }

@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/search/:keyword?/:filter?/:sort?',
@@ -43,14 +43,14 @@ export const route: Route = {
 | 按相关度排序 | 按发布时间排序 |
 | ------------ | -------------- |
 | 0            | 1              |`,
-};
+}
 
 async function handler(ctx) {
-    const filter = ctx.req.param('filter') ?? '';
-    const keyword = ctx.req.param('keyword') ?? '';
-    const sort = ctx.req.param('sort') ?? '0';
+    const filter = ctx.req.param('filter') ?? ''
+    const keyword = ctx.req.param('keyword') ?? ''
+    const sort = ctx.req.param('sort') ?? '0'
 
-    const currentUrl = `/search?q=${keyword}${filter && filter !== 'none' ? `&f=${filter}` : ''}&sb=${sort}`;
+    const currentUrl = `/search?q=${keyword}${filter && filter !== 'none' ? `&f=${filter}` : ''}&sb=${sort}`
 
     const filters = {
         '': '',
@@ -65,14 +65,14 @@ async function handler(ctx) {
         download: '可下載',
         cnsub: '字幕',
         preview: '預覽圖',
-    };
+    }
 
     const sorts = {
         0: '按相关度排序',
         1: '按发布时间排序',
-    };
+    }
 
-    const title = `關鍵字 ${keyword} ${filters[filter] === '' ? '' : `+ ${filters[filter]}`} ${sorts[sort]} 搜索結果 - JavDB`;
+    const title = `關鍵字 ${keyword} ${filters[filter] === '' ? '' : `+ ${filters[filter]}`} ${sorts[sort]} 搜索結果 - JavDB`
 
-    return await utils.ProcessItems(ctx, currentUrl, title);
+    return await utils.ProcessItems(ctx, currentUrl, title)
 }

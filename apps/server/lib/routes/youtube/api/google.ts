@@ -1,118 +1,118 @@
-import * as cheerio from 'cheerio';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration.js';
-import { google } from 'googleapis';
+import * as cheerio from 'cheerio'
+import dayjs from 'dayjs'
+import duration from 'dayjs/plugin/duration.js'
+import { google } from 'googleapis'
 
-import { config } from '@/config';
-import NotFoundError from '@/errors/types/not-found';
-import type { Data } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import NotFoundError from '@/errors/types/not-found'
+import type { Data } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import utils, { getVideoUrl } from '../utils';
-import { getSrtAttachmentBatch } from './subtitles';
+import utils, { getVideoUrl } from '../utils'
+import { getSrtAttachmentBatch } from './subtitles'
 
-const { OAuth2 } = google.auth;
+const { OAuth2 } = google.auth
 
-dayjs.extend(duration);
+dayjs.extend(duration)
 
-let count = 0;
-const youtube = {};
+let count = 0
+const youtube = {}
 if (config.youtube && config.youtube.key) {
-    const keys = config.youtube.key.split(',');
+    const keys = config.youtube.key.split(',')
 
     for (const [index, key] of keys.entries()) {
         if (key) {
             youtube[index] = google.youtube({
                 version: 'v3',
                 auth: key,
-            });
-            count = index + 1;
+            })
+            count = index + 1
         }
     }
 }
 
-let index = -1;
+let index = -1
 const exec = async (func) => {
-    let result;
+    let result
     for (let i = 0; i < count; i++) {
-        index++;
+        index++
         try {
             // eslint-disable-next-line no-await-in-loop
-            result = await func(youtube[index % count]);
-            break;
+            result = await func(youtube[index % count])
+            break
         } catch {
             // console.error(error);
         }
     }
-    return result;
-};
-
-let youtubeOAuth2Client;
-if (config.youtube && config.youtube.clientId && config.youtube.clientSecret && config.youtube.refreshToken) {
-    youtubeOAuth2Client = new OAuth2(config.youtube.clientId, config.youtube.clientSecret, 'https://developers.google.com/oauthplayground');
-    youtubeOAuth2Client.setCredentials({ refresh_token: config.youtube.refreshToken });
+    return result
 }
 
-export { exec, youtubeOAuth2Client };
+let youtubeOAuth2Client
+if (config.youtube && config.youtube.clientId && config.youtube.clientSecret && config.youtube.refreshToken) {
+    youtubeOAuth2Client = new OAuth2(config.youtube.clientId, config.youtube.clientSecret, 'https://developers.google.com/oauthplayground')
+    youtubeOAuth2Client.setCredentials({ refresh_token: config.youtube.refreshToken })
+}
+
+export { exec, youtubeOAuth2Client }
 
 export const getDataByUsername = async ({ username, embed, filterShorts, isJsonFeed }: { username: string; embed: boolean; filterShorts: boolean; isJsonFeed: boolean }): Promise<Data> => {
-    let userHandleData;
+    let userHandleData
     if (username.startsWith('@')) {
         userHandleData = await cache.tryGet(`youtube:handle:${username}`, async () => {
-            const link = `https://www.youtube.com/${username}`;
-            const response = await ofetch(link);
-            const $ = cheerio.load(response);
+            const link = `https://www.youtube.com/${username}`
+            const response = await ofetch(link)
+            const $ = cheerio.load(response)
             const ytInitialData = JSON.parse(
                 $('script')
                     .text()
-                    .match(/ytInitialData = ({.*?});/)?.[1] || '{}'
-            );
-            const metadataRenderer = ytInitialData.metadata.channelMetadataRenderer;
+                    .match(/ytInitialData = ({.*?});/)?.[1] || '{}',
+            )
+            const metadataRenderer = ytInitialData.metadata.channelMetadataRenderer
 
-            const channelId = metadataRenderer.externalId;
-            const channelName = metadataRenderer.title;
-            const image = metadataRenderer.avatar?.thumbnails?.[0]?.url;
-            const description = metadataRenderer.description;
-            const playlistId = (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads;
+            const channelId = metadataRenderer.externalId
+            const channelName = metadataRenderer.title
+            const image = metadataRenderer.avatar?.thumbnails?.[0]?.url
+            const description = metadataRenderer.description
+            const playlistId = (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads
 
             return {
                 channelName,
                 image,
                 description,
                 playlistId,
-            };
-        });
+            }
+        })
     }
 
     // Get the appropriate playlist ID based on filterShorts setting
     const playlistId = await (async () => {
         if (userHandleData?.playlistId) {
-            const origPlaylistId = userHandleData.playlistId;
+            const origPlaylistId = userHandleData.playlistId
 
-            return utils.getPlaylistWithShortsFilter(origPlaylistId, filterShorts);
+            return utils.getPlaylistWithShortsFilter(origPlaylistId, filterShorts)
         } else {
-            const channelData = await utils.getChannelWithUsername(username, 'contentDetails', cache);
-            const items = channelData.data.items;
+            const channelData = await utils.getChannelWithUsername(username, 'contentDetails', cache)
+            const items = channelData.data.items
 
             if (!items) {
-                throw new NotFoundError(`The channel https://www.youtube.com/user/${username} does not exist.`);
+                throw new NotFoundError(`The channel https://www.youtube.com/user/${username} does not exist.`)
             }
 
-            const channelId = items[0].id;
+            const channelId = items[0].id
 
-            return filterShorts ? utils.getPlaylistWithShortsFilter(channelId, filterShorts) : items[0].contentDetails.relatedPlaylists.uploads;
+            return filterShorts ? utils.getPlaylistWithShortsFilter(channelId, filterShorts) : items[0].contentDetails.relatedPlaylists.uploads
         }
-    })();
+    })()
 
-    const playlistItems = await utils.getPlaylistItems(playlistId, 'snippet', cache);
+    const playlistItems = await utils.getPlaylistItems(playlistId, 'snippet', cache)
     if (!playlistItems) {
-        throw new NotFoundError("This channel doesn't have any content.");
+        throw new NotFoundError("This channel doesn't have any content.")
     }
-    const videoIds = playlistItems.data.items.map((item) => item.snippet.resourceId.videoId);
-    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache);
-    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+    const videoIds = playlistItems.data.items.map((item) => item.snippet.resourceId.videoId)
+    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache)
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {}
 
     return {
         title: `${userHandleData?.channelName || username} - YouTube`,
@@ -122,11 +122,11 @@ export const getDataByUsername = async ({ username, embed, filterShorts, isJsonF
         item: playlistItems.data.items
             .filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
             .map((item) => {
-                const snippet = item.snippet;
-                const videoId = snippet.resourceId.videoId;
-                const img = utils.getThumbnail(snippet.thumbnails);
-                const detail = videoDetails?.data.items.find((d) => d.id === videoId);
-                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+                const snippet = item.snippet
+                const videoId = snippet.resourceId.videoId
+                const img = utils.getThumbnail(snippet.thumbnails)
+                const detail = videoDetails?.data.items.find((d) => d.id === videoId)
+                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : []
 
                 return {
                     title: snippet.title,
@@ -143,22 +143,22 @@ export const getDataByUsername = async ({ username, embed, filterShorts, isJsonF
                         },
                         ...srtAttachments,
                     ],
-                };
+                }
             }),
-    };
-};
+    }
+}
 
 export const getDataByChannelId = async ({ channelId, embed, filterShorts, isJsonFeed }: { channelId: string; embed: boolean; filterShorts: boolean; isJsonFeed: boolean }): Promise<Data> => {
     // Get original uploads playlist ID if needed
-    const originalPlaylistId = filterShorts ? null : (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads;
+    const originalPlaylistId = filterShorts ? null : (await utils.getChannelWithId(channelId, 'contentDetails', cache)).data.items[0].contentDetails.relatedPlaylists.uploads
 
     // Use the utility function to get the appropriate playlist ID based on filterShorts setting
-    const playlistId = filterShorts ? utils.getPlaylistWithShortsFilter(channelId) : originalPlaylistId;
+    const playlistId = filterShorts ? utils.getPlaylistWithShortsFilter(channelId) : originalPlaylistId
 
-    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items;
-    const videoIds = data.map((item) => item.snippet.resourceId.videoId);
-    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache);
-    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items
+    const videoIds = data.map((item) => item.snippet.resourceId.videoId)
+    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache)
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {}
 
     return {
         title: `${data[0].snippet.channelTitle} - YouTube`,
@@ -167,11 +167,11 @@ export const getDataByChannelId = async ({ channelId, embed, filterShorts, isJso
         item: data
             .filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
             .map((item) => {
-                const snippet = item.snippet;
-                const videoId = snippet.resourceId.videoId;
-                const img = utils.getThumbnail(snippet.thumbnails);
-                const detail = videoDetails?.data.items.find((d) => d.id === videoId);
-                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+                const snippet = item.snippet
+                const videoId = snippet.resourceId.videoId
+                const img = utils.getThumbnail(snippet.thumbnails)
+                const detail = videoDetails?.data.items.find((d) => d.id === videoId)
+                const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : []
 
                 return {
                     title: snippet.title,
@@ -188,29 +188,29 @@ export const getDataByChannelId = async ({ channelId, embed, filterShorts, isJso
                         },
                         ...srtAttachments,
                     ],
-                };
+                }
             }),
-    };
-};
+    }
+}
 
 export const getDataByPlaylistId = async ({ playlistId, embed, isJsonFeed }: { playlistId: string; embed: boolean; isJsonFeed: boolean }): Promise<Data> => {
-    const playlistTitle = (await utils.getPlaylist(playlistId, 'snippet', cache)).data.items[0].snippet.title;
+    const playlistTitle = (await utils.getPlaylist(playlistId, 'snippet', cache)).data.items[0].snippet.title
 
-    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items.filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video');
-    const videoIds = data.map((item) => item.snippet.resourceId.videoId);
-    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache);
-    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {};
+    const data = (await utils.getPlaylistItems(playlistId, 'snippet', cache)).data.items.filter((d) => d.snippet.title !== 'Private video' && d.snippet.title !== 'Deleted video')
+    const videoIds = data.map((item) => item.snippet.resourceId.videoId)
+    const videoDetails = await utils.getVideos(videoIds.join(','), 'contentDetails', cache)
+    const subtitlesMap = isJsonFeed ? await getSrtAttachmentBatch(videoIds) : {}
 
     return {
         title: `${playlistTitle} by ${data[0].snippet.channelTitle} - YouTube`,
         link: `https://www.youtube.com/playlist?list=${playlistId}`,
         description: `${playlistTitle} by ${data[0].snippet.channelTitle}`,
         item: data.map((item) => {
-            const snippet = item.snippet;
-            const videoId = snippet.resourceId.videoId;
-            const img = utils.getThumbnail(snippet.thumbnails);
-            const detail = videoDetails?.data.items.find((d) => d.id === videoId);
-            const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : [];
+            const snippet = item.snippet
+            const videoId = snippet.resourceId.videoId
+            const img = utils.getThumbnail(snippet.thumbnails)
+            const detail = videoDetails?.data.items.find((d) => d.id === videoId)
+            const srtAttachments = subtitlesMap ? subtitlesMap[videoId] || [] : []
 
             return {
                 title: snippet.title,
@@ -227,7 +227,7 @@ export const getDataByPlaylistId = async ({ playlistId, embed, isJsonFeed }: { p
                     },
                     ...srtAttachments,
                 ],
-            };
+            }
         }),
-    };
-};
+    }
+}

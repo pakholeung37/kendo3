@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/news/:type/:lang?',
@@ -29,24 +29,24 @@ export const route: Route = {
 | All | Detected Cases | Investigation Reports or Recommendations | Annual Reports | CCAC's Updates |
 | --- | -------------- | ---------------------------------------- | -------------- | -------------- |
 | all | case           | Persuasion                               | AnnualReport   | PCANews        |`,
-};
+}
 
 async function handler(ctx) {
-    const browser = await puppeteer();
-    const lang = ctx.req.param('lang') ?? 'sc';
-    const type = utils.TYPE[ctx.req.param('type')];
+    const browser = await puppeteer()
+    const lang = ctx.req.param('lang') ?? 'sc'
+    const type = utils.TYPE[ctx.req.param('type')]
 
-    const BASE = utils.langBase(lang);
-    const page = await browser.newPage();
-    await page.setRequestInterception(true);
+    const BASE = utils.langBase(lang)
+    const page = await browser.newPage()
+    await page.setRequestInterception(true)
     page.on('request', (request) => {
-        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
-    });
+        request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort()
+    })
     await page.goto(BASE, {
         waitUntil: 'domcontentloaded',
-    });
-    const articles = await page.evaluate(() => window.articles);
-    await browser.close();
+    })
+    const articles = await page.evaluate(() => window.articles)
+    await browser.close()
 
     const list = utils
         .typeFilter(articles, type)
@@ -56,7 +56,7 @@ async function handler(ctx) {
             category: item.tags.map((tag) => tag.name),
             link: utils.BASE_URL + item.url,
             pubDate: parseDate(item.time, 'YYYY-MM-DD'),
-        }));
+        }))
 
     const items = await Promise.all(
         list.map((item) =>
@@ -64,15 +64,15 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const $ = load(detailResponse.data);
-                $('.article_details_body > *').removeAttr('style');
-                item.description = $('.article_details_body').html();
-                return item;
-            })
-        )
-    );
+                const $ = load(detailResponse.data)
+                $('.article_details_body > *').removeAttr('style')
+                item.description = $('.article_details_body').html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `CCAC ${type}`,
@@ -80,5 +80,5 @@ async function handler(ctx) {
         description: `CCAC ${type}`,
         language: ctx.req.param('lang') ? utils.LANG_TYPE[ctx.req.param('lang')] : utils.LANG_TYPE.sc,
         item: items,
-    };
+    }
 }

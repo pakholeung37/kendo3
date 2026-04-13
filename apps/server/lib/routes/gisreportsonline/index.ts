@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:path{.*}',
@@ -18,44 +18,44 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://www.gisreportsonline.com';
-    const currentUrl = `${rootUrl}/${ctx.req.param('path')}`;
-    const response = await ofetch(currentUrl);
+    const rootUrl = 'https://www.gisreportsonline.com'
+    const currentUrl = `${rootUrl}/${ctx.req.param('path')}`
+    const response = await ofetch(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $('article h3 a')
         .toArray()
-        .map((e) => ({ link: $(e).attr('href'), title: $(e).text() }));
+        .map((e) => ({ link: $(e).attr('href'), title: $(e).text() }))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const html = await ofetch(item.link);
-                const content = load(html);
-                const ldjson = JSON.parse(content('script.rank-math-schema-pro').text())['@graph'].find((e) => e['@type'] === 'NewsArticle');
+                const html = await ofetch(item.link)
+                const content = load(html)
+                const ldjson = JSON.parse(content('script.rank-math-schema-pro').text())['@graph'].find((e) => e['@type'] === 'NewsArticle')
 
-                item.pubDate = parseDate(ldjson.datePublished);
-                item.updated = parseDate(ldjson.dateModified);
-                item.author = [ldjson.author];
-                item.category = ldjson.keywords.split(',');
-                item.language = ldjson.inLanguage;
+                item.pubDate = parseDate(ldjson.datePublished)
+                item.updated = parseDate(ldjson.dateModified)
+                item.author = [ldjson.author]
+                item.category = ldjson.keywords.split(',')
+                item.language = ldjson.inLanguage
 
                 item.description = content('header.entry-header ~ :not(#pos-conclusion ~ *)')
                     .toArray()
                     .map((e) => content(e).prop('outerHTML'))
-                    .join('');
+                    .join('')
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

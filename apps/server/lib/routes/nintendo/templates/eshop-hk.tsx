@@ -1,69 +1,69 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type GalleryItem = {
-    type?: string;
-    isMain?: boolean;
-    full?: string;
-    img?: string;
-    thumb?: string;
-};
+    type?: string
+    isMain?: boolean
+    full?: string
+    img?: string
+    thumb?: string
+}
 
 type Attributes = {
-    platform?: string;
-    supported_languages?: string;
-    game_category?: string;
-    required_space?: string;
-    release_date?: string;
-    supported_controllers?: string;
-    publisher?: string;
-    supported_play_modes?: string;
-    no_of_players?: string;
-    price?: string;
-    currency?: string;
-    disclaimer?: string;
-};
+    platform?: string
+    supported_languages?: string
+    game_category?: string
+    required_space?: string
+    release_date?: string
+    supported_controllers?: string
+    publisher?: string
+    supported_play_modes?: string
+    no_of_players?: string
+    price?: string
+    currency?: string
+    disclaimer?: string
+}
 
 type JsonData = {
-    hero_banner_url?: string;
-    catch_copy?: string;
-    description?: string;
-    notices?: Array<{ text?: string }>;
-    total_rom_size?: number;
-    play_styles?: Array<{ name?: string }>;
+    hero_banner_url?: string
+    catch_copy?: string
+    description?: string
+    notices?: Array<{ text?: string }>
+    total_rom_size?: number
+    play_styles?: Array<{ name?: string }>
     player_number?: {
-        offline_max?: string | number;
-        local_max?: string | number;
-        online_max?: string | number;
-    };
-    controllers?: Array<{ name?: string }>;
-    cloud_backup_type?: string;
-    platform?: { name?: string };
-    publisher?: { name?: string };
-    genre?: string;
-    release_date_on_eshop?: string;
-    languages?: Array<{ name?: string }>;
-    network_feature_description?: string;
-    copyright_text?: string;
-    screenshots?: Array<{ images?: Array<{ url?: string }> }>;
-};
+        offline_max?: string | number
+        local_max?: string | number
+        online_max?: string | number
+    }
+    controllers?: Array<{ name?: string }>
+    cloud_backup_type?: string
+    platform?: { name?: string }
+    publisher?: { name?: string }
+    genre?: string
+    release_date_on_eshop?: string
+    languages?: Array<{ name?: string }>
+    network_feature_description?: string
+    copyright_text?: string
+    screenshots?: Array<{ images?: Array<{ url?: string }> }>
+}
 
 type PriceData = {
     price?: {
         regular_price?: {
-            formatted_value?: string;
-        };
-    };
-};
+            formatted_value?: string
+        }
+    }
+}
 
 type DescriptionParams = {
-    host?: string;
-    attributes?: Attributes;
-    description?: string;
-    gallery?: GalleryItem[];
-    jsonData?: JsonData;
-    priceData?: PriceData;
-};
+    host?: string
+    attributes?: Attributes
+    description?: string
+    gallery?: GalleryItem[]
+    jsonData?: JsonData
+    priceData?: PriceData
+}
 
 export const renderEshopHkDescription = ({ host, attributes, description, gallery, jsonData, priceData }: DescriptionParams) =>
     renderToString(
@@ -255,5 +255,5 @@ export const renderEshopHkDescription = ({ host, attributes, description, galler
                     {jsonData?.screenshots ? jsonData.screenshots.map((screen, screenIndex) => screen.images?.map((image, imageIndex) => <img src={image.url} key={String(image.url ?? `${screenIndex}-${imageIndex}`)} />)) : null}
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 /**
  * Parses a tree array and returns an array of objects containing the key-value pairs.
@@ -16,16 +16,16 @@ import { renderDescription } from './templates/description';
  */
 const parseTree = (tree, result = []) => {
     for (const obj of tree) {
-        const { key, value, children } = obj;
-        result.push({ key, value });
+        const { key, value, children } = obj
+        result.push({ key, value })
 
         if (children && children.length > 0) {
-            parseTree(children, result);
+            parseTree(children, result)
         }
     }
 
-    return result;
-};
+    return result
+}
 
 export const route: Route = {
     path: '/report/:industry?/:label?',
@@ -153,32 +153,32 @@ export const route: Route = {
 | -------- | -------- | ------- | ---- | -------- |
 | 9001     | 9002     | 9003    | 10   | 10001    |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { industry, label } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50;
+    const { industry, label } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 50
 
-    const rootUrl = 'https://www.questmobile.com.cn';
-    const apiUrl = new URL('api/v2/report/article-list', rootUrl).href;
-    const apiTreeUrl = new URL('api/v2/report/industry-label-tree', rootUrl).href;
+    const rootUrl = 'https://www.questmobile.com.cn'
+    const apiUrl = new URL('api/v2/report/article-list', rootUrl).href
+    const apiTreeUrl = new URL('api/v2/report/industry-label-tree', rootUrl).href
 
     const {
         data: {
             data: { industryTree, labelTree },
         },
-    } = await got(apiTreeUrl);
+    } = await got(apiTreeUrl)
 
-    const industries = parseTree(industryTree);
-    const labels = parseTree(labelTree);
+    const industries = parseTree(industryTree)
+    const labels = parseTree(labelTree)
 
-    const industryObj = industry ? industries.find((i) => i.key === industry || i.value === industry) : undefined;
-    const labelObj = label ? labels.find((i) => i.key === label || i.value === label) : industryObj ? undefined : labels.find((i) => i.key === industry || i.value === industry);
+    const industryObj = industry ? industries.find((i) => i.key === industry || i.value === industry) : undefined
+    const labelObj = label ? labels.find((i) => i.key === label || i.value === label) : industryObj ? undefined : labels.find((i) => i.key === industry || i.value === industry)
 
-    const industryId = industryObj?.key ?? -1;
-    const labelId = labelObj?.key ?? -1;
+    const industryId = industryObj?.key ?? -1
+    const labelId = labelObj?.key ?? -1
 
-    const currentUrl = new URL(`research/reports/${industryObj?.key ?? -1}/${labelObj?.key ?? -1}`, rootUrl).href;
+    const currentUrl = new URL(`research/reports/${industryObj?.key ?? -1}/${labelObj?.key ?? -1}`, rootUrl).href
 
     const { data: response } = await got(apiUrl, {
         searchParams: {
@@ -188,7 +188,7 @@ async function handler(ctx) {
             industryId,
             labelId,
         },
-    });
+    })
 
     let items = response.data.slice(0, limit).map((item) => ({
         title: item.title,
@@ -204,43 +204,43 @@ async function handler(ctx) {
         category: [...(item.industryList ?? []), ...(item.labelList ?? [])],
         guid: `questmobile-report#${item.id}`,
         pubDate: parseDate(item.publishTime),
-    }));
+    }))
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const content = load(detailResponse);
+                const content = load(detailResponse)
 
-                content('div.text div.daoyu').remove();
+                content('div.text div.daoyu').remove()
 
-                item.title = content('div.title h1').text();
+                item.title = content('div.title h1').text()
                 item.description += renderDescription({
                     description: content('div.text').html(),
-                });
+                })
                 item.author = content('div.source')
                     .text()
-                    .replace(/^.*?：/, '');
+                    .replace(/^.*?：/, '')
                 item.category = content('div.hy, div.keyword')
                     .find('span')
                     .toArray()
-                    .map((c) => content(c).text());
-                item.pubDate = parseDate(content('div.data span').prop('datetime'));
+                    .map((c) => content(c).text())
+                item.pubDate = parseDate(content('div.data span').prop('datetime'))
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const { data: currentResponse } = await got(currentUrl);
+    const { data: currentResponse } = await got(currentUrl)
 
-    const $ = load(currentResponse);
+    const $ = load(currentResponse)
 
-    const author = $('meta[property="og:title"]').prop('content').split(/-/)[0];
-    const categories = [industryObj?.value, labelObj?.value].filter(Boolean);
-    const image = $(`img[alt="${author}"]`).prop('src');
-    const icon = $('link[rel="shortcut icon"]').prop('href');
+    const author = $('meta[property="og:title"]').prop('content').split(/-/)[0]
+    const categories = [industryObj?.value, labelObj?.value].filter(Boolean)
+    const image = $(`img[alt="${author}"]`).prop('src')
+    const icon = $('link[rel="shortcut icon"]').prop('href')
 
     return {
         item: items,
@@ -254,5 +254,5 @@ async function handler(ctx) {
         subtitle: $('meta[name="keywords"]').prop('content'),
         author,
         allowEmpty: true,
-    };
+    }
 }

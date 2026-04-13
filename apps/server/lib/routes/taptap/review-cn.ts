@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { handler } from './common/review';
+import { handler } from './common/review'
 
 export const route: Route = {
     path: '/review/:id/:order?/:lang?',
@@ -31,4 +31,4 @@ export const route: Route = {
     description: `| 最新   | 综合 |
 | --- | --- |
 | new | hot |`,
-};
+}

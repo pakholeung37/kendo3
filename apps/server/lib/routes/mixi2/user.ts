@@ -1,34 +1,34 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, Route } from '@/types';
-import { ViewType } from '@/types';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, Route } from '@/types'
+import { ViewType } from '@/types'
+import { parseDate } from '@/utils/parse-date'
 
-import { CONFIG_OPTIONS, getClient, parsePost, postFilter } from './utils';
+import { CONFIG_OPTIONS, getClient, parsePost, postFilter } from './utils'
 
 const handler = async (ctx: Context) => {
-    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
-    const name = ctx.req.param('name');
-    const mediaOnly = ctx.req.param('media') === 'media';
+    const limit = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
+    const name = ctx.req.param('name')
+    const mediaOnly = ctx.req.param('media') === 'media'
 
     if (!name.startsWith('@')) {
-        throw new InvalidParameterError('ユーザー名は@で始まる必要があります');
+        throw new InvalidParameterError('ユーザー名は@で始まる必要があります')
     }
 
-    const client = getClient();
+    const client = getClient()
 
     const userInfo = await client.getPersonaByName({
         name: name.slice(1),
-    });
+    })
 
-    const persona = userInfo.persona;
+    const persona = userInfo.persona
 
     const data = await client.getPersonalTimeline({
         personaId: persona?.personaId,
         limit,
         mediaOnly,
-    });
+    })
 
     return {
         title: `${persona?.name} - ${mediaOnly ? 'メディア' : 'ポスト'}`,
@@ -42,8 +42,8 @@ const handler = async (ctx: Context) => {
                 author: persona?.name,
                 link: `https://mixi.social/@${persona?.name}/posts/${post.postId}`,
             })) ?? [],
-    } as Data;
-};
+    } as Data
+}
 
 export const route: Route = {
     path: '/user/:name/:media?',
@@ -77,4 +77,4 @@ export const route: Route = {
     view: ViewType.SocialMedia,
     handler,
     maintainers: ['KarasuShin'],
-};
+}

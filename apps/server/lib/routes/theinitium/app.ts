@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { applyLanguageToTagSlug, CHANNEL_TAG_MAP, ghostFetch, postsToItems } from './utils';
+import { applyLanguageToTagSlug, CHANNEL_TAG_MAP, ghostFetch, postsToItems } from './utils'
 
 // Reason: Old app categories map to Ghost channel tag + language.
 // The _sc suffix = Simplified Chinese (zh-hans), _tc = Traditional Chinese (zh-hant).
@@ -23,7 +23,7 @@ const APP_CATEGORY_MAP: Record<string, { channelType: string; language: string }
     hongkong_tc: { channelType: 'hongkong', language: 'zh-hant' },
     taiwan_sc: { channelType: 'taiwan', language: 'zh-hans' },
     taiwan_tc: { channelType: 'taiwan', language: 'zh-hant' },
-};
+}
 
 // Reason: Display labels for the old app categories, kept for RSS feed titles
 const APP_CATEGORY_LABELS: Record<string, string> = {
@@ -45,7 +45,7 @@ const APP_CATEGORY_LABELS: Record<string, string> = {
     hongkong_tc: '香港',
     taiwan_sc: '台湾',
     taiwan_tc: '台灣',
-};
+}
 
 export const route: Route = {
     path: '/app/:category?',
@@ -94,40 +94,40 @@ export const route: Route = {
 :::tip
 原 App 路由已迁移至 Ghost CMS API。播客（article_audio）分类已停用，请改用 \`/theinitium/channel\` 路由。
 :::`,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'latest_sc';
+    const category = ctx.req.param('category') ?? 'latest_sc'
 
-    const mapping = APP_CATEGORY_MAP[category];
+    const mapping = APP_CATEGORY_MAP[category]
     if (!mapping) {
-        throw new Error(`Unknown category: ${category}. Supported: ${Object.keys(APP_CATEGORY_MAP).join(', ')}`);
+        throw new Error(`Unknown category: ${category}. Supported: ${Object.keys(APP_CATEGORY_MAP).join(', ')}`)
     }
 
-    const { channelType, language } = mapping;
+    const { channelType, language } = mapping
 
     // Reason: Reuse the same Ghost tag filter logic as processFeed's channel case
-    const baseTag = CHANNEL_TAG_MAP[channelType] ?? channelType;
-    let filter = '';
+    const baseTag = CHANNEL_TAG_MAP[channelType] ?? channelType
+    let filter = ''
     if (baseTag === '') {
         // "latest" = no tag filter, just filter by language via internal tag
-        filter = `tag:hash-${language}`;
+        filter = `tag:hash-${language}`
     } else {
-        const tagSlug = applyLanguageToTagSlug(baseTag, language);
-        filter = `tag:${tagSlug}`;
+        const tagSlug = applyLanguageToTagSlug(baseTag, language)
+        filter = `tag:${tagSlug}`
     }
 
     const params: Record<string, string> = {
         include: 'tags,authors',
         limit: '20',
         filter,
-    };
+    }
 
-    const data = await ghostFetch('posts', params);
-    const items = await postsToItems(data.posts);
+    const data = await ghostFetch('posts', params)
+    const items = await postsToItems(data.posts)
 
-    const label = APP_CATEGORY_LABELS[category] ?? category;
-    const name = language === 'zh-hans' ? '端传媒' : '端傳媒';
+    const label = APP_CATEGORY_LABELS[category] ?? category
+    const name = language === 'zh-hans' ? '端传媒' : '端傳媒'
 
     return {
         title: `${name} - ${label}`,
@@ -135,5 +135,5 @@ async function handler(ctx) {
         icon: 'https://theinitium.com/favicon.ico',
         language: language === 'zh-hans' ? 'zh-CN' : 'zh-TW',
         item: items,
-    };
+    }
 }

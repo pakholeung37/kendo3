@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/books/:language',
@@ -38,40 +38,40 @@ export const route: Route = {
     `,
     maintainers: ['Cedaric'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const language = ctx.req.param('language');
-    const baseUrl = 'https://www.jimmyspa.com';
-    const booksListUrl = new URL(`/${language}/Books/Ajax/changeList?year=&keyword=&categoryId=0&page=1`, baseUrl).href;
+    const language = ctx.req.param('language')
+    const baseUrl = 'https://www.jimmyspa.com'
+    const booksListUrl = new URL(`/${language}/Books/Ajax/changeList?year=&keyword=&categoryId=0&page=1`, baseUrl).href
 
-    const listResponse = await got(booksListUrl);
-    const listPage = load(listResponse.data.view);
+    const listResponse = await got(booksListUrl)
+    const listPage = load(listResponse.data.view)
 
     const bookItems = listPage('ul#appendWork li.work_block')
         .toArray()
         .map(async (bookElement) => {
-            const bookContent = load(bookElement);
-            const bookTitle = bookContent('p.tit').text();
-            const bookImageRelative = bookContent('div.work_img img').prop('src') || '';
-            const bookImageUrl = bookImageRelative ? baseUrl + bookImageRelative : '';
-            const bookDetailUrl = bookContent('li.work_block').prop('data-route');
+            const bookContent = load(bookElement)
+            const bookTitle = bookContent('p.tit').text()
+            const bookImageRelative = bookContent('div.work_img img').prop('src') || ''
+            const bookImageUrl = bookImageRelative ? baseUrl + bookImageRelative : ''
+            const bookDetailUrl = bookContent('li.work_block').prop('data-route')
 
             const { renderedDescription, publishDate } = (await cache.tryGet(bookDetailUrl, async () => {
-                const detailResponse = await got(bookDetailUrl);
-                const detailPage = load(detailResponse.data);
-                const bookDescription = detailPage('article.intro_cont').html() || '';
-                const bookInfoWrap = detailPage('div.info_wrap').html() || '';
+                const detailResponse = await got(bookDetailUrl)
+                const detailPage = load(detailResponse.data)
+                const bookDescription = detailPage('article.intro_cont').html() || ''
+                const bookInfoWrap = detailPage('div.info_wrap').html() || ''
 
                 const processedDescription = bookDescription.replaceAll(/<img\b[^>]*>/g, (imgTag) =>
                     imgTag.replaceAll(/\b(src|data-src)="(?!http|https|\/\/)([^"]*)"/g, (_, attrName, relativePath) => {
-                        const absoluteImageUrl = new URL(relativePath, baseUrl).href;
-                        return `${attrName}="${absoluteImageUrl}"`;
-                    })
-                );
+                        const absoluteImageUrl = new URL(relativePath, baseUrl).href
+                        return `${attrName}="${absoluteImageUrl}"`
+                    }),
+                )
 
-                const publishDateMatch = bookInfoWrap.match(/<span>(首次出版|First Published|初版)<\/span>\s*<span class="num">([^<]+)<\/span>/);
-                const publishDate = publishDateMatch ? parseDate(publishDateMatch[2] + '-02') : '';
+                const publishDateMatch = bookInfoWrap.match(/<span>(首次出版|First Published|初版)<\/span>\s*<span class="num">([^<]+)<\/span>/)
+                const publishDate = publishDateMatch ? parseDate(publishDateMatch[2] + '-02') : ''
 
                 const renderedDescription = renderDescription({
                     images: bookImageUrl
@@ -83,13 +83,13 @@ async function handler(ctx) {
                           ]
                         : undefined,
                     description: processedDescription,
-                });
+                })
 
                 return {
                     renderedDescription,
                     publishDate,
-                };
-            })) as { renderedDescription: string; publishDate: string };
+                }
+            })) as { renderedDescription: string; publishDate: string }
 
             return {
                 title: bookTitle,
@@ -100,13 +100,13 @@ async function handler(ctx) {
                     html: renderedDescription,
                     text: bookTitle,
                 },
-            };
-        });
+            }
+        })
 
     return {
         title: `幾米 - 幾米創作(${language})`,
         link: `${baseUrl}/${language}/Books`,
         allowEmpty: true,
         item: await Promise.all(bookItems),
-    };
+    }
 }

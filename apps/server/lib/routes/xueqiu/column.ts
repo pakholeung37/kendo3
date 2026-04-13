@@ -1,12 +1,12 @@
-import { JSDOM } from 'jsdom';
-import { CookieJar } from 'tough-cookie';
+import { JSDOM } from 'jsdom'
+import { CookieJar } from 'tough-cookie'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const cookieJar = new CookieJar();
-const baseUrl = 'https://xueqiu.com';
+const cookieJar = new CookieJar()
+const baseUrl = 'https://xueqiu.com'
 
 export const route: Route = {
     path: '/column/:id',
@@ -29,24 +29,24 @@ export const route: Route = {
     name: '用户专栏',
     maintainers: ['TonyRL', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const pageUrl = `${baseUrl}/${id}/column`;
+    const id = ctx.req.param('id')
+    const pageUrl = `${baseUrl}/${id}/column`
 
     // Get cookie first
     await got(baseUrl, {
         cookieJar,
-    });
+    })
 
     const pageData = await got(pageUrl, {
         cookieJar,
-    });
+    })
     const { window } = new JSDOM(pageData.data, {
         runScripts: 'dangerously',
-    });
-    const SNOWMAN_TARGET = window.SNOWMAN_TARGET;
+    })
+    const SNOWMAN_TARGET = window.SNOWMAN_TARGET
 
     const { data } = await got(`${baseUrl}/statuses/original/timeline.json`, {
         cookieJar,
@@ -54,10 +54,10 @@ async function handler(ctx) {
             user_id: id,
             page: 1,
         },
-    });
+    })
 
     if (!data.list) {
-        throw new Error('Error occurred, please refresh the page or try again after logging back into your account');
+        throw new Error('Error occurred, please refresh the page or try again after logging back into your account')
     }
 
     const items = data.list.map((item) => ({
@@ -66,12 +66,12 @@ async function handler(ctx) {
         pubDate: parseDate(item.created_at, 'x'),
         link: `${baseUrl}${item.target}`,
         author: SNOWMAN_TARGET.screen_name,
-    }));
+    }))
 
     return {
         title: `${SNOWMAN_TARGET.screen_name} - 雪球`,
         link: pageUrl,
         description: SNOWMAN_TARGET.description,
         item: items,
-    };
+    }
 }

@@ -1,42 +1,42 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const handler = async (ctx) => {
-    const { category = '' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 18;
+    const { category = '' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 18
 
-    const domain = '423down.com';
-    const rootUrl = `https://www.${domain}`;
-    const currentUrl = new URL(category, rootUrl).href;
+    const domain = '423down.com'
+    const rootUrl = `https://www.${domain}`
+    const currentUrl = new URL(category, rootUrl).href
 
-    const { data: response } = await got(currentUrl);
+    const { data: response } = await got(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
-    const language = $('html').prop('lang');
+    const language = $('html').prop('lang')
 
     let items = $('ul.excerpt li')
         .toArray()
         .filter((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.find('h2 a').prop('href');
-            const isAdItem = item.find('span.cat').text().includes('423Down');
+            const link = item.find('h2 a').prop('href')
+            const isAdItem = item.find('span.cat').text().includes('423Down')
 
-            return new RegExp(domain).test(link) && !isAdItem;
+            return new RegExp(domain).test(link) && !isAdItem
         })
         .slice(0, limit)
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.find('h2').text();
-            const image = item.find('a.pic img').prop('src');
+            const title = item.find('h2').text()
+            const image = item.find('a.pic img').prop('src')
             const description = renderDescription({
                 images: image
                     ? [
@@ -47,7 +47,7 @@ export const handler = async (ctx) => {
                       ]
                     : undefined,
                 intro: item.find('div.note').text(),
-            });
+            })
 
             return {
                 title,
@@ -68,38 +68,38 @@ export const handler = async (ctx) => {
                 enclosure_url: image,
                 enclosure_type: image ? `image/${image.split(/\./).pop()}` : undefined,
                 enclosure_title: title,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: detailResponse } = await got(item.link);
+                const { data: detailResponse } = await got(item.link)
 
-                const $$ = load(detailResponse);
+                const $$ = load(detailResponse)
 
-                const title = $$('h1.meta-tit a').text();
-                const description = item.description + renderDescription({ description: $$('div.entry').html() });
+                const title = $$('h1.meta-tit a').text()
+                const description = item.description + renderDescription({ description: $$('div.entry').html() })
 
-                item.title = title;
-                item.description = description;
-                item.pubDate = parseDate($$('p.meta-info').contents().first().text().trim().split(/\s/)[0], 'YYYY-MM-DD');
+                item.title = title
+                item.description = description
+                item.pubDate = parseDate($$('p.meta-info').contents().first().text().trim().split(/\s/)[0], 'YYYY-MM-DD')
                 item.category = $$('p.meta-info a[rel="category tag"]')
                     .toArray()
-                    .map((c) => $$(c).text());
+                    .map((c) => $$(c).text())
                 item.content = {
                     html: description,
                     text: $$('div.entry').text(),
-                };
-                item.language = language;
+                }
+                item.language = language
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const title = $('title').first().text();
-    const image = new URL('wp-content/themes/D7/img/423Down.png', rootUrl).href;
+    const title = $('title').first().text()
+    const image = new URL('wp-content/themes/D7/img/423Down.png', rootUrl).href
 
     return {
         title,
@@ -110,8 +110,8 @@ export const handler = async (ctx) => {
         image,
         author: title.split(/-/).pop()?.trim(),
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/:category{.+}?',
@@ -166,9 +166,9 @@ export const route: Route = {
         {
             source: ['423down.com/:category', '423down.com'],
             target: (params) => {
-                const category = params.category;
+                const category = params.category
 
-                return `/423down${category ? `/${category}` : ''}`;
+                return `/423down${category ? `/${category}` : ''}`
             },
         },
         {
@@ -272,4 +272,4 @@ export const route: Route = {
             target: '/pe-system',
         },
     ],
-};
+}

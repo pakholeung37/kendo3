@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { parseDate } from '@/utils/parse-date';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { parseDate } from '@/utils/parse-date'
+import puppeteer from '@/utils/puppeteer'
 
-const baseUrl = 'http://www.chinadegrees.com.cn';
+const baseUrl = 'http://www.chinadegrees.com.cn'
 
 const renderDescription = (title, pubDate) =>
     renderToString(
@@ -20,8 +20,8 @@ const renderDescription = (title, pubDate) =>
                 <td>{title}</td>
                 <td>{pubDate}</td>
             </tr>
-        </table>
-    );
+        </table>,
+    )
 
 export const route: Route = {
     path: '/:province?',
@@ -73,61 +73,61 @@ export const route: Route = {
 | 台湾             | 71   |`,
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { province = '11' } = ctx.req.param();
-    const url = `${baseUrl}/help/unitSwqk${province}.html`;
+    const { province = '11' } = ctx.req.param()
+    const url = `${baseUrl}/help/unitSwqk${province}.html`
 
     const data = await cache.tryGet(
         url,
         async () => {
-            const browser = await puppeteer();
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
+            const browser = await puppeteer()
+            const page = await browser.newPage()
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort();
-            });
+                request.resourceType() === 'document' || request.resourceType() === 'script' ? request.continue() : request.abort()
+            })
             await page.goto(url, {
                 waitUntil: 'domcontentloaded',
-            });
-            await page.waitForSelector('.datalist');
+            })
+            await page.waitForSelector('.datalist')
 
-            const html = await page.evaluate(() => document.documentElement.innerHTML);
-            await browser.close();
+            const html = await page.evaluate(() => document.documentElement.innerHTML)
+            await browser.close()
 
-            const $ = load(html);
+            const $ = load(html)
             return {
                 title: $('caption').text().trim(),
                 items: $('.datalist tr')
                     .toArray()
                     .slice(1)
                     .map((item) => {
-                        item = $(item);
-                        const title = item.find('td').eq(1).text();
-                        const pubDate = item.find('td').eq(2).text();
+                        item = $(item)
+                        const title = item.find('td').eq(1).text()
+                        const pubDate = item.find('td').eq(2).text()
                         return {
                             title,
                             pubDate,
                             guid: `${title}:${pubDate}`,
-                        };
+                        }
                     })
                     .filter((item) => item.title !== 'null'),
-            };
+            }
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = data.items.map((item) => {
-        item.description = renderDescription(item.title, item.pubDate);
-        item.pubDate = parseDate(item.pubDate, 'YYYY-MM-DD');
-        return item;
-    });
+        item.description = renderDescription(item.title, item.pubDate)
+        item.pubDate = parseDate(item.pubDate, 'YYYY-MM-DD')
+        return item
+    })
 
     return {
         title: data.title,
         link: url,
         item: items,
-    };
+    }
 }

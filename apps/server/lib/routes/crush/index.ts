@@ -1,13 +1,13 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
 
-import type { Data, DataItem, Route } from '@/types';
-import md5 from '@/utils/md5';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import md5 from '@/utils/md5'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const baseUrl = 'https://www.crush.ninja';
+const baseUrl = 'https://www.crush.ninja'
 
 export const route: Route = {
     path: '/pages/:id',
@@ -27,46 +27,46 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const { id } = ctx.req.param();
-    const targetUrl = `${baseUrl}/en-us/pages/${id}/`;
+    const { id } = ctx.req.param()
+    const targetUrl = `${baseUrl}/en-us/pages/${id}/`
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
 
-    const title = $('meta[property="og:title"]').attr('content') || `CrushNinja - ${id}`;
-    const description = $('meta[name="description"]').attr('content') ?? undefined;
-    const image = $('meta[property="og:image"]').attr('content') ?? undefined;
+    const title = $('meta[property="og:title"]').attr('content') || `CrushNinja - ${id}`
+    const description = $('meta[name="description"]').attr('content') ?? undefined
+    const image = $('meta[property="og:image"]').attr('content') ?? undefined
 
     const items: DataItem[] = $('div.rounded-border')
         .toArray()
         .map((el): DataItem => {
-            const $el = $(el);
+            const $el = $(el)
 
-            const p1 = $el.find('.p-1').first();
-            const description = (p1.text() || '').trim();
+            const p1 = $el.find('.p-1').first()
+            const description = (p1.text() || '').trim()
 
-            const publishedDiv = $el.children('div').last();
-            const publishedRaw = (publishedDiv.text() || '').trim();
+            const publishedDiv = $el.children('div').last()
+            const publishedRaw = (publishedDiv.text() || '').trim()
 
             // Example
             // Published at: September 20, 2025 12:44:36 PM
-            const postedAtText = publishedRaw.replace('Published at: ', '');
-            const pubDate = timezone(parseDate(postedAtText), 0);
+            const postedAtText = publishedRaw.replace('Published at: ', '')
+            const pubDate = timezone(parseDate(postedAtText), 0)
 
-            const guid = `${targetUrl}#${md5(description)}`;
+            const guid = `${targetUrl}#${md5(description)}`
 
             const item: DataItem = {
                 title: description,
                 description,
                 pubDate,
                 guid,
-            };
+            }
 
-            return item;
-        });
+            return item
+        })
 
     return {
         title,
@@ -75,5 +75,5 @@ async function handler(ctx): Promise<Data> {
         item: items,
         image,
         allowEmpty: true,
-    };
+    }
 }

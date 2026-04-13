@@ -1,10 +1,10 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/report/:type1/:type2',
@@ -18,10 +18,10 @@ export const route: Route = {
         {
             source: ['mall.nanhua.net/mall/r/w/reportNew/report-list.html'],
             target: (_, url) => {
-                const params = new URL(url).searchParams;
-                const type1 = params.get('type1');
-                const type2 = params.get('type2');
-                return type1 && type2 ? `/nanhua/report/${encodeURIComponent(type1)}/${encodeURIComponent(type2)}` : '';
+                const params = new URL(url).searchParams
+                const type1 = params.get('type1')
+                const type2 = params.get('type2')
+                return type1 && type2 ? `/nanhua/report/${encodeURIComponent(type1)}/${encodeURIComponent(type2)}` : ''
             },
         },
     ],
@@ -29,21 +29,21 @@ export const route: Route = {
     maintainers: ['TonyRL'],
     handler,
     url: 'mall.nanhua.net/mall/r/w/reportNew/report-list.html',
-};
+}
 
 async function handler(ctx: Context) {
-    const { type1, type2 } = ctx.req.param();
-    const baseUrl = 'https://mall.nanhua.net';
-    const apiBase = `${baseUrl}/mall/nh/api`;
-    const link = `${baseUrl}/mall/r/w/reportNew/report-list.html?type1=${type1}&type2=${type2}`;
+    const { type1, type2 } = ctx.req.param()
+    const baseUrl = 'https://mall.nanhua.net'
+    const apiBase = `${baseUrl}/mall/nh/api`
+    const link = `${baseUrl}/mall/r/w/reportNew/report-list.html?type1=${type1}&type2=${type2}`
 
     const treeList = await cache.tryGet('nanhua:treeList', async () => {
         const response = await ofetch(`${apiBase}/reportType/getTreeList.json`, {
             method: 'POST',
             body: {},
-        });
-        return response.data;
-    });
+        })
+        return response.data
+    })
 
     const response = await ofetch(`${apiBase}/report/getPage.json`, {
         method: 'POST',
@@ -52,10 +52,10 @@ async function handler(ctx: Context) {
             type2Code: type2,
             pageSize: ctx.req.query('limit') || '20',
         },
-    });
+    })
 
-    const parent = treeList.find((item) => item.type === type1);
-    const child = parent?.children?.find((item) => item.type === type2);
+    const parent = treeList.find((item) => item.type === type1)
+    const child = parent?.children?.find((item) => item.type === type2)
 
     const items: DataItem[] = response.data.result.map((item) => ({
         title: item.title,
@@ -65,7 +65,7 @@ async function handler(ctx: Context) {
         author: item.personName,
         category: [item.type1Name, item.type2Name, item.typeName].filter(Boolean),
         image: item.iconUrl,
-    }));
+    }))
 
     return {
         title: `南华期货 - ${parent?.name ?? type1} - ${child?.name ?? type2}`,
@@ -73,5 +73,5 @@ async function handler(ctx: Context) {
         language: 'zh-CN' as const,
         image: `${baseUrl}/favicon.ico`,
         item: items,
-    };
+    }
 }

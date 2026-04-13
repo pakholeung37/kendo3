@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
 
-import { baseUrl, getData, getList, variables } from './utils.js';
+import { baseUrl, getData, getList, variables } from './utils.js'
 
 const sourceQuery = `
 query Source($handle: ID!) {
@@ -79,7 +79,7 @@ query Source($handle: ID!) {
     }
   }
 
-`;
+`
 
 const query = `
   query SourceFeed(
@@ -200,7 +200,7 @@ const query = `
     bookmarked
     downvoted
   }
-`;
+`
 
 export const route: Route = {
     path: '/squads/:squads/:innerSharedContent?',
@@ -225,14 +225,14 @@ export const route: Route = {
     maintainers: ['Rjnishant530'],
     handler,
     url: 'app.daily.dev/squads/discover',
-};
+}
 
 async function handler(ctx) {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
-    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false;
-    const squads = ctx.req.param('squads');
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
+    const innerSharedContent = ctx.req.param('innerSharedContent') ? JSON.parse(ctx.req.param('innerSharedContent')) : false
+    const squads = ctx.req.param('squads')
 
-    const link = `${baseUrl}/squads/${squads}`;
+    const link = `${baseUrl}/squads/${squads}`
 
     const { id, description, name } = await getData(
         {
@@ -241,8 +241,8 @@ async function handler(ctx) {
                 handle: squads,
             },
         },
-        true
-    );
+        true,
+    )
 
     const data = await getData({
         query,
@@ -253,8 +253,8 @@ async function handler(ctx) {
             supportedTypes: ['article', 'share', 'freeform', 'video:youtube', 'collection', 'welcome'],
             first: limit,
         },
-    });
-    const items = getList(data, innerSharedContent, true);
+    })
+    const items = getList(data, innerSharedContent, true)
 
     return {
         title: `${name} - daily.dev`,
@@ -264,5 +264,5 @@ async function handler(ctx) {
         logo: `${baseUrl}/favicon-32x32.png`,
         icon: `${baseUrl}/favicon-32x32.png`,
         language: 'en-us',
-    };
+    }
 }

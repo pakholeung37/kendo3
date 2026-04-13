@@ -1,11 +1,11 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-const baseUrl = 'https://www.gelonghui.com';
+const baseUrl = 'https://www.gelonghui.com'
 
 export const route: Route = {
     path: '/live',
@@ -30,13 +30,13 @@ export const route: Route = {
     maintainers: [],
     handler,
     url: 'gelonghui.com/live',
-};
+}
 
 async function handler() {
-    const apiUrl = `${baseUrl}/api/live-channels/all/lives/v4`;
+    const apiUrl = `${baseUrl}/api/live-channels/all/lives/v4`
     const {
         data: { result },
-    } = await got(apiUrl);
+    } = await got(apiUrl)
 
     const items = result.map((i) => ({
         title: i.title || i.content,
@@ -44,7 +44,7 @@ async function handler() {
         link: i.route,
         category: i.source,
         pubDate: parseDate(i.createTimestamp, 'X'),
-    }));
+    }))
 
     return {
         title: '格隆汇快讯-7x24小时市场快讯-财经市场热点',
@@ -52,7 +52,7 @@ async function handler() {
         image: 'https://cdn.gelonghui.com/static/web/www.ico.la.ico',
         link: `${baseUrl}/live`,
         item: items,
-    };
+    }
 }
 
 const GelonghuiLiveDescription = ({ i }: { i: { content?: string; pictures?: string[] } }) => (
@@ -67,4 +67,4 @@ const GelonghuiLiveDescription = ({ i }: { i: { content?: string; pictures?: str
             </>
         ) : null}
     </>
-);
+)

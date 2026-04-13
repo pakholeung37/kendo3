@@ -1,4 +1,4 @@
-import workerFactory from './utils';
+import workerFactory from './utils'
 
 export default workerFactory(
     () => ({
@@ -13,5 +13,5 @@ export default workerFactory(
                 date: $(e).children('span').text(),
                 title: $(e).children('a').attr('title'),
                 link: $(e).children('a').attr('href'),
-            }))
-);
+            })),
+)

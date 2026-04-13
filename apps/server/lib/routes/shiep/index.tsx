@@ -1,16 +1,16 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { config } from './config';
-import { radar } from './radar';
+import { config } from './config'
+import { radar } from './radar'
 
 export const route: Route = {
     path: '/:type/:id?',
@@ -52,64 +52,64 @@ export const route: Route = {
 | notice | zxgkxx     | zxxx       | tzgg           | 2202    | 5575     | 5973                  | 1959                           | 118                          | tzgg         | 4449                 |
 
   参数与来源页面对应规则为：\`https://\${type}.shiep.edu.cn/\${id}/list.htm\``,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
+    const type = ctx.req.param('type')
 
     if (!Object.keys(config).includes(type)) {
-        throw new InvalidParameterError(`Invalid type: ${type}`);
+        throw new InvalidParameterError(`Invalid type: ${type}`)
     }
 
-    const { listSelector = '.list_item', pubDateSelector = '.Article_PublishDate', descriptionSelector = '.wp_articlecontent', title } = config[type];
+    const { listSelector = '.list_item', pubDateSelector = '.Article_PublishDate', descriptionSelector = '.wp_articlecontent', title } = config[type]
 
     if (!title) {
-        throw new InvalidParameterError(`Invalid type: ${type}`);
+        throw new InvalidParameterError(`Invalid type: ${type}`)
     }
 
-    const host = `https://${type}.shiep.edu.cn`;
-    const id = ctx.req.param('id') || config[type].id;
-    const link = type === 'career' ? `${host}/news/index/tag/${id}` : `${host}/${id}/list.htm`;
+    const host = `https://${type}.shiep.edu.cn`
+    const id = ctx.req.param('id') || config[type].id
+    const link = type === 'career' ? `${host}/news/index/tag/${id}` : `${host}/${id}/list.htm`
 
-    const response = await got(link);
-    const $ = load(response.data);
+    const response = await got(link)
+    const $ = load(response.data)
 
     const list = $(listSelector)
         .toArray()
         .map((item) => {
-            item = $(item);
-            const pubDateText = item.find(pubDateSelector).text().trim();
-            const match = pubDateText.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+            item = $(item)
+            const pubDateText = item.find(pubDateSelector).text().trim()
+            const match = pubDateText.match(/\b(\d{4}-\d{2}-\d{2})\b/)
             return {
                 title: item.find('a').attr('title') || item.find('h3').text() || item.find('a').text(),
                 link: new URL(item.find('a').attr('href'), host).href,
                 pubDate: match ? parseDate(match[0], 'YYYY-MM-DD') : null,
-            };
+            }
         })
         .filter((item) => {
-            const date = dayjs(item.pubDate);
-            return date.isValid();
-        });
+            const date = dayjs(item.pubDate)
+            return date.isValid()
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 try {
-                    const response = await got(item.link);
-                    const $ = load(response.data);
+                    const response = await got(item.link)
+                    const $ = load(response.data)
 
-                    item.description = $(descriptionSelector).length > 0 ? renderToString(<>{$(descriptionSelector).html() ? raw($(descriptionSelector).html()) : null}</>) : '请进行统一身份认证后查看内容';
+                    item.description = $(descriptionSelector).length > 0 ? renderToString(<>{$(descriptionSelector).html() ? raw($(descriptionSelector).html()) : null}</>) : '请进行统一身份认证后查看内容'
                 } catch {
-                    item.description = '请在校内或通过校园VPN查看内容';
+                    item.description = '请在校内或通过校园VPN查看内容'
                 }
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `上海电力大学-${title}`,
         link,
         item: items,
-    };
+    }
 }

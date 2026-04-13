@@ -1,7 +1,7 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/whpj/:format?',
@@ -29,14 +29,14 @@ export const route: Route = {
     description: `| 短格式 | 中行折算价 | 现汇买卖 | 现钞买卖 | 现汇买入 | 现汇卖出 | 现钞买入 | 现钞卖出 |
 | ------ | ---------- | -------- | -------- | -------- | -------- | -------- | -------- |
 | short  | zs         | xh       | xc       | xhmr     | xhmc     | xcmr     | xcmc     |`,
-};
+}
 
 async function handler(ctx) {
-    const link = 'https://www.boc.cn/sourcedb/whpj/';
-    const response = await got(link);
-    const $ = load(response.data);
+    const link = 'https://www.boc.cn/sourcedb/whpj/'
+    const response = await got(link)
+    const $ = load(response.data)
 
-    const format = ctx.req.param('format');
+    const format = ctx.req.param('format')
 
     const en_names = {
         阿联酋迪拉姆: 'AED',
@@ -66,65 +66,65 @@ async function handler(ctx) {
         新台币: 'TWD',
         美元: 'USD',
         南非兰特: 'ZAR',
-    };
+    }
 
     const out = $('div.publish table tbody tr')
         .slice(2)
         .toArray()
         .map((e) => {
-            e = $(e);
-            const zh_name = e.find('td:nth-child(1)').text();
-            const en_name = en_names[zh_name] || '';
-            const name = `${zh_name} ${en_name}`;
-            const date = e.find('td:nth-child(7)').text();
+            e = $(e)
+            const zh_name = e.find('td:nth-child(1)').text()
+            const en_name = en_names[zh_name] || ''
+            const name = `${zh_name} ${en_name}`
+            const date = e.find('td:nth-child(7)').text()
 
-            const xhmr = `现汇买入价：${e.find('td:nth-child(2)').text()}`;
+            const xhmr = `现汇买入价：${e.find('td:nth-child(2)').text()}`
 
-            const xcmr = `现钞买入价：${e.find('td:nth-child(3)').text()}`;
+            const xcmr = `现钞买入价：${e.find('td:nth-child(3)').text()}`
 
-            const xhmc = `现汇卖出价：${e.find('td:nth-child(4)').text()}`;
+            const xhmc = `现汇卖出价：${e.find('td:nth-child(4)').text()}`
 
-            const xcmc = `现钞卖出价：${e.find('td:nth-child(5)').text()}`;
+            const xcmc = `现钞卖出价：${e.find('td:nth-child(5)').text()}`
 
-            const zs = `中行折算价：${e.find('td:nth-child(6)').text()}`;
+            const zs = `中行折算价：${e.find('td:nth-child(6)').text()}`
 
-            const content = `${xhmr} ${xcmr} ${xhmc} ${xcmc} ${zs}`;
+            const content = `${xhmr} ${xcmr} ${xhmc} ${xcmc} ${zs}`
 
             const formatTitle = () => {
                 switch (format) {
                     case 'short':
-                        return name;
+                        return name
                     case 'xh':
-                        return `${name} ${xhmr} ${xhmc}`;
+                        return `${name} ${xhmr} ${xhmc}`
                     case 'xc':
-                        return `${name} ${xcmr} ${xcmc}`;
+                        return `${name} ${xcmr} ${xcmc}`
                     case 'zs':
-                        return `${name} ${zs}`;
+                        return `${name} ${zs}`
                     case 'xhmr':
-                        return `${name} ${xhmr}`;
+                        return `${name} ${xhmr}`
                     case 'xhmc':
-                        return `${name} ${xhmc}`;
+                        return `${name} ${xhmc}`
                     case 'xcmr':
-                        return `${name} ${xcmr}`;
+                        return `${name} ${xcmr}`
                     case 'xcmc':
-                        return `${name} ${xcmc}`;
+                        return `${name} ${xcmc}`
                     default:
-                        return `${name} ${content}`;
+                        return `${name} ${content}`
                 }
-            };
+            }
 
             const info = {
                 title: formatTitle(),
                 description: content.replaceAll(/\s/g, '<br>'),
                 pubDate: new Date(date).toUTCString(),
                 guid: `${name} ${content}`,
-            };
-            return info;
-        });
+            }
+            return info
+        })
 
     return {
         title: '中国银行外汇牌价',
         link,
         item: out,
-    };
+    }
 }

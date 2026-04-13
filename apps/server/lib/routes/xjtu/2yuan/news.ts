@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/2yuan/news/:id?',
@@ -34,31 +34,31 @@ export const route: Route = {
 | 外事活动 | 13   |
 | 媒体二院 | 14   |
 | 理论政策 | 16   |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? '110';
+    const id = ctx.req.param('id') ?? '110'
 
-    const rootUrl = 'http://2yuan.xjtu.edu.cn';
-    const currentUrl = `${rootUrl}/Html/News/Columns/${id}/Index.html`;
+    const rootUrl = 'http://2yuan.xjtu.edu.cn'
+    const currentUrl = `${rootUrl}/Html/News/Columns/${id}/Index.html`
 
     const response = await got({
         method: 'get',
         url: currentUrl,
-    });
+    })
 
-    const $ = load(response.data);
+    const $ = load(response.data)
 
     let items = $('.column_list h2')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('a').attr('title'),
                 link: `${rootUrl}${item.find('a').attr('href')}`,
                 pubDate: timezone(parseDate(item.find('.dy_date').text()), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
@@ -66,29 +66,29 @@ async function handler(ctx) {
                 const detailResponse = await got({
                     method: 'get',
                     url: item.link,
-                });
+                })
 
-                const content = load(detailResponse.data);
+                const content = load(detailResponse.data)
 
-                item.description = content('#zoom').html();
+                item.description = content('#zoom').html()
                 item.pubDate = timezone(
                     parseDate(
                         content('.sub_tit3 strong')
                             .first()
                             .text()
-                            .replace(/发布时间：/, '')
+                            .replace(/发布时间：/, ''),
                     ),
-                    +8
-                );
+                    +8,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: $('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

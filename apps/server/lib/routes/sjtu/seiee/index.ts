@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/seiee/:path/:catID?/:searchCatCode?',
@@ -28,14 +28,14 @@ export const route: Route = {
     name: '电子信息与电气工程学院',
     maintainers: ['dzx-dzx'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { path, catID = '', searchCatCode = '' } = ctx.req.param();
+    const { path, catID = '', searchCatCode = '' } = ctx.req.param()
 
-    const rootUrl = 'https://www.seiee.sjtu.edu.cn';
-    const currentUrl = `${rootUrl}/${path}.html`;
-    const ajaxUrl = `${rootUrl}/active/ajax_article_list.html`;
+    const rootUrl = 'https://www.seiee.sjtu.edu.cn'
+    const currentUrl = `${rootUrl}/${path}.html`
+    const ajaxUrl = `${rootUrl}/active/ajax_article_list.html`
     const response = catID
         ? (
               await ofetch(ajaxUrl, {
@@ -53,47 +53,47 @@ async function handler(ctx) {
                   parseResponse: JSON.parse,
               })
           ).content
-        : await ofetch(currentUrl);
+        : await ofetch(currentUrl)
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $(catID ? 'li' : '.u10 li')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 title: item.find('.name').text().trim(),
                 link: item.find('a').attr('href'),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const detailResponse = await ofetch(item.link);
-                const content = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const content = load(detailResponse)
 
-                item.description = content('.nr').html();
+                item.description = content('.nr').html()
                 item.pubDate = timezone(
                     parseDate(
                         content('.jj')
                             .text()
                             .trim()
-                            .match(/日期：([\d-]+) /)[1]
+                            .match(/日期：([\d-]+) /)[1],
                     ),
-                    +8
-                );
+                    +8,
+                )
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const fallbackHtml = await ofetch(currentUrl);
+    const fallbackHtml = await ofetch(currentUrl)
     return {
         title: $('title').text() || load(fallbackHtml)('title').text(),
         link: currentUrl,
         item: items,
-    };
+    }
 }

@@ -1,13 +1,13 @@
-import type { Context } from 'hono';
-import { renderToString } from 'hono/jsx/dom/server';
+import type { Context } from 'hono'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import type { District, House } from './types';
-import { baseUrl, getCitys, getDistricts } from './utils';
+import type { District, House } from './types'
+import { baseUrl, getCitys, getDistricts } from './utils'
 
 const render = (item: House) =>
     renderToString(
@@ -37,8 +37,8 @@ const render = (item: House) =>
                       </>
                   ))
                 : null}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/rent/:city/:district?',
@@ -52,24 +52,24 @@ export const route: Route = {
     handler,
     url: 'www.wellcee.com',
     description: '支持的城市可以通过 [/wellcee/support-city](https://rsshub.app/wellcee/support-city) 获取',
-};
+}
 
 async function handler(ctx: Context) {
-    const { city, district = '' } = ctx.req.param();
-    const citys = await getCitys();
-    const cityInfo = citys.find((item) => item.chCityName === city);
+    const { city, district = '' } = ctx.req.param()
+    const citys = await getCitys()
+    const cityInfo = citys.find((item) => item.chCityName === city)
     if (!cityInfo) {
-        throw new InvalidParameterError('Invalid city');
+        throw new InvalidParameterError('Invalid city')
     }
 
-    let districtInfo: District | undefined;
+    let districtInfo: District | undefined
     if (district) {
-        const districts = await getDistricts(cityInfo.id);
-        const d = districts.find((item) => item.name === district);
+        const districts = await getDistricts(cityInfo.id)
+        const d = districts.find((item) => item.name === district)
         if (!d) {
-            throw new InvalidParameterError('Invalid district');
+            throw new InvalidParameterError('Invalid district')
         }
-        districtInfo = d;
+        districtInfo = d
     }
 
     const response = await ofetch(`${baseUrl}/api/house/filter`, {
@@ -85,7 +85,7 @@ async function handler(ctx: Context) {
             lang: 1,
             pn: 1,
         },
-    });
+    })
 
     const items = (response.data.list as House[]).map((item) => ({
         title: item.address,
@@ -94,7 +94,7 @@ async function handler(ctx: Context) {
         pubDate: parseDate(item.loginTime, 'X'),
         author: item.userInfo.name,
         category: [...item.tags, ...item.typeTags],
-    }));
+    }))
 
     return {
         title: `${city}${districtInfo?.name ?? ''}租房信息 - Wellcee`,
@@ -104,5 +104,5 @@ async function handler(ctx: Context) {
         logo: cityInfo.icon,
         link: `${baseUrl}/rent-apartment/${cityInfo.cityName}/list?cityId=${cityInfo.id}&lang=zh${district ? `#districtIds=${districtInfo?.id}` : ''}`,
         item: items,
-    };
+    }
 }

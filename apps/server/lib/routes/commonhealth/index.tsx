@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const apiKey = 'Cah2snYi52eJjpshbIfof1Tpx8ZhzXqh';
+const apiKey = 'Cah2snYi52eJjpshbIfof1Tpx8ZhzXqh'
 
 export const route: Route = {
     path: '/',
@@ -29,41 +29,41 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.commonhealth.com.tw';
-    const apiUrl = 'https://api-ch.commonhealth.com.tw/api/v3.0/latest_article/channel/focus/list';
+    const rootUrl = 'https://www.commonhealth.com.tw'
+    const apiUrl = 'https://api-ch.commonhealth.com.tw/api/v3.0/latest_article/channel/focus/list'
 
     const headers = {
         accept: 'application/json',
         'api-key': apiKey,
-    };
+    }
 
     const response = await ofetch(apiUrl, {
         headers,
         query: {
             page: 1,
         },
-    });
+    })
 
     const items = response.items.list.map((item) => {
-        const description = renderDescription(item.image, item.preface);
+        const description = renderDescription(item.image, item.preface)
 
         return {
             title: item.title,
             link: item.link,
             pubDate: parseDate(item.item_datetime),
             description,
-        };
-    });
+        }
+    })
 
     return {
         title: '康健',
         link: rootUrl,
         language: 'zh-TW' as const,
         item: items,
-    };
+    }
 }
 
 const renderDescription = (image: string, preface: string): string =>
@@ -71,5 +71,5 @@ const renderDescription = (image: string, preface: string): string =>
         <>
             <img src={image} alt="article image" />
             <p>{preface}</p>
-        </>
-    );
+        </>,
+    )

@@ -1,8 +1,8 @@
-import { getCurrentCell, setCurrentCell } from 'node-network-devtools';
-import undici from 'undici';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { getCurrentCell, setCurrentCell } from 'node-network-devtools'
+import undici from 'undici'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { useCustomHeader } from './fetch';
+import { useCustomHeader } from './fetch'
 
 const getInitRequest = () =>
     ({
@@ -14,7 +14,7 @@ const getInitRequest = () =>
         responseData: '',
         responseHeaders: {},
         responseInfo: {},
-    }) satisfies NonNullable<ReturnType<typeof getCurrentCell>>['request'];
+    }) satisfies NonNullable<ReturnType<typeof getCurrentCell>>['request']
 
 enum Env {
     dev = 'dev',
@@ -23,85 +23,85 @@ enum Env {
 }
 
 describe('useCustomHeader', () => {
-    let originalEnv: string;
+    let originalEnv: string
 
     beforeEach(() => {
-        originalEnv = process.env.NODE_ENV || Env.test;
-        process.env.ENABLE_REMOTE_DEBUGGING = 'true';
-    });
+        originalEnv = process.env.NODE_ENV || Env.test
+        process.env.ENABLE_REMOTE_DEBUGGING = 'true'
+    })
 
     afterEach(() => {
-        process.env.NODE_ENV = originalEnv;
-    });
+        process.env.NODE_ENV = originalEnv
+    })
 
     test('should register request with custom headers in dev environment', () => {
-        process.env.NODE_ENV = Env.dev;
+        process.env.NODE_ENV = Env.dev
 
-        const headers = new Headers();
-        const headerText = 'authorization';
-        const headerValue = 'Bearer token';
-        headers.set(headerText, headerValue);
+        const headers = new Headers()
+        const headerText = 'authorization'
+        const headerValue = 'Bearer token'
+        headers.set(headerText, headerValue)
 
-        const req = getInitRequest();
+        const req = getInitRequest()
         setCurrentCell({
             request: req,
             pipes: [],
             isAborted: false,
-        });
+        })
 
-        useCustomHeader(headers);
+        useCustomHeader(headers)
 
-        const cell = getCurrentCell();
-        expect(cell).toBeDefined();
+        const cell = getCurrentCell()
+        expect(cell).toBeDefined()
 
-        let request = req;
+        let request = req
         if (cell) {
             for (const { pipe } of cell.pipes) {
-                request = pipe(request);
+                request = pipe(request)
             }
         }
 
-        expect(request.requestHeaders[headerText]).toEqual(headerValue);
-    });
+        expect(request.requestHeaders[headerText]).toEqual(headerValue)
+    })
 
     test('should not register request in non-dev environment', () => {
-        process.env.NODE_ENV = Env.production;
+        process.env.NODE_ENV = Env.production
 
-        const headers = new Headers();
-        const headerText = 'content-type';
-        const headerValue = 'application/json';
+        const headers = new Headers()
+        const headerText = 'content-type'
+        const headerValue = 'application/json'
 
-        headers.set(headerText, headerValue);
-        const req = getInitRequest();
+        headers.set(headerText, headerValue)
+        const req = getInitRequest()
 
         setCurrentCell({
             request: req,
             pipes: [],
             isAborted: false,
-        });
-        useCustomHeader(headers);
+        })
+        useCustomHeader(headers)
 
-        const cell = getCurrentCell();
-        expect(cell).toBeDefined();
+        const cell = getCurrentCell()
+        expect(cell).toBeDefined()
 
-        let request = req;
+        let request = req
         if (cell) {
             for (const { pipe } of cell.pipes) {
-                request = pipe(request);
+                request = pipe(request)
             }
         }
 
-        expect(req.requestHeaders[headerText]).toBeUndefined();
-    });
-});
+        expect(req.requestHeaders[headerText]).toBeUndefined()
+    })
+})
 
 describe('wrappedFetch', () => {
     test('throws when fetch fails without proxy retry', async () => {
-        const fetchSpy = vi.spyOn(undici, 'fetch').mockRejectedValueOnce(new Error('boom'));
-        const { default: wrappedFetch } = await import('./fetch');
+        const fetchSpy = vi.spyOn(undici, 'fetch').mockRejectedValueOnce(new Error('boom'))
+        const { default: wrappedFetch } = await import('./fetch')
 
-        await expect(wrappedFetch('http://example.com')).rejects.toThrow('boom');
+        await expect(wrappedFetch('http://example.com')).rejects.toThrow('boom')
 
-        fetchSpy.mockRestore();
-    });
-});
+        fetchSpy.mockRestore()
+    })
+})

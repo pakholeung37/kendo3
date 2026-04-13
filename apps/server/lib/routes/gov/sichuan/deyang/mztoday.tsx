@@ -1,14 +1,14 @@
-import { load } from 'cheerio';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { load } from 'cheerio'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'http://www.mztoday.gov.cn';
+const rootUrl = 'http://www.mztoday.gov.cn'
 const basicInfoDict = {
     zx: {
         name: '最新',
@@ -90,33 +90,33 @@ const basicInfoDict = {
         name: '外媒看绵竹',
         url: '/list/50.html?page=1',
     },
-};
+}
 
 const getInfoUrlList = async (url) => {
-    const response = await got(url);
-    const $ = load(response.data);
+    const response = await got(url)
+    const $ = load(response.data)
     const infoList = $('div.sl')
         .toArray()
         .map((item) => ({
             title: $('a', item).attr('title'),
             url: `${rootUrl}${$('a', item).attr('href')}`,
             pubDate: parseDate(timezone($('div > div:nth-child(4)', item).html().trim()), +8),
-        }));
-    return infoList;
-};
+        }))
+    return infoList
+}
 
 // 获取信息正文内容
 const getInfoContent = (item) =>
     cache.tryGet(item.url, async () => {
-        const response = await got(item.url);
-        const $ = load(response.data);
+        const response = await got(item.url)
+        const $ = load(response.data)
         return {
             title: item.title,
             content: $('td:nth-child(2)').html(),
             link: item.url,
             pubDate: item.pubDate,
-        };
-    });
+        }
+    })
 
 export const route: Route = {
     path: '/sichuan/deyang/mztoday/:infoType?',
@@ -144,13 +144,13 @@ export const route: Route = {
     description: `| 最新 | 推荐 | 时政 | 教育 | 民生 | 文旅 | 经济 | 文明创建 | 部门 | 镇（街道） | 健康绵竹 | 南轩讲堂 | 视频 | 文明实践 | 领航中国 | 绵竹年画 | 绵竹历史 | 绵竹旅游 | 外媒看绵竹 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- | -------- | ---- | ---------- | -------- | -------- | ---- | -------- | -------- | -------- | -------- | -------- | ---------- |
 | zx   | tj   | sz   | jy   | ms   | wl   | jj   | wmcj     | bm   | zj         | jkmz     | nxjt     | sp   | wmsj     | lhzg     | mznh     | mzls     | mzly     | wmkmz      |`,
-};
+}
 
 async function handler(ctx) {
-    const infoType = ctx.req.param('infoType') || 'zx';
-    const infoBasicUrl = `${rootUrl}${basicInfoDict[infoType].url}`;
-    const infoUrlList = await getInfoUrlList(infoBasicUrl);
-    const items = await Promise.all(infoUrlList.map((item) => getInfoContent(item)));
+    const infoType = ctx.req.param('infoType') || 'zx'
+    const infoBasicUrl = `${rootUrl}${basicInfoDict[infoType].url}`
+    const infoUrlList = await getInfoUrlList(infoBasicUrl)
+    const items = await Promise.all(infoUrlList.map((item) => getInfoContent(item)))
 
     return {
         title: `今日绵竹-${basicInfoDict[infoType].name}`,
@@ -161,5 +161,5 @@ async function handler(ctx) {
             link: item.link,
             pubDate: item.pubDate,
         })),
-    };
+    }
 }

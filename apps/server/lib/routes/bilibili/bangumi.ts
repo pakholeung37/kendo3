@@ -1,9 +1,9 @@
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
 
-import type { EpisodeResult } from './types';
-import utils from './utils';
+import type { EpisodeResult } from './types'
+import utils from './utils'
 
 export const route: Route = {
     path: '/bangumi/media/:mediaid/:embed?',
@@ -26,17 +26,17 @@ export const route: Route = {
         supportPodcast: false,
         supportScihub: false,
     },
-};
+}
 
 async function handler(ctx) {
-    const mediaId = ctx.req.param('mediaid');
-    const embed = !ctx.req.param('embed');
+    const mediaId = ctx.req.param('mediaid')
+    const embed = !ctx.req.param('embed')
 
-    const mediaData = await utils.getBangumi(mediaId, cache);
-    const seasonId = String(mediaData.season_id);
-    const seasonData = await utils.getBangumiItems(seasonId, cache);
+    const mediaData = await utils.getBangumi(mediaId, cache)
+    const seasonId = String(mediaData.season_id)
+    const seasonData = await utils.getBangumiItems(seasonId, cache)
 
-    const episodes: DataItem[] = [];
+    const episodes: DataItem[] = []
 
     const getEpisode = (item: EpisodeResult, title: string) =>
         ({
@@ -45,17 +45,17 @@ async function handler(ctx) {
             link: item.share_url,
             image: item.cover.replace('http://', 'https://'),
             language: 'zh-cn',
-        }) as DataItem;
+        }) as DataItem
 
     for (const item of seasonData.main_section.episodes) {
-        const episode = getEpisode(item, `第${item.title}话 ${item.long_title}`);
-        episodes.push(episode);
+        const episode = getEpisode(item, `第${item.title}话 ${item.long_title}`)
+        episodes.push(episode)
     }
 
     for (const section of seasonData.section) {
         for (const item of section.episodes) {
-            const episode = getEpisode(item, `${item.title} ${item.long_title}`);
-            episodes.push(episode);
+            const episode = getEpisode(item, `${item.title} ${item.long_title}`)
+            episodes.push(episode)
         }
     }
 
@@ -66,5 +66,5 @@ async function handler(ctx) {
         item: episodes,
         image: mediaData.cover.replace('http://', 'https://'),
         language: 'zh-cn',
-    } as Data;
+    } as Data
 }

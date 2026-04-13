@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import apiKey from './api-key';
-import { handleMovieItem } from './utils';
+import apiKey from './api-key'
+import { handleMovieItem } from './utils'
 
 export const route: Route = {
     path: '/collection/:id/:lang?',
@@ -20,16 +20,16 @@ export const route: Route = {
     name: 'Collection',
     maintainers: ['x2cf'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { id, lang } = ctx.req.param();
+    const { id, lang } = ctx.req.param()
     const { data } = await got(`https://api.themoviedb.org/3/collection/${id}`, {
         searchParams: {
             language: lang,
             api_key: apiKey(),
         },
-    });
+    })
 
     return {
         title: `${data.name} — TMDB`,
@@ -37,5 +37,5 @@ async function handler(ctx) {
         image: `https://image.tmdb.org/t/p/original${data.poster_path}`,
         link: `https://www.themoviedb.org/collection/${data.id}`,
         item: data.parts.map((item) => handleMovieItem(item, lang)),
-    };
+    }
 }

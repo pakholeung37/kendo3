@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { rootUrl } from './utils';
+import { rootUrl } from './utils'
 
 export const route: Route = {
     path: '/video/:id',
@@ -26,34 +26,34 @@ export const route: Route = {
     name: '番剧详情',
     maintainers: ['Yamico'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const url = `${rootUrl}/video/${id}.html`;
-    const response = await got(url);
-    const $ = load(response.data);
+    const id = ctx.req.param('id')
+    const url = `${rootUrl}/video/${id}.html`
+    const response = await got(url)
+    const $ = load(response.data)
 
-    const dmtitle = $('.detail_imform_name').text();
-    const dmdesc = $('.detail_imform_desc_pre').text();
+    const dmtitle = $('.detail_imform_name').text()
+    const dmdesc = $('.detail_imform_desc_pre').text()
 
     const items = $('.movurl.mod ul')
         .first()
         .find('li')
         .toArray()
         .map((item) => {
-            const dom = $(item);
-            const a = dom.find('a');
+            const dom = $(item)
+            const a = dom.find('a')
             return {
                 title: a.text(),
                 link: `${rootUrl}${a.attr('href')}`,
-            };
+            }
         })
-        .toReversed();
+        .toReversed()
     return {
         title: `NT动漫 - ${dmtitle}`,
         link: `${rootUrl}/video/${id}.html`,
         description: dmdesc,
         item: items,
-    };
+    }
 }

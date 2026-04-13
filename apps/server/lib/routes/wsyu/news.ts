@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-const baseUrl = 'http://www.wsyu.edu.cn';
+const baseUrl = 'http://www.wsyu.edu.cn'
 
 const typeMap = {
     xxyw: {
@@ -19,7 +19,7 @@ const typeMap = {
         name: '媒体聚焦',
         url: '/info/iList.jsp?cat_id=10120',
     },
-};
+}
 
 export const route: Route = {
     path: '/news/:type?',
@@ -40,69 +40,69 @@ export const route: Route = {
     description: `| 学校要闻 | 综合新闻 | 媒体聚焦 |
 | -------- | -------- | -------- |
 | xxyw     | zhxw     | mtjj     |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') || 'xxyw';
-    const link = baseUrl + typeMap[type].url;
+    const type = ctx.req.param('type') || 'xxyw'
+    const link = baseUrl + typeMap[type].url
     const response = await got({
         method: 'get',
         url: link,
         headers: {
             Referer: baseUrl,
         },
-    });
-    const $ = load(response.data);
+    })
+    const $ = load(response.data)
 
     const urlList = $('.mainContent li')
         .slice(0, 10)
         .toArray()
-        .map((e) => $('a', e).attr('href'));
+        .map((e) => $('a', e).attr('href'))
 
     const titleList = $('.mainContent li')
         .slice(0, 10)
         .toArray()
-        .map((e) => $('a', e).text());
+        .map((e) => $('a', e).text())
 
     const dateList = $('.mainContent li')
         .slice(0, 10)
         .toArray()
-        .map((e) => $('span', e).text());
+        .map((e) => $('span', e).text())
 
     const out = await Promise.all(
         urlList.map(async (itemUrl, index) => {
-            itemUrl = new URL(itemUrl, baseUrl).href;
+            itemUrl = new URL(itemUrl, baseUrl).href
             if (itemUrl.includes('.htm')) {
-                const cacheIn = await cache.get(itemUrl);
+                const cacheIn = await cache.get(itemUrl)
                 if (cacheIn) {
-                    return JSON.parse(cacheIn);
+                    return JSON.parse(cacheIn)
                 }
-                const response = await got.get(itemUrl);
-                const $ = load(response.data);
-                $('.content .photos').remove();
+                const response = await got.get(itemUrl)
+                const $ = load(response.data)
+                $('.content .photos').remove()
                 const single = {
                     title: titleList[index],
                     link: itemUrl,
                     description: $('.content').html(),
                     pubDate: dateList[index],
-                };
-                cache.set(itemUrl, JSON.stringify(single));
-                return single;
+                }
+                cache.set(itemUrl, JSON.stringify(single))
+                return single
             } else {
                 const single = {
                     title: titleList[index],
                     link: itemUrl,
                     description: '此链接为文件，请点击下载',
                     pubDate: dateList[index],
-                };
-                return single;
+                }
+                return single
             }
-        })
-    );
+        }),
+    )
 
     return {
         title: '武昌首义学院-' + typeMap[type].name,
         link,
         item: out,
-    };
+    }
 }

@@ -1,12 +1,12 @@
-import { JSDOM } from 'jsdom';
-import { JSONPath } from 'jsonpath-plus';
+import { JSDOM } from 'jsdom'
+import { JSONPath } from 'jsonpath-plus'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { buildContent, extractTokens, getUserId, profileUrl, threadUrl } from './utils';
+import { buildContent, extractTokens, getUserId, profileUrl, threadUrl } from './utils'
 
 export const route: Route = {
     path: '/:user/:routeParams?',
@@ -33,18 +33,18 @@ Specify options (in the format of query string) in parameter \`routeParams\` to 
     name: 'User timeline',
     maintainers: ['ninboy', 'pseudoyu'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { user, routeParams } = ctx.req.param();
-    const { lsd } = await extractTokens(user);
-    const userId = await getUserId(user);
+    const { user, routeParams } = ctx.req.param()
+    const { lsd } = await extractTokens(user)
+    const userId = await getUserId(user)
 
-    const params = new URLSearchParams(routeParams);
+    const params = new URLSearchParams(routeParams)
     const debugJson: any = {
         params: routeParams,
         lsd,
-    };
+    }
 
     const options = {
         showAuthorInTitle: params.get('showAuthorInTitle') ?? true,
@@ -54,7 +54,7 @@ async function handler(ctx) {
         showQuotedAuthorAvatarInDesc: params.get('showQuotedAuthorAvatarInDesc') ?? false,
         showEmojiForQuotesAndReply: params.get('showEmojiForQuotesAndReply') ?? true,
         replies: params.get('replies') ?? false,
-    };
+    }
 
     const response = await ofetch(profileUrl(user), {
         headers: {
@@ -70,21 +70,21 @@ async function handler(ctx) {
             'Sec-Fetch-User': '?1',
             'Upgrade-Insecure-Requests': '1',
         },
-    });
+    })
 
-    const dom = new JSDOM(response);
+    const dom = new JSDOM(response)
 
-    let threadsData: ThreadItem[] | null = null;
+    let threadsData: ThreadItem[] | null = null
     for (const el of dom.window.document.querySelectorAll('script[data-sjs]')) {
         try {
             const data = JSONPath({
                 path: '$..thread_items[0]',
                 json: JSON.parse(el.textContent || ''),
-            });
+            })
 
             if (data?.length > 0) {
-                threadsData = data as ThreadItem[];
-                break;
+                threadsData = data as ThreadItem[]
+                break
             }
         } catch {
             // Skip invalid JSON
@@ -92,13 +92,13 @@ async function handler(ctx) {
     }
 
     if (!threadsData) {
-        throw new Error('Failed to fetch thread data');
+        throw new Error('Failed to fetch thread data')
     }
 
-    debugJson.profileId = userId;
-    debugJson.response = { response: threadsData };
+    debugJson.profileId = userId
+    debugJson.response = { response: threadsData }
 
-    const userData: ThreadUser = threadsData[0]?.post?.user || { username: user, profile_pic_url: '' };
+    const userData: ThreadUser = threadsData[0]?.post?.user || { username: user, profile_pic_url: '' }
 
     const items = threadsData
         .filter((item) => user === item.post.user?.username)
@@ -108,31 +108,31 @@ async function handler(ctx) {
             description: buildContent(item, options).description,
             pubDate: parseDate(item.post.taken_at, 'X'),
             link: threadUrl(item.post.code),
-        }));
+        }))
 
-    debugJson.items = items;
-    ctx.set('json', debugJson);
+    debugJson.items = items
+    ctx.set('json', debugJson)
 
     return {
         title: `${user} (@${user}) on Threads`,
         link: profileUrl(user),
         image: userData?.profile_pic_url,
         item: items,
-    };
+    }
 }
 
 interface ThreadUser {
-    username: string;
-    profile_pic_url: string;
+    username: string
+    profile_pic_url: string
 }
 
 interface ThreadItem {
     post: {
-        user?: ThreadUser;
-        taken_at: number;
-        code: string;
+        user?: ThreadUser
+        taken_at: number
+        code: string
         caption?: {
-            text: string;
-        };
-    };
+            text: string
+        }
+    }
 }

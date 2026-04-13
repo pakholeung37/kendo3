@@ -1,16 +1,16 @@
-import { load } from 'cheerio'; // html parser
+import { load } from 'cheerio' // html parser
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
 // Warning: The author still knows nothing about javascript!
 // params:
 // type: subject type
-import got from '@/utils/got'; // get web content
-import { isValidHost } from '@/utils/valid-host';
+import got from '@/utils/got' // get web content
+import { isValidHost } from '@/utils/valid-host'
 
-import get_article from './_article';
+import get_article from './_article'
 
 export const route: Route = {
     path: '/:type?',
@@ -53,36 +53,36 @@ export const route: Route = {
     name: '最新消息',
     maintainers: ['sgqy', 'hang333', 'TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type') ?? 'www';
+    const type = ctx.req.param('type') ?? 'www'
     if (!isValidHost(type)) {
-        throw new InvalidParameterError('Invalid type');
+        throw new InvalidParameterError('Invalid type')
     }
 
-    const base_url = `https://${type}.solidot.org`;
+    const base_url = `https://${type}.solidot.org`
     const response = await got({
         method: 'get',
         url: base_url,
-    });
-    const data = response.data; // content is html format
-    const $ = load(data);
+    })
+    const data = response.data // content is html format
+    const $ = load(data)
 
     // get urls
-    const a = $('div.block_m').find('div.bg_htit > h2 > a');
-    const urls = [];
+    const a = $('div.block_m').find('div.bg_htit > h2 > a')
+    const urls = []
     for (const element of a) {
-        urls.push($(element).attr('href'));
+        urls.push($(element).attr('href'))
     }
 
     // get articles
-    const msg_list = await Promise.all(urls.map((u) => cache.tryGet(u, () => get_article(u))));
+    const msg_list = await Promise.all(urls.map((u) => cache.tryGet(u, () => get_article(u))))
 
     // feed the data
     return {
         title: '奇客的资讯，重要的东西',
         link: base_url,
         item: msg_list,
-    };
+    }
 }

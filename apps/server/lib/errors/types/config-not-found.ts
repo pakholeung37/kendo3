@@ -1,5 +1,5 @@
 class ConfigNotFoundError extends Error {
-    name = 'ConfigNotFoundError';
+    name = 'ConfigNotFoundError'
 }
 
-export default ConfigNotFoundError;
+export default ConfigNotFoundError

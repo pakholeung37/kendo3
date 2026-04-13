@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import queryString from 'query-string';
+import { load } from 'cheerio'
+import queryString from 'query-string'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/mmda/tags/:tags?',
@@ -37,11 +37,11 @@ export const route: Route = {
   -   默认查询单个 tag：\`/booru/mmda/tags/full_body\`
   -   默认查询多个 tag：\`/booru/mmda/tags/full_body%20blue_eyes\`
   -   默认查询根据作者查询：\`/booru/mmda/tags/user:xxxx\``,
-};
+}
 
 async function handler(ctx) {
-    const baseUrl = 'https://mmda.booru.org';
-    const tags = ctx.req.param('tags');
+    const baseUrl = 'https://mmda.booru.org'
+    const tags = ctx.req.param('tags')
 
     const query = queryString.stringify(
         {
@@ -51,25 +51,25 @@ async function handler(ctx) {
         },
         {
             skipNull: true,
-        }
-    );
+        },
+    )
 
     const { data: response } = await got(`${baseUrl}/index.php`, {
         searchParams: query,
-    });
+    })
 
-    const $ = load(response);
+    const $ = load(response)
     const list = $('#post-list > div.content > div > div:nth-child(3) span')
         .toArray()
         .map((item) => {
-            item = $(item);
-            const a = item.find('a').first();
+            item = $(item)
+            const a = item.find('a').first()
 
-            const scriptStr = item.find('script[type="text/javascript"]').first().text();
-            const user = scriptStr.match(/user':'(.*?)'/)?.[1] ?? '';
+            const scriptStr = item.find('script[type="text/javascript"]').first().text()
+            const user = scriptStr.match(/user':'(.*?)'/)?.[1] ?? ''
 
-            const title = a.find('img').first().attr('title') ?? '';
-            const imageSrc = a.find('img').first().attr('src') ?? '';
+            const title = a.find('img').first().attr('title') ?? ''
+            const imageSrc = a.find('img').first().attr('src') ?? ''
 
             return {
                 title,
@@ -81,33 +81,33 @@ async function handler(ctx) {
                     image: imageSrc,
                     by: user,
                 }),
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const { data: response } = await got(item.link);
-                const $ = load(response);
+                const { data: response } = await got(item.link)
+                const $ = load(response)
 
                 // 获取左侧的Statistics统计信息
-                const statisticsTages = $('#tag_list > ul');
-                statisticsTages.find('li, br, strong').remove();
-                const statisticsStr = statisticsTages.text();
+                const statisticsTages = $('#tag_list > ul')
+                statisticsTages.find('li, br, strong').remove()
+                const statisticsStr = statisticsTages.text()
 
-                const regex = /(?<key>[^\s:]+)\s*:\s*(?<value>.+)/gm;
-                const result = {};
+                const regex = /(?<key>[^\s:]+)\s*:\s*(?<value>.+)/gm
+                const result = {}
                 for (const match of statisticsStr.matchAll(regex)) {
-                    const { key, value } = match.groups ?? ({} as { key: string; value: string });
-                    result[key.trim().toLocaleLowerCase()] = value.trim();
+                    const { key, value } = match.groups ?? ({} as { key: string; value: string })
+                    result[key.trim().toLocaleLowerCase()] = value.trim()
                 }
 
                 // 获取大图
-                const bigImage = $('#image').attr('src');
+                const bigImage = $('#image').attr('src')
 
                 // 获取发布时间
                 if (result.posted) {
-                    item.pubDate = parseDate(result.posted);
+                    item.pubDate = parseDate(result.posted)
                 }
 
                 item.description = renderDescription({
@@ -118,16 +118,16 @@ async function handler(ctx) {
                     source: result.source,
                     rating: result.rating,
                     score: result.score,
-                });
+                })
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: tags,
         link: `${baseUrl}/index.php?${query}`,
         item: items,
-    };
+    }
 }

@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import { getSubPath } from '@/utils/common-utils';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import { getSubPath } from '@/utils/common-utils'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/*',
@@ -17,27 +17,27 @@ export const route: Route = {
     maintainers: ['nczitzk'],
     handler,
     url: 'bangumi.moe/',
-};
+}
 
 async function handler(ctx) {
-    const isLatest = getSubPath(ctx) === '/';
-    const rootUrl = 'https://bangumi.moe';
+    const isLatest = getSubPath(ctx) === '/'
+    const rootUrl = 'https://bangumi.moe'
 
-    let response;
-    let tag_id = [];
+    let response
+    let tag_id = []
 
     if (isLatest) {
-        const apiUrl = `${rootUrl}/api/torrent/latest`;
+        const apiUrl = `${rootUrl}/api/torrent/latest`
 
         response = await got({
             method: 'get',
             url: apiUrl,
-        });
+        })
     } else {
-        const tagUrl = `${rootUrl}/api/tag/search`;
-        const torrentUrl = `${rootUrl}/api/torrent/search`;
+        const tagUrl = `${rootUrl}/api/tag/search`
+        const torrentUrl = `${rootUrl}/api/torrent/search`
 
-        const params = getSubPath(ctx).split('/').slice(2);
+        const params = getSubPath(ctx).split('/').slice(2)
 
         tag_id = await Promise.all(
             params.map((param) =>
@@ -50,12 +50,12 @@ async function handler(ctx) {
                             keywords: true,
                             multi: true,
                         },
-                    });
+                    })
 
-                    return paramResponse.data.found ? paramResponse.data.tag.map((tag) => tag._id)[0] : '';
-                })
-            )
-        );
+                    return paramResponse.data.found ? paramResponse.data.tag.map((tag) => tag._id)[0] : ''
+                }),
+            ),
+        )
 
         response = await got({
             method: 'post',
@@ -63,7 +63,7 @@ async function handler(ctx) {
             json: {
                 tag_id,
             },
-        });
+        })
     }
 
     let items =
@@ -75,7 +75,7 @@ async function handler(ctx) {
             enclosure_url: item.magnet,
             enclosure_type: 'application/x-bittorrent',
             category: item.tag_ids,
-        })) ?? [];
+        })) ?? []
 
     items = await Promise.all(
         items.map((item) =>
@@ -86,25 +86,25 @@ async function handler(ctx) {
                     json: {
                         _ids: item.category,
                     },
-                });
+                })
 
-                item.category = [];
+                item.category = []
 
                 for (const tag of detailResponse.data) {
                     for (const t of tag.synonyms) {
-                        item.category.push(t);
+                        item.category.push(t)
                     }
                 }
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: '萌番组 Bangumi Moe',
         link: isLatest || items.length === 0 ? rootUrl : `${rootUrl}/search/${tag_id.join('+')}`,
         item: items,
         allowEmpty: true,
-    };
+    }
 }

@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { getItem } from './utils';
+import { getItem } from './utils'
 
 export const route: Route = {
     path: '/notes',
@@ -25,18 +25,18 @@ export const route: Route = {
     maintainers: ['DIYgod'],
     handler,
     url: 'crossbell.io/*',
-};
+}
 
 async function handler() {
     const response = await got('https://indexer.crossbell.io/v1/notes', {
         searchParams: {
             includeCharacter: true,
         },
-    });
+    })
 
     return {
         title: 'Crossbell Notes',
         link: 'https://crossbell.io/',
         item: response.data?.list?.map((item) => getItem(item)),
-    };
+    }
 }

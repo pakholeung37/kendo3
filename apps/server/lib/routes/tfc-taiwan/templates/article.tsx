@@ -1,10 +1,10 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ArticleData = {
-    headerImage?: string;
-    content?: string;
-};
+    headerImage?: string
+    content?: string
+}
 
 const TfcTaiwanArticle = ({ headerImage, content }: ArticleData) => (
     <>
@@ -16,6 +16,6 @@ const TfcTaiwanArticle = ({ headerImage, content }: ArticleData) => (
         ) : null}
         {content ? raw(content) : null}
     </>
-);
+)
 
-export const renderArticle = (data: ArticleData) => renderToString(<TfcTaiwanArticle {...data} />);
+export const renderArticle = (data: ArticleData) => renderToString(<TfcTaiwanArticle {...data} />)

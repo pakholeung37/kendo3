@@ -1,8 +1,8 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Route } from '@/types';
-import { parseRelativeDate } from '@/utils/parse-date';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Route } from '@/types'
+import { parseRelativeDate } from '@/utils/parse-date'
 
-import { doGot, genSize } from './util';
+import { doGot, genSize } from './util'
 
 const categoryDict = {
     1: '电影',
@@ -10,7 +10,7 @@ const categoryDict = {
     3: '近日热门',
     4: '本周热门',
     5: '本月热门',
-};
+}
 
 export const route: Route = {
     path: '/tlist/:sc/:domain?',
@@ -33,22 +33,22 @@ export const route: Route = {
     name: '最新资源列表',
     maintainers: ['miemieYaho'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const domain = ctx.req.param('domain') ?? '2';
-    const sc = ctx.req.param('sc');
+    const domain = ctx.req.param('domain') ?? '2'
+    const sc = ctx.req.param('sc')
     if (!/^[1-9]$/.test(domain)) {
-        throw new InvalidParameterError('Invalid domain');
+        throw new InvalidParameterError('Invalid domain')
     }
     if (!/^[1-5]$/.test(sc)) {
-        throw new InvalidParameterError('Invalid sc');
+        throw new InvalidParameterError('Invalid sc')
     }
 
-    const host = `https://www.${domain}bt0.com`;
-    const _link = `${host}/prod/core/system/getTList?sc=${sc}`;
+    const host = `https://www.${domain}bt0.com`
+    const _link = `${host}/prod/core/system/getTList?sc=${sc}`
 
-    const data = await doGot(0, host, _link);
+    const data = await doGot(0, host, _link)
     const items = data.data.list.map((item) => ({
         title: item.zname,
         guid: item.zname,
@@ -59,10 +59,10 @@ async function handler(ctx) {
         enclosure_url: item.zlink,
         enclosure_length: genSize(item.zsize),
         itunes_item_image: item.epic,
-    }));
+    }))
     return {
         title: `不太灵-最新资源列表-${categoryDict[sc]}`,
         link: `${host}/tlist/${sc}_1.html`,
         item: items,
-    };
+    }
 }

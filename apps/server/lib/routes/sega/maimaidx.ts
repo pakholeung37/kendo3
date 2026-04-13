@@ -1,9 +1,9 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/maimaidx/news',
@@ -18,48 +18,48 @@ export const route: Route = {
     maintainers: ['randompasser'],
     handler,
     url: 'info-maimai.sega.jp/',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://info-maimai.sega.jp/';
+    const baseUrl = 'https://info-maimai.sega.jp/'
 
     const parseContent = (htmlString: string, image: cheerio.Cheerio<cheerio.Element>) => {
-        const $ = cheerio.load(htmlString);
-        const content = $('.maiMd');
-        content.prepend(image);
-        content.find('.hrLine').replaceWith('<hr/>');
-        return content.html();
-    };
+        const $ = cheerio.load(htmlString)
+        const content = $('.maiMd')
+        content.prepend(image)
+        content.find('.hrLine').replaceWith('<hr/>')
+        return content.html()
+    }
 
-    const response = await got(baseUrl);
-    const $ = cheerio.load(response.data);
-    const list = $('.maiPager-content .newsBox');
+    const response = await got(baseUrl)
+    const $ = cheerio.load(response.data)
+    const list = $('.maiPager-content .newsBox')
 
     const item = await Promise.all(
         list.map(async (_, items) => {
-            const i = $(items);
-            const title = i.find('.newsLink').text();
-            const pubDateStr = i.find('.newsDate').text().slice(0, 10);
-            const pubDate = parseDate(pubDateStr, 'YYYY.MM.DD');
-            const image = i.find('.newsImg');
-            const link = i.find('a').attr('href') as string;
+            const i = $(items)
+            const title = i.find('.newsLink').text()
+            const pubDateStr = i.find('.newsDate').text().slice(0, 10)
+            const pubDate = parseDate(pubDateStr, 'YYYY.MM.DD')
+            const image = i.find('.newsImg')
+            const link = i.find('a').attr('href') as string
             return await cache.tryGet(link, async () => {
-                const response = await got(link);
-                const description = parseContent(response.body, image);
+                const response = await got(link)
+                const description = parseContent(response.body, image)
                 return {
                     title,
                     link,
                     description,
                     pubDate,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: 'maimai DX - Japanese Ver. News',
         link: baseUrl,
         language: 'ja',
         item,
-    };
+    }
 }

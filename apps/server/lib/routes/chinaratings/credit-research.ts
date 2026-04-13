@@ -1,36 +1,36 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'Industry/Comment' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10);
+    const { category = 'Industry/Comment' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '15', 10)
 
-    const baseUrl = 'https://www.chinaratings.com.cn';
-    const targetUrl: string = new URL(`CreditResearch/${category.endsWith('/') ? category : `${category}/`}`, baseUrl).href;
+    const baseUrl = 'https://www.chinaratings.com.cn'
+    const targetUrl: string = new URL(`CreditResearch/${category.endsWith('/') ? category : `${category}/`}`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = 'zh-CN'
 
     let items: DataItem[] = $('div.contRight ul.list li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
-            const $aEl: Cheerio<Element> = $el.find('a');
+            const $el: Cheerio<Element> = $(el)
+            const $aEl: Cheerio<Element> = $el.find('a')
 
-            const title: string = $aEl.text();
-            const pubDateStr: string | undefined = $el.find('span').text();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const pubDateStr: string | undefined = $el.find('span').text()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -38,29 +38,29 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 link: linkUrl ? new URL(linkUrl, targetUrl).href : undefined,
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.newshead h2, div.title h3').text();
-                    const description: string = $$('div.news div.content').html() ?? '';
+                    const title: string = $$('div.newshead h2, div.title h3').text()
+                    const description: string = $$('div.news div.content').html() ?? ''
 
-                    const metaStr: string = $$('div.newshead p span, div.title p span').text();
-                    const pubDateStr: string | undefined = metaStr?.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
-                    const authors: DataItem['author'] = metaStr?.match(/来源：(.*?)/)?.[1];
-                    const upDatedStr: string | undefined = pubDateStr;
+                    const metaStr: string = $$('div.newshead p span, div.title p span').text()
+                    const pubDateStr: string | undefined = metaStr?.match(/(\d{4}-\d{2}-\d{2})/)?.[1]
+                    const authors: DataItem['author'] = metaStr?.match(/来源：(.*?)/)?.[1]
+                    const upDatedStr: string | undefined = pubDateStr
 
                     let processedItem: DataItem = {
                         title,
@@ -73,10 +73,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? parseDate(upDatedStr) : item.updated,
                         language,
-                    };
+                    }
 
-                    const docUrl: string | undefined = detailResponse.match(/(\/upload\/docs\/\d{4}-\d{2}-\d{2}\/doc_\d+)"/)?.[1];
-                    const enclosureUrl: string | undefined = docUrl ? `${new URL(docUrl, baseUrl).href}.pdf` : undefined;
+                    const docUrl: string | undefined = detailResponse.match(/(\/upload\/docs\/\d{4}-\d{2}-\d{2}\/doc_\d+)"/)?.[1]
+                    const enclosureUrl: string | undefined = docUrl ? `${new URL(docUrl, baseUrl).href}.pdf` : undefined
 
                     if (enclosureUrl) {
                         processedItem = {
@@ -84,19 +84,19 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             enclosure_url: enclosureUrl,
                             enclosure_type: 'application/pdf',
                             enclosure_title: title,
-                        };
+                        }
                     }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -107,8 +107,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/-/).pop(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/CreditResearch/:category{.+}?',
@@ -138,11 +138,11 @@ export const route: Route = {
         {
             source: ['www.chinaratings.com.cn/CreditResearch/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/chinaratings/CreditResearch${category ? `/${category}` : ''}`;
+                return `/chinaratings/CreditResearch${category ? `/${category}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

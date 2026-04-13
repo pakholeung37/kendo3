@@ -1,14 +1,14 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
     image?: {
-        src?: string;
-        alt?: string;
-    };
-    introduction?: string;
-    description?: string;
-};
+        src?: string
+        alt?: string
+    }
+    introduction?: string
+    description?: string
+}
 
 const QuestMobileDescription = ({ image, introduction, description }: DescriptionData) => (
     <>
@@ -20,6 +20,6 @@ const QuestMobileDescription = ({ image, introduction, description }: Descriptio
         {introduction ? <blockquote>{introduction}</blockquote> : null}
         {description ? raw(description) : null}
     </>
-);
+)
 
-export const renderDescription = (data: DescriptionData) => renderToString(<QuestMobileDescription {...data} />);
+export const renderDescription = (data: DescriptionData) => renderToString(<QuestMobileDescription {...data} />)

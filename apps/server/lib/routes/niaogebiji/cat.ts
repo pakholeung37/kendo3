@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/cat/:cat',
@@ -28,20 +28,20 @@ export const route: Route = {
     maintainers: ['cKotoriKat'],
     handler,
     url: 'niaogebiji.com/',
-};
+}
 
 async function handler(ctx) {
-    const categoryId = ctx.req.param('cat');
-    const link = `https://www.niaogebiji.com/cat/${categoryId}`;
+    const categoryId = ctx.req.param('cat')
+    const link = `https://www.niaogebiji.com/cat/${categoryId}`
 
-    const response = await got(link);
-    const $ = load(response.data);
-    const catName = $('h1').text();
+    const response = await got(link)
+    const $ = load(response.data)
+    const catName = $('h1').text()
 
     const articles = $('div.articleBox.clearfix')
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
             return {
                 title: item.find('.articleTitle').text().trim(),
                 description: item.find('.articleContentInner').text().trim(),
@@ -54,27 +54,27 @@ async function handler(ctx) {
                         .map((tag) => $(tag).text().trim()),
                     catName,
                 ],
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         articles.map((element) =>
             cache.tryGet(element.link, async () => {
-                const response = await got(element.link);
-                const $ = load(response.data);
+                const response = await got(element.link)
+                const $ = load(response.data)
 
-                element.pubDate = timezone(parseDate($('.writeTime3').text().trim()), 8);
-                element.description = $('.pc_content').html();
+                element.pubDate = timezone(parseDate($('.writeTime3').text().trim()), 8)
+                element.description = $('.pc_content').html()
 
-                return element;
-            })
-        )
-    );
+                return element
+            }),
+        ),
+    )
 
     return {
         title: $('head title').text(),
         description: $('head meta[name="description"]').attr('content'),
         link,
         item: items,
-    };
+    }
 }

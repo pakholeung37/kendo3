@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Bugzilla',
@@ -9,4 +9,4 @@ export const namespace: Namespace = {
         description: '各组织自建的Bugzilla实例。',
     },
     lang: 'en',
-};
+}

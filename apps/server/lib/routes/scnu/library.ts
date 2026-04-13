@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/library',
@@ -26,20 +26,20 @@ export const route: Route = {
     maintainers: ['fengkx'],
     handler,
     url: 'lib.scnu.edu.cn/news/zuixingonggao',
-};
+}
 
 async function handler() {
-    const baseUrl = 'https://lib.scnu.edu.cn';
-    const url = `${baseUrl}/news/zuixingonggao/`;
+    const baseUrl = 'https://lib.scnu.edu.cn'
+    const url = `${baseUrl}/news/zuixingonggao/`
     const res = await got({
         method: 'get',
         url,
         headers: {
             Referer: baseUrl,
         },
-    });
-    const $ = load(res.data);
-    const list = $('.article-list').find('li');
+    })
+    const $ = load(res.data)
+    const list = $('.article-list').find('li')
 
     return {
         title: $('title').text(),
@@ -48,12 +48,12 @@ async function handler() {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.find('a').text(),
                     pubDate: parseDate(item.find('.clock').text()),
                     link: item.find('a').attr('href'),
-                };
+                }
             }),
-    };
+    }
 }

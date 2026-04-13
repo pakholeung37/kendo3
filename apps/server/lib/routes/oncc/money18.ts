@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/money18';
+import { renderDescription } from './templates/money18'
 
 const sections = {
     exp: '新聞總覽',
@@ -20,7 +20,7 @@ const sections = {
     weainvest: '投資理財',
     ipo: '新股IPO',
     tech: '科技財情',
-};
+}
 
 export const route: Route = {
     path: '/money18/:id?',
@@ -41,24 +41,24 @@ export const route: Route = {
     description: `| 新聞總覽 | 全日焦點 | 板塊新聞 | 國際金融 | 大行報告 | A 股新聞 | 地產新聞 | 投資理財  | 新股 IPO | 科技財情 |
 | -------- | -------- | -------- | -------- | -------- | -------- | -------- | --------- | -------- | -------- |
 | exp      | fov      | industry | int      | recagent | ntlgroup | pro      | weainvest | ipo      | tech     |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id') ?? 'exp';
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30;
+    const id = ctx.req.param('id') ?? 'exp'
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit')) : 30
 
-    const rootUrl = 'https://money18.on.cc';
-    const currentUrl = `${rootUrl}/finnews/news_${id === 'industry' ? 'industry.html' : `breaking.html?section=${id}`}`;
-    const ipoApiUrl = `https://dyn.on.cc/api/asrh/v1/events/names/新股/articles?page=1&limit=${limit}`;
-    const industryApiUrl = `${rootUrl}/cnt/utf8/content/articleList/sector_list_exp_1.js`;
+    const rootUrl = 'https://money18.on.cc'
+    const currentUrl = `${rootUrl}/finnews/news_${id === 'industry' ? 'industry.html' : `breaking.html?section=${id}`}`
+    const ipoApiUrl = `https://dyn.on.cc/api/asrh/v1/events/names/新股/articles?page=1&limit=${limit}`
+    const industryApiUrl = `${rootUrl}/cnt/utf8/content/articleList/sector_list_exp_1.js`
 
-    const toApiUrl = (date) => `${rootUrl}/cnt/utf8/content/${date}/articleList/list_${id}_all.js`;
+    const toApiUrl = (date) => `${rootUrl}/cnt/utf8/content/${date}/articleList/list_${id}_all.js`
 
-    let apiUrl = id === 'ipo' ? ipoApiUrl : id === 'industry' ? industryApiUrl : toApiUrl(dayjs().format('YYYYMMDD'));
-    let hasArticle = false;
-    let items: DataItem[];
-    let i = 0;
-    let response;
+    let apiUrl = id === 'ipo' ? ipoApiUrl : id === 'industry' ? industryApiUrl : toApiUrl(dayjs().format('YYYYMMDD'))
+    let hasArticle = false
+    let items: DataItem[]
+    let i = 0
+    let response
 
     /* eslint-disable no-await-in-loop */
 
@@ -67,12 +67,12 @@ async function handler(ctx) {
             response = await got({
                 method: 'get',
                 url: apiUrl,
-            });
-            hasArticle = true;
+            })
+            hasArticle = true
         } catch (error) {
             if (error.code === 'ERR_NON_2XX_3XX_RESPONSE') {
-                hasArticle = false;
-                apiUrl = toApiUrl(dayjs().subtract(++i, 'day').format('YYYYMMDD'));
+                hasArticle = false
+                apiUrl = toApiUrl(dayjs().subtract(++i, 'day').format('YYYYMMDD'))
             }
         }
     }
@@ -89,7 +89,7 @@ async function handler(ctx) {
                 description: item.content,
             }),
             pubDate: timezone(parseDate(item.pubDate), +8),
-        }));
+        }))
     } else if (id === 'industry') {
         items = response.data.articles.slice(0, limit).map((item) => ({
             title: item.title,
@@ -97,14 +97,14 @@ async function handler(ctx) {
             link: `${rootUrl}/finnews/content/${id}/${item.articleId}.html`,
             category: item.sector.map((s) => s.name),
             pubDate: timezone(parseDate(item.pubDate), +8),
-        }));
+        }))
     } else {
         items = response.data.slice(0, limit).map((item) => ({
             title: item.title,
             author: item.authorname,
             link: `${rootUrl}/finnews/content/${id}/${item.articleId}.html`,
             pubDate: timezone(parseDate(item.pubDate), +8),
-        }));
+        }))
     }
 
     if (id !== 'ipo') {
@@ -114,26 +114,26 @@ async function handler(ctx) {
                     const detailResponse = await got({
                         method: 'get',
                         url: item.link,
-                    });
+                    })
 
-                    const content = load(detailResponse.data);
+                    const content = load(detailResponse.data)
 
                     item.description = renderDescription({
                         images: content('.photo img')
                             .toArray()
                             .map((i) => content(i).attr('src')),
                         description: content('.content').html(),
-                    });
+                    })
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
     }
 
     return {
         title: `東網產經 - ${sections[id]}`,
         link: currentUrl,
         item: items,
-    };
+    }
 }

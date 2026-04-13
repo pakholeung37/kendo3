@@ -1,18 +1,18 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { lang } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '500', 10);
+    const { lang } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '500', 10)
 
-    const baseUrl = 'https://t1.daumcdn.net';
-    const targetUrl: string = new URL(`potplayer/PotPlayer/v4/Update2/Update${lang ?? ''}.html`, baseUrl).href;
+    const baseUrl = 'https://t1.daumcdn.net'
+    const targetUrl: string = new URL(`potplayer/PotPlayer/v4/Update2/Update${lang ?? ''}.html`, baseUrl).href
 
-    const response: string = await ofetch(targetUrl);
+    const response: string = await ofetch(targetUrl)
 
     // Updated regex to capture blocks:
     // Group 1: Leading hyphens (unused, but for context)
@@ -20,43 +20,43 @@ export const handler = async (ctx: Context): Promise<Data> => {
     // Group 3: Trailing hyphens (unused, but for context)
     // Group 4: Update content
     // Uses global and multiline flags for all matches and line start/end anchors
-    const updateRegex = /^(-+)\s*\n(.*?)\s*\n(-+)\s*\n([\s\S]*?)(?=\n-{2,}|<\/p>)/gm;
+    const updateRegex = /^(-+)\s*\n(.*?)\s*\n(-+)\s*\n([\s\S]*?)(?=\n-{2,}|<\/p>)/gm
 
-    const items: DataItem[] = [];
-    let match: RegExpExecArray | null;
+    const items: DataItem[] = []
+    let match: RegExpExecArray | null
 
     while ((match = updateRegex.exec(response)) !== null && items.length < limit) {
-        const headerLine: string | undefined = match[2].trim();
-        const description: string | undefined = match[4].trim()?.replaceAll(/(\s[+-])/g, '<br>$1');
+        const headerLine: string | undefined = match[2].trim()
+        const description: string | undefined = match[4].trim()?.replaceAll(/(\s[+-])/g, '<br>$1')
 
-        let version = 'N/A';
-        let pubDateStr: string | undefined = undefined;
+        let version = 'N/A'
+        let pubDateStr: string | undefined = undefined
 
         // Regex to extract version (e.g., [1.4.20199] or [250514])
-        const versionMatch = headerLine.match(/\[([\d.]+)\]/);
+        const versionMatch = headerLine.match(/\[([\d.]+)\]/)
         if (versionMatch && versionMatch[1]) {
-            version = versionMatch[1];
+            version = versionMatch[1]
         }
 
         // Regex to extract date (either YYYY/MM/DD or YYMMDD from the headerLine)
-        const specificDateMatch = headerLine.match(/(\d{4}\/\d{1,2}\/\d{1,2})/); // YYYY/MM/DD format
-        const numericDateMatch = headerLine.match(/(\d{6})/); // YYMMDD format
+        const specificDateMatch = headerLine.match(/(\d{4}\/\d{1,2}\/\d{1,2})/) // YYYY/MM/DD format
+        const numericDateMatch = headerLine.match(/(\d{6})/) // YYMMDD format
 
         if (specificDateMatch && specificDateMatch[1]) {
             // Found YYYY/MM/DD format
-            pubDateStr = specificDateMatch[1].replaceAll('/', '-'); // Format to YYYY-MM-DD
+            pubDateStr = specificDateMatch[1].replaceAll('/', '-') // Format to YYYY-MM-DD
         } else if (numericDateMatch && numericDateMatch[1]) {
-            const rawDate = numericDateMatch[1];
+            const rawDate = numericDateMatch[1]
             if (rawDate.length === 6 && (version === rawDate || !specificDateMatch)) {
-                const year = Number.parseInt(rawDate.slice(0, 2), 10);
-                const month = Number.parseInt(rawDate.slice(2, 4), 10);
-                const day = Number.parseInt(rawDate.slice(4, 6), 10);
-                const fullYear = year < 70 ? 2000 + year : 1900 + year;
-                pubDateStr = `${fullYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const year = Number.parseInt(rawDate.slice(0, 2), 10)
+                const month = Number.parseInt(rawDate.slice(2, 4), 10)
+                const day = Number.parseInt(rawDate.slice(4, 6), 10)
+                const fullYear = year < 70 ? 2000 + year : 1900 + year
+                pubDateStr = `${fullYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
             }
         }
 
-        const guid = `potplayer-${lang}-${version}`;
+        const guid = `potplayer-${lang}-${version}`
 
         const processedItem: DataItem = {
             title: version,
@@ -70,9 +70,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 text: description,
             },
             updated: pubDateStr ? parseDate(pubDateStr) : undefined,
-        };
+        }
 
-        items.push(processedItem);
+        items.push(processedItem)
     }
 
     return {
@@ -81,8 +81,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         item: items,
         allowEmpty: true,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/potplayer/:lang?',
@@ -154,10 +154,10 @@ To subscribe to [Potplayer Update History](https://t1.daumcdn.net/potplayer/PotP
         {
             source: ['potplayer.daum.net'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const lang: string | undefined = urlObj.searchParams.get('lang') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const lang: string | undefined = urlObj.searchParams.get('lang') ?? undefined
 
-                return `/daum/potplayer${lang ? `/${lang}` : ''}`;
+                return `/daum/potplayer${lang ? `/${lang}` : ''}`
             },
         },
         {
@@ -255,4 +255,4 @@ To subscribe to [Potplayer Update History](https://t1.daumcdn.net/potplayer/PotP
 | [Polski](https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdatePol.html)     | [Eng](https://rsshub.app/daum/potplayer/Pol) |
 `,
     },
-};
+}

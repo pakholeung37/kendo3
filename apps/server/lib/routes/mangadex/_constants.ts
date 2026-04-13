@@ -72,4 +72,4 @@ export default {
     },
 
     TOKEN_EXPIRE: 15 * 60 - 10, // access token expires in 15 minutes, refresh 10 seconds earlier
-};
+}

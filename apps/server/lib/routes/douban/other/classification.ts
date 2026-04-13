@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/movie/classification/:sort?/:score?/:tags?',
@@ -22,26 +22,26 @@ export const route: Route = {
 | 近期热门 | 标记最多 | 评分最高 | 最近上映 |
 | -------- | -------- | -------- | -------- |
 | U        | T        | S        | R        |`,
-};
+}
 
 async function handler(ctx) {
-    const sort = ctx.req.param('sort') || 'U';
-    const score = Number.parseFloat(ctx.req.param('score')) || 0;
-    const tags = ctx.req.param('tags') || '';
+    const sort = ctx.req.param('sort') || 'U'
+    const score = Number.parseFloat(ctx.req.param('score')) || 0
+    const tags = ctx.req.param('tags') || ''
 
     const response = await got({
         method: 'get',
         url: `https://movie.douban.com/j/new_search_subjects?sort=${sort}&range=0,10&tags=${tags}&start=0`,
-    });
+    })
 
-    const movies = response.data.data;
+    const movies = response.data.data
 
     return {
         title: `豆瓣电影分类${score ? `超过 ${score} 分的` : ''}影视`,
         link: `https://movie.douban.com/tag/#/?sort=U&range=0,10&tags=`,
         item: movies
             .map((item) => {
-                const itemScore = Number.parseFloat(item.rate) || 0;
+                const itemScore = Number.parseFloat(item.rate) || 0
 
                 return itemScore >= score
                     ? {
@@ -53,9 +53,9 @@ async function handler(ctx) {
                         <img src="${item.cover}">`,
                           link: item.url,
                       }
-                    : null;
+                    : null
             })
             .filter(Boolean),
         allowEmpty: true,
-    };
+    }
 }

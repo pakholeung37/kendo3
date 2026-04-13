@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import getContent from './utils/common';
+import getContent from './utils/common'
 
 export const route: Route = {
     path: '/ied/:type?/:category?/:page?',
@@ -29,7 +29,7 @@ export const route: Route = {
 | -------- | -------- | -------- | ----------- |
 | type     | xwzx     | xwzx     | 对应 URL    |
 | category | tzgg     | xwkx     | 对应 URL    |`,
-};
+}
 
 async function handler(ctx) {
     await getContent(ctx, {
@@ -39,5 +39,5 @@ async function handler(ctx) {
         baseTitle: '国际交流与合作处',
         baseDescription: '湖南农业大学国际交流与合作处、国际教育学院、港澳台事务办公室',
         baseDeparment: 'ied',
-    });
+    })
 }

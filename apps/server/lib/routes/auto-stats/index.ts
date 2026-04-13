@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/:category?',
@@ -26,55 +26,55 @@ export const route: Route = {
     description: `| 信息快递 | 工作动态 | 专题分析 |
 | -------- | -------- | -------- |
 | xxkd     | gzdt     | ztfx     |`,
-};
+}
 
 async function handler(ctx) {
-    const { category = 'xxkd' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { category = 'xxkd' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'http://www.auto-stats.org.cn';
-    const currentUrl = new URL(`${category}.asp`, rootUrl).href;
+    const rootUrl = 'http://www.auto-stats.org.cn'
+    const currentUrl = new URL(`${category}.asp`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
     let items = $('a.dnews font')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const title = item.text();
-            const pubDate = title.match(/(\d{4}(?:\/\d{1,2}){2}\s\d{1,2}(?::\d{2}){2})/)?.[1] ?? undefined;
+            const title = item.text()
+            const pubDate = title.match(/(\d{4}(?:\/\d{1,2}){2}\s\d{1,2}(?::\d{2}){2})/)?.[1] ?? undefined
 
             return {
                 title: title.replace(/●/, '').split(/（\d+/)[0],
                 link: new URL(item.parent().prop('href'), rootUrl).href,
                 pubDate: timezone(parseDate(pubDate, 'YYYY/M/D H:mm:ss'), +8),
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: detailResponse } = await got(item.link, {
                     responseType: 'buffer',
-                });
+                })
 
-                const content = load(iconv.decode(detailResponse, 'gbk'));
+                const content = load(iconv.decode(detailResponse, 'gbk'))
 
-                item.description = content('table tbody tr td.dd').last().html();
+                item.description = content('table tbody tr td.dd').last().html()
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const subtitle = $('title').text().split(/——/).pop();
-    const image = new URL('images/logo.jpg', rootUrl).href;
+    const subtitle = $('title').text().split(/——/).pop()
+    const image = new URL('images/logo.jpg', rootUrl).href
 
     return {
         item: items,
@@ -85,5 +85,5 @@ async function handler(ctx) {
         image,
         subtitle,
         allowEmpty: true,
-    };
+    }
 }

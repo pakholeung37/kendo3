@@ -1,28 +1,28 @@
-import dayjs from 'dayjs';
-import { renderToString } from 'hono/jsx/dom/server';
+import dayjs from 'dayjs'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type NewsItem = {
-    url?: string;
-    title?: string;
-    siteNameDisplay?: string;
-};
+    url?: string
+    title?: string
+    siteNameDisplay?: string
+}
 
 type TimelineTopic = {
-    publishDate?: string;
-    uid?: string;
-    title?: string;
-};
+    publishDate?: string
+    uid?: string
+    title?: string
+}
 
 type TimelineData = {
-    topics?: TimelineTopic[];
-};
+    topics?: TimelineTopic[]
+}
 
 type DescriptionData = {
-    description?: string;
-    news?: NewsItem[];
-    timeline?: TimelineData;
-    rootUrl: string;
-};
+    description?: string
+    news?: NewsItem[]
+    timeline?: TimelineData
+    rootUrl: string
+}
 
 export const renderDescription = ({ description, news, timeline, rootUrl }: DescriptionData) =>
     renderToString(
@@ -66,5 +66,5 @@ export const renderDescription = ({ description, news, timeline, rootUrl }: Desc
                     </table>
                 </>
             ) : null}
-        </>
-    );
+        </>,
+    )

@@ -1,17 +1,17 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { author, language, processItems, rootUrl } from './util';
+import { author, language, processItems, rootUrl } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { name } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { name } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL(`article-list/1?tagName=${name}`, rootUrl).href;
-    const apiUrl: string = new URL('api/articles/tagId', rootUrl).href;
+    const targetUrl: string = new URL(`article-list/1?tagName=${name}`, rootUrl).href
+    const apiUrl: string = new URL('api/articles/tagId', rootUrl).href
 
     const apiResponse = await ofetch(apiUrl, {
         query: {
@@ -20,9 +20,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
             current: 1,
             size: limit,
         },
-    });
+    })
 
-    const items: DataItem[] = processItems(apiResponse.data.records, limit);
+    const items: DataItem[] = processItems(apiResponse.data.records, limit)
 
     return {
         title: `${author} - ${name}`,
@@ -32,8 +32,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         author,
         language,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/n/tag/:name',
@@ -65,12 +65,12 @@ export const route: Route = {
         {
             source: ['n.ifun.cool/article-list/1'],
             target: (_, url) => {
-                const urlObj = new URL(url);
-                const name = urlObj.searchParams.get('tagName');
+                const urlObj = new URL(url)
+                const name = urlObj.searchParams.get('tagName')
 
-                return `/ifun/n/tag/${name}`;
+                return `/ifun/n/tag/${name}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}

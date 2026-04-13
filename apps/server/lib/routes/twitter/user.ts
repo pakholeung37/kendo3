@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import logger from '@/utils/logger';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import logger from '@/utils/logger'
 
-import api from './api';
-import utils from './utils';
+import api from './api'
+import utils from './utils'
 
 export const route: Route = {
     path: '/user/:id/:routeParams?',
@@ -62,28 +62,28 @@ export const route: Route = {
             target: '/user/:id',
         },
     ],
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
 
     // For compatibility
-    const { count, include_replies, include_rts } = utils.parseRouteParams(ctx.req.param('routeParams'));
-    const params = count ? { count } : {};
+    const { count, include_replies, include_rts } = utils.parseRouteParams(ctx.req.param('routeParams'))
+    const params = count ? { count } : {}
 
-    await api.init();
-    const userInfo = await api.getUser(id);
-    let data;
+    await api.init()
+    const userInfo = await api.getUser(id)
+    let data
     try {
-        data = await (include_replies ? api.getUserTweetsAndReplies(id, params) : api.getUserTweets(id, params));
+        data = await (include_replies ? api.getUserTweetsAndReplies(id, params) : api.getUserTweets(id, params))
         if (!include_rts) {
-            data = utils.excludeRetweet(data);
+            data = utils.excludeRetweet(data)
         }
     } catch (error) {
-        logger.error(error);
+        logger.error(error)
     }
 
-    const profileImageUrl = userInfo?.profile_image_url || userInfo?.profile_image_url_https;
+    const profileImageUrl = userInfo?.profile_image_url || userInfo?.profile_image_url_https
 
     return {
         title: `Twitter @${userInfo?.name}`,
@@ -96,5 +96,5 @@ async function handler(ctx) {
                 data,
             }),
         allowEmpty: true,
-    };
+    }
 }

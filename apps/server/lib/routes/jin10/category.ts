@@ -1,12 +1,12 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 export const route: Route = {
     path: '/category/:id',
@@ -167,10 +167,10 @@ export const route: Route = {
     maintainers: ['laampui'],
     handler,
     url: 'jin10.com/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
+    const id = ctx.req.param('id')
     const data = await cache.tryGet(
         'jin10:aa:${category}',
         async () => {
@@ -184,22 +184,22 @@ async function handler(ctx) {
                     vip: '1',
                     classify: `[${id}]`,
                 },
-            });
-            return response.data.filter((item) => item.type !== 1);
+            })
+            return response.data.filter((item) => item.type !== 1)
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const item = data.map((item) => {
-        const titleMatch = item.data.content.match(/^【(.*?)】/);
-        let title;
-        let content = item.data.content;
+        const titleMatch = item.data.content.match(/^【(.*?)】/)
+        let title
+        let content = item.data.content
         if (titleMatch) {
-            title = titleMatch[1];
-            content = content.replace(titleMatch[0], '');
+            title = titleMatch[1]
+            content = content.replace(titleMatch[0], '')
         } else {
-            title = item.data.vip_title || item.data.content;
+            title = item.data.vip_title || item.data.content
         }
 
         return {
@@ -207,12 +207,12 @@ async function handler(ctx) {
             description: renderDescription(content, item.data.pic),
             pubDate: timezone(parseDate(item.time), 8),
             guid: `jin10:category:${item.id}`,
-        };
-    });
+        }
+    })
 
     return {
         title: '金十数据',
         link: 'https://www.jin10.com/',
         item,
-    };
+    }
 }

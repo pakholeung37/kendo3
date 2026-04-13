@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/keyword/:keyword',
@@ -18,13 +18,13 @@ export const route: Route = {
     name: 'Keyword',
     maintainers: ['DIYgod', 'loganrockmore'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const keyword = ctx.req.param('keyword');
-    const url = `https://dribbble.com/search/shots/recent?q=${keyword}`;
+    const keyword = ctx.req.param('keyword')
+    const url = `https://dribbble.com/search/shots/recent?q=${keyword}`
 
-    const title = `Dribbble - keyword ${keyword}`;
+    const title = `Dribbble - keyword ${keyword}`
 
-    return await utils.getData(url, title);
+    return await utils.getData(url, title)
 }

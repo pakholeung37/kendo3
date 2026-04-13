@@ -1,6 +1,6 @@
-import type { Data, Route } from '@/types';
+import type { Data, Route } from '@/types'
 
-import { getRelativeUrlList, processList, rootUrl } from './utils';
+import { getRelativeUrlList, processList, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/latest/:category?',
@@ -40,15 +40,15 @@ export const route: Route = {
     name: 'Articles and Tutorials',
     maintainers: ['Rjnishant530'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category: string = ctx.req.param('category') || '';
-    const currentUrl = category ? `${rootUrl}/${category}` : rootUrl;
-    const selector = category ? 'div > article > a:first-child' : 'article[data-include-enter-animation="false"] > a:first-child';
-    const { heading, urls } = await getRelativeUrlList(currentUrl, selector);
-    const items = await processList(urls);
-    const title = category ? `${heading} | ` : '';
+    const category: string = ctx.req.param('category') || ''
+    const currentUrl = category ? `${rootUrl}/${category}` : rootUrl
+    const selector = category ? 'div > article > a:first-child' : 'article[data-include-enter-animation="false"] > a:first-child'
+    const { heading, urls } = await getRelativeUrlList(currentUrl, selector)
+    const items = await processList(urls)
+    const title = category ? `${heading} | ` : ''
     return {
         title: `${title}Articles and Tutorials | Josh W. Comeau`,
         description: `Friendly tutorials for developers. Focus on ${category ? title : 'React, CSS, Animation, and more!'}`,
@@ -56,5 +56,5 @@ async function handler(ctx) {
         item: items,
         icon: `${rootUrl}/favicon.png`,
         logo: `${rootUrl}/favicon.png`,
-    } as Data;
+    } as Data
 }

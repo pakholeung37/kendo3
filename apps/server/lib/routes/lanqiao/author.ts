@@ -1,10 +1,10 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import utils from './utils';
+import utils from './utils'
 
 async function getUserName(uid) {
     // 获取用户信息
@@ -14,9 +14,9 @@ async function getUserName(uid) {
         headers: {
             Referer: `https://www.lanqiao.cn/users/${uid}/`,
         },
-    });
+    })
 
-    return response.data.name;
+    return response.data.name
 }
 
 export const route: Route = {
@@ -40,11 +40,11 @@ export const route: Route = {
     name: '作者发布的课程',
     maintainers: ['huhuhang'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const uid = ctx.req.param('uid');
-    const userName = await getUserName(uid);
+    const uid = ctx.req.param('uid')
+    const userName = await getUserName(uid)
     // 发起 HTTP GET 请求
     const response = await got({
         method: 'get',
@@ -52,28 +52,28 @@ async function handler(ctx) {
         headers: {
             Referer: `https://www.lanqiao.cn/users/${uid}/`,
         },
-    });
+    })
 
-    const data = response.data.results; // response.data 为 HTTP GET 请求返回的数据对象
+    const data = response.data.results // response.data 为 HTTP GET 请求返回的数据对象
 
-    const md = new MarkdownIt();
+    const md = new MarkdownIt()
     const items = await Promise.all(
         data.map((item) =>
             cache.tryGet(`https://www.lanqiao.cn/api/v2/courses/${item.id}/`, async () => {
                 const courseResponse = await got({
                     method: 'get',
                     url: `https://www.lanqiao.cn/api/v2/courses/${item.id}/`,
-                });
-                const course = courseResponse.data;
+                })
+                const course = courseResponse.data
 
-                item.title = course.name;
-                item.description = utils.courseDesc(course.picture_url, md.render(course.long_description));
-                item.author = course.teacher.name;
-                item.link = `https://www.lanqiao.cn/courses/${course.id}/`;
-                return item;
-            })
-        )
-    );
+                item.title = course.name
+                item.description = utils.courseDesc(course.picture_url, md.render(course.long_description))
+                item.author = course.teacher.name
+                item.link = `https://www.lanqiao.cn/courses/${course.id}/`
+                return item
+            }),
+        ),
+    )
 
     return {
         // 源标题
@@ -84,5 +84,5 @@ async function handler(ctx) {
         description: `${userName} 发布的课程`,
         // 遍历此前获取的数据
         item: items,
-    };
+    }
 }

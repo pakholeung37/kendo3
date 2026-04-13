@@ -1,12 +1,12 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const idOptions = [
     {
@@ -25,7 +25,7 @@ const idOptions = [
         label: 'Honeycam',
         value: 'honeycam',
     },
-];
+]
 
 const languageOptions = [
     {
@@ -124,47 +124,47 @@ const languageOptions = [
         label: '한국어',
         value: 'kr',
     },
-];
+]
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'bandizip', language = 'en' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '500', 10);
+    const { id = 'bandizip', language = 'en' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '500', 10)
 
-    const validIds = new Set<string>(idOptions.map((option) => option.value));
+    const validIds = new Set<string>(idOptions.map((option) => option.value))
 
     if (!validIds.has(id)) {
-        throw new Error(`Invalid id: ${id}. Allowed values are: ${[...validIds].join(', ')}`);
+        throw new Error(`Invalid id: ${id}. Allowed values are: ${[...validIds].join(', ')}`)
     }
 
-    const validLanguages = new Set<string>(languageOptions.map((option) => option.value));
+    const validLanguages = new Set<string>(languageOptions.map((option) => option.value))
 
     if (!validLanguages.has(language)) {
-        throw new Error(`Invalid language: ${language}. Allowed values are: ${[...validLanguages].join(', ')}`);
+        throw new Error(`Invalid language: ${language}. Allowed values are: ${[...validLanguages].join(', ')}`)
     }
 
-    const baseUrl = `https://${language}.bandisoft.com`;
-    const targetUrl: string = new URL(`${id}/history/`, baseUrl).href;
+    const baseUrl = `https://${language}.bandisoft.com`
+    const targetUrl: string = new URL(`${id}/history/`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const lang = $('html').attr('lang') ?? 'en';
-    const author: string | undefined = $('meta[name="author"]').attr('content');
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const lang = $('html').attr('lang') ?? 'en'
+    const author: string | undefined = $('meta[name="author"]').attr('content')
 
     const items: DataItem[] = $('div.row')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const version: string | undefined = $el.find('div.cell1').text();
-            const pubDateStr: string | undefined = $el.find('div.cell2').text();
+            const version: string | undefined = $el.find('div.cell1').text()
+            const pubDateStr: string | undefined = $el.find('div.cell2').text()
 
-            const title: string = version;
-            const description: string | undefined = $el.find('ul.cell3').html() ?? undefined;
+            const title: string = version
+            const description: string | undefined = $el.find('ul.cell3').html() ?? undefined
 
-            const linkUrl: string = targetUrl;
-            const guid = `bandisoft-${id}-${language}-${version}`;
-            const upDatedStr: string | undefined = pubDateStr;
+            const linkUrl: string = targetUrl
+            const guid = `bandisoft-${id}-${language}-${version}`
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -180,10 +180,10 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 },
                 updated: upDatedStr ? parseDate(upDatedStr) : undefined,
                 language: lang,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     return {
         title: $('title').text(),
@@ -195,8 +195,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language: lang,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/history/:id?/:language?',
@@ -265,9 +265,9 @@ To subscribe to [Bandizip Version History](https://www.bandisoft.com/bandizip/hi
         {
             source: ['www.bandisoft.com/:id/history'],
             target: (params) => {
-                const id: string = params.id;
+                const id: string = params.id
 
-                return `/bandisoft/history${id ? `/${id}` : ''}`;
+                return `/bandisoft/history${id ? `/${id}` : ''}`
             },
         },
     ],
@@ -327,4 +327,4 @@ To subscribe to [Bandizip Version History](https://www.bandisoft.com/bandizip/hi
 </details>
 `,
     },
-};
+}

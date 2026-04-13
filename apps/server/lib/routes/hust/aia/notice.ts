@@ -1,8 +1,8 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: ['/aia/notice/:type?', '/auto/notice/:type?'],
@@ -23,16 +23,16 @@ export const route: Route = {
     description: `| 最新 | 党政 | 科研 | 本科生 | 研究生 | 学工思政 | 离退休 |
 | ---- | ---- | ---- | ------ | ------ | -------- | ------ |
 |      | dz   | ky   | bk     | yjs    | xgsz     | litui  |`,
-};
+}
 
 async function handler(ctx) {
-    const type = ctx.req.param('type');
-    const baseUrl = 'https://aia.hust.edu.cn';
-    const link = `${baseUrl}/tzgg${type ? `/${type}` : ''}.htm`;
-    const response = await got(link);
-    const $ = load(response.data);
-    const list = $('.list li');
-    const title = $('title').text();
+    const type = ctx.req.param('type')
+    const baseUrl = 'https://aia.hust.edu.cn'
+    const link = `${baseUrl}/tzgg${type ? `/${type}` : ''}.htm`
+    const response = await got(link)
+    const $ = load(response.data)
+    const list = $('.list li')
+    const title = $('title').text()
 
     return {
         title,
@@ -40,13 +40,13 @@ async function handler(ctx) {
         item:
             list &&
             list.toArray().map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.find('a h2').text(),
                     description: item.find('a div').text() || title,
                     pubDate: parseDate(item.find('.date3').text(), 'DDYYYY-MM'),
                     link: new URL(item.find('a').attr('href'), link).href,
-                };
+                }
             }),
-    };
+    }
 }

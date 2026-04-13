@@ -1,76 +1,76 @@
-import * as cheerio from 'cheerio';
-import { destr } from 'destr';
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
-import type { JSX } from 'hono/jsx/jsx-runtime';
+import * as cheerio from 'cheerio'
+import { destr } from 'destr'
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
+import type { JSX } from 'hono/jsx/jsx-runtime'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const topics = new Set(['style', 'watches', 'lifestyle', 'health', 'money-investment', 'gear', 'people', 'watch', 'mens-talk']);
+const topics = new Set(['style', 'watches', 'lifestyle', 'health', 'money-investment', 'gear', 'people', 'watch', 'mens-talk'])
 
 const handler = async (ctx) => {
-    let { id = 'Fashion' } = ctx.req.param();
+    let { id = 'Fashion' } = ctx.req.param()
 
-    id = id.toLowerCase();
+    id = id.toLowerCase()
 
-    const rootUrl = 'https://www.esquirehk.com';
+    const rootUrl = 'https://www.esquirehk.com'
 
-    let currentUrl = `${rootUrl}/tag/${id}`;
+    let currentUrl = `${rootUrl}/tag/${id}`
     if (topics.has(id)) {
-        currentUrl = `${rootUrl}/${id}`;
+        currentUrl = `${rootUrl}/${id}`
     }
 
-    const response = await ofetch(currentUrl);
+    const response = await ofetch(currentUrl)
 
-    const $ = cheerio.load(response);
+    const $ = cheerio.load(response)
     const list = [
         ...$('div[class^="max-w-[100%]"] > div > div:nth-child(2) > a')
             .toArray()
             .map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.text().trim(),
                     link: new URL(item.attr('href'), currentUrl).href,
-                };
+                }
             }),
         ...$('div.list-item > div > div:nth-child(2) > a')
             .toArray()
             .map((item) => {
-                item = $(item);
+                item = $(item)
                 return {
                     title: item.text().trim(),
                     link: new URL(item.attr('href'), currentUrl).href,
-                };
+                }
             }),
     ]
         .map((item) => ({
             ...item,
             slug: item.link.replace(rootUrl, ''),
         }))
-        .filter((item) => !item.slug.startsWith('/campaign'));
+        .filter((item) => !item.slug.startsWith('/campaign'))
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
-                const resp = await ofetch(`https://api.esquirehk.com${item.slug}`);
-                const response = destr(resp) as any;
+                const resp = await ofetch(`https://api.esquirehk.com${item.slug}`)
+                const response = destr(resp) as any
                 if (response.status === '404') {
-                    return item;
+                    return item
                 }
 
-                item.description = response.intro.raw + renderSubpages(response.subpages);
-                item.pubDate = parseDate(response.date.published, 'X');
-                item.updated = parseDate(response.date.lastModified, 'X');
-                item.author = response.author.name;
-                item.category = [...response.tags.topic.map((tag) => tag.name), ...response.tags.normal.map((tag) => tag.name)];
+                item.description = response.intro.raw + renderSubpages(response.subpages)
+                item.pubDate = parseDate(response.date.published, 'X')
+                item.updated = parseDate(response.date.lastModified, 'X')
+                item.author = response.author.name
+                item.category = [...response.tags.topic.map((tag) => tag.name), ...response.tags.normal.map((tag) => tag.name)]
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${$('head title').text()} - Esquirehk`,
@@ -79,24 +79,24 @@ const handler = async (ctx) => {
         logo: $('head meta[property="og:image"]').attr('content'),
         link: currentUrl,
         item: items,
-    };
-};
+    }
+}
 
 const renderSubpages = (subpages): string =>
     renderToString(
         <>
             {subpages?.map((page, index) => {
-                const blocks: Array<JSX.Element | null> = [];
+                const blocks: Array<JSX.Element | null> = []
 
                 switch (page.type) {
                     case 'image': {
-                        const image = page.image?.large || page.image?.desktop || page.image?.mobile;
-                        blocks.push(<img key={`image-${index}`} src={image?.src} alt={image?.alt} />);
+                        const image = page.image?.large || page.image?.desktop || page.image?.mobile
+                        blocks.push(<img key={`image-${index}`} src={image?.src} alt={image?.alt} />)
 
-                        break;
+                        break
                     }
                     case 'video_block': {
-                        const videoId = page.source?.split('&')[0];
+                        const videoId = page.source?.split('&')[0]
                         blocks.push(
                             <iframe
                                 key={`video-${index}`}
@@ -108,16 +108,16 @@ const renderSubpages = (subpages): string =>
                                 frameborder="0"
                                 allowfullscreen
                                 referrerpolicy="strict-origin-when-cross-origin"
-                            ></iframe>
-                        );
+                            ></iframe>,
+                        )
 
-                        break;
+                        break
                     }
                     case 'ctc_product_list':
                         blocks.push(
                             <span key={`products-${index}`}>
                                 {page.products?.map((product, productIndex) => {
-                                    const img = product.image?.desktop || product.image?.mobile;
+                                    const img = product.image?.desktop || product.image?.mobile
                                     return (
                                         <span key={`product-${productIndex}`}>
                                             <img src={img?.src} alt={img?.alt} />
@@ -130,15 +130,15 @@ const renderSubpages = (subpages): string =>
                                             <br />
                                             <a href={product.url}>SHOP NOW</a>
                                         </span>
-                                    );
+                                    )
                                 })}
-                            </span>
-                        );
+                            </span>,
+                        )
 
-                        break;
+                        break
 
                     default:
-                        blocks.push(<span key={`unknown-${index}`}>UNHANDLED PAGE TYPE: {page.type}</span>);
+                        blocks.push(<span key={`unknown-${index}`}>UNHANDLED PAGE TYPE: {page.type}</span>)
                 }
 
                 if (page.title) {
@@ -146,18 +146,18 @@ const renderSubpages = (subpages): string =>
                         <h2 key={`title-${index}`}>
                             {page.order ? `${page.order} ` : ''}
                             {page.title}
-                        </h2>
-                    );
+                        </h2>,
+                    )
                 }
 
                 if (page.description?.raw) {
-                    blocks.push(<span key={`description-${index}`}>{raw(page.description.raw)}</span>);
+                    blocks.push(<span key={`description-${index}`}>{raw(page.description.raw)}</span>)
                 }
 
-                return <span key={`page-${index}`}>{blocks}</span>;
+                return <span key={`page-${index}`}>{blocks}</span>
             })}
-        </>
-    );
+        </>,
+    )
 
 export const route: Route = {
     path: '/tag/:id?',
@@ -172,4 +172,4 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}

@@ -1,4 +1,4 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 export const renderDescription = (videoInfo) =>
     renderToString(
@@ -74,5 +74,5 @@ export const renderDescription = (videoInfo) =>
                       </>
                   ))
                 : null}
-        </>
-    );
+        </>,
+    )

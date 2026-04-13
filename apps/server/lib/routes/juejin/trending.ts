@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { getCategoryBrief, parseList, ProcessFeed } from './utils';
+import { getCategoryBrief, parseList, ProcessFeed } from './utils'
 
 export const route: Route = {
     path: '/trending/:category/:type',
@@ -88,20 +88,20 @@ export const route: Route = {
     name: '热门',
     maintainers: ['moaix'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { category, type } = ctx.req.param();
+    const { category, type } = ctx.req.param()
 
-    let id = '';
-    let name = '';
-    let url = 'recommended';
-    const idResponse = await getCategoryBrief();
-    const cat = idResponse.find((item) => item.category_url === category);
+    let id = ''
+    let name = ''
+    let url = 'recommended'
+    const idResponse = await getCategoryBrief()
+    const cat = idResponse.find((item) => item.category_url === category)
     if (cat) {
-        id = cat.category_id;
-        name = cat.category_name;
-        url = cat.category_url;
+        id = cat.category_id
+        name = cat.category_name
+        url = cat.category_url
     }
 
     const params = {
@@ -124,42 +124,42 @@ async function handler(ctx) {
             link: 'hottest',
             sort_type: 0,
         },
-    };
+    }
 
-    const p = params[type];
+    const p = params[type]
 
-    const title = `掘金${name}${p.title}最热`;
-    const link = `https://juejin.im/${url}?sort=${p.link}`;
+    const title = `掘金${name}${p.title}最热`
+    const link = `https://juejin.im/${url}?sort=${p.link}`
 
-    let getUrl = 'https://api.juejin.cn/recommend_api/v1/article/recommend_all_feed';
+    let getUrl = 'https://api.juejin.cn/recommend_api/v1/article/recommend_all_feed'
     const getJson = {
         cursor: '0',
         id_type: 2,
         limit: 20,
         sort_type: p.sort_type,
-    };
+    }
 
     if (url !== 'recommended') {
-        getUrl = 'https://api.juejin.cn/recommend_api/v1/article/recommend_cate_feed';
-        getJson.cate_id = id;
+        getUrl = 'https://api.juejin.cn/recommend_api/v1/article/recommend_cate_feed'
+        getJson.cate_id = id
     }
 
     const trendingResponse = await ofetch(getUrl, {
         method: 'POST',
         body: getJson,
-    });
-    let entrylist = trendingResponse.data;
+    })
+    let entrylist = trendingResponse.data
 
     if (category === 'all' || category === 'devops' || category === 'product' || category === 'design') {
-        entrylist = trendingResponse.data.filter((item) => item.item_type === 2).map((item) => item.item_info);
+        entrylist = trendingResponse.data.filter((item) => item.item_type === 2).map((item) => item.item_info)
     }
-    const list = parseList(entrylist);
+    const list = parseList(entrylist)
 
-    const resultItems = await ProcessFeed(list);
+    const resultItems = await ProcessFeed(list)
 
     return {
         title,
         link,
         item: resultItems,
-    };
+    }
 }

@@ -1,98 +1,98 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-const escapeHtml = (text: string): string => text?.replaceAll('&', '&amp;')?.replaceAll('<', '&lt;')?.replaceAll('>', '&gt;')?.replaceAll("'", '&quot;')?.replaceAll("'", '&#039;') ?? text;
+const escapeHtml = (text: string): string => text?.replaceAll('&', '&amp;')?.replaceAll('<', '&lt;')?.replaceAll('>', '&gt;')?.replaceAll("'", '&quot;')?.replaceAll("'", '&#039;') ?? text
 
-const parseTextChildren = (children: any[]): string => children.map((child: any) => escapeHtml(child.text)).join('');
+const parseTextChildren = (children: any[]): string => children.map((child: any) => escapeHtml(child.text)).join('')
 
 const parseImageNode = (node: any): string => {
-    const titleAttr = node.title ? ` title="${escapeHtml(node.title)}"` : '';
-    const altAttr = node.alt ? ` alt="${escapeHtml(node.alt)}"` : '';
-    const styleAttr = node.size ? ` style="width:${node.size.width}px;height:${node.size.height}px;"` : '';
-    return `<img src="${escapeHtml(node.url)}"${titleAttr}${altAttr}${styleAttr}>`;
-};
+    const titleAttr = node.title ? ` title="${escapeHtml(node.title)}"` : ''
+    const altAttr = node.alt ? ` alt="${escapeHtml(node.alt)}"` : ''
+    const styleAttr = node.size ? ` style="width:${node.size.width}px;height:${node.size.height}px;"` : ''
+    return `<img src="${escapeHtml(node.url)}"${titleAttr}${altAttr}${styleAttr}>`
+}
 
-const parseListItemNode = (listItem: any): string => `<li>${parseContentToHtml(listItem.children)}</li>`;
+const parseListItemNode = (listItem: any): string => `<li>${parseContentToHtml(listItem.children)}</li>`
 
 const parseListNode = (node: any): string => {
-    const tag = node.ordered ? 'ol' : 'ul';
-    const startAttr = node.ordered && node.start !== 1 ? ` start="${node.start}"` : '';
-    const listItemsHtml = node.children.map((item: any) => parseListItemNode(item)).join('');
-    return `<${tag}${startAttr}>${listItemsHtml}</${tag}>`;
-};
+    const tag = node.ordered ? 'ol' : 'ul'
+    const startAttr = node.ordered && node.start !== 1 ? ` start="${node.start}"` : ''
+    const listItemsHtml = node.children.map((item: any) => parseListItemNode(item)).join('')
+    return `<${tag}${startAttr}>${listItemsHtml}</${tag}>`
+}
 
 const parseParagraphChildren = (children: any[]): string =>
     children
         .map((child: any) => {
             if (child.text !== undefined) {
-                return escapeHtml(child.text);
+                return escapeHtml(child.text)
             } else if (child.type === 'image') {
-                return parseImageNode(child);
+                return parseImageNode(child)
             }
-            return '';
+            return ''
         })
-        .join('');
+        .join('')
 
 const parseContentToHtml = (content: any[]): string =>
     content
         ?.map((node: any) => {
             switch (node.type) {
                 case 'paragraph':
-                    return `<p>${parseParagraphChildren(node.children)}</p>`;
+                    return `<p>${parseParagraphChildren(node.children)}</p>`
                 case 'image':
-                    return parseImageNode(node);
+                    return parseImageNode(node)
                 case 'heading':
-                    return `<h${node.depth}>${parseTextChildren(node.children)}</h${node.depth ?? ''}>`;
+                    return `<h${node.depth}>${parseTextChildren(node.children)}</h${node.depth ?? ''}>`
                 case 'code':
-                    return `<pre><code${node.lang ? ` class="language-${node.lang}"` : ''}>${parseTextChildren(node.children)}</code></pre>`;
+                    return `<pre><code${node.lang ? ` class="language-${node.lang}"` : ''}>${parseTextChildren(node.children)}</code></pre>`
                 case 'list':
-                    return parseListNode(node);
+                    return parseListNode(node)
                 case 'blockquote':
-                    return `<blockquote>${parseContentToHtml(node.children)}</blockquote>`;
+                    return `<blockquote>${parseContentToHtml(node.children)}</blockquote>`
                 default:
-                    return '';
+                    return ''
             }
         })
-        .join('') ?? '';
+        .join('') ?? ''
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { category = 'latest' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10);
+    const { category = 'latest' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '20', 10)
 
-    const baseUrl = 'https://tidb.net';
-    const targetUrl: string = new URL(`blog${category === 'latest' ? '' : `/c/${category}`}`, baseUrl).href;
-    const targetResponse = await ofetch(targetUrl);
+    const baseUrl = 'https://tidb.net'
+    const targetUrl: string = new URL(`blog${category === 'latest' ? '' : `/c/${category}`}`, baseUrl).href
+    const targetResponse = await ofetch(targetUrl)
 
-    const buildId: string | undefined = targetResponse.match(/"buildId":"(.*?)"/)?.[1];
+    const buildId: string | undefined = targetResponse.match(/"buildId":"(.*?)"/)?.[1]
 
     if (!buildId) {
-        throw new Error('Build ID not found.');
+        throw new Error('Build ID not found.')
     }
 
-    const $: CheerioAPI = load(targetResponse);
-    const language = $('html').attr('lang') ?? 'zh';
+    const $: CheerioAPI = load(targetResponse)
+    const language = $('html').attr('lang') ?? 'zh'
 
-    const apiUrl: string = new URL(`_next/data/${buildId}/${language}/blog${category === 'latest' ? '' : `/c/${category}`}.json`, baseUrl).href;
+    const apiUrl: string = new URL(`_next/data/${buildId}/${language}/blog${category === 'latest' ? '' : `/c/${category}`}.json`, baseUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
             latest: true,
         },
-    });
+    })
 
     let items: DataItem[] = response.pageProps.blogs.content.slice(0, limit).map((item): DataItem => {
-        const title: string = item.title;
-        const description: string | undefined = item.summary;
-        const pubDate: number | string = item.publishedAt;
-        const linkUrl: string | undefined = item.slug ? `blog/${item.slug}` : undefined;
-        const categories: string[] = [...new Set([item.category?.name, ...(item.tags ?? []).map((c) => c.name)].filter(Boolean))];
+        const title: string = item.title
+        const description: string | undefined = item.summary
+        const pubDate: number | string = item.publishedAt
+        const linkUrl: string | undefined = item.slug ? `blog/${item.slug}` : undefined
+        const categories: string[] = [...new Set([item.category?.name, ...(item.tags ?? []).map((c) => c.name)].filter(Boolean))]
         const authors: DataItem['author'] = item.author?.username
             ? [
                   {
@@ -101,9 +101,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                       avatar: item.author.avatarURL,
                   },
               ]
-            : undefined;
-        const guid: string = item.slug ?? '';
-        const updated: number | string = item.lastModifiedAt ?? pubDate;
+            : undefined
+        const guid: string = item.slug ?? ''
+        const updated: number | string = item.lastModifiedAt ?? pubDate
 
         const processedItem: DataItem = {
             title,
@@ -120,31 +120,31 @@ export const handler = async (ctx: Context): Promise<Data> => {
             },
             updated: updated ? parseDate(updated) : undefined,
             language,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link) {
-                return item;
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                const detailUrl: string = new URL(`blog/api/posts/${item.guid}/detail`, baseUrl).href;
+                const detailUrl: string = new URL(`blog/api/posts/${item.guid}/detail`, baseUrl).href
 
                 const detailResponse = await ofetch(detailUrl, {
                     query: {
                         visit: true,
                     },
-                });
+                })
 
-                const title: string = detailResponse.title;
-                const description: string | undefined = detailResponse.content ? parseContentToHtml(JSON.parse(detailResponse.content)) : item.description;
-                const pubDate: number | string = detailResponse.publishedAt;
-                const linkUrl: string | undefined = `blog/${detailResponse.slug}`;
-                const categories: string[] = [...new Set([detailResponse.category?.name, ...(detailResponse.tags ?? []).map((c) => c.name)].filter(Boolean))];
+                const title: string = detailResponse.title
+                const description: string | undefined = detailResponse.content ? parseContentToHtml(JSON.parse(detailResponse.content)) : item.description
+                const pubDate: number | string = detailResponse.publishedAt
+                const linkUrl: string | undefined = `blog/${detailResponse.slug}`
+                const categories: string[] = [...new Set([detailResponse.category?.name, ...(detailResponse.tags ?? []).map((c) => c.name)].filter(Boolean))]
                 const authors: DataItem['author'] = detailResponse.author?.username
                     ? [
                           {
@@ -153,9 +153,9 @@ export const handler = async (ctx: Context): Promise<Data> => {
                               avatar: detailResponse.author.avatarURL,
                           },
                       ]
-                    : undefined;
-                const guid = `tidb-blog-${detailResponse.slug}`;
-                const updated: number | string = detailResponse.lastModifiedAt ?? pubDate;
+                    : undefined
+                const guid = `tidb-blog-${detailResponse.slug}`
+                const updated: number | string = detailResponse.lastModifiedAt ?? pubDate
 
                 const processedItem: DataItem = {
                     title,
@@ -172,17 +172,17 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     },
                     updated: updated ? parseDate(updated) : undefined,
                     language,
-                };
+                }
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
-    const title: string = $('title').text();
+    const title: string = $('title').text()
 
     return {
         title,
@@ -194,8 +194,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: title.split(/\|/).pop()?.trim(),
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/blog/c/:category?',
@@ -268,9 +268,9 @@ export const route: Route = {
         {
             source: ['tidb.net/blog', 'tidb.net/blog/c/:category'],
             target: (params) => {
-                const category: string = params.category;
+                const category: string = params.category
 
-                return `/tidb/blog/c${category ? `/${category}` : ''}`;
+                return `/tidb/blog/c${category ? `/${category}` : ''}`
             },
         },
         {
@@ -310,4 +310,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

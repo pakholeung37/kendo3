@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import utils from './utils';
+import utils from './utils'
 
 export const route: Route = {
     path: '/characters/:lang?',
@@ -27,18 +27,18 @@ export const route: Route = {
     name: '最新售卖角色列表',
     maintainers: ['NeverBehave'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const base = utils.langBase(ctx.req.param('lang'));
-    const res = await got(base);
-    const info = utils.fetchAllCharacters(res.data, base);
+    const base = utils.langBase(ctx.req.param('lang'))
+    const res = await got(base)
+    const info = utils.fetchAllCharacters(res.data, base)
 
-    const details = await Promise.all(info.map((e) => utils.detailPage(e.detailPage, cache)));
+    const details = await Promise.all(info.map((e) => utils.detailPage(e.detailPage, cache)))
 
     ctx.set('json', {
         info,
-    });
+    })
 
     return {
         title: 'Furstar 最新角色',
@@ -52,5 +52,5 @@ async function handler(ctx) {
             pubDate: parseDate(new Date().toISOString()), // No Time for now
             link: e.detailPage,
         })),
-    };
+    }
 }

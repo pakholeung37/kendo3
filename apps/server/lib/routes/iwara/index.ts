@@ -1,15 +1,15 @@
-import { config } from '@/config';
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
-import { apiRootUrl, parseThumbnail, rootUrl, typeMap } from './utils';
+import { apiRootUrl, parseThumbnail, rootUrl, typeMap } from './utils'
 
 const apiUrlMap = {
     video: `${apiRootUrl}/videos`,
     image: `${apiRootUrl}/images`,
-};
+}
 
 export const route: Route = {
     path: '/users/:username/:type?',
@@ -24,21 +24,21 @@ export const route: Route = {
     features: {
         nsfw: true,
     },
-};
+}
 
 async function handler(ctx) {
-    const { username, type = 'video' } = ctx.req.param();
+    const { username, type = 'video' } = ctx.req.param()
 
     const profile = await cache.tryGet(`${apiRootUrl}/profile/${username}`, async () => {
         const response = await ofetch(`${apiRootUrl}/profile/${username}`, {
             headers: {
                 'user-agent': config.trueUA,
             },
-        });
-        return response.user;
-    });
+        })
+        return response.user
+    })
 
-    const id = profile.id;
+    const id = profile.id
     const list = await cache.tryGet(
         `${apiUrlMap[type]}?user=${id}`,
         async () => {
@@ -46,12 +46,12 @@ async function handler(ctx) {
                 headers: {
                     'user-agent': config.trueUA,
                 },
-            });
-            return response.results;
+            })
+            return response.results
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
     const items = list.map((item) => ({
         title: item.title,
@@ -60,11 +60,11 @@ async function handler(ctx) {
         category: item.tags.map((i) => i.id),
         description: parseThumbnail(type, item),
         pubDate: parseDate(item.createdAt),
-    }));
+    }))
 
     return {
         title: `${username}'s iwara - ${typeMap[type]}`,
         link: `${rootUrl}/users/${username}`,
         item: items,
-    };
+    }
 }

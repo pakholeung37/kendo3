@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import parser from '@/utils/rss-parser';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import parser from '@/utils/rss-parser'
 
 export const route: Route = {
     path: '/blog',
@@ -20,25 +20,25 @@ export const route: Route = {
     maintainers: ['liyaozhong', 'Circloud'],
     handler,
     description: '宝玉 - 博客文章',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://baoyu.io';
-    const feedUrl = `${rootUrl}/feed.xml`;
+    const rootUrl = 'https://baoyu.io'
+    const feedUrl = `${rootUrl}/feed.xml`
 
-    const response = await ofetch(feedUrl);
-    const feed = await parser.parseString(response);
+    const response = await ofetch(feedUrl)
+    const feed = await parser.parseString(response)
 
     const items = await Promise.all(
         feed.items.map((item) => {
-            const link = item.link;
+            const link = item.link
 
             return cache.tryGet(link as string, async () => {
-                const response = await ofetch(link as string);
-                const $ = load(response);
+                const response = await ofetch(link as string)
+                const $ = load(response)
 
-                const container = $('.container');
-                const content = container.find('.prose').html() || '';
+                const container = $('.container')
+                const content = container.find('.prose').html() || ''
 
                 return {
                     title: item.title,
@@ -46,14 +46,14 @@ async function handler() {
                     link,
                     pubDate: item.pubDate ? parseDate(item.pubDate) : undefined,
                     author: item.creator || '宝玉',
-                } as DataItem;
-            });
-        })
-    );
+                } as DataItem
+            })
+        }),
+    )
 
     return {
         title: '宝玉的博客',
         link: rootUrl,
         item: items,
-    };
+    }
 }

@@ -1,18 +1,18 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type ImageData = {
-    src?: string;
-    alt?: string;
-};
+    src?: string
+    alt?: string
+}
 
 type VideoData = {
-    src?: string;
-};
+    src?: string
+}
 
 type DescriptionData = {
-    image?: ImageData;
-    video?: VideoData;
-};
+    image?: ImageData
+    video?: VideoData
+}
 
 export const renderDescription = ({ image, video }: DescriptionData) =>
     renderToString(
@@ -30,5 +30,5 @@ export const renderDescription = ({ image, video }: DescriptionData) =>
                     </object>
                 </video>
             ) : null}
-        </>
-    );
+        </>,
+    )

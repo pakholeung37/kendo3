@@ -1,7 +1,7 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
-import { generateData } from './utils';
+import { generateData } from './utils'
 
 export const route: Route = {
     path: '/pin/daily',
@@ -26,7 +26,7 @@ export const route: Route = {
     maintainers: ['xyqfer'],
     handler,
     url: 'daily.zhihu.com/*',
-};
+}
 
 async function handler() {
     const {
@@ -34,12 +34,12 @@ async function handler() {
     } = await got({
         method: 'get',
         url: 'https://api.zhihu.com/pins/special/972884951192113152/moments?order_by=newest&reverse_order=0&limit=20',
-    });
+    })
 
     return {
         title: '知乎想法-24小时新闻汇总',
         link: 'https://www.zhihu.com/pin/special/972884951192113152',
         description: '汇集每天的社会大事、行业资讯，让你用最简单的方式获得想法里的新闻',
         item: generateData(data),
-    };
+    }
 }

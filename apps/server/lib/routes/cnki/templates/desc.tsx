@@ -1,10 +1,10 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
 type DescriptionData = {
-    author: string;
-    company: string;
-    content: string;
-};
+    author: string
+    company: string
+    content: string
+}
 
 export const renderDescription = ({ author, company, content }: DescriptionData): string =>
     renderToString(
@@ -14,5 +14,5 @@ export const renderDescription = ({ author, company, content }: DescriptionData)
             <text>{`单位：${company} `}</text>
             <br />
             <text>{content}</text>
-        </>
-    );
+        </>,
+    )

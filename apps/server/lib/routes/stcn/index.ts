@@ -1,43 +1,43 @@
-import type { Cheerio, CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Element } from 'domhandler';
-import type { Context } from 'hono';
+import type { Cheerio, CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Element } from 'domhandler'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { id = 'yw' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { id = 'yw' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const baseUrl = 'https://www.stcn.com';
-    const targetUrl: string = new URL(`article/list/${id}.html`, baseUrl).href;
+    const baseUrl = 'https://www.stcn.com'
+    const targetUrl: string = new URL(`article/list/${id}.html`, baseUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language = $('html').attr('lang') ?? 'zh-CN';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language = $('html').attr('lang') ?? 'zh-CN'
 
     let items: DataItem[] = $('ul.infinite-list li')
         .slice(0, limit)
         .toArray()
         .map((el): Element => {
-            const $el: Cheerio<Element> = $(el);
+            const $el: Cheerio<Element> = $(el)
 
-            const $aEl: Cheerio<Element> = $el.find('div.tt a');
+            const $aEl: Cheerio<Element> = $el.find('div.tt a')
 
-            const title: string = $aEl.text();
-            const description: string = $el.find('div.text').html();
-            const pubDateStr: string | undefined = $el.find('div.info span').last().text().trim();
-            const linkUrl: string | undefined = $aEl.attr('href');
-            const categoryEls: Element[] = $el.find('div.tags span').toArray();
-            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))];
-            const authors: DataItem['author'] = $el.find('div.info span').first().text();
-            const image: string | undefined = $el.find('div.side a img').attr('src');
-            const upDatedStr: string | undefined = pubDateStr;
+            const title: string = $aEl.text()
+            const description: string = $el.find('div.text').html()
+            const pubDateStr: string | undefined = $el.find('div.info span').last().text().trim()
+            const linkUrl: string | undefined = $aEl.attr('href')
+            const categoryEls: Element[] = $el.find('div.tags span').toArray()
+            const categories: string[] = [...new Set(categoryEls.map((el) => $(el).text()).filter(Boolean))]
+            const authors: DataItem['author'] = $el.find('div.info span').first().text()
+            const image: string | undefined = $el.find('div.side a img').attr('src')
+            const upDatedStr: string | undefined = pubDateStr
 
             const processedItem: DataItem = {
                 title,
@@ -54,28 +54,28 @@ export const handler = async (ctx: Context): Promise<Data> => {
                 banner: image,
                 updated: upDatedStr ? timezone(parseDate(upDatedStr, ['HH:mm', 'MM-DD HH:mm', 'YYYY-MM-DD HH:mm']), +8) : undefined,
                 language,
-            };
+            }
 
-            return processedItem;
-        });
+            return processedItem
+        })
 
     items = (
         await Promise.all(
             items.map((item) => {
                 if (!item.link) {
-                    return item;
+                    return item
                 }
 
                 return cache.tryGet(item.link, async (): Promise<DataItem> => {
-                    const detailResponse = await ofetch(item.link);
-                    const $$: CheerioAPI = load(detailResponse);
+                    const detailResponse = await ofetch(item.link)
+                    const $$: CheerioAPI = load(detailResponse)
 
-                    const title: string = $$('div.detail-title').text();
-                    const description: string = $$('div.detail-content').html() ?? '';
-                    const pubDateStr: string | undefined = $$('div.detail-info span').last().text().trim();
-                    const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? [];
-                    const authors: DataItem['author'] = $$('div.detail-info span').first().text().split(/：/).pop();
-                    const upDatedStr: string | undefined = pubDateStr;
+                    const title: string = $$('div.detail-title').text()
+                    const description: string = $$('div.detail-content').html() ?? ''
+                    const pubDateStr: string | undefined = $$('div.detail-info span').last().text().trim()
+                    const categories: string[] = $$('meta[name="keywords"]').attr('content')?.split(/,/) ?? []
+                    const authors: DataItem['author'] = $$('div.detail-info span').first().text().split(/：/).pop()
+                    const upDatedStr: string | undefined = pubDateStr
 
                     const processedItem: DataItem = {
                         title,
@@ -89,16 +89,16 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         },
                         updated: upDatedStr ? timezone(parseDate(upDatedStr), +8) : item.updated,
                         language,
-                    };
+                    }
 
                     return {
                         ...item,
                         ...processedItem,
-                    };
-                });
-            })
+                    }
+                })
+            }),
         )
-    ).filter((_): _ is DataItem => true);
+    ).filter((_): _ is DataItem => true)
 
     return {
         title: $('title').text(),
@@ -110,8 +110,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author: $('meta[name="keywords"]').attr('content')?.split(/,/)[0],
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/article/list/:id?',
@@ -197,10 +197,10 @@ export const route: Route = {
         {
             source: ['www.stcn.com/article/list.html', 'www.stcn.com/article/list/:id'],
             target: (params, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('type') ?? params.id;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('type') ?? params.id
 
-                return `/stcn/article/list${id ? `/${id}` : ''}`;
+                return `/stcn/article/list${id ? `/${id}` : ''}`
             },
         },
         {
@@ -260,4 +260,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

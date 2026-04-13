@@ -1,5 +1,5 @@
 class RequestInProgressError extends Error {
-    name = 'RequestInProgressError';
+    name = 'RequestInProgressError'
 }
 
-export default RequestInProgressError;
+export default RequestInProgressError

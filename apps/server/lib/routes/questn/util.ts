@@ -1,16 +1,16 @@
 const parseFilterStr = (filterStr) => {
-    const filters = {};
+    const filters = {}
     if (!filterStr) {
-        return filters;
+        return filters
     }
-    const filterPairs = filterStr.split('&'); // Split by '&'
+    const filterPairs = filterStr.split('&') // Split by '&'
 
     for (const pair of filterPairs) {
-        const [key, value] = pair.split('='); // Split by '='
-        filters[key] = value;
+        const [key, value] = pair.split('=') // Split by '='
+        filters[key] = value
     }
 
-    return filters;
-};
+    return filters
+}
 
-export { parseFilterStr };
+export { parseFilterStr }

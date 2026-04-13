@@ -1,13 +1,13 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Data, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-const rootUrl = 'http://www.jwc.zjut.edu.cn/';
-const host = 'www.jwc.zjut.edu.cn';
+const rootUrl = 'http://www.jwc.zjut.edu.cn/'
+const host = 'www.jwc.zjut.edu.cn'
 
 export const route: Route = {
     path: '/jwc/:type',
@@ -47,43 +47,43 @@ export const route: Route = {
 | 项目申报 | 1852 |
 | 学籍管理 | 1853 |
 | 办事指南 | 1839 |`,
-};
+}
 
 async function handler(ctx) {
-    const type = Number.parseInt(ctx.req.param('type'));
-    const response = await ofetch(rootUrl + type + '/list.htm');
-    const $ = load(response);
+    const type = Number.parseInt(ctx.req.param('type'))
+    const response = await ofetch(rootUrl + type + '/list.htm')
+    const $ = load(response)
 
     const list = $('.news.clearfix')
         .toArray()
         .map((item) => {
-            const cheerioItem = $(item);
-            const a = cheerioItem.find('a');
+            const cheerioItem = $(item)
+            const a = cheerioItem.find('a')
 
             try {
-                const title = a.attr('title') || '';
-                let link = a.attr('href');
+                const title = a.attr('title') || ''
+                let link = a.attr('href')
                 if (!link) {
-                    link = '';
+                    link = ''
                 } else if (!link.startsWith('http')) {
-                    link = rootUrl.slice(0, -1) + link;
+                    link = rootUrl.slice(0, -1) + link
                 }
-                const pubDate = timezone(parseDate(cheerioItem.find('.news_meta').text()), +8);
+                const pubDate = timezone(parseDate(cheerioItem.find('.news_meta').text()), +8)
 
                 return {
                     title,
                     link,
                     pubDate,
-                };
+                }
             } catch {
                 return {
                     title: '',
                     link: '',
                     pubDate: Date.now(),
-                };
+                }
             }
         })
-        .filter((item) => item.title && item.link);
+        .filter((item) => item.title && item.link)
 
     const items = await Promise.all(
         list.map((item) =>
@@ -91,28 +91,28 @@ async function handler(ctx) {
                 const newItem = {
                     ...item,
                     description: '',
-                };
+                }
                 if (host === new URL(item.link).hostname) {
                     if (new URL(item.link).pathname.startsWith('/_upload')) {
                         // 链接为一个文件，直接返回链接
-                        newItem.description = item.link;
+                        newItem.description = item.link
                     } else {
-                        const response = await ofetch(item.link);
-                        const $ = load(response);
-                        newItem.description = $('.wp_articlecontent').html() || '';
+                        const response = await ofetch(item.link)
+                        const $ = load(response)
+                        newItem.description = $('.wp_articlecontent').html() || ''
                     }
                 } else {
                     // 涉及到其他站点，不方便做统一的 html 解析，直接返回链接
-                    newItem.description = item.link;
+                    newItem.description = item.link
                 }
-                return newItem;
-            })
-        )
-    );
+                return newItem
+            }),
+        ),
+    )
 
     return {
         title: $('head > title').text() + ' - 浙江工业大学教务处',
         link: rootUrl + type + '/list.htm',
         item: items,
-    } as Data;
+    } as Data
 }

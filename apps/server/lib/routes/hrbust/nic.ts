@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/nic/:category?',
@@ -39,61 +39,61 @@ export const route: Route = {
         },
     ],
     view: ViewType.Notifications,
-};
+}
 
 async function handler(ctx) {
-    const rootUrl = 'https://nic.hrbust.edu.cn/';
-    const { category = 3988 } = ctx.req.param();
-    const columnUrl = `${rootUrl}${category}/list.htm`;
-    const response = await ofetch(columnUrl);
-    const $ = load(response);
+    const rootUrl = 'https://nic.hrbust.edu.cn/'
+    const { category = 3988 } = ctx.req.param()
+    const columnUrl = `${rootUrl}${category}/list.htm`
+    const response = await ofetch(columnUrl)
+    const $ = load(response)
 
-    const bigTitle = $('li.col_title').text();
+    const bigTitle = $('li.col_title').text()
 
     const list = $('ul.news_list.list2 li')
         .toArray()
         .map((item) => {
-            const element = $(item);
-            const title = element.find('a').text().trim();
-            const link = new URL(element.find('a').attr('href'), rootUrl).href;
+            const element = $(item)
+            const title = element.find('a').text().trim()
+            const link = new URL(element.find('a').attr('href'), rootUrl).href
 
-            const pubDateText = element.find('span.news_meta').text().trim();
-            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null;
+            const pubDateText = element.find('span.news_meta').text().trim()
+            const pubDate = pubDateText ? timezone(parseDate(pubDateText), +8) : null
             return {
                 title,
                 pubDate,
                 link,
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link.startsWith(rootUrl)) {
-                    item.description = '本文需跳转，请点击原文链接后阅读';
-                    return item;
+                    item.description = '本文需跳转，请点击原文链接后阅读'
+                    return item
                 }
 
-                const response = await ofetch(item.link);
-                const $ = load(response);
+                const response = await ofetch(item.link)
+                const $ = load(response)
 
-                item.author = $('span.arti_publisher').text().replace('发布者：', '').trim();
+                item.author = $('span.arti_publisher').text().replace('发布者：', '').trim()
 
-                const body = $('div.wp_articlecontent');
-                body.find('[style]').removeAttr('style');
-                body.find('font').contents().unwrap();
-                body.html(body.html()?.replaceAll('&nbsp;', ''));
-                body.find('[align]').removeAttr('align');
-                item.description = body.html();
-                return item;
-            })
-        )
-    );
+                const body = $('div.wp_articlecontent')
+                body.find('[style]').removeAttr('style')
+                body.find('font').contents().unwrap()
+                body.html(body.html()?.replaceAll('&nbsp;', ''))
+                body.find('[align]').removeAttr('align')
+                item.description = body.html()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `${bigTitle} - 哈尔滨理工大学网络信息中心`,
         link: columnUrl,
         language: 'zh-CN',
         item: items,
-    };
+    }
 }

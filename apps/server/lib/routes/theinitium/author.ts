@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { processFeed } from './utils';
+import { processFeed } from './utils'
 
-const handler = (ctx) => processFeed('author', ctx);
+const handler = (ctx) => processFeed('author', ctx)
 
 export const route: Route = {
     path: '/author/:type/:language?',
@@ -36,4 +36,4 @@ export const route: Route = {
     handler,
     example: '/theinitium/author/initium-newsroom',
     categories: ['new-media'],
-};
+}

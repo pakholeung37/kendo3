@@ -16,21 +16,21 @@ const elementMap = {
     ul: (element) => `<ul>${renderHTML(element.children)}</ul>`,
     li: (element) => `<li>${renderHTML(element.children)}</li>`,
     lic: (element) => element.children[0].text,
-};
+}
 
 function renderHTML(json) {
     return json
         .map((element) => {
-            const handler = elementMap[element.type];
+            const handler = elementMap[element.type]
             if (handler) {
-                return handler(element);
+                return handler(element)
             } else if (Object.hasOwn(element, 'text')) {
-                return element.text;
+                return element.text
             } else {
-                throw new Error(`Unknown handled type: ${element.type}, ${JSON.stringify(element)}`);
+                throw new Error(`Unknown handled type: ${element.type}, ${JSON.stringify(element)}`)
             }
         })
-        .join('');
+        .join('')
 }
 
-export { renderHTML };
+export { renderHTML }

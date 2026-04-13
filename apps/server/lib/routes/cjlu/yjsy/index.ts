@@ -1,18 +1,18 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import { getPuppeteerPage } from '@/utils/puppeteer';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import { getPuppeteerPage } from '@/utils/puppeteer'
+import timezone from '@/utils/timezone'
 
-const host = 'https://yjsy.cjlu.edu.cn/';
+const host = 'https://yjsy.cjlu.edu.cn/'
 
 const titleMap = new Map([
     ['yjstz', '中量大研究生院 —— 研究生通知'],
     ['jstz', '中量大研究生院 —— 教师通知'],
-]);
+])
 const headers = {
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
@@ -28,9 +28,9 @@ const headers = {
     'sec-ch-ua': '"Microsoft Edge";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
-};
+}
 
-const allowedResourceTypes = new Set(['document', 'script']);
+const allowedResourceTypes = new Set(['document', 'script'])
 
 export const route: Route = {
     path: '/yjsy/:cate',
@@ -79,59 +79,59 @@ export const route: Route = {
     description: `| 研究生通知 | 教师通知 |
 | -------- | -------- |
 | yjstz    | jstz     |`,
-};
+}
 
 async function handler(ctx) {
-    const cate = ctx.req.param('cate');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
-    const url = `${host}index/${cate}.htm`;
+    const cate = ctx.req.param('cate')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
+    const url = `${host}index/${cate}.htm`
 
     const { page, destroy, browser } = await getPuppeteerPage(url, {
         onBeforeLoad: async (page) => {
-            await page.setExtraHTTPHeaders(headers);
-            await page.setUserAgent(headers['User-Agent']);
-            await page.setRequestInterception(true);
+            await page.setExtraHTTPHeaders(headers)
+            await page.setUserAgent(headers['User-Agent'])
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                allowedResourceTypes.has(request.resourceType()) ? request.continue() : request.abort();
-            });
+                allowedResourceTypes.has(request.resourceType()) ? request.continue() : request.abort()
+            })
         },
         gotoConfig: { waitUntil: 'networkidle2' },
-    });
+    })
 
-    const cookies = await browser.cookies();
-    const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+    const cookies = await browser.cookies()
+    const cookieString = cookies.map((c) => `${c.name}=${c.value}`).join('; ')
 
-    const response = await page.content();
-    await destroy();
+    const response = await page.content()
+    await destroy()
 
-    const $ = load(response);
+    const $ = load(response)
 
     const list = $('div.grid685.right div.body ul')
         .find('li')
         .toArray()
         .slice(0, limit)
         .map((element) => {
-            const item = $(element);
+            const item = $(element)
 
-            const a = item.find('a').first();
+            const a = item.find('a').first()
 
-            const timeStr = item.find('span').first().text().trim();
-            const href = a.attr('href') ?? '';
-            const route = href.startsWith('../') ? href.replace(/^\.\.\//, '') : href;
+            const timeStr = item.find('span').first().text().trim()
+            const href = a.attr('href') ?? ''
+            const route = href.startsWith('../') ? href.replace(/^\.\.\//, '') : href
 
             return {
                 title: a.attr('title') ?? titleMap.get(cate) ?? '中量大研究生院通知',
                 pubDate: timezone(parseDate(timeStr, 'YYYY/MM/DD'), +8),
                 link: `${host}${route}`,
                 description: '',
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(item.link, async () => {
                 if (!item.link || item.link === host) {
-                    return item;
+                    return item
                 }
 
                 const res = await ofetch(item.link, {
@@ -141,21 +141,21 @@ async function handler(ctx) {
                         Cookie: cookieString,
                         Referer: url,
                     },
-                });
-                const $ = load(res);
+                })
+                const $ = load(res)
 
-                const content = $('#vsb_content').html() ?? '';
-                const attachments = $('form[name="_newscontent_fromname"] div ul').html() ?? '';
+                const content = $('#vsb_content').html() ?? ''
+                const attachments = $('form[name="_newscontent_fromname"] div ul').html() ?? ''
 
-                item.description = `${content}<br>${attachments}`;
-                return item;
-            })
-        )
-    );
+                item.description = `${content}<br>${attachments}`
+                return item
+            }),
+        ),
+    )
 
     return {
         title: titleMap.get(cate),
         link: `https://yjsy.cjlu.edu.cn/index/${cate}.htm`,
         item: items,
-    };
+    }
 }

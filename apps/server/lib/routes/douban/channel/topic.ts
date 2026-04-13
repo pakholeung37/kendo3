@@ -1,5 +1,5 @@
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/channel/:id/:nav?',
@@ -20,12 +20,12 @@ export const route: Route = {
     description: `| 默认    | 热门 | 最新 |
 | ------- | ---- | ---- |
 | default | hot  | new  |`,
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const nav = ctx.req.param('nav') || 'default';
-    const link = `https://www.douban.com/channel/${id}`;
+    const id = ctx.req.param('id')
+    const nav = ctx.req.param('nav') || 'default'
+    const link = `https://www.douban.com/channel/${id}`
 
     const channel_info_response = await got({
         method: 'get',
@@ -33,7 +33,7 @@ async function handler(ctx) {
         headers: {
             Referer: link,
         },
-    });
+    })
 
     const response = await got({
         method: 'get',
@@ -41,22 +41,22 @@ async function handler(ctx) {
         headers: {
             Referer: link,
         },
-    });
+    })
 
-    const channel_name = channel_info_response.data.title;
-    const data = response.data.items;
-    let nav_name: string;
+    const channel_name = channel_info_response.data.title
+    const data = response.data.items
+    let nav_name: string
 
     switch (nav) {
         case 'hot':
-            nav_name = '热门';
-            break;
+            nav_name = '热门'
+            break
         case 'new':
-            nav_name = '最新';
-            break;
+            nav_name = '最新'
+            break
         default:
-            nav_name = '默认';
-            break;
+            nav_name = '默认'
+            break
     }
 
     return {
@@ -67,19 +67,19 @@ async function handler(ctx) {
         item: data
             .map((item) => {
                 if (item.external_payload.items === undefined) {
-                    const description = `作者：${item.author.name} | ${item.create_time} <br><br> ${item.abstract}">`;
+                    const description = `作者：${item.author.name} | ${item.create_time} <br><br> ${item.abstract}">`
 
                     return {
                         title: item.title,
                         description,
                         pubDate: new Date(item.create_time),
                         link: item.url,
-                    };
+                    }
                 } else {
-                    return null;
+                    return null
                 }
             })
             .filter(Boolean),
         allowEmpty: true,
-    };
+    }
 }

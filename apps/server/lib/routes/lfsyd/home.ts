@@ -1,9 +1,9 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { ProcessFeed, ProcessForm } from './utils';
+import { ProcessFeed, ProcessForm } from './utils'
 
 export const route: Route = {
     path: '/home',
@@ -27,15 +27,15 @@ export const route: Route = {
     maintainers: ['auto-bot-ty'],
     handler,
     url: 'www.iyingdi.com/',
-};
+}
 
 async function handler() {
-    const rootUrl = 'https://www.iyingdi.com';
-    const url = 'https://api.iyingdi.com/mweb/feed/recommend-content-list';
+    const rootUrl = 'https://www.iyingdi.com'
+    const url = 'https://api.iyingdi.com/mweb/feed/recommend-content-list'
     const form = {
         size: 30,
         timestamp: '',
-    };
+    }
     const response = await got({
         method: 'post',
         url,
@@ -49,8 +49,8 @@ async function handler() {
             Referer: 'https://mob.iyingdi.com/',
         },
         form: ProcessForm(form, 'mweb'),
-    });
-    const { posts } = response.data;
+    })
+    const { posts } = response.data
 
     const articleList = posts.map((item) => ({
         title: item.post.title,
@@ -58,12 +58,12 @@ async function handler() {
         link: `${rootUrl}/tz/post/${item.post.id}`,
         guid: item.post.title,
         postId: item.post.id,
-    }));
-    const items = await ProcessFeed(cache, articleList);
+    }))
+    const items = await ProcessFeed(cache, articleList)
 
     return {
         title: '首页 - 旅法师营地',
         link: rootUrl,
         item: items,
-    };
+    }
 }

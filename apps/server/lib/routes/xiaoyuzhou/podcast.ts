@@ -1,10 +1,10 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/podcast/:id',
@@ -29,44 +29,44 @@ export const route: Route = {
     maintainers: ['hondajojo', 'jtsang4', 'pseudoyu', 'cscnk52'],
     handler,
     url: 'xiaoyuzhoufm.com/',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    let link;
-    let response;
-    let $;
-    let page_data;
+    const id = ctx.req.param('id')
+    let link
+    let response
+    let $
+    let page_data
 
     // First try podcast URL, if that fails try episode URL
     try {
-        link = `https://www.xiaoyuzhoufm.com/podcast/${id}`;
-        response = await ofetch(link);
+        link = `https://www.xiaoyuzhoufm.com/podcast/${id}`
+        response = await ofetch(link)
 
-        $ = load(response);
-        const nextDataElement = $('#__NEXT_DATA__').get(0);
-        page_data = JSON.parse(nextDataElement.children[0].data);
+        $ = load(response)
+        const nextDataElement = $('#__NEXT_DATA__').get(0)
+        page_data = JSON.parse(nextDataElement.children[0].data)
 
         // If no episodes found, we should try episode URL
         if (!page_data.props.pageProps.podcast?.episodes) {
-            throw new Error('No episodes found in podcast data');
+            throw new Error('No episodes found in podcast data')
         }
     } catch {
         // Try as episode instead
-        link = `https://www.xiaoyuzhoufm.com/episode/${id}`;
-        response = await ofetch(link);
+        link = `https://www.xiaoyuzhoufm.com/episode/${id}`
+        response = await ofetch(link)
 
-        $ = load(response);
-        const podcastLink = $('a[href^="/podcast/"].name').attr('href');
+        $ = load(response)
+        const podcastLink = $('a[href^="/podcast/"].name').attr('href')
 
         if (podcastLink) {
-            const podcastId = podcastLink.split('/').pop();
-            link = `https://www.xiaoyuzhoufm.com/podcast/${podcastId}`;
-            response = await ofetch(link);
+            const podcastId = podcastLink.split('/').pop()
+            link = `https://www.xiaoyuzhoufm.com/podcast/${podcastId}`
+            response = await ofetch(link)
 
-            $ = load(response);
-            const nextDataElement = $('#__NEXT_DATA__').get(0);
-            page_data = JSON.parse(nextDataElement.children[0].data);
+            $ = load(response)
+            const nextDataElement = $('#__NEXT_DATA__').get(0)
+            page_data = JSON.parse(nextDataElement.children[0].data)
         }
     }
 
@@ -79,19 +79,19 @@ async function handler(ctx) {
         eid: item.eid,
         pubDate: parseDate(item.pubDate),
         itunes_item_image: (item.image || item.podcast?.image)?.smallPicUrl,
-    }));
+    }))
 
     episodes = await Promise.all(
         episodes.map((item) =>
             cache.tryGet(item.link, async () => {
-                const episodeLink = `https://www.xiaoyuzhoufm.com/_next/data/${page_data.buildId}/episode/${item.eid}.json`;
-                const response = await ofetch(episodeLink);
-                const episodeItem = response.pageProps.episode;
-                item.description = episodeItem.shownotes || episodeItem.description || episodeItem.title || '';
-                return item as DataItem;
-            })
-        )
-    );
+                const episodeLink = `https://www.xiaoyuzhoufm.com/_next/data/${page_data.buildId}/episode/${item.eid}.json`
+                const response = await ofetch(episodeLink)
+                const episodeItem = response.pageProps.episode
+                item.description = episodeItem.shownotes || episodeItem.description || episodeItem.title || ''
+                return item as DataItem
+            }),
+        ),
+    )
 
     return {
         title: page_data.props.pageProps.podcast.title,
@@ -101,5 +101,5 @@ async function handler(ctx) {
         image: page_data.props.pageProps.podcast.image.smallPicUrl,
         item: episodes,
         description: page_data.props.pageProps.podcast.description,
-    };
+    }
 }

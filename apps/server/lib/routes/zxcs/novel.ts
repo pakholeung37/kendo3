@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const types = {
     jinqigengxin: '近期更新',
@@ -19,7 +19,7 @@ const types = {
     lingyi: '灵异',
     junshi: '军事',
     erciyuan: '轻小说',
-};
+}
 
 export const route: Route = {
     path: '/novel/:type',
@@ -47,21 +47,21 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const { type } = ctx.req.param();
+    const { type } = ctx.req.param()
 
-    const baseUrl = `https://www.zxcs.info`;
-    const link = `${baseUrl}/${type}`;
-    const response = await ofetch(link);
-    const $ = load(response);
+    const baseUrl = `https://www.zxcs.info`
+    const link = `${baseUrl}/${type}`
+    const response = await ofetch(link)
+    const $ = load(response)
 
     const list: DataItem[] = $('div.book-info')
         .toArray()
         .map((item) => {
-            const $item = $(item);
-            const a = $item.find('a').first();
+            const $item = $(item)
+            const a = $item.find('a').first()
             return {
                 title: a.text(),
                 link: String(a.attr('href')),
@@ -70,27 +70,27 @@ async function handler(ctx) {
                 description: '',
                 image: '',
                 author: '',
-            };
-        });
+            }
+        })
 
     const items = await Promise.all(
         list.map((item) =>
             cache.tryGet(String(item.link), async () => {
-                const response = await ofetch(String(item.link));
-                const $ = load(response);
-                const links = String(item.link).split('/');
-                item.category = [types[String(links.at(-2))]];
-                item.description = String($('.intro').first().html());
-                item.image = baseUrl + String($('.book-cover img').attr('src'));
-                item.author = $('.author').text();
-                return item;
-            })
-        )
-    );
+                const response = await ofetch(String(item.link))
+                const $ = load(response)
+                const links = String(item.link).split('/')
+                item.category = [types[String(links.at(-2))]]
+                item.description = String($('.intro').first().html())
+                item.image = baseUrl + String($('.book-cover img').attr('src'))
+                item.author = $('.author').text()
+                return item
+            }),
+        ),
+    )
 
     return {
         title: `知轩藏书 - ${types[type]}`,
         link,
         item: items,
-    };
+    }
 }

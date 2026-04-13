@@ -1,11 +1,11 @@
-import * as cheerio from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
+import * as cheerio from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
 
-import { config } from '@/config';
-import type { Data, Route } from '@/types';
-import cache from '@/utils/cache';
-import logger from '@/utils/logger';
-import puppeteer from '@/utils/puppeteer';
+import { config } from '@/config'
+import type { Data, Route } from '@/types'
+import cache from '@/utils/cache'
+import logger from '@/utils/logger'
+import puppeteer from '@/utils/puppeteer'
 
 const render = ({ preview, cover }) =>
     renderToString(
@@ -15,37 +15,37 @@ const render = ({ preview, cover }) =>
                     <source src={preview} type="video/mp4" />
                 </video>
             ) : null}
-        </>
-    );
+        </>,
+    )
 
 const handler = async () => {
-    const baseUrl = 'https://spankbang.com';
-    const link = `${baseUrl}/new_videos/`;
+    const baseUrl = 'https://spankbang.com'
+    const link = `${baseUrl}/new_videos/`
 
-    const browser = await puppeteer();
+    const browser = await puppeteer()
 
     const data = await cache.tryGet(
         link,
         async () => {
-            const page = await browser.newPage();
-            await page.setRequestInterception(true);
+            const page = await browser.newPage()
+            await page.setRequestInterception(true)
             page.on('request', (request) => {
-                request.resourceType() === 'document' ? request.continue() : request.abort();
-            });
-            logger.http(`Requesting ${link}`);
+                request.resourceType() === 'document' ? request.continue() : request.abort()
+            })
+            logger.http(`Requesting ${link}`)
             await page.goto(link, {
                 waitUntil: 'domcontentloaded',
-            });
+            })
 
-            const response = await page.content();
-            const $ = cheerio.load(response);
+            const response = await page.content()
+            const $ = cheerio.load(response)
 
             const items = $('.video-item')
                 .toArray()
                 .map((item) => {
-                    const $item = $(item);
-                    const thumb = $item.find('.thumb');
-                    const cover = $item.find('img.cover');
+                    const $item = $(item)
+                    const thumb = $item.find('.thumb')
+                    const cover = $item.find('img.cover')
 
                     return {
                         title: thumb.attr('title'),
@@ -54,28 +54,28 @@ const handler = async () => {
                             cover: cover.data('src'),
                             preview: cover.data('preview'),
                         }),
-                    };
-                });
+                    }
+                })
 
             return {
                 title: $('head title').text(),
                 description: $('head meta[name="description"]').attr('content'),
                 item: items,
-            };
+            }
         },
         config.cache.routeExpire,
-        false
-    );
+        false,
+    )
 
-    await browser.close();
+    await browser.close()
 
     return {
         title: data.title,
         description: data.description,
         link,
         item: data.item,
-    } as unknown as Promise<Data>;
-};
+    } as unknown as Promise<Data>
+}
 
 export const route: Route = {
     path: '/new_videos',
@@ -94,4 +94,4 @@ export const route: Route = {
         },
     ],
     handler,
-};
+}

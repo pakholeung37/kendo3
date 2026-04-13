@@ -1,78 +1,78 @@
-import 'dayjs/locale/zh-cn.js';
+import 'dayjs/locale/zh-cn.js'
 
-import { load } from 'cheerio';
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat.js';
-import { JSDOM } from 'jsdom';
+import { load } from 'cheerio'
+import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat.js'
+import { JSDOM } from 'jsdom'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderEshopCnDescription } from './templates/eshop-cn';
+import { renderEshopCnDescription } from './templates/eshop-cn'
 
-dayjs.extend(localizedFormat);
+dayjs.extend(localizedFormat)
 
 function nuxtReader(data) {
-    let nuxt: Record<string, unknown>;
+    let nuxt: Record<string, unknown>
     try {
         const dom = new JSDOM(data, {
             runScripts: 'dangerously',
-        });
-        nuxt = dom.window.__NUXT__.data[0];
+        })
+        nuxt = dom.window.__NUXT__.data[0]
     } catch {
-        throw new Error('Nuxt 框架信息提取失败，请报告这个问题');
+        throw new Error('Nuxt 框架信息提取失败，请报告这个问题')
     }
 
-    return nuxt;
+    return nuxt
 }
 
 function generateImageLink(link) {
-    return `<img src="${link}"><br/>`;
+    return `<img src="${link}"><br/>`
 }
 
 async function loadContent(link) {
-    const response = await got(link);
+    const response = await got(link)
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data); // 使用 cheerio 加载返回的 HTML
-    const description = $('.description').html();
+    const $ = load(data) // 使用 cheerio 加载返回的 HTML
+    const description = $('.description').html()
 
     return {
         content: description,
-    };
+    }
 }
 
 async function loadNews(link) {
-    const response = await got(link);
+    const response = await got(link)
 
-    const data = response.data;
+    const data = response.data
 
-    const $ = load(data);
-    let description = $('.detail-body-container').html();
-    const date = $('.topics-articleHead__date').text();
-    description = description.replaceAll('src="/topics/', 'src="https://www.nintendo.com.hk/topics/');
+    const $ = load(data)
+    let description = $('.detail-body-container').html()
+    const date = $('.topics-articleHead__date').text()
+    description = description.replaceAll('src="/topics/', 'src="https://www.nintendo.com.hk/topics/')
     return {
         content: description,
         pubDate: parseDate(date, 'YYYY.M.D'),
-    };
+    }
 }
 
 const ProcessItem = (list, caches) =>
     Promise.all(
         list.map(async (item) => {
-            const other = await caches.tryGet(item.link, () => loadContent(item.link));
-            return { ...item, ...other };
-        })
-    );
+            const other = await caches.tryGet(item.link, () => loadContent(item.link))
+            return { ...item, ...other }
+        }),
+    )
 
 const ProcessNews = (list, caches) =>
     Promise.all(
         list.map(async (item) => {
-            const other = await caches.tryGet(item.url, () => loadNews('https://www.nintendo.com.hk' + item.url));
-            return { ...item, ...other };
-        })
-    );
+            const other = await caches.tryGet(item.url, () => loadNews('https://www.nintendo.com.hk' + item.url))
+            return { ...item, ...other }
+        }),
+    )
 
 /*
     Software Item Example
@@ -134,10 +134,10 @@ const ProcessItemChina = (list, cache) =>
     Promise.all(
         list.map(async (item) => {
             if (!item.link.startsWith('https://www.nintendoswitch.com.cn/software/')) {
-                return item;
+                return item
             }
-            const n = await cache.tryGet(item.link, async () => nuxtReader((await got(item.link)).data));
-            const software = n.data;
+            const n = await cache.tryGet(item.link, async () => nuxtReader((await got(item.link)).data))
+            const software = n.data
             return {
                 ...item,
                 category: [...software.supportLanguages, ...software.genre, ...software.playMode],
@@ -146,21 +146,21 @@ const ProcessItemChina = (list, cache) =>
                     software,
                     releaseDatetime: dayjs(software.releaseDatetime).locale('zh-cn').format('lll'),
                 }),
-            };
-        })
-    );
+            }
+        }),
+    )
 
 const ProcessNewsChina = (list, cache) =>
     Promise.all(
         list.map(async (item) => {
-            const n = await cache.tryGet(item.link, async () => nuxtReader((await got(item.link)).data));
+            const n = await cache.tryGet(item.link, async () => nuxtReader((await got(item.link)).data))
             return {
                 ...item,
                 description: item.description + n.newsData.content,
                 category: n.newsData.category,
                 pubDate: parseDate(n.newsData.releaseTime, 'x'),
-            };
-        })
-    );
+            }
+        }),
+    )
 
-export default { ProcessItem, ProcessNews, ProcessNewsChina, ProcessItemChina, nuxtReader, generateImageLink };
+export default { ProcessItem, ProcessNews, ProcessNewsChina, ProcessItemChina, nuxtReader, generateImageLink }

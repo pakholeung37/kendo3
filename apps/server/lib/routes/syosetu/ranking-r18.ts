@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
-import type { SearchParams } from 'narou';
-import { NarouNovelFetch, SearchBuilderR18 } from 'narou';
+import type { Context } from 'hono'
+import type { SearchParams } from 'narou'
+import { NarouNovelFetch, SearchBuilderR18 } from 'narou'
 
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
 
-import { renderDescription } from './templates/description';
-import { NovelType, novelTypeToJapanese, periodToJapanese, periodToOrder, RankingPeriod, SyosetuSub, syosetuSubToJapanese, syosetuSubToNocgenre } from './types/ranking-r18';
+import { renderDescription } from './templates/description'
+import { NovelType, novelTypeToJapanese, periodToJapanese, periodToOrder, RankingPeriod, SyosetuSub, syosetuSubToJapanese, syosetuSubToNocgenre } from './types/ranking-r18'
 
 /**
  * Implementation of "Syosetu" R18 Rankings
@@ -23,19 +23,19 @@ const getParameters = () => {
     const subOptions = Object.entries(SyosetuSub).map(([, value]) => ({
         value,
         label: syosetuSubToJapanese[value],
-    }));
+    }))
 
     // Generate period options
     const periodOptions = Object.entries(RankingPeriod).map(([key, value]) => ({
         value,
         label: `${periodToJapanese[value]} (${key})`,
-    }));
+    }))
 
     // Generate novel type options
     const novelTypeOptions = Object.entries(NovelType).map(([key, value]) => ({
         value,
         label: `${novelTypeToJapanese[value]} (${key})`,
-    }));
+    }))
 
     return {
         sub: {
@@ -48,11 +48,11 @@ const getParameters = () => {
                 novelTypeOptions.map((type) => ({
                     value: `${period.value}_${type.value}`,
                     label: `${period.label} ${type.label}`,
-                }))
+                })),
             ),
         },
-    };
-};
+    }
+}
 
 const getBest5RadarItems = () =>
     Object.entries(SyosetuSub).flatMap(([, domain]) =>
@@ -60,8 +60,8 @@ const getBest5RadarItems = () =>
             title: `${syosetuSubToJapanese[domain]} ${periodToJapanese[period]}ランキング BEST5`,
             source: [`${domain === SyosetuSub.MOONLIGHT_BL ? SyosetuSub.MOONLIGHT : domain}.syosetu.com/rank/${domain === SyosetuSub.MOONLIGHT_BL ? 'bltop' : 'top'}`],
             target: `/rankingr18/${domain}/${period}_${NovelType.TOTAL}?limit=5`,
-        }))
-    );
+        })),
+    )
 
 export const route: Route = {
     path: '/rankingr18/:sub/:type',
@@ -119,58 +119,58 @@ For example: \`daily_total\`, \`weekly_r\`, \`monthly_er\`
         },
         ...getBest5RadarItems(),
     ],
-};
+}
 
 function parseRankingType(type: string): { period: RankingPeriod; novelType: NovelType } {
-    const [periodStr, novelTypeStr] = type.split('_');
+    const [periodStr, novelTypeStr] = type.split('_')
 
-    const period = periodStr as RankingPeriod;
-    const novelType = novelTypeStr as NovelType;
+    const period = periodStr as RankingPeriod
+    const novelType = novelTypeStr as NovelType
 
-    const isValid = [Object.values(RankingPeriod).includes(period), Object.values(NovelType).includes(novelType)].every(Boolean);
+    const isValid = [Object.values(RankingPeriod).includes(period), Object.values(NovelType).includes(novelType)].every(Boolean)
 
     if (!isValid) {
-        throw new InvalidParameterError(`Invalid ranking type: ${type}`);
+        throw new InvalidParameterError(`Invalid ranking type: ${type}`)
     }
 
     return {
         period: periodStr as RankingPeriod,
         novelType: novelTypeStr as NovelType,
-    };
+    }
 }
 
 function getRankingTitle(type: string, limit: number): string {
-    const { period, novelType } = parseRankingType(type);
-    return `${periodToJapanese[period]}${novelTypeToJapanese[novelType]}ランキング BEST${limit}`;
+    const { period, novelType } = parseRankingType(type)
+    return `${periodToJapanese[period]}${novelTypeToJapanese[novelType]}ランキング BEST${limit}`
 }
 
 async function handler(ctx: Context): Promise<Data> {
-    const { sub, type } = ctx.req.param();
-    const baseUrl = `https://${sub === SyosetuSub.MOONLIGHT_BL ? SyosetuSub.MOONLIGHT : sub}.syosetu.com`;
-    const rankingUrl = `${baseUrl}/rank/list/type/${type}`;
-    const api = new NarouNovelFetch();
+    const { sub, type } = ctx.req.param()
+    const baseUrl = `https://${sub === SyosetuSub.MOONLIGHT_BL ? SyosetuSub.MOONLIGHT : sub}.syosetu.com`
+    const rankingUrl = `${baseUrl}/rank/list/type/${type}`
+    const api = new NarouNovelFetch()
 
-    const limit = Math.min(Number(ctx.req.query('limit') ?? 300), 300);
-    const { period, novelType } = parseRankingType(type);
+    const limit = Math.min(Number(ctx.req.query('limit') ?? 300), 300)
+    const { period, novelType } = parseRankingType(type)
 
     const searchParams: SearchParams = {
         gzip: 5,
         lim: limit,
         order: periodToOrder[period],
-    };
+    }
 
     // TOTAL: Skip type filter to get all types combined
     if (novelType !== NovelType.TOTAL) {
-        searchParams.type = novelType;
+        searchParams.type = novelType
     }
 
     if (!(sub in syosetuSubToNocgenre)) {
-        throw new InvalidParameterError(`Invalid subsite: ${sub}`);
+        throw new InvalidParameterError(`Invalid subsite: ${sub}`)
     }
-    const nocgenre = syosetuSubToNocgenre[sub];
+    const nocgenre = syosetuSubToNocgenre[sub]
 
-    const builder = new SearchBuilderR18(searchParams, api).r18Site(nocgenre);
-    const result = await builder.execute();
+    const builder = new SearchBuilderR18(searchParams, api).r18Site(nocgenre)
+    const result = await builder.execute()
 
     const items = result.values.map((novel, index) => ({
         title: `#${index + 1} ${novel.title}`,
@@ -178,12 +178,12 @@ async function handler(ctx: Context): Promise<Data> {
         description: renderDescription({ novel }),
         author: novel.writer,
         category: novel.keyword.split(/[\s/\uFF0F]/).filter(Boolean),
-    }));
+    }))
 
     return {
         title: `小説家になろう (${sub}) - ${getRankingTitle(type, limit)}`,
         link: rankingUrl,
         item: items as DataItem[],
         language: 'ja',
-    };
+    }
 }

@@ -1,9 +1,9 @@
-import { renderToString } from 'hono/jsx/dom/server';
+import { renderToString } from 'hono/jsx/dom/server'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/:type?',
@@ -24,7 +24,7 @@ export const route: Route = {
     description: `| 快讯     | 本周热文 | 首页资讯 | 视频  |
 | -------- | -------- | -------- | ----- |
 | breaking | hot      | index    | video |`,
-};
+}
 
 async function handler(ctx) {
     const typeMap = {
@@ -44,12 +44,12 @@ async function handler(ctx) {
             title: '视频',
             apiPath: '/movie/index',
         },
-    };
+    }
 
-    const { type = 'index' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10;
+    const { type = 'index' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 10
 
-    const link = `https://apii.web.mittrchina.com${typeMap[type].apiPath}`;
+    const link = `https://apii.web.mittrchina.com${typeMap[type].apiPath}`
     const { data: response } =
         type === 'breaking'
             ? await got.post(link, {
@@ -62,9 +62,9 @@ async function handler(ctx) {
                   searchParams: {
                       limit,
                   },
-              });
+              })
 
-    const articles = type === 'hot' ? response.data : response.data.items;
+    const articles = type === 'hot' ? response.data : response.data.items
 
     const list = articles.map((article) => ({
         title: article.name || article.title,
@@ -79,7 +79,7 @@ async function handler(ctx) {
                               address: article.address,
                               type: article.address.split('.').pop(),
                           }}
-                      />
+                      />,
                   )
                 : type === 'breaking'
                   ? article.content
@@ -87,42 +87,42 @@ async function handler(ctx) {
         pubDate: article.start_time ? parseDate(article.start_time, 'X') : article.push_time ? parseDate(article.push_time, 'X') : undefined,
         id: article.id,
         link: `https://www.mittrchina.com/news/detail/${article.id}`,
-    }));
+    }))
 
-    let items = list;
+    let items = list
     if (type !== 'video' && type !== 'breaking') {
         items = await Promise.all(
             list.map((item) =>
                 cache.tryGet(item.link, async () => {
                     const {
                         data: { data: details },
-                    } = await got(`https://apii.web.mittrchina.com/information/details?id=${item.id}`);
+                    } = await got(`https://apii.web.mittrchina.com/information/details?id=${item.id}`)
 
-                    item.description = details.content;
+                    item.description = details.content
 
                     if (!item.author) {
-                        item.author = details.authors.map((a) => a.username).join(', ');
+                        item.author = details.authors.map((a) => a.username).join(', ')
                     }
                     if (!item.pubDate) {
-                        item.pubDate = parseDate(details.start_time, 'X');
+                        item.pubDate = parseDate(details.start_time, 'X')
                     }
 
                     if (details.cover) {
-                        item.enclosure_url = details.cover;
-                        item.enclosure_type = `image/${details.cover.split('.').pop()}`;
+                        item.enclosure_url = details.cover
+                        item.enclosure_type = `image/${details.cover.split('.').pop()}`
                     }
 
-                    return item;
-                })
-            )
-        );
+                    return item
+                }),
+            ),
+        )
     }
 
     return {
         title: `MIT 科技评论 - ${typeMap[type].title}`,
         link: `https://www.mittrchina.com/${type}`,
         item: items,
-    };
+    }
 }
 
 const VideoDescription = ({ poster, video }: { poster?: string; video?: { address?: string; type?: string } }) =>
@@ -130,4 +130,4 @@ const VideoDescription = ({ poster, video }: { poster?: string; video?: { addres
         <video poster={poster} controls>
             <source src={video.address} type={video.type} />
         </video>
-    ) : null;
+    ) : null

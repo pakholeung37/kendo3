@@ -1,8 +1,8 @@
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
 
-import { apiClubRootUrl, fetchClubData, processItems } from './util';
+import { apiClubRootUrl, fetchClubData, processItems } from './util'
 
 export const route: Route = {
     path: '/club/:id',
@@ -21,15 +21,15 @@ export const route: Route = {
     maintainers: ['nczitzk', 'TimoYoung'],
     handler,
     description: '更多源流请参见 [源流](https://www.huxiu.com/club)',
-};
+}
 
 async function handler(ctx) {
-    const id = ctx.req.param('id');
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20;
+    const id = ctx.req.param('id')
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 20
 
-    const apiUrl = new URL('v1/club/briefList', apiClubRootUrl).href;
+    const apiUrl = new URL('v1/club/briefList', apiClubRootUrl).href
 
-    const data = await fetchClubData(id);
+    const data = await fetchClubData(id)
 
     const { data: response } = await got.post(apiUrl, {
         form: {
@@ -37,12 +37,12 @@ async function handler(ctx) {
             club_id: id,
             pagesize: limit,
         },
-    });
+    })
 
-    const items = await processItems(response.data.datalist, limit, cache.tryGet);
+    const items = await processItems(response.data.datalist, limit, cache.tryGet)
 
     return {
         item: items,
         ...data,
-    };
+    }
 }

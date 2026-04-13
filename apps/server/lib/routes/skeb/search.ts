@@ -1,9 +1,9 @@
-import InvalidParameterError from '@/errors/types/invalid-parameter';
-import type { Data, DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
+import InvalidParameterError from '@/errors/types/invalid-parameter'
+import type { Data, DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
 
-import { baseUrl, processWork } from './utils';
+import { baseUrl, processWork } from './utils'
 
 export const route: Route = {
     path: '/search/:keyword',
@@ -23,16 +23,16 @@ export const route: Route = {
     maintainers: ['SnowAgar25'],
     handler,
     description: 'Get the search results for works on Skeb',
-};
+}
 
 async function handler(ctx): Promise<Data> {
-    const keyword = ctx.req.param('keyword');
+    const keyword = ctx.req.param('keyword')
 
     if (!keyword) {
-        throw new InvalidParameterError('Invalid search keyword');
+        throw new InvalidParameterError('Invalid search keyword')
     }
 
-    const url = 'https://hb1jt3kre9-dsn.algolia.net/1/indexes/*/queries';
+    const url = 'https://hb1jt3kre9-dsn.algolia.net/1/indexes/*/queries'
 
     const items = await cache.tryGet(`skeb:search:${keyword}`, async () => {
         const data = await ofetch(url, {
@@ -56,24 +56,24 @@ async function handler(ctx): Promise<Data> {
                     },
                 ],
             },
-        });
+        })
 
         if (!data || !data.results || !Array.isArray(data.results) || data.results.length < 2) {
-            throw new Error('Invalid data received from API');
+            throw new Error('Invalid data received from API')
         }
 
-        const works = data.results[1].hits;
+        const works = data.results[1].hits
 
         if (!Array.isArray(works)) {
-            throw new TypeError('Invalid hits data received from API');
+            throw new TypeError('Invalid hits data received from API')
         }
 
-        return works.map((item) => processWork(item)).filter(Boolean);
-    });
+        return works.map((item) => processWork(item)).filter(Boolean)
+    })
 
     return {
         title: `Skeb - Search Results for "${keyword}"`,
         link: `${baseUrl}/search?q=${encodeURIComponent(keyword)}`,
         item: items as DataItem[],
-    };
+    }
 }

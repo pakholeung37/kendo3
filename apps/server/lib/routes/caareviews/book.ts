@@ -1,6 +1,6 @@
-import type { Route } from '@/types';
+import type { Route } from '@/types'
 
-import { getItems, getList, rootUrl } from './utils';
+import { getItems, getList, rootUrl } from './utils'
 
 export const route: Route = {
     path: '/book',
@@ -24,17 +24,17 @@ export const route: Route = {
     maintainers: ['Fatpandac'],
     handler,
     url: 'caareviews.org/reviews/book',
-};
+}
 
 async function handler(ctx) {
-    const url = `${rootUrl}/reviews/book`;
+    const url = `${rootUrl}/reviews/book`
 
-    const list = await getList(url);
-    const items = await getItems(ctx, list);
+    const list = await getList(url)
+    const items = await getItems(ctx, list)
 
     return {
         title: 'Book Reviews',
         link: url,
         item: items,
-    };
+    }
 }

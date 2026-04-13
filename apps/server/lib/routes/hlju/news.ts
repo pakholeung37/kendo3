@@ -1,9 +1,9 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { DataItem, Route } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import type { DataItem, Route } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 export const route: Route = {
     path: '/news/:category?',
@@ -41,45 +41,45 @@ export const route: Route = {
     name: '新闻网',
     maintainers: ['LCMs-YoRHa'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const category = ctx.req.param('category') ?? 'hdyw';
-    const baseUrl = 'https://hdxw.hlju.edu.cn';
-    const listUrl = `${baseUrl}/${category}.htm`;
+    const category = ctx.req.param('category') ?? 'hdyw'
+    const baseUrl = 'https://hdxw.hlju.edu.cn'
+    const listUrl = `${baseUrl}/${category}.htm`
 
-    const response = await ofetch(listUrl);
-    const $ = load(response);
+    const response = await ofetch(listUrl)
+    const $ = load(response)
 
     // 从页面自动获取栏目名称
-    const categoryName = $('.bgtitle_list').text().trim() || '黑大要闻';
+    const categoryName = $('.bgtitle_list').text().trim() || '黑大要闻'
 
     // 查找所有新闻链接 - 匹配 info/ 路径的链接，使用 map 而不是 push
     const list = $('a[href*="info/"]')
         .toArray()
         .map((element) => {
-            const item = $(element);
-            const link = item.attr('href');
-            const title = item.text().trim();
+            const item = $(element)
+            const link = item.attr('href')
+            const title = item.text().trim()
 
             if (!title || !link || title.length < 5) {
-                return null;
+                return null
             }
 
             // 查找日期信息 - 在同一行或附近
-            const parent = item.parent();
-            const dateMatch = parent.text().match(/(\d{4})\/(\d{2})\/(\d{2})/);
+            const parent = item.parent()
+            const dateMatch = parent.text().match(/(\d{4})\/(\d{2})\/(\d{2})/)
 
             return {
                 title,
                 link: link.startsWith('http') ? link : `${baseUrl}/${link}`,
                 pubDate: dateMatch ? parseDate(dateMatch[0].replaceAll('/', '-')) : undefined,
-            } satisfies DataItem;
+            } satisfies DataItem
         })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
+        .filter((item): item is NonNullable<typeof item> => item !== null)
 
     // 限制返回数量并去重
-    const uniqueList = list.filter((item, index, arr) => arr.findIndex((i) => i.link === item.link) === index).slice(0, 15);
+    const uniqueList = list.filter((item, index, arr) => arr.findIndex((i) => i.link === item.link) === index).slice(0, 15)
 
     // 获取每篇文章的详细内容
     const items = await Promise.all(
@@ -92,34 +92,34 @@ async function handler(ctx) {
                         link: item.link,
                         description: '外部链接，请点击查看原文',
                         pubDate: item.pubDate,
-                    };
+                    }
                 }
 
-                const detailResponse = await ofetch(item.link);
-                const $detail = load(detailResponse);
+                const detailResponse = await ofetch(item.link)
+                const $detail = load(detailResponse)
 
                 // 提取文章内容 - 只使用主要内容选择器
-                const content = $detail('.v_news_content');
-                let description: string;
+                const content = $detail('.v_news_content')
+                let description: string
 
                 if (content.length > 0) {
                     // 清理内容
-                    content.find('script, style, .print, .share').remove();
-                    description = content.html() || '';
+                    content.find('script, style, .print, .share').remove()
+                    description = content.html() || ''
                 } else {
-                    description = '内容获取失败，请点击查看原文';
+                    description = '内容获取失败，请点击查看原文'
                 }
 
                 // 提取精确的发布时间
-                let pubDate = item.pubDate;
-                const timeElement = $detail('.timestyle110144');
+                let pubDate = item.pubDate
+                const timeElement = $detail('.timestyle110144')
                 if (timeElement.length > 0) {
-                    const timeText = timeElement.text().trim();
-                    const timeMatch = timeText.match(/(\d{4}[-/]\d{2}[-/]\d{2})\s*(\d{2}:\d{2}(?::\d{2})?)/);
+                    const timeText = timeElement.text().trim()
+                    const timeMatch = timeText.match(/(\d{4}[-/]\d{2}[-/]\d{2})\s*(\d{2}:\d{2}(?::\d{2})?)/)
                     if (timeMatch) {
-                        const dateStr = timeMatch[1].replaceAll('/', '-');
-                        const timeStr = timeMatch[2];
-                        pubDate = parseDate(`${dateStr} ${timeStr}`);
+                        const dateStr = timeMatch[1].replaceAll('/', '-')
+                        const timeStr = timeMatch[2]
+                        pubDate = parseDate(`${dateStr} ${timeStr}`)
                     }
                 }
 
@@ -128,15 +128,15 @@ async function handler(ctx) {
                     link: item.link,
                     description: description || '无法获取文章内容，请点击查看原文',
                     pubDate,
-                };
-            })
-        )
-    );
+                }
+            }),
+        ),
+    )
 
     return {
         title: `黑龙江大学新闻网 - ${categoryName}`,
         link: listUrl,
         description: `黑龙江大学新闻网${categoryName}栏目`,
         item: items,
-    };
+    }
 }

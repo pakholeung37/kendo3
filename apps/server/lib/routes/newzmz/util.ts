@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
-const rootUrl = 'https://nzmz.xyz';
+const rootUrl = 'https://nzmz.xyz'
 
 /**
  * Retrieve all movies and TV shows under a specified category on the homepage and obtain their detail links.
@@ -18,25 +18,25 @@ const rootUrl = 'https://nzmz.xyz';
  */
 const getItems = async (tryGet, homeUrl, id, modSelector, itemSelector) => {
     const response = await tryGet(homeUrl, async () => {
-        const { data: response } = await got(homeUrl);
+        const { data: response } = await got(homeUrl)
 
-        return response;
-    });
+        return response
+    })
 
-    const $ = load(response);
+    const $ = load(response)
 
     return $(modSelector)
         .eq(Number.parseInt(id, 10))
         .find(itemSelector)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
             return {
                 link: new URL(item.prop('href'), rootUrl).href,
-            };
-        });
-};
+            }
+        })
+}
 
 /**
  * Obtain the information corresponding to a given movie or TV show item based on the provided URL.
@@ -46,20 +46,20 @@ const getItems = async (tryGet, homeUrl, id, modSelector, itemSelector) => {
  */
 const getItemInfo = (tryGet, itemUrl) =>
     tryGet(`newzmz#${itemUrl.match(/details-(.*?)\.html/)[1]}`, async () => {
-        const { data: detailResponse } = await got(itemUrl);
+        const { data: detailResponse } = await got(itemUrl)
 
-        const content = load(detailResponse);
+        const content = load(detailResponse)
 
-        const nameZh = content('div.chsname').text();
-        const nameEn = content('div.engname').text();
+        const nameZh = content('div.chsname').text()
+        const nameEn = content('div.engname').text()
         const alias = content('div.aliasname')
             .text()
             .replace(/又名：/, '')
             .split('/')
             .map((a) => a.trim())
-            .filter(Boolean);
+            .filter(Boolean)
 
-        const link = content('a.addgz').prop('href');
+        const link = content('a.addgz').prop('href')
 
         return {
             link,
@@ -67,7 +67,7 @@ const getItemInfo = (tryGet, itemUrl) =>
                 content('span.duration')
                     .first()
                     .text()
-                    .match(/(\d{4}-\d{2}-\d{2})/)[1]
+                    .match(/(\d{4}-\d{2}-\d{2})/)[1],
             ),
             description: {
                 image: content('div.details-bg img').prop('src'),
@@ -78,12 +78,12 @@ const getItemInfo = (tryGet, itemUrl) =>
                 links: content('div.ep-infos a[title]')
                     .toArray()
                     .map((a) => {
-                        a = content(a);
+                        a = content(a)
 
                         return {
                             title: a.prop('title'),
                             link: a.prop('href'),
-                        };
+                        }
                     }),
             },
             author: content('ul.sws-list')
@@ -93,8 +93,8 @@ const getItemInfo = (tryGet, itemUrl) =>
                 .map((a) => content(a).text())
                 .join(' / '),
             category: [nameZh, nameEn, ...alias],
-        };
-    });
+        }
+    })
 
 /**
  * Retrieve all the episode items from the corresponding download page of a movie or TV show.
@@ -106,38 +106,38 @@ const getItemInfo = (tryGet, itemUrl) =>
  * @returns {Array} An array containing RSS feed objects in the map.
  */
 const processItems = async (i, downLinkType, itemSelector, categorySelector, downLinkSelector) => {
-    const { data: detailResponse } = await got(i.link);
+    const { data: detailResponse } = await got(i.link)
 
-    const content = load(detailResponse);
+    const content = load(detailResponse)
 
     return content(itemSelector)
         .toArray()
         .map((item) => {
-            item = content(item);
+            item = content(item)
 
             const categories = item
                 .find(categorySelector)
                 .toArray()
-                .map((c) => content(c).text());
+                .map((c) => content(c).text())
 
             const downLinks = item
                 .find(downLinkSelector)
                 .toArray()
                 .map((downLink) => {
-                    downLink = content(downLink);
+                    downLink = content(downLink)
 
                     return {
                         title: downLink.find('p.link-name').text(),
                         link: downLink.find('a[title]').prop('href'),
-                    };
-                });
+                    }
+                })
 
             const subtitle = item
                 .find('span.up')
                 .text()
-                .replaceAll(/[\s-]+/g, '');
-            const title = `${i.description.nameZh || i.description.nameEn}|${subtitle}`;
-            const guid = `newzmz#${i.link.match(/view\/(.*?)\.html/)[1]}-${subtitle}`;
+                .replaceAll(/[\s-]+/g, '')
+            const title = `${i.description.nameZh || i.description.nameEn}|${subtitle}`
+            const guid = `newzmz#${i.link.match(/view\/(.*?)\.html/)[1]}-${subtitle}`
 
             return {
                 guid,
@@ -153,8 +153,8 @@ const processItems = async (i, downLinkType, itemSelector, categorySelector, dow
                 pubDate: i.pubDate,
                 enclosure_url: downLinks.findLast((l) => l.title === downLinkType)?.link ?? downLinks[0].link,
                 enclosure_type: 'application/x-bittorrent',
-            };
-        });
-};
+            }
+        })
+}
 
-export { getItemInfo, getItems, processItems, rootUrl };
+export { getItemInfo, getItems, processItems, rootUrl }

@@ -1,7 +1,7 @@
-import dayjs from 'dayjs';
+import dayjs from 'dayjs'
 
-import type { Route } from '@/types';
-import got from '@/utils/got';
+import type { Route } from '@/types'
+import got from '@/utils/got'
 
 export const route: Route = {
     path: '/calendar/:before?/:after?',
@@ -26,13 +26,13 @@ export const route: Route = {
     maintainers: ['aether17'],
     handler,
     url: 'thwiki.cc/',
-};
+}
 
 async function handler(ctx) {
-    const beforeDays = ctx.req.param('before') ? Number.parseInt(ctx.req.param('before')) : 30;
-    const afterDays = ctx.req.param('after') ? Number.parseInt(ctx.req.param('after')) : 30;
-    const before = dayjs().subtract(beforeDays, 'day').format('YYYY-MM-DD');
-    const after = dayjs().add(afterDays, 'day').format('YYYY-MM-DD');
+    const beforeDays = ctx.req.param('before') ? Number.parseInt(ctx.req.param('before')) : 30
+    const afterDays = ctx.req.param('after') ? Number.parseInt(ctx.req.param('after')) : 30
+    const before = dayjs().subtract(beforeDays, 'day').format('YYYY-MM-DD')
+    const after = dayjs().add(afterDays, 'day').format('YYYY-MM-DD')
 
     const response = await got({
         method: 'get',
@@ -40,8 +40,8 @@ async function handler(ctx) {
         headers: {
             Origin: 'https://thwiki.cc',
         },
-    });
-    const data = response.data.results;
+    })
+    const data = response.data.results
 
     return {
         title: 'Touhou events calendar (THBWiki)',
@@ -55,5 +55,5 @@ async function handler(ctx) {
             guid: item.id,
             link: item.url,
         })),
-    };
+    }
 }

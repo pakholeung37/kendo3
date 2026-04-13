@@ -1,13 +1,13 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import cache from '@/utils/cache';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import cache from '@/utils/cache'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
-import { renderDescription } from './templates/description';
+import { renderDescription } from './templates/description'
 
 const types = {
     1: {
@@ -70,7 +70,7 @@ const types = {
             isfree: 0,
         },
     },
-};
+}
 
 const idOptions = [
     {
@@ -193,30 +193,30 @@ const idOptions = [
         label: '其他',
         value: '81',
     },
-];
+]
 
-const defaultType = 1;
-const siteTitle = '艾瑞咨询';
+const defaultType = 1
+const siteTitle = '艾瑞咨询'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { type: paramType = defaultType, id: paramId = '' } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10);
+    const { type: paramType = defaultType, id: paramId = '' } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '50', 10)
 
-    const typeObj = types?.[paramType] ?? Object.values(types).find((obj) => obj.label === paramType || obj.value === paramType);
+    const typeObj = types?.[paramType] ?? Object.values(types).find((obj) => obj.label === paramType || obj.value === paramType)
     if (!typeObj) {
-        throw new Error(`Invalid type: ${paramType}. Please refer to [the documentation](https://docs.rsshub.app/routes/other#${siteTitle}) for valid types.`);
+        throw new Error(`Invalid type: ${paramType}. Please refer to [the documentation](https://docs.rsshub.app/routes/other#${siteTitle}) for valid types.`)
     }
 
-    const idObj = idOptions.find((option) => option.label === paramId || option.value === paramId);
+    const idObj = idOptions.find((option) => option.label === paramId || option.value === paramId)
 
-    const type: number = typeObj.value;
-    const id: string | undefined = idObj ? String(idObj.value) : undefined;
+    const type: number = typeObj.value
+    const id: string | undefined = idObj ? String(idObj.value) : undefined
 
-    const baseUrl = 'https://www.iresearch.com.cn';
-    const imageBaseUrl = 'https://pic.iresearch.cn';
-    const targetUrl: string = new URL(`report.shtml?type=${type}${id ? `&classId=${id}` : ''}`, baseUrl).href;
-    const apiUrl: string = new URL(`api/${typeObj.slug}`, baseUrl).href;
-    const apiDetailUrl: string = new URL(`api/${typeObj.detailSlug}`, baseUrl).href;
+    const baseUrl = 'https://www.iresearch.com.cn'
+    const imageBaseUrl = 'https://pic.iresearch.cn'
+    const targetUrl: string = new URL(`report.shtml?type=${type}${id ? `&classId=${id}` : ''}`, baseUrl).href
+    const apiUrl: string = new URL(`api/${typeObj.slug}`, baseUrl).href
+    const apiDetailUrl: string = new URL(`api/${typeObj.detailSlug}`, baseUrl).href
 
     const response = await ofetch(apiUrl, {
         query: {
@@ -228,36 +228,36 @@ export const handler = async (ctx: Context): Promise<Data> => {
             [typeObj.limitKey]: limit,
             ...typeObj.fixedQuery,
         },
-    });
+    })
 
     let items: DataItem[] = response.List.slice(0, limit).map((item): DataItem => {
         const title: string =
             item.reportname ??
             (() => {
                 if (item.Title) {
-                    const suffix: string = item.sTitle && item.sTitle !== item.Title ? ` - ${item.sTitle}` : '';
-                    return `${item.Title}${suffix}`;
+                    const suffix: string = item.sTitle && item.sTitle !== item.Title ? ` - ${item.sTitle}` : ''
+                    return `${item.Title}${suffix}`
                 }
 
-                return item.sTitle ?? item.Content;
-            })();
+                return item.sTitle ?? item.Content
+            })()
 
-        const images: string[] = [item.BigImg, item.SmallImg, item.reportpic].filter(Boolean) as string[];
+        const images: string[] = [item.BigImg, item.SmallImg, item.reportpic].filter(Boolean) as string[]
         const description: string | undefined = renderDescription({
             images: images.map((src) => ({
                 src,
                 alt: title,
             })),
             intro: item.Content,
-        });
+        })
 
-        const pubDate: number | string = item.Uptime ?? item.addtime;
-        const linkUrl: string | undefined = item.VisitUrl;
-        const categories: string[] = [...new Set([item.sTitle, item.industry, item.classname, ...(item.Keyword ?? [])])].filter(Boolean);
-        const authors: DataItem['author'] = item.Author;
-        const guid: string = item.Id ? `iresearch-${item.Id}` : item.id ? `iresearch-ireport.${item.id}` : '';
-        const image: string | undefined = images?.[0] ?? undefined;
-        const updated: number | string = pubDate;
+        const pubDate: number | string = item.Uptime ?? item.addtime
+        const linkUrl: string | undefined = item.VisitUrl
+        const categories: string[] = [...new Set([item.sTitle, item.industry, item.classname, ...(item.Keyword ?? [])])].filter(Boolean)
+        const authors: DataItem['author'] = item.Author
+        const guid: string = item.Id ? `iresearch-${item.Id}` : item.id ? `iresearch-ireport.${item.id}` : ''
+        const image: string | undefined = images?.[0] ?? undefined
+        const updated: number | string = pubDate
 
         let processedItem: DataItem = {
             title,
@@ -276,22 +276,22 @@ export const handler = async (ctx: Context): Promise<Data> => {
             banner: image,
             updated: updated ? timezone(parseDate(updated), +8) : undefined,
             detailId: item.id ?? (linkUrl ? item.NewsId : item.Id),
-        };
+        }
 
         const medias: Record<string, Record<string, string>> = (() => {
-            const result: Record<string, Record<string, string>> = {};
-            const medium = 'image';
-            let count = 0;
+            const result: Record<string, Record<string, string>> = {}
+            const medium = 'image'
+            let count = 0
 
             for (const media of images) {
-                const url: string | undefined = media;
+                const url: string | undefined = media
 
                 if (!url) {
-                    continue;
+                    continue
                 }
 
-                count += 1;
-                const key = `${medium}${count}`;
+                count += 1
+                const key = `${medium}${count}`
 
                 result[key] = {
                     url,
@@ -299,25 +299,25 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     title,
                     description: title,
                     thumbnail: url,
-                };
+                }
             }
 
-            return result;
-        })();
+            return result
+        })()
 
         processedItem = {
             ...processedItem,
             media: medias,
-        };
+        }
 
-        return processedItem;
-    });
+        return processedItem
+    })
 
     items = await Promise.all(
         items.map((item) => {
             if (!item.link || (item.guid ? /chart\.\d+$/.test(item.guid) : false)) {
-                delete item.detailId;
-                return item;
+                delete item.detailId
+                return item
             }
 
             return cache.tryGet(item.link, async (): Promise<DataItem> => {
@@ -326,15 +326,15 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         [typeObj.detailKey]: item.detailId,
                         ...typeObj.detailFixedQuery,
                     },
-                });
-                const data = detailResponse.List?.[0] ?? detailResponse.List ?? undefined;
+                })
+                const data = detailResponse.List?.[0] ?? detailResponse.List ?? undefined
 
                 if (!data) {
-                    delete item.detailId;
-                    return item;
+                    delete item.detailId
+                    return item
                 }
 
-                const title: string = data.Title ?? data.reportname ?? item.title;
+                const title: string = data.Title ?? data.reportname ?? item.title
                 const images: string[] = [
                     data.BigImg,
                     data.SmallImg,
@@ -344,20 +344,20 @@ export const handler = async (ctx: Context): Promise<Data> => {
                         {
                             length: Number.parseInt(data.PagesCount ?? data.pagesCount, 10),
                         },
-                        (_, index) => `${imageBaseUrl}/${typeObj.imageSlug}/${item.detailId}/${index + 1}.jpg`
+                        (_, index) => `${imageBaseUrl}/${typeObj.imageSlug}/${item.detailId}/${index + 1}.jpg`,
                     ),
-                ].filter(Boolean) as string[];
+                ].filter(Boolean) as string[]
                 const description: string | undefined = renderDescription({
                     images: images.map((src) => ({
                         src,
                         alt: title,
                     })),
                     description: data.Content,
-                });
-                const pubDate: number | string = data.Uptime;
-                const categories: string[] = [...new Set([...(item.category ?? []), data.industry, ...(data.Keyword ?? []), ...(data.keywords?.split(/,/) ?? [])])].filter(Boolean);
-                const image: string | undefined = images?.[0] ?? undefined;
-                const updated: number | string = pubDate;
+                })
+                const pubDate: number | string = data.Uptime
+                const categories: string[] = [...new Set([...(item.category ?? []), data.industry, ...(data.Keyword ?? []), ...(data.keywords?.split(/,/) ?? [])])].filter(Boolean)
+                const image: string | undefined = images?.[0] ?? undefined
+                const updated: number | string = pubDate
 
                 let processedItem: DataItem = {
                     title,
@@ -371,22 +371,22 @@ export const handler = async (ctx: Context): Promise<Data> => {
                     image,
                     banner: image,
                     updated: updated ? timezone(parseDate(updated), +8) : undefined,
-                };
+                }
 
                 const medias: Record<string, Record<string, string>> = (() => {
-                    const result: Record<string, Record<string, string>> = {};
-                    const medium = 'image';
-                    let count = 0;
+                    const result: Record<string, Record<string, string>> = {}
+                    const medium = 'image'
+                    let count = 0
 
                     for (const media of images) {
-                        const url: string | undefined = media;
+                        const url: string | undefined = media
 
                         if (!url) {
-                            continue;
+                            continue
                         }
 
-                        count += 1;
-                        const key = `${medium}${count}`;
+                        count += 1
+                        const key = `${medium}${count}`
 
                         result[key] = {
                             url,
@@ -394,26 +394,26 @@ export const handler = async (ctx: Context): Promise<Data> => {
                             title,
                             description: title,
                             thumbnail: url,
-                        };
+                        }
                     }
 
-                    return result;
-                })();
+                    return result
+                })()
 
                 processedItem = {
                     ...processedItem,
                     media: medias,
-                };
+                }
 
-                delete item.detailId;
+                delete item.detailId
 
                 return {
                     ...item,
                     ...processedItem,
-                };
-            });
-        })
-    );
+                }
+            })
+        }),
+    )
 
     return {
         title: `${siteTitle}${typeObj.label ? ` - ${typeObj.label}` : ''}${idObj && idObj.label ? ` - ${idObj.label}` : ''}`,
@@ -423,8 +423,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         allowEmpty: true,
         author: siteTitle,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/report/:type?/:id?',
@@ -507,51 +507,51 @@ export const route: Route = {
         {
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const type: string | undefined = urlObj.searchParams.get('type') ?? undefined;
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const type: string | undefined = urlObj.searchParams.get('type') ?? undefined
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/report${type ? `/${type}${id ? `/${id}` : ''}` : ''}`;
+                return `/iresearch/report${type ? `/${type}${id ? `/${id}` : ''}` : ''}`
             },
         },
         {
             title: '最新报告',
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/report/1${id ? `/${id}` : ''}`;
+                return `/iresearch/report/1${id ? `/${id}` : ''}`
             },
         },
         {
             title: '研究图表',
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/report/4${id ? `/${id}` : ''}`;
+                return `/iresearch/report/4${id ? `/${id}` : ''}`
             },
         },
         {
             title: '周度市场观察',
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/report/3${id ? `/${id}` : ''}`;
+                return `/iresearch/report/3${id ? `/${id}` : ''}`
             },
         },
         {
             title: '热门报告',
             source: ['www.iresearch.com.cn/report.shtml'],
             target: (_, url) => {
-                const urlObj: URL = new URL(url);
-                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined;
+                const urlObj: URL = new URL(url)
+                const id: string | undefined = urlObj.searchParams.get('classId') ?? urlObj.searchParams.get('channelId') ?? urlObj.searchParams.get('cid') ?? undefined
 
-                return `/iresearch/report/2${id ? `/${id}` : ''}`;
+                return `/iresearch/report/2${id ? `/${id}` : ''}`
             },
         },
         {
@@ -701,4 +701,4 @@ export const route: Route = {
         },
     ],
     view: ViewType.Articles,
-};
+}

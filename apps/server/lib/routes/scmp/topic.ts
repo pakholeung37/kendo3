@@ -1,11 +1,11 @@
-import { load } from 'cheerio';
+import { load } from 'cheerio'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
 
-import { parseItem } from './utils';
+import { parseItem } from './utils'
 
 export const route: Route = {
     path: '/topics/:topic',
@@ -28,18 +28,18 @@ export const route: Route = {
     name: 'Topics',
     maintainers: ['TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const topic = ctx.req.param('topic');
-    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 30;
-    const pageUrl = `https://www.scmp.com/topics/${topic}`;
-    const { data: pageResponse } = await got(pageUrl);
-    const $ = load(pageResponse);
+    const topic = ctx.req.param('topic')
+    const limit = Number.parseInt(ctx.req.query('limit'), 10) || 30
+    const pageUrl = `https://www.scmp.com/topics/${topic}`
+    const { data: pageResponse } = await got(pageUrl)
+    const $ = load(pageResponse)
 
-    const nextData = JSON.parse($('script#__NEXT_DATA__').text());
-    const topicData = nextData.props.pageProps.payload.data.topic;
-    const variables = nextData.props.pageProps.operationDescriptor.root.variables;
+    const nextData = JSON.parse($('script#__NEXT_DATA__').text())
+    const topicData = nextData.props.pageProps.payload.data.topic
+    const variables = nextData.props.pageProps.operationDescriptor.root.variables
 
     const { data: apiResponse } = await got('https://apigw.scmp.com/content-delivery/v2', {
         headers: {
@@ -62,7 +62,7 @@ async function handler(ctx) {
                 id: topicData.id,
             }),
         },
-    });
+    })
 
     const list = apiResponse.data.node.contents.edges.map(({ node }) => ({
         title: node.headline,
@@ -71,14 +71,14 @@ async function handler(ctx) {
         author: node.authors.map((a) => a.name).join(', '),
         pubDate: parseDate(node.publishedDate, 'x'),
         updated: parseDate(node.updatedDate, 'x'),
-    }));
+    }))
 
-    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))));
+    const items = await Promise.all(list.map((item) => cache.tryGet(item.link, () => parseItem(item))))
 
     ctx.set('json', {
         nextData,
         apiResponse,
-    });
+    })
 
     return {
         title: topicData.name,
@@ -89,5 +89,5 @@ async function handler(ctx) {
         icon: 'https://assets.i-scmp.com/static/img/icons/scmp-icon-256x256.png',
         logo: 'https://customerservice.scmp.com/img/logo_scmp@2x.png',
         image: 'https://assets-v2.i-scmp.com/production/_next/static/media/default-image.d1be8967.png',
-    };
+    }
 }

@@ -1,11 +1,11 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import { config } from '@/config';
-import ConfigNotFoundError from '@/errors/types/config-not-found';
-import type { Data, Route } from '@/types';
+import { config } from '@/config'
+import ConfigNotFoundError from '@/errors/types/config-not-found'
+import type { Data, Route } from '@/types'
 
-import type { GroupInfoResponse, TopicsResponse } from './types';
-import { customFetch, generateTopicDataItem } from './utils';
+import type { GroupInfoResponse, TopicsResponse } from './types'
+import { customFetch, generateTopicDataItem } from './utils'
 
 export const route: Route = {
     name: '星球',
@@ -35,25 +35,25 @@ export const route: Route = {
     description: `| all  | digests | by_owner | questions | tasks |
 | ---- | ------ | --------- | -------- | ------ |
 | 最新 | 精华    | 只看星主    | 问答      | 作业   |`,
-};
+}
 
 async function handler(ctx: Context): Promise<Data> {
-    const groupId = ctx.req.param('id');
-    const scope = ctx.req.param('scope') ?? 'all';
-    const accessToken = config.zsxq.accessToken;
+    const groupId = ctx.req.param('id')
+    const scope = ctx.req.param('scope') ?? 'all'
+    const accessToken = config.zsxq.accessToken
 
     if (!accessToken) {
-        throw new ConfigNotFoundError('该 RSS 源由于配置不正确而被禁用：令牌丢失。');
+        throw new ConfigNotFoundError('该 RSS 源由于配置不正确而被禁用：令牌丢失。')
     }
 
-    let count = Number(ctx.req.query('limit')) || 20;
+    let count = Number(ctx.req.query('limit')) || 20
     if (count > 30) {
-        count = 30;
+        count = 30
     }
 
-    const { group } = await customFetch<GroupInfoResponse>(`/groups/${groupId}`);
+    const { group } = await customFetch<GroupInfoResponse>(`/groups/${groupId}`)
 
-    const { topics } = await customFetch<TopicsResponse>(`/groups/${groupId}/topics?scope=${scope}&count=${count}`);
+    const { topics } = await customFetch<TopicsResponse>(`/groups/${groupId}/topics?scope=${scope}&count=${count}`)
 
     return {
         title: `知识星球 - ${group.name}`,
@@ -61,5 +61,5 @@ async function handler(ctx: Context): Promise<Data> {
         image: group.background_url,
         link: `https://wx.zsxq.com/dweb2/index/group/${groupId}`,
         item: generateTopicDataItem(topics),
-    };
+    }
 }

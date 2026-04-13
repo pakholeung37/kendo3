@@ -1,14 +1,14 @@
-import MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it'
 
-import { config } from '@/config';
-import type { Route } from '@/types';
-import ofetch from '@/utils/ofetch';
-import { parseDate } from '@/utils/parse-date';
+import { config } from '@/config'
+import type { Route } from '@/types'
+import ofetch from '@/utils/ofetch'
+import { parseDate } from '@/utils/parse-date'
 
 const md = MarkdownIt({
     html: true,
     linkify: true,
-});
+})
 
 export const route: Route = {
     path: '/pull/:user/:repo/:state?/:labels?',
@@ -32,20 +32,20 @@ export const route: Route = {
     name: 'Repo Pull Requests',
     maintainers: ['hashman', 'TonyRL'],
     handler,
-};
+}
 
 async function handler(ctx) {
-    const user = ctx.req.param('user');
-    const repo = ctx.req.param('repo');
-    const state = ctx.req.param('state') ?? 'open';
-    const labels = ctx.req.param('labels');
+    const user = ctx.req.param('user')
+    const repo = ctx.req.param('repo')
+    const state = ctx.req.param('state') ?? 'open'
+    const labels = ctx.req.param('labels')
 
-    const host = `https://github.com/${user}/${repo}/pulls`;
-    const url = `https://api.github.com/repos/${user}/${repo}/issues`; // every PR is also an issue
+    const host = `https://github.com/${user}/${repo}/pulls`
+    const url = `https://api.github.com/repos/${user}/${repo}/issues` // every PR is also an issue
 
-    const headers = { Accept: 'application/vnd.github.v3+json' };
+    const headers = { Accept: 'application/vnd.github.v3+json' }
     if (config.github && config.github.access_token) {
-        headers.Authorization = `token ${config.github.access_token}`;
+        headers.Authorization = `token ${config.github.access_token}`
     }
     const response = await ofetch(url, {
         query: {
@@ -56,8 +56,8 @@ async function handler(ctx) {
             per_page: ctx.req.query('limit') ? Math.min(Number.parseInt(ctx.req.query('limit')), 100) : 100,
         },
         headers,
-    });
-    const data = response.filter((item) => item.pull_request);
+    })
+    const data = response.filter((item) => item.pull_request)
 
     return {
         allowEmpty: true,
@@ -70,5 +70,5 @@ async function handler(ctx) {
             pubDate: parseDate(item.created_at),
             link: item.html_url,
         })),
-    };
+    }
 }

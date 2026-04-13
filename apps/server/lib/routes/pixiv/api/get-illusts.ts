@@ -1,7 +1,7 @@
-import queryString from 'query-string';
+import queryString from 'query-string'
 
-import { maskHeader } from '../constants';
-import got from '../pixiv-got';
+import { maskHeader } from '../constants'
+import got from '../pixiv-got'
 
 /**
  * 获取用户插画作品
@@ -19,5 +19,5 @@ export default function getIllusts(user_id, token) {
             user_id,
             filter: 'for_ios',
         }),
-    });
+    })
 }

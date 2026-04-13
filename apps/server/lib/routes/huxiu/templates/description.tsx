@@ -1,31 +1,31 @@
-import { raw } from 'hono/html';
-import { renderToString } from 'hono/jsx/dom/server';
+import { raw } from 'hono/html'
+import { renderToString } from 'hono/jsx/dom/server'
 
 type MediaImage = {
-    src?: string;
-    width?: string | number;
-    height?: string | number;
-};
+    src?: string
+    width?: string | number
+    height?: string | number
+}
 
 type MediaAudio = {
-    src?: string;
-    type?: string;
-};
+    src?: string
+    type?: string
+}
 
 type MediaVideo = {
-    src?: string;
-    type?: string;
-    poster?: string;
-};
+    src?: string
+    type?: string
+    poster?: string
+}
 
 type DescriptionData = {
-    image?: MediaImage;
-    audio?: MediaAudio;
-    video?: MediaVideo;
-    preface?: string;
-    summary?: string;
-    description?: string;
-};
+    image?: MediaImage
+    audio?: MediaAudio
+    video?: MediaVideo
+    preface?: string
+    summary?: string
+    description?: string
+}
 
 export const renderDescription = ({ image, audio, video, preface, summary, description }: DescriptionData) =>
     renderToString(
@@ -51,5 +51,5 @@ export const renderDescription = ({ image, audio, video, preface, summary, descr
             {preface ? <>{raw(preface)}</> : null}
             {summary ? <>{raw(summary)}</> : null}
             {description ? <>{raw(description)}</> : null}
-        </>
-    );
+        </>,
+    )

@@ -1,12 +1,12 @@
-import { load } from 'cheerio';
-import { renderToString } from 'hono/jsx/dom/server';
-import iconv from 'iconv-lite';
+import { load } from 'cheerio'
+import { renderToString } from 'hono/jsx/dom/server'
+import iconv from 'iconv-lite'
 
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
-import got from '@/utils/got';
-import { parseDate } from '@/utils/parse-date';
-import timezone from '@/utils/timezone';
+import type { Route } from '@/types'
+import cache from '@/utils/cache'
+import got from '@/utils/got'
+import { parseDate } from '@/utils/parse-date'
+import timezone from '@/utils/timezone'
 
 export const route: Route = {
     path: '/list/:id?',
@@ -81,78 +81,78 @@ export const route: Route = {
 | ------ | -------- | -------- | -------- |
 | 214  | 216    | 215    | 223    |
 </details>`,
-};
+}
 
 async function handler(ctx) {
-    const { id = '751' } = ctx.req.param();
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
+    const { id = '751' } = ctx.req.param()
+    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30
 
-    const rootUrl = 'https://www.8264.com';
-    const currentUrl = new URL(`list/${id}`, rootUrl).href;
+    const rootUrl = 'https://www.8264.com'
+    const currentUrl = new URL(`list/${id}`, rootUrl).href
 
     const { data: response } = await got(currentUrl, {
         responseType: 'buffer',
-    });
+    })
 
-    const $ = load(iconv.decode(response, 'gbk'));
+    const $ = load(iconv.decode(response, 'gbk'))
 
-    $('div.newslist_info').remove();
+    $('div.newslist_info').remove()
 
     let items = $('div.newlist_r, div.newslist_r, div.bbslistone_name, dt')
         .find('a')
         .slice(0, limit)
         .toArray()
         .map((item) => {
-            item = $(item);
+            item = $(item)
 
-            const link = item.prop('href');
+            const link = item.prop('href')
 
             return {
                 title: item.text(),
                 link: link.startsWith('http') ? link : new URL(link, rootUrl).href,
-            };
-        });
+            }
+        })
 
     items = await Promise.all(
         items.map((item) =>
             cache.tryGet(item.link, async () => {
                 const { data: detailResponse } = await got(item.link, {
                     responseType: 'buffer',
-                });
+                })
 
-                const content = load(iconv.decode(detailResponse, 'gbk'));
+                const content = load(iconv.decode(detailResponse, 'gbk'))
 
-                content('a.syq, a.xlsj, a.titleoverflow200, #fjump').remove();
-                content('i.pstatus').remove();
-                content('div.crly').remove();
+                content('a.syq, a.xlsj, a.titleoverflow200, #fjump').remove()
+                content('i.pstatus').remove()
+                content('div.crly').remove()
 
-                const pubDate = content('span.pub-time').text() || content('span.fby span').first().prop('title') || content('span.fby').first().text().split('发表于').pop().trim();
+                const pubDate = content('span.pub-time').text() || content('span.fby span').first().prop('title') || content('span.fby').first().text().split('发表于').pop().trim()
 
                 content('img').each(function () {
                     content(this).replaceWith(
                         renderToString(
                             <figure>
                                 <img src={content(this).prop('file')} alt={content(this).prop('alt')} />
-                            </figure>
-                        )
-                    );
-                });
+                            </figure>,
+                        ),
+                    )
+                })
 
-                item.title = content('h1').first().text();
-                item.description = content('div.art-content, td.t_f').first().html();
-                item.author = content('a.user-name, #author').first().text();
+                item.title = content('h1').first().text()
+                item.description = content('div.art-content, td.t_f').first().html()
+                item.author = content('a.user-name, #author').first().text()
                 item.category = content('div.fl_dh a, div.site a')
                     .toArray()
-                    .map((c) => content(c).text().trim());
-                item.pubDate = timezone(parseDate(pubDate, ['YYYY-MM-DD HH:mm', 'YYYY-M-D HH:mm']), +8);
+                    .map((c) => content(c).text().trim())
+                item.pubDate = timezone(parseDate(pubDate, ['YYYY-MM-DD HH:mm', 'YYYY-M-D HH:mm']), +8)
 
-                return item;
-            })
-        )
-    );
+                return item
+            }),
+        ),
+    )
 
-    const description = $('meta[name="description"]').prop('content').trim();
-    const icon = new URL('favicon', rootUrl).href;
+    const description = $('meta[name="description"]').prop('content').trim()
+    const icon = new URL('favicon', rootUrl).href
 
     return {
         item: items,
@@ -164,5 +164,5 @@ async function handler(ctx) {
         logo: icon,
         subtitle: $('meta[name="keywords"]').prop('content').trim(),
         author: $('meta[name="author"]').prop('content'),
-    };
+    }
 }

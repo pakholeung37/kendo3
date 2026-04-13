@@ -1,4 +1,4 @@
-import type { Namespace } from '@/types';
+import type { Namespace } from '@/types'
 
 export const namespace: Namespace = {
     name: 'Radio France Internationale',
@@ -7,4 +7,4 @@ export const namespace: Namespace = {
     zh: {
         name: '法国国际广播电台',
     },
-};
+}

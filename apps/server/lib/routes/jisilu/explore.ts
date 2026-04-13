@@ -1,29 +1,29 @@
-import type { CheerioAPI } from 'cheerio';
-import { load } from 'cheerio';
-import type { Context } from 'hono';
+import type { CheerioAPI } from 'cheerio'
+import { load } from 'cheerio'
+import type { Context } from 'hono'
 
-import type { Data, DataItem, Route } from '@/types';
-import { ViewType } from '@/types';
-import ofetch from '@/utils/ofetch';
+import type { Data, DataItem, Route } from '@/types'
+import { ViewType } from '@/types'
+import ofetch from '@/utils/ofetch'
 
-import { processItems, rootUrl } from './util';
+import { processItems, rootUrl } from './util'
 
 export const handler = async (ctx: Context): Promise<Data> => {
-    const { filter } = ctx.req.param();
-    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10);
+    const { filter } = ctx.req.param()
+    const limit: number = Number.parseInt(ctx.req.query('limit') ?? '30', 10)
 
-    const targetUrl: string = new URL(`/${filter ? 'home/' : ''}explore/${filter ?? ''}`, rootUrl).href;
+    const targetUrl: string = new URL(`/${filter ? 'home/' : ''}explore/${filter ?? ''}`, rootUrl).href
 
-    const response = await ofetch(targetUrl);
-    const $: CheerioAPI = load(response);
-    const language: string = $('html').prop('lang') ?? 'zh';
+    const response = await ofetch(targetUrl)
+    const $: CheerioAPI = load(response)
+    const language: string = $('html').prop('lang') ?? 'zh'
 
-    const items: DataItem[] = await processItems($, $('div.aw-question-list'), limit);
+    const items: DataItem[] = await processItems($, $('div.aw-question-list'), limit)
 
-    $('div.pagination').remove();
+    $('div.pagination').remove()
 
-    const author = $('meta[name="keywords"]').prop('content').split(/,/)[0];
-    const feedImage = $('div.aw-logo img').prop('src');
+    const author = $('meta[name="keywords"]').prop('content').split(/,/)[0]
+    const feedImage = $('div.aw-logo img').prop('src')
 
     return {
         title: `${$('title').text()} - ${$('li.active')
@@ -39,8 +39,8 @@ export const handler = async (ctx: Context): Promise<Data> => {
         author,
         language,
         id: targetUrl,
-    };
-};
+    }
+}
 
 export const route: Route = {
     path: '/explore/:filter?',
@@ -70,11 +70,11 @@ export const route: Route = {
         {
             source: ['www.jisilu.cn/home/explore/:filter', 'www.jisilu.cn/home/explore', 'www.jisilu.cn/explore'],
             target: (params) => {
-                const filter = params.filter;
+                const filter = params.filter
 
-                return `/jisilu/explore${filter ? `/${filter}` : ''}`;
+                return `/jisilu/explore${filter ? `/${filter}` : ''}`
             },
         },
     ],
     view: ViewType.Articles,
-};
+}
