@@ -18,7 +18,7 @@ interface ProxyExport {
     dispatcher: ProxyAgent | null
     proxyUri?: string
     proxyObj: Record<string, any>
-    proxyUrlHandler?: URL | null
+    proxyUrlHandler: URL | null
     multiProxy?: MultiProxyResult
     getCurrentProxy: () => ProxyState | null
     markProxyFailed: (proxyUri: string) => void
@@ -61,21 +61,21 @@ if (proxyIsPAC) {
     const proxy = pacProxy(config.pacUri, config.pacScript, config.proxy)
     proxyUri = proxy.proxyUri
     proxyObj = proxy.proxyObj
-    proxyUrlHandler = proxy.proxyUrlHandler
+    proxyUrlHandler = proxy.proxyUrlHandler ?? null
 } else if (config.proxyUris && config.proxyUris.length > 0) {
     multiProxy = createMultiProxy(config.proxyUris, config.proxy)
     proxyObj = multiProxy.proxyObj
     const currentProxy = multiProxy.getNextProxy()
     if (currentProxy) {
         proxyUri = currentProxy.uri
-        proxyUrlHandler = currentProxy.urlHandler
+        proxyUrlHandler = currentProxy.urlHandler ?? null
     }
     logger.info(`Multi-proxy initialized with ${config.proxyUris.length} proxies`)
 } else {
     const proxy = unifyProxy(config.proxyUri, config.proxy)
     proxyUri = proxy.proxyUri
     proxyObj = proxy.proxyObj
-    proxyUrlHandler = proxy.proxyUrlHandler
+    proxyUrlHandler = proxy.proxyUrlHandler ?? null
 }
 
 let agent: PacProxyAgent<string> | HttpsProxyAgent<string> | SocksProxyAgent | null = null
@@ -97,7 +97,7 @@ const getCurrentProxy = (): ProxyState | null => {
             uri: proxyUri,
             isActive: true,
             failureCount: 0,
-            urlHandler: proxyUrlHandler,
+            urlHandler: proxyUrlHandler ?? null,
         }
     }
     return null

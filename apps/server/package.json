@@ -20,6 +20,7 @@
         "start": "NODE_ENV=production bun dist/index.mjs",
         "test": "bun run build:routes && bun run vitest:coverage",
         "test:browser": "NODE_ENV=test vitest lib/utils/puppeteer.test.ts lib/utils/puppeteer-utils.test.ts",
+        "typecheck": "tsc --noEmit",
         "vitest": "NODE_ENV=test vitest",
         "vitest:coverage": "NODE_ENV=test vitest --coverage.enabled --reporter=junit --exclude lib/utils/puppeteer.test.ts --exclude lib/utils/puppeteer-utils.test.ts",
         "vitest:watch": "NODE_ENV=test vitest --watch"

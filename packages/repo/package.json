@@ -4,6 +4,7 @@
     "scripts": {
         "format": "biome format --write . ../../package.json ../../biome.json ../../README.md ../../docker-compose.yml ../../.codecov.yml ../../.github ../../scripts",
         "format:check": "biome format . ../../package.json ../../biome.json ../../README.md ../../docker-compose.yml ../../.codecov.yml ../../.github ../../scripts",
-        "lint": "biome lint . ../../package.json ../../biome.json ../../README.md ../../docker-compose.yml ../../.codecov.yml ../../.github ../../scripts"
+        "lint": "biome lint . ../../package.json ../../biome.json ../../README.md ../../docker-compose.yml ../../.codecov.yml ../../.github ../../scripts",
+        "typecheck": "true"
     }
 }

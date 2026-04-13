@@ -68,6 +68,9 @@ export type DataItem = {
         size_in_bytes?: number
         duration_in_seconds?: number
     }>
+    upvotes?: number
+    downvotes?: number
+    comments?: number
 
     _extra?: Record<string, any> & {
         links?: Array<{

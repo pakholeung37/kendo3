@@ -12,10 +12,13 @@ type Get = typeof http.get | typeof https.get | typeof http.request | typeof htt
 
 interface ExtendedRequestOptions extends http.RequestOptions {
     headerGeneratorOptions?: Partial<HeaderGeneratorOptions>
+    href?: string
+    search?: string
+    query?: string | Record<string, string> | URLSearchParams
 }
 
-const getWrappedGet: <T extends Get>(origin: T) => T = (origin) =>
-    function (this: any, ...args: Parameters<typeof origin>) {
+const getWrappedGet = <T extends Get>(origin: T): T =>
+    ((function (this: any, ...args: Parameters<T>) {
         let url: URL | null
         let options: ExtendedRequestOptions = {}
         let callback: ((res: http.IncomingMessage) => void) | undefined
@@ -45,29 +48,30 @@ const getWrappedGet: <T extends Get>(origin: T) => T = (origin) =>
 
         logger.debug(`Outgoing request: ${options.method || 'GET'} ${url}`)
 
-        options.headers = options.headers || {}
-        const headersLowerCaseKeys = new Set(Object.keys(options.headers).map((key) => key.toLowerCase()))
+        const headers = ((options.headers as http.OutgoingHttpHeaders | undefined) ?? {}) as Record<string, any>
+        options.headers = headers
+        const headersLowerCaseKeys = new Set(Object.keys(headers).map((key) => key.toLowerCase()))
 
         // ua
         if (config.isDefaultUA || options.headerGeneratorOptions) {
             const generatedHeaders = generateHeaders(options.headerGeneratorOptions)
 
             if (!headersLowerCaseKeys.has('user-agent')) {
-                options.headers['user-agent'] = generatedHeaders['user-agent']
+                headers['user-agent'] = generatedHeaders['user-agent']
             }
 
             for (const header of HEADER_LIST) {
                 if (!headersLowerCaseKeys.has(header) && generatedHeaders[header]) {
-                    options.headers[header] = generatedHeaders[header]
+                    headers[header] = generatedHeaders[header]
                 }
             }
         } else if (!headersLowerCaseKeys.has('user-agent')) {
-            options.headers['user-agent'] = config.ua
+            headers['user-agent'] = config.ua
         }
 
         // referer
         if (!headersLowerCaseKeys.has('referer')) {
-            options.headers.referer = url.origin
+            headers.referer = url.origin
         }
 
         // proxy
@@ -91,6 +95,6 @@ const getWrappedGet: <T extends Get>(origin: T) => T = (origin) =>
         const { headerGeneratorOptions, ...cleanOptions } = options
 
         return Reflect.apply(origin, this, [url, cleanOptions, callback]) as ReturnType<typeof origin>
-    }
+    }) as unknown) as T
 
 export default getWrappedGet

@@ -19,7 +19,7 @@ const limiterQueue = new RateLimiterQueue(limiter, {
     maxQueueSize: 4800,
 })
 
-export const useCustomHeader = (headers: Headers) => {
+export const useCustomHeader = (headers: { entries(): IterableIterator<[string, string]> }) => {
     process.env.NODE_ENV === 'dev' &&
         useRegisterRequest((req) => {
             for (const [key, value] of headers.entries()) {
@@ -29,7 +29,7 @@ export const useCustomHeader = (headers: Headers) => {
         })
 }
 
-const wrappedFetch: typeof undici.fetch = async (input: RequestInfo, init?: RequestInit & { headerGeneratorOptions?: Partial<HeaderGeneratorOptions> }) => {
+const wrappedFetch = async (input: RequestInfo, init?: RequestInit & { headerGeneratorOptions?: Partial<HeaderGeneratorOptions> }) => {
     const request = new Request(input, init)
     const options: RequestInit = {}
 
@@ -96,7 +96,7 @@ const wrappedFetch: typeof undici.fetch = async (input: RequestInfo, init?: Requ
 
     const maxRetries = proxy.multiProxy?.allProxies.length || 1
 
-    const attemptRequest = async (attempt: number): Promise<Response> => {
+    const attemptRequest = async (attempt: number) => {
         try {
             return await undici.fetch(request, options)
         } catch (error) {
@@ -128,4 +128,4 @@ const wrappedFetch: typeof undici.fetch = async (input: RequestInfo, init?: Requ
     return attemptRequest(0)
 }
 
-export default wrappedFetch
+export default wrappedFetch as typeof undici.fetch

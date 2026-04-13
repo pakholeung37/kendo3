@@ -1,23 +1,20 @@
 {
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "target": "ESNext",
         "module": "ESNext",
-        "moduleResolution": "bundler",
         "strict": true,
+        "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
         "jsx": "react-jsx",
         "jsxImportSource": "hono/jsx",
         "paths": {
             "@/*": ["./lib/*"]
         },
-        "esModuleInterop": true,
-        "noImplicitAny": false,
         "outDir": "./dist",
-        "skipLibCheck": true,
         "noEmit": true,
         "incremental": true,
         "resolveJsonModule": true,
         "isolatedModules": true
     },
     "include": ["./lib/**/*"],
-    "exclude": ["node_modules", "*.test.*"]
+    "exclude": ["node_modules", "dist", "coverage", "./lib/**/*.test.*", "./lib/**/*.spec.*", "./lib/routes"]
 }

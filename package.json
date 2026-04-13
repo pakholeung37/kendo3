@@ -12,6 +12,7 @@
         "build": "cd apps/server && bun run build",
         "start": "cd apps/server && bun run start",
         "lint": "turbo run lint",
+        "typecheck": "turbo run typecheck",
         "format": "turbo run format",
         "format:check": "turbo run format:check",
         "test": "cd apps/server && bun run test",
