@@ -15,6 +15,6 @@
         "resolveJsonModule": true,
         "isolatedModules": true
     },
-    "include": ["./lib/**/*"],
-    "exclude": ["node_modules", "dist", "coverage", "./lib/**/*.test.*", "./lib/**/*.spec.*", "./lib/routes"]
+    "include": ["src"],
+    "exclude": ["node_modules", "dist", "coverage", " **/*.test.*", " **/*.spec.*"]
 }
