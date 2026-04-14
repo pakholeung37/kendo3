@@ -108,3 +108,12 @@ textarea {
     background: var(--primary);
     color: var(--primary-foreground);
 }
+
+@keyframes new-item-flash {
+    0% {
+        background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+    }
+    100% {
+        background-color: transparent;
+    }
+}

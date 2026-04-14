@@ -30,7 +30,7 @@ export function AppLayout() {
     const _location = useLocation()
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col font-mono text-xs">
+        <div className="h-screen bg-background text-foreground flex flex-col font-mono text-xs overflow-hidden">
             <header className="border-b border-border bg-card uppercase">
                 <div className="flex items-center justify-between px-3 py-1.5 space-x-4">
                     <div className="flex items-center gap-6">
@@ -65,15 +65,9 @@ export function AppLayout() {
             </header>
 
             {/* Main Terminal Window */}
-            <main className="flex-1 p-4 overflow-auto">
+            <main className="flex-1 p-4 flex flex-col min-h-0">
                 <Outlet />
             </main>
-
-            {/* Footer Status Bar */}
-            <footer className="border-t border-border p-1 px-4 bg-card text-muted-foreground flex justify-between">
-                <div>SYSTEM RUNNING OK</div>
-                <div>TERMINAL ID: T-8492</div>
-            </footer>
         </div>
     )
 }

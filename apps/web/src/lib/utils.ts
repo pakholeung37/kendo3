@@ -47,6 +47,19 @@ export const formatTimeOnly = (value: number | null | undefined) => {
     return timeFormatter.format(value)
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    month: 'short',
+    day: '2-digit',
+})
+
+export const formatDateOnly = (value: number | null | undefined) => {
+    if (!value) {
+        return '---'
+    }
+
+    return dateFormatter.format(value).replace(' ', '-').toUpperCase()
+}
+
 export const formatRelativeMinutes = (minutes: number) => `${minutes} 分钟`
 
 export const formatCompactNumber = (value: number) => new Intl.NumberFormat('zh-CN').format(value)

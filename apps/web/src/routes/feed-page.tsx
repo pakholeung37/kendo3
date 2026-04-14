@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api'
-import { cn, formatCompactNumber, formatDateTime, formatTimeOnly } from '@/lib/utils'
+import { cn, formatCompactNumber, formatDateTime, formatDateOnly, formatTimeOnly } from '@/lib/utils'
 import { useFeedFilterStore } from '@/store/feed-filters'
 
 export function FeedPage() {
@@ -38,6 +38,7 @@ export function FeedPage() {
     const selectedSource = sourceId === 'all' ? null : (sources.find((source) => source.id === sourceId) ?? null)
 
     const observerTarget = useRef<HTMLDivElement>(null)
+    const knownIds = useRef(new Set<string>())
 
     useEffect(() => {
         const target = observerTarget.current
@@ -57,7 +58,7 @@ export function FeedPage() {
     }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage])
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2 flex-1 min-h-0 h-full">
             <div className="grid gap-2 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] flex-1 min-h-0">
                 <aside className="flex flex-col gap-2 min-h-0">
                     <Card className="flex flex-col min-h-[300px] lg:min-h-0 max-h-screen lg:max-h-full overflow-hidden">
@@ -159,28 +160,38 @@ export function FeedPage() {
                                         <div className="w-12 text-right shrink-0">ACT</div>
                                     </div>
 
-                                    {items.map((item, index) => (
-                                        <article className="group flex items-start border-b border-border/50 px-2 py-1 hover:bg-muted/30 transition-colors" key={item.id}>
-                                            <div className="w-24 shrink-0 text-primary tabular-nums">{formatTimeOnly(item.publishedAt)}</div>
+                                    {items.map((item, index) => {
+                                        const isNewArrival = knownIds.current.size > 0 && !knownIds.current.has(item.id)
+                                        if (!knownIds.current.has(item.id)) {
+                                            knownIds.current.add(item.id)
+                                        }
 
-                                            <div className="w-32 shrink-0 truncate pr-2">
-                                                <span className="text-secondary-foreground bg-secondary px-1">{item.sourceName}</span>
-                                            </div>
+                                        return (
+                                            <article className={cn("group flex items-start border-b border-border/50 px-2 py-1 hover:bg-muted/30 transition-colors", isNewArrival && "animate-[new-item-flash_1.5s_ease-out]")} key={item.id}>
+                                                <div className="w-24 shrink-0 tabular-nums flex flex-col justify-start pt-[2px]">
+                                                    <span className="text-primary text-xs font-bold leading-none">{formatTimeOnly(item.publishedAt)}</span>
+                                                    <span className="text-muted-foreground text-[9px] font-bold opacity-60 mt-[3px] leading-none">{formatDateOnly(item.publishedAt)}</span>
+                                                </div>
 
-                                            <div className="flex-1 min-w-0 pr-2 flex flex-col gap-1">
-                                                <a className="font-bold text-[13px] text-foreground hover:text-primary leading-tight" href={item.link} rel="noreferrer" target="_blank" title={item.title}>
-                                                    {item.title}
-                                                </a>
-                                                {item.summary && <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{item.summary}</p>}
-                                            </div>
+                                                <div className="w-32 shrink-0 truncate pr-2">
+                                                    <span className="text-secondary-foreground bg-secondary px-1">{item.sourceName}</span>
+                                                </div>
 
-                                            <div className="w-12 text-right shrink-0">
-                                                <a href={item.link} rel="noreferrer" target="_blank" className="text-muted-foreground hover:text-primary inline-flex">
-                                                    <ArrowUpRight className="size-3" />
-                                                </a>
-                                            </div>
-                                        </article>
-                                    ))}
+                                                <div className="flex-1 min-w-0 pr-2 flex flex-col gap-1">
+                                                    <a className="font-bold text-[13px] text-foreground hover:text-primary leading-tight" href={item.link} rel="noreferrer" target="_blank" title={item.title}>
+                                                        {item.title}
+                                                    </a>
+                                                    {item.summary && <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{item.summary}</p>}
+                                                </div>
+
+                                                <div className="w-12 text-right shrink-0">
+                                                    <a href={item.link} rel="noreferrer" target="_blank" className="text-muted-foreground hover:text-primary inline-flex">
+                                                        <ArrowUpRight className="size-3" />
+                                                    </a>
+                                                </div>
+                                            </article>
+                                        )
+                                    })}
                                 </div>
                             )}
 
