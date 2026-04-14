@@ -1,12 +1,23 @@
 # kendo3
 
-`kendo3` is a Bun monorepo that hosts the refactored RSSHub server in `apps/server`.
+`kendo3` is a Bun monorepo that hosts the refactored RSSHub server in `apps/server` and a separate web console in `apps/web`.
 
 ## Local development
 
 1. Run `bun install`.
 2. Copy `apps/server/.env.example` to `apps/server/.env` if you need custom local settings.
-3. Start the server with `bun run dev`.
+3. Start the full local stack with `bun run dev`.
+
+Local defaults:
+
+- Web: `http://localhost:5173`
+- Server: `http://localhost:1200`
+
+Useful development commands:
+
+- `bun run dev`
+- `bun run dev:server`
+- `bun run dev:web`
 
 Useful commands:
 
@@ -16,6 +27,8 @@ Useful commands:
 - `bun run start`
 - `bun run test`
 - `bun run smoke:bun`
+
+The web app is a separate frontend build intended to be served by `nginx` or another static host in production. The backend does not read frontend build artifacts as a static directory.
 
 ## Docker
 

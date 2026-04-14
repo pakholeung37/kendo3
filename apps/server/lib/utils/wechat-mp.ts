@@ -27,12 +27,13 @@
 
 import type { Cheerio, CheerioAPI } from 'cheerio'
 import { load } from 'cheerio'
-import type { Element } from 'domhandler'
+import type { AnyNode, Element } from 'domhandler'
 
 import cache from '@/utils/cache'
 import logger from '@/utils/logger'
 import ofetch from '@/utils/ofetch'
 import { parseDate } from '@/utils/parse-date'
+import type { DataItem } from '@/types'
 
 class WeChatMpError extends Error {
     constructor(message: string) {
@@ -92,7 +93,7 @@ class LoopReturn extends Error {
     }
 }
 
-const forEachScript = ($: CheerioAPI | string, callback: (script) => void, defaultReturn: any = null, selector = 'script[nonce][type="text/javascript"]') => {
+const forEachScript = ($: CheerioAPI | string, callback: (script: AnyNode | string) => void, defaultReturn: any = null, selector = 'script[nonce][type="text/javascript"]') => {
     const scripts = typeof $ === 'string' ? [$] : $(selector).toArray()
     for (const script of scripts) {
         try {
@@ -290,7 +291,7 @@ class ExtractMetadata {
         )
 }
 
-const replaceTag = ($, oldTag, newTagName) => {
+const replaceTag = ($: CheerioAPI, oldTag: string | Element | Cheerio<Element>, newTagName: string) => {
     oldTag = $(oldTag)
     const NewTag = $($(`<${newTagName} />`))
     const oldTagAttr = oldTag.attr()
@@ -301,7 +302,7 @@ const replaceTag = ($, oldTag, newTagName) => {
     oldTag.replaceWith(NewTag)
 }
 
-const detectOriginalArticleUrl = ($) => {
+const detectOriginalArticleUrl = ($: CheerioAPI) => {
     // No article content get, try the original url
     // example: https://mp.weixin.qq.com/s/f6sKObaZZhADTYU2Jl5Bnw
     if (!$('#js_content').text()) {
@@ -654,9 +655,14 @@ const fetchArticle = (url: string, bypassHostCheck: boolean = false) => {
  * @param {boolean} skipLink - Whether to skip overriding `item.link` with the normalized url.
  * @return {Promise<object>} - The incoming `item` object, with the article and its metadata filled in.
  */
-const finishArticleItem = async (item, setMpNameAsAuthor = false, skipLink = false) => {
+const finishArticleItem = async (item: DataItem, setMpNameAsAuthor = false, skipLink = false) => {
+    if (!item.link) {
+        return item
+    }
     const fetchedItem = await fetchArticle(item.link)
-    for (const key in fetchedItem) {
+    const itemRecord = item as Record<string, unknown>
+    const fetchedItemRecord = fetchedItem as Record<string, unknown>
+    for (const key of Object.keys(fetchedItem) as Array<keyof typeof fetchedItem>) {
         switch (key) {
             case 'author':
                 item.author = setMpNameAsAuthor
@@ -667,7 +673,9 @@ const finishArticleItem = async (item, setMpNameAsAuthor = false, skipLink = fal
                 item.link = skipLink ? item.link : fetchedItem.link || item.link
                 break
             default:
-                item[key] = item[key] || fetchedItem[key]
+                if (key in itemRecord) {
+                    itemRecord[key] = itemRecord[key] || fetchedItemRecord[key]
+                }
         }
     }
     return item

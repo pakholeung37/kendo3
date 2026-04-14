@@ -1,11 +1,14 @@
 import { load } from 'cheerio'
+import type { CheerioAPI } from 'cheerio'
 import iconv from 'iconv-lite'
 
 import ofetch from '@/utils/ofetch'
 import { parseDate as _parseDate } from '@/utils/parse-date'
 import _timezone from '@/utils/timezone'
 
-function transElemText($, prop) {
+type TemplateSelector = (selector: string) => ReturnType<CheerioAPI>
+
+function transElemText($: CheerioAPI | TemplateSelector, prop: string) {
     const regex = /\$\((.*)\)/g
     let result = prop
     // biome-ignore lint/correctness/noUnusedVariables: referenced via legacy eval templates
@@ -19,7 +22,7 @@ function transElemText($, prop) {
     return result
 }
 
-function replaceParams(data, prop, $) {
+function replaceParams(data: Record<string, any>, prop: string, $: CheerioAPI | TemplateSelector) {
     const regex = /%(.*)%/g
     let result = prop
     let group = regex.exec(prop)
@@ -31,8 +34,8 @@ function replaceParams(data, prop, $) {
     return result
 }
 
-function getProp(data, prop, $) {
-    let result = data
+function getProp(data: Record<string, any>, prop: string | string[], $: CheerioAPI | TemplateSelector) {
+    let result: any = data
     if (Array.isArray(prop)) {
         for (const e of prop) {
             result = transElemText($, result[e])
@@ -43,7 +46,7 @@ function getProp(data, prop, $) {
     return replaceParams(data, result, $)
 }
 
-async function buildData(data) {
+async function buildData(data: Record<string, any>) {
     const response = await ofetch.raw(data.url)
     const contentType = response.headers.get('content-type') || ''
     // 若没有指定编码，则默认utf-8
@@ -64,7 +67,7 @@ async function buildData(data) {
         description: getProp(data, 'description', $),
         allowEmpty: data.allowEmpty || false,
         item: $item.toArray().map((e) => {
-            const $elem = (selector) => $(e).find(selector)
+            const $elem: TemplateSelector = (selector: string) => $(e).find(selector)
             return {
                 title: getProp(data, ['item', 'title'], $elem),
                 description: getProp(data, ['item', 'description'], $elem),

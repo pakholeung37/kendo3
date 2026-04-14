@@ -5,7 +5,10 @@
  * @param {RegExp | string} domainFilter Filter cookies by domain or RegExp
  * @return {string} Cookie-header-style cookie string (e.g. "foobar; foo=bar; baz=qux")
  */
-const parseCookieArray = (cookies, domainFilter?: string | RegExp) => {
+type BrowserCookie = { name: string; value: string; domain: string }
+type CookiePage = { setCookie: (...cookies: BrowserCookie[]) => Promise<void>; cookies: () => Promise<BrowserCookie[]> }
+
+const parseCookieArray = (cookies: BrowserCookie[], domainFilter?: string | RegExp) => {
     if (typeof domainFilter === 'string') {
         const dotDomain = '.' + domainFilter
         cookies = cookies.filter(({ domain }) => domain === domainFilter || domain.endsWith(dotDomain))
@@ -24,8 +27,8 @@ const parseCookieArray = (cookies, domainFilter?: string | RegExp) => {
  * @param {string} domain Domain to set for each cookie
  * @return {import('puppeteer').Protocol.Network.CookieParam[]} Puppeteer-style cookie array
  */
-const constructCookieArray = (cookieStr, domain) =>
-    cookieStr.split('; ').map((item) => {
+const constructCookieArray = (cookieStr: string, domain: string): BrowserCookie[] =>
+    cookieStr.split('; ').map((item: string) => {
         const [name, value] = item.split('=')
         return value === undefined ? { name: '', value: name, domain } : { name, value, domain }
     })
@@ -38,7 +41,7 @@ const constructCookieArray = (cookieStr, domain) =>
  * @param {string} domain Domain to set for each cookie
  * @return {Promise<void>}
  */
-const setCookies = async (page, cookieStr, domain) => {
+const setCookies = async (page: CookiePage, cookieStr: string, domain: string) => {
     const cookies = constructCookieArray(cookieStr, domain)
     await page.setCookie(...cookies)
 }
@@ -50,7 +53,7 @@ const setCookies = async (page, cookieStr, domain) => {
  * @param {RegExp | string} domainFilter Filter cookies by domain or RegExp
  * @return {Promise<string>} Cookie-header-style cookie string
  */
-const getCookies = async (page, domainFilter?: string) => {
+const getCookies = async (page: CookiePage, domainFilter?: string | RegExp) => {
     const cookies = await page.cookies()
     return parseCookieArray(cookies, domainFilter)
 }

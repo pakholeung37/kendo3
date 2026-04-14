@@ -56,10 +56,10 @@ const getAiCompletion = async (prompt: string, text: string) => {
     return response.choices[0].message.content
 }
 
-const getAuthorString = (item) => {
+const getAuthorString = (item: DataItem) => {
     let author = ''
     if (item.author) {
-        author = typeof item.author === 'string' ? item.author : item.author.map((i) => i.name).join(' ')
+        author = typeof item.author === 'string' ? item.author : item.author.map((i: { name: string }) => i.name).join(' ')
     }
     return author
 }
@@ -320,6 +320,7 @@ const middleware: MiddlewareHandler = async (ctx, next) => {
                             // no-empty
                         }
                     }
+                    return ''
                 })
 
                 item.author = author || parsed_result?.author

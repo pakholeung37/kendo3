@@ -7,6 +7,7 @@ coverage
 node_modules
 .turbo
 tmp
+*.tsbuildinfo
 
 apps/server/.env
 apps/server/assets/build/*
@@ -14,3 +15,4 @@ apps/server/assets/build/*
 apps/server/coverage
 apps/server/dist
 apps/server/logs
+apps/web/dist

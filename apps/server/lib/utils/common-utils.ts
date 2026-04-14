@@ -1,5 +1,6 @@
 import os from 'node:os'
 
+import type { Context } from 'hono'
 import title from 'title'
 
 import { parseDate } from '@/utils/parse-date'
@@ -29,7 +30,7 @@ const convertDateToISO8601 = (date?: string | Date | number | null) => {
     return date.toISOString()
 }
 
-const getSubPath = (ctx) => {
+const getSubPath = (ctx: Context) => {
     const subPath = ctx.req.path.replace(/\/[^/]*/, '') || '/'
     return subPath
 }

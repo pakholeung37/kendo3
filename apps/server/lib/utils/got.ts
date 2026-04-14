@@ -4,69 +4,74 @@ import ofetch from '@/utils/ofetch'
 
 import { getSearchParamsString } from './helpers'
 
+type RequestLike = string | Request | ({ url: string } & Record<string, any>)
+type FakeGotOptions = Record<string, any>
+
 const getFakeGot = (defaultOptions?: any) => {
-    const fakeGot = async (request, options?: any) => {
+    const fakeGot = async (request: RequestLike, options?: FakeGotOptions) => {
+        let requestUrl: string | Request = typeof request === 'string' || request instanceof Request ? request : request.url
         if (!(typeof request === 'string' || request instanceof Request) && request.url) {
             options = {
                 ...request,
                 ...options,
             }
-            request = request.url
+            requestUrl = request.url
         }
-        if (options?.hooks?.beforeRequest) {
-            for (const hook of options.hooks.beforeRequest) {
-                hook(options)
+        let resolvedOptions: FakeGotOptions = options ?? {}
+        if (resolvedOptions.hooks?.beforeRequest) {
+            for (const hook of resolvedOptions.hooks.beforeRequest) {
+                hook(resolvedOptions)
             }
-            delete options.hooks
+            delete resolvedOptions.hooks
         }
 
-        options = {
+        resolvedOptions = {
             ...defaultOptions,
-            ...options,
+            ...resolvedOptions,
         }
 
-        if (options?.json && !options.body) {
-            options.body = options.json
-            delete options.json
+        if (resolvedOptions.json && !resolvedOptions.body) {
+            resolvedOptions.body = resolvedOptions.json
+            delete resolvedOptions.json
         }
-        if (options?.form && !options.body) {
-            options.body = new URLSearchParams(options.form as Record<string, string>).toString()
-            if (!options.headers) {
-                options.headers = {}
+        if (resolvedOptions.form && !resolvedOptions.body) {
+            resolvedOptions.body = new URLSearchParams(resolvedOptions.form as Record<string, string>).toString()
+            if (!resolvedOptions.headers) {
+                resolvedOptions.headers = {}
             }
-            options.headers['content-type'] = 'application/x-www-form-urlencoded'
-            delete options.form
+            resolvedOptions.headers['content-type'] = 'application/x-www-form-urlencoded'
+            delete resolvedOptions.form
         }
-        if (options?.searchParams) {
-            request += '?' + getSearchParamsString(options.searchParams)
-            delete options.searchParams
+        if (resolvedOptions.searchParams && typeof requestUrl === 'string') {
+            requestUrl += '?' + getSearchParamsString(resolvedOptions.searchParams)
+            delete resolvedOptions.searchParams
         }
 
         // Add support for buffer responseType, to be compatible with got
-        options.parseResponse = (responseText) => ({
+        resolvedOptions.parseResponse = (responseText: string) => ({
             data: destr(responseText),
             body: responseText,
         })
 
-        if (options?.responseType === 'buffer' || options?.responseType === 'arrayBuffer') {
-            options.responseType = 'arrayBuffer'
-            delete options.parseResponse
+        if (resolvedOptions.responseType === 'buffer' || resolvedOptions.responseType === 'arrayBuffer') {
+            resolvedOptions.responseType = 'arrayBuffer'
+            delete resolvedOptions.parseResponse
         }
 
-        if (options.cookieJar) {
-            const cookies = options.cookieJar.getCookiesSync(request)
+        if (resolvedOptions.cookieJar) {
+            const cookies = resolvedOptions.cookieJar.getCookiesSync(requestUrl)
             if (cookies.length) {
-                if (!options.headers) {
-                    options.headers = {}
+                if (!resolvedOptions.headers) {
+                    resolvedOptions.headers = {}
                 }
-                options.headers.cookie = cookies.join('; ')
+                resolvedOptions.headers.cookie = cookies.join('; ')
             }
-            delete options.cookieJar
+            delete resolvedOptions.cookieJar
         }
 
-        const response = ofetch(request, options)
+        const response = ofetch(requestUrl, resolvedOptions)
 
-        if (options?.responseType === 'arrayBuffer') {
+        if (resolvedOptions.responseType === 'arrayBuffer') {
             const responseData = await response
             return {
                 data: Buffer.from(responseData),
@@ -76,13 +81,13 @@ const getFakeGot = (defaultOptions?: any) => {
         return response
     }
 
-    fakeGot.get = (request, options?) => fakeGot(request, { ...options, method: 'GET' })
-    fakeGot.post = (request, options?) => fakeGot(request, { ...options, method: 'POST' })
-    fakeGot.put = (request, options?) => fakeGot(request, { ...options, method: 'PUT' })
-    fakeGot.patch = (request, options?) => fakeGot(request, { ...options, method: 'PATCH' })
-    fakeGot.head = (request, options?) => fakeGot(request, { ...options, method: 'HEAD' })
-    fakeGot.delete = (request, options?) => fakeGot(request, { ...options, method: 'DELETE' })
-    fakeGot.extend = (options) => getFakeGot(options)
+    fakeGot.get = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'GET' })
+    fakeGot.post = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'POST' })
+    fakeGot.put = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'PUT' })
+    fakeGot.patch = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'PATCH' })
+    fakeGot.head = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'HEAD' })
+    fakeGot.delete = (request: RequestLike, options?: FakeGotOptions) => fakeGot(request, { ...options, method: 'DELETE' })
+    fakeGot.extend = (options: FakeGotOptions) => getFakeGot(options)
 
     return fakeGot
 }

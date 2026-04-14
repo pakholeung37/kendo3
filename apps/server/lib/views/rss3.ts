@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import type { Data, DataItem } from '@/types'
 
 /**
  * This function should be used by RSSHub middleware only.
@@ -11,10 +12,11 @@ const TAG = 'RSS'
 const TYPE = 'feed'
 const PLATFORM = 'RSSHub'
 
-const rss3 = (data) => {
+const rss3 = (data: Data) => {
     const currentUnixTsp = dayjs().unix()
+    const items = data.item ?? []
     const umsResult = {
-        data: data.item.map((item) => {
+        data: items.map((item: DataItem) => {
             const owner = getOwnershipFieldFromURL(item)
             return {
                 owner,
@@ -51,7 +53,10 @@ const rss3 = (data) => {
 }
 
 // we treat the domain as the owner of the content
-function getOwnershipFieldFromURL(item) {
+function getOwnershipFieldFromURL(item: DataItem) {
+    if (!item.link) {
+        return ''
+    }
     try {
         const urlObj = new URL(item.link)
         return urlObj.hostname

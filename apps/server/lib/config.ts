@@ -719,22 +719,22 @@ const calculateValue = () => {
     const medium_cookies: Record<string, string | undefined> = {}
     const discourse_config: Record<string, string | undefined> = {}
 
-    for (const name in envs) {
+    for (const [name, envValue] of Object.entries(envs) as [ConfigEnvKeys, string | undefined][]) {
         if (name.startsWith('BILIBILI_COOKIE_')) {
             const uid = name.slice(16)
-            bilibili_cookies[uid] = envs[name]
+            bilibili_cookies[uid] = envValue
         } else if (name.startsWith('EMAIL_CONFIG_')) {
             const id = name.slice(13)
-            email_config[id] = envs[name]
+            email_config[id] = envValue
         } else if (name.startsWith('DISCUZ_COOKIE_')) {
             const cid = name.slice(14)
-            discuz_cookies[cid] = envs[name]
+            discuz_cookies[cid] = envValue
         } else if (name.startsWith('MEDIUM_COOKIE_')) {
             const username = name.slice(14).toLowerCase()
-            medium_cookies[username] = envs[name]
+            medium_cookies[username] = envValue
         } else if (name.startsWith('DISCOURSE_CONFIG_')) {
             const id = name.slice('DISCOURSE_CONFIG_'.length)
-            discourse_config[id] = JSON.parse(envs[name] || '{}')
+            discourse_config[id] = JSON.parse(envValue || '{}')
         }
     }
 
@@ -1193,9 +1193,7 @@ const calculateValue = () => {
         },
     }
 
-    for (const name in _value) {
-        value[name] = _value[name]
-    }
+    Object.assign(value, _value)
 }
 calculateValue()
 

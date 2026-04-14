@@ -1,4 +1,4 @@
-const fallback = (a, b, c) => {
+const fallback = <T>(a: T | null | undefined, b: T | null | undefined, c: T) => {
     if (a !== undefined && a !== null) {
         return a
     }
@@ -8,7 +8,7 @@ const fallback = (a, b, c) => {
     return c
 }
 
-const queryToBoolean = (s) => {
+const queryToBoolean = (s: string | string[] | null | undefined) => {
     if (s === undefined || s === null) {
         return s
     }
@@ -25,7 +25,7 @@ const queryToBoolean = (s) => {
     return true
 }
 
-const queryToInteger = (s) => {
+const queryToInteger = (s: string | string[] | null | undefined) => {
     if (s === undefined || s === null) {
         return s
     }
@@ -39,7 +39,7 @@ const queryToInteger = (s) => {
     return Number.parseInt(s)
 }
 
-const queryToFloat = (s) => {
+const queryToFloat = (s: string | string[] | null | undefined) => {
     if (s === undefined || s === null) {
         return s
     }

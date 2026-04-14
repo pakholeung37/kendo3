@@ -56,11 +56,11 @@ export type NamespacesType = Record<
 let namespaces: NamespacesType = {}
 
 if (config.isPackage) {
-    namespaces = (await import('../assets/build/routes.js')).default
+    namespaces = (await import('../assets/build/routes.js')).default as NamespacesType
 } else {
     switch (process.env.NODE_ENV) {
         case 'production':
-            namespaces = (await import('../assets/build/routes.js')).default
+            namespaces = (await import('../assets/build/routes.js')).default as NamespacesType
             break
         case 'test':
             // @ts-expect-error
