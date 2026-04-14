@@ -7,5 +7,6 @@ export default defineConfig({
     clean: true,
     deps: {
         onlyBundle: false,
+        neverBundle: ['bun:sqlite'],
     },
 })

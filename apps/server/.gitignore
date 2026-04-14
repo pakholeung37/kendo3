@@ -1,6 +1,7 @@
 assets/build/*
 !assets/build/.gitkeep
 coverage
+data
 dist
 logs
 node_modules

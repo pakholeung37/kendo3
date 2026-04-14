@@ -1,10 +1,27 @@
 import { createBrowserRouter } from 'react-router'
 
-import { Component as App } from './App'
+import { AppLayout } from './App'
+import { FeedPage } from './routes/feed-page'
+import { RunsPage } from './routes/runs-page'
+import { SourcesPage } from './routes/sources-page'
 
 export const router = createBrowserRouter([
     {
         path: '/',
-        Component: App,
+        Component: AppLayout,
+        children: [
+            {
+                index: true,
+                Component: FeedPage,
+            },
+            {
+                path: 'sources',
+                Component: SourcesPage,
+            },
+            {
+                path: 'runs',
+                Component: RunsPage,
+            },
+        ],
     },
 ])

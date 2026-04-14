@@ -5,12 +5,13 @@ export default defineConfig({
     plugins: [tsconfigPaths()],
     test: {
         watch: false,
+        environment: 'node',
+        include: ['src/**/*.test.ts'],
         coverage: {
-            include: ['lib/**/*.ts', 'lib/**/*.tsx'],
-            exclude: ['lib/routes/**'],
+            include: ['src/**/*.ts'],
+            exclude: ['src/**/*.test.ts'],
         },
         testTimeout: 10000,
-        setupFiles: ['./lib/setup.test.ts'],
-        exclude: [...configDefaults.exclude, './lib/setup.test.ts'],
+        exclude: [...configDefaults.exclude],
     },
 })
