@@ -1,11 +1,14 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { AlertTriangle, ArrowUpRight, RefreshCcw, SatelliteDish } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
-import { api } from '../lib/api'
-import { cn, formatDateTime } from '../lib/utils'
-import { useFeedFilterStore } from '../store/feed-filters'
-
-const statusCardClassName =
-    'rounded-[1.75rem] border border-white/70 bg-white/80 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur'
+import { PanelHeading } from '@/components/panel-heading'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { api } from '@/lib/api'
+import { cn, formatCompactNumber, formatDateTime, formatTimeOnly } from '@/lib/utils'
+import { useFeedFilterStore } from '@/store/feed-filters'
 
 export function FeedPage() {
     const sourceId = useFeedFilterStore((state) => state.sourceId)
@@ -32,108 +35,164 @@ export function FeedPage() {
 
     const sources = sourcesQuery.data?.items ?? []
     const items = feedQuery.data?.pages.flatMap((page) => page.items) ?? []
-    const activeSourceCount = sources.filter((source) => source.status === 'active').length
+    const selectedSource = sourceId === 'all' ? null : (sources.find((source) => source.id === sourceId) ?? null)
+
+    const observerTarget = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const target = observerTarget.current
+        if (!target) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
+                    void feedQuery.fetchNextPage()
+                }
+            },
+            { threshold: 0.1 },
+        )
+
+        observer.observe(target)
+        return () => observer.unobserve(target)
+    }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage])
 
     return (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-            <aside className="space-y-4">
-                <section className={statusCardClassName}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">监控概览</p>
-                    <div className="mt-4 grid gap-3">
-                        <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
-                            <p className="text-xs uppercase tracking-[0.28em] text-white/65">已启用源</p>
-                            <p className="mt-2 text-3xl font-semibold">{activeSourceCount}</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">当前条目</p>
-                            <p className="mt-2 text-3xl font-semibold text-slate-950">{items.length}</p>
-                        </div>
-                    </div>
-                </section>
+        <div className="flex flex-col gap-2 h-full">
+            <div className="grid gap-2 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] flex-1 min-h-0">
+                <aside className="flex flex-col gap-2 min-h-0">
+                    <Card className="flex flex-col min-h-[300px] lg:min-h-0 max-h-screen lg:max-h-full overflow-hidden">
+                        <CardHeader>
+                            <PanelHeading eyebrow="SCOPE" title="SOURCE_SEL" />
+                        </CardHeader>
+                        <CardContent className="flex-1 overflow-auto">
+                            <div className="flex flex-col gap-1">
+                                <button
+                                    className={cn(
+                                        'flex w-full items-center justify-between border px-2 py-1 text-left transition text-xs font-mono uppercase',
+                                        sourceId === 'all' ? 'border-primary bg-primary text-primary-foreground' : 'border-transparent bg-secondary text-secondary-foreground hover:border-primary',
+                                    )}
+                                    onClick={() => setSourceId('all')}
+                                    type="button"
+                                >
+                                    <span>[ALL_SOURCES]</span>
+                                    <span>{formatCompactNumber(sources.length)}</span>
+                                </button>
 
-                <section className={statusCardClassName}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-lg font-semibold">按信息源过滤</p>
-                            <p className="mt-1 text-sm text-slate-600">只保留一个最基础的过滤器。</p>
-                        </div>
-                    </div>
-
-                    <select
-                        className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-sky-400 focus:bg-white"
-                        onChange={(event) => setSourceId(event.target.value)}
-                        value={sourceId}
-                    >
-                        <option value="all">全部信息源</option>
-                        {sources.map((source) => (
-                            <option key={source.id} value={source.id}>
-                                {source.name}
-                            </option>
-                        ))}
-                    </select>
-                </section>
-            </aside>
-
-            <section className="space-y-4">
-                <div className={cn(statusCardClassName, 'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between')}>
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Unified Feed</p>
-                        <h2 className="mt-2 text-2xl font-semibold">全局时间倒序信息流</h2>
-                    </div>
-                    <button
-                        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
-                        onClick={() => void feedQuery.refetch()}
-                        type="button"
-                    >
-                        刷新列表
-                    </button>
-                </div>
-
-                {feedQuery.isLoading ? (
-                    <div className={statusCardClassName}>正在加载信息流…</div>
-                ) : items.length === 0 ? (
-                    <div className={statusCardClassName}>还没有抓到文章。可以先去“信息源”页面新增源，然后立即抓取。</div>
-                ) : (
-                    <>
-                        {items.map((item) => (
-                            <article key={item.id} className={statusCardClassName}>
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="space-y-3">
-                                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] tracking-[0.18em] text-slate-600">
-                                                {item.sourceName}
-                                            </span>
-                                            <span>{formatDateTime(item.publishedAt)}</span>
+                                {sources.map((source) => (
+                                    <button
+                                        className={cn(
+                                            'flex w-full items-center justify-between border px-2 py-1 text-left transition text-xs font-mono',
+                                            sourceId === source.id ? 'border-primary bg-primary/20 text-primary' : 'border-transparent bg-transparent text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                                        )}
+                                        key={source.id}
+                                        onClick={() => setSourceId(source.id)}
+                                        type="button"
+                                    >
+                                        <div className="flex items-center gap-2 truncate">
+                                            <span className={cn('size-2 shrink-0', source.status === 'active' ? 'bg-emerald-500' : source.status === 'error' ? 'bg-rose-500' : 'bg-muted-foreground')} />
+                                            <span className="truncate">{source.name}</span>
                                         </div>
-                                        <div>
-                                            <a
-                                                className="text-xl font-semibold tracking-tight text-slate-950 transition hover:text-sky-700"
-                                                href={item.link}
-                                                rel="noreferrer"
-                                                target="_blank"
-                                            >
-                                                {item.title}
-                                            </a>
-                                            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{item.summary || '暂无摘要'}</p>
-                                        </div>
-                                    </div>
+                                        <span className="shrink-0">{formatCompactNumber(source.itemCount)}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <PanelHeading eyebrow="CONTEXT" title="LIVE_STAT" />
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-1 text-[10px] font-mono">
+                            <div className="flex justify-between border-b border-border py-1">
+                                <span className="text-muted-foreground">MODE</span>
+                                <span className="text-primary">{selectedSource ? 'FOCUS' : 'GLOBAL'}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-border py-1">
+                                <span className="text-muted-foreground">POLL_RATE</span>
+                                <span>{selectedSource ? `${selectedSource.currentIntervalMin}M` : 'DYNAMIC'}</span>
+                            </div>
+                            <div className="flex justify-between border-b border-border py-1">
+                                <span className="text-muted-foreground">LAST_OK</span>
+                                <span>{selectedSource ? formatDateTime(selectedSource.lastSuccessAt) : 'MULTIPLE'}</span>
+                            </div>
+                            {selectedSource?.status === 'error' && selectedSource.lastErrorMessage ? (
+                                <div className="mt-2 border border-rose-500/50 bg-rose-500/10 p-2 text-rose-400">ERR: {selectedSource.lastErrorMessage}</div>
+                            ) : null}
+                        </CardContent>
+                    </Card>
+                </aside>
+
+                <section className="flex flex-col min-h-0">
+                    <Card className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <CardHeader className="flex-row items-center justify-between py-1 px-2 border-b border-border">
+                            <span className="text-primary font-bold">UNIFIED_TAPE</span>
+                            <Button onClick={() => void feedQuery.refetch()} size="sm" type="button" variant="terminal">
+                                <RefreshCcw className="size-3 mr-1" />
+                                REFRESH
+                            </Button>
+                        </CardHeader>
+
+                        <CardContent className="flex-1 overflow-auto p-0">
+                            {feedQuery.isLoading ? (
+                                <div className="p-4 space-y-2">
+                                    {Array.from({ length: 15 }).map((_, i) => (
+                                        <Skeleton className="h-6 w-full" key={i} />
+                                    ))}
                                 </div>
-                            </article>
-                        ))}
+                            ) : feedQuery.error ? (
+                                <div className="p-4 text-rose-500 flex items-center gap-2">
+                                    <AlertTriangle className="size-4" />
+                                    <span>TAPE_ERR: {feedQuery.error.message}</span>
+                                </div>
+                            ) : items.length === 0 ? (
+                                <div className="flex h-full flex-col items-center justify-center text-muted-foreground font-mono">
+                                    <SatelliteDish className="size-8 mb-2 opacity-50" />
+                                    <p>NO_DATA_AWAITING_SIGNAL</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col text-xs font-mono">
+                                    <div className="sticky top-0 bg-secondary px-2 py-1 border-b border-border flex text-muted-foreground uppercase text-[10px]">
+                                        <div className="w-24 shrink-0">TIME</div>
+                                        <div className="w-32 shrink-0">SOURCE</div>
+                                        <div className="flex-1">HEADLINE</div>
+                                        <div className="w-12 text-right shrink-0">ACT</div>
+                                    </div>
 
-                        {feedQuery.hasNextPage ? (
-                            <button
-                                className="w-full rounded-[1.5rem] border border-dashed border-slate-300 bg-white/70 px-5 py-4 text-sm font-medium text-slate-700 transition hover:border-sky-400 hover:text-sky-700"
-                                disabled={feedQuery.isFetchingNextPage}
-                                onClick={() => void feedQuery.fetchNextPage()}
-                                type="button"
-                            >
-                                {feedQuery.isFetchingNextPage ? '加载中…' : '加载更多'}
-                            </button>
-                        ) : null}
-                    </>
-                )}
-            </section>
+                                    {items.map((item, index) => (
+                                        <article className="group flex items-start border-b border-border/50 px-2 py-1 hover:bg-muted/30 transition-colors" key={item.id}>
+                                            <div className="w-24 shrink-0 text-primary tabular-nums">{formatTimeOnly(item.publishedAt)}</div>
+
+                                            <div className="w-32 shrink-0 truncate pr-2">
+                                                <span className="text-secondary-foreground bg-secondary px-1">{item.sourceName}</span>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 pr-2 flex flex-col gap-1">
+                                                <a className="font-bold text-[13px] text-foreground hover:text-primary leading-tight" href={item.link} rel="noreferrer" target="_blank" title={item.title}>
+                                                    {item.title}
+                                                </a>
+                                                {item.summary && <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{item.summary}</p>}
+                                            </div>
+
+                                            <div className="w-12 text-right shrink-0">
+                                                <a href={item.link} rel="noreferrer" target="_blank" className="text-muted-foreground hover:text-primary inline-flex">
+                                                    <ArrowUpRight className="size-3" />
+                                                </a>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+
+                            {feedQuery.hasNextPage && (
+                                <div ref={observerTarget} className="p-3 text-center text-[10px] text-muted-foreground border-t border-border">
+                                    {feedQuery.isFetchingNextPage ? 'FETCHING_MORE_DATA...' : 'AWAITING_SCROLL_INTERSECTION...'}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </section>
+            </div>
         </div>
     )
 }

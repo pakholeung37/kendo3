@@ -1,7 +1,14 @@
+import { migrateLegacySourceIds, type SourceIdMigrationDatabase } from './source-id-migration'
 import { sqlite } from './client'
 
 export const initializeDatabase = () => {
     sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS app_meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at INTEGER NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS sources (
             id TEXT PRIMARY KEY,
             type TEXT NOT NULL,
@@ -70,4 +77,10 @@ export const initializeDatabase = () => {
         CREATE INDEX IF NOT EXISTS source_runs_started_at_idx
             ON source_runs(started_at);
     `)
+
+    const migrations = migrateLegacySourceIds(sqlite as unknown as SourceIdMigrationDatabase)
+
+    if (migrations.length > 0) {
+        console.info(`[kendo3] migrated ${migrations.length} legacy source id${migrations.length === 1 ? '' : 's'}`)
+    }
 }

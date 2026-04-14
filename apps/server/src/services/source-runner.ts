@@ -103,6 +103,8 @@ export const fetchAndStoreSource = async (source: SourceRow, trigger: SourceRunT
                     currentIntervalMin: nextIntervalMin,
                     lastCheckedAt: finishedAt,
                     lastSuccessAt: finishedAt,
+                    lastErrorAt: null,
+                    lastErrorMessage: null,
                     consecutiveFailures: 0,
                     updatedAt: finishedAt,
                 })

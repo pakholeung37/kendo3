@@ -1,46 +1,79 @@
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
+import { ModeToggle } from '@/components/mode-toggle'
+import { cn } from '@/lib/utils'
 
 const navigation = [
-    { to: '/', label: '信息流' },
-    { to: '/sources', label: '信息源' },
-    { to: '/runs', label: '抓取记录' },
+    { to: '/', label: 'FEED_TAPE', code: '<GO>' },
+    { to: '/sources', label: 'SOURCE_MGR', code: '<GO>' },
+    { to: '/runs', label: 'EXEC_LOGS', code: '<GO>' },
 ]
 
-const navClassName = ({ isActive }: { isActive: boolean }) =>
-    [
-        'rounded-full px-4 py-2 text-sm font-medium transition',
-        isActive ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/15' : 'text-slate-600 hover:bg-white/80 hover:text-slate-950',
-    ].join(' ')
+const _pageMeta = {
+    '/': {
+        eyebrow: 'CMD // MNTR',
+        title: 'MAIN_TAPE',
+        description: 'LIVE FEED AGGREGATION & TERMINAL MONITOR',
+    },
+    '/sources': {
+        eyebrow: 'CMD // SRC',
+        title: 'SOURCE_RSTRY',
+        description: 'ENDPOINT CONFIGURATION & REGISTRY',
+    },
+    '/runs': {
+        eyebrow: 'CMD // LOG',
+        title: 'EXEC_LEDGER',
+        description: 'POLLING RUN & ERROR DIAGNOSTICS',
+    },
+} as const
 
 export function AppLayout() {
+    const _location = useLocation()
+
     return (
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.18),transparent_32%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#f8fafc_100%)] text-slate-950">
-            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-                <header className="rounded-[2rem] border border-white/70 bg-white/75 px-5 py-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur xl:px-8">
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="space-y-2">
-                            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-sky-700">Kendo3 Monitor</p>
-                            <div>
-                                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">把 RSS 变成可观察的信息流</h1>
-                                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-                                    一期聚焦 RSS 监控：统一时间线、源状态、抓取结果都在这里看。
-                                </p>
-                            </div>
-                        </div>
-                        <nav className="flex flex-wrap gap-2 rounded-full bg-slate-100/85 p-1.5">
+        <div className="min-h-screen bg-background text-foreground flex flex-col font-mono text-xs">
+            <header className="border-b border-border bg-card uppercase">
+                <div className="flex items-center justify-between px-3 py-1.5 space-x-4">
+                    <div className="flex items-center gap-6">
+                        <span className="text-primary font-bold text-xs shrink-0">
+                            KENDO_TERM<span className="animate-pulse">_</span>
+                        </span>
+
+                        <nav className="flex gap-1">
                             {navigation.map((item) => (
-                                <NavLink key={item.to} className={navClassName} to={item.to}>
-                                    {item.label}
+                                <NavLink
+                                    key={item.to}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            'px-2 py-0.5 flex items-center gap-1 transition-colors text-[10px] sm:text-xs font-bold border',
+                                            isActive ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent text-muted-foreground border-transparent hover:border-primary/50 hover:text-foreground',
+                                        )
+                                    }
+                                    end={item.to === '/'}
+                                    to={item.to}
+                                >
+                                    <span>{item.label}</span>
+                                    <span className="opacity-50 text-[10px] hidden sm:inline">{item.code}</span>
                                 </NavLink>
                             ))}
                         </nav>
                     </div>
-                </header>
 
-                <main className="mt-6 flex-1">
-                    <Outlet />
-                </main>
-            </div>
+                    <div className="flex items-center gap-4 text-[10px]">
+                        <ModeToggle />
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Terminal Window */}
+            <main className="flex-1 p-4 overflow-auto">
+                <Outlet />
+            </main>
+
+            {/* Footer Status Bar */}
+            <footer className="border-t border-border p-1 px-4 bg-card text-muted-foreground flex justify-between">
+                <div>SYSTEM RUNNING OK</div>
+                <div>TERMINAL ID: T-8492</div>
+            </footer>
         </div>
     )
 }

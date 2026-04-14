@@ -1,16 +1,95 @@
-@import '@fontsource/sn-pro/400.css';
-@import '@fontsource/sn-pro/500.css';
-@import '@fontsource/sn-pro/700.css';
-@import 'tailwindcss';
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/sn-pro/400.css";
+@import "@fontsource/sn-pro/500.css";
+@import "@fontsource/sn-pro/700.css";
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
     color-scheme: light;
-    font-family: 'SN Pro', ui-sans-serif, system-ui, sans-serif;
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #f8f9fa;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #d97706; /* Darker amber for daylight visibility */
+    --primary-foreground: #ffffff;
+    --secondary: #e5e7eb; /* Light Gray */
+    --secondary-foreground: #000000;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+    --accent: #2563eb; /* Blue */
+    --accent-foreground: #ffffff;
+    --destructive: #dc2626; /* Red */
+    --destructive-foreground: #ffffff;
+    --border: #d1d5db; /* Noticeable gray border */
+    --ring: #d97706;
+    --radius: 0rem;
+}
+
+.dark {
+    color-scheme: dark;
+    --background: #000000;
+    --foreground: #e0e0e0;
+    --card: #050505;
+    --card-foreground: #e0e0e0;
+    --popover: #050505;
+    --popover-foreground: #e0e0e0;
+    --primary: #f59e0b; /* Amber */
+    --primary-foreground: #000000;
+    --secondary: #1a1a1a; /* Dark Gray */
+    --secondary-foreground: #e0e0e0;
+    --muted: #111111;
+    --muted-foreground: #9ca3af;
+    --accent: #2563eb; /* Blue */
+    --accent-foreground: #ffffff;
+    --destructive: #ef4444; /* Red */
+    --destructive-foreground: #000000;
+    --border: #27272a;
+    --ring: #f59e0b;
+}
+
+@theme inline {
+    --font-sans: "IBM Plex Mono", ui-monospace, monospace; /* Use monospace everywhere for Bloomberg look */
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-ring: var(--ring);
+}
+
+* {
+    border-color: var(--border);
+}
+
+html {
+    background: var(--background);
 }
 
 body {
     margin: 0;
     min-width: 320px;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -23,4 +102,9 @@ input,
 select,
 textarea {
     font: inherit;
+}
+
+::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
 }

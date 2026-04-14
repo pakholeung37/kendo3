@@ -7,11 +7,11 @@ import { db } from './db/client'
 import { feedItems, sourceRuns, sources, type SourceRow } from './db/schema'
 import { deriveSourceStatus } from './lib/status'
 import { DEFAULT_POLL_INTERVAL_MINUTES } from './lib/time'
-import { deriveSourceName } from './lib/text'
+import { createUniqueSourceId, deriveSourceId, deriveSourceName, normalizeSourceId, SOURCE_ID_MAX_LENGTH } from './lib/text'
 import { SourceBusyError, type SourcePoller } from './services/poller'
-import type { SourceRunResult } from './services/source-runner'
 
 const createSourceSchema = z.object({
+    id: z.string().trim().min(1).max(SOURCE_ID_MAX_LENGTH).optional(),
     name: z.string().trim().min(1).max(120).optional(),
     endpoint: z.url(),
     enabled: z.boolean().optional(),
@@ -45,8 +45,7 @@ const jsonError = (status: number, message: string) =>
         headers: { 'Content-Type': 'application/json' },
     })
 
-const encodeCursor = (payload: { publishedAt: number; fetchedAt: number; id: string }) =>
-    Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+const encodeCursor = (payload: { publishedAt: number; fetchedAt: number; id: string }) => Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
 
 const decodeCursor = (value: string | undefined) => {
     if (!value) {
@@ -127,6 +126,41 @@ const getSourceById = (sourceId: string) =>
         .where(and(eq(sources.id, sourceId), isNull(sources.deletedAt)))
         .get()
 
+const getSourceByIdIncludingDeleted = (sourceId: string) => db.select({ id: sources.id }).from(sources).where(eq(sources.id, sourceId)).get()
+
+type ResolvedSourceId = { id: string; name: string } | { error: string }
+
+const resolveSourceId = (input: { id?: string; name?: string }, endpoint: string): ResolvedSourceId => {
+    const normalizedRequestedId = input.id ? normalizeSourceId(input.id) : ''
+
+    if (input.id && !normalizedRequestedId) {
+        return {
+            error: 'Source id must contain letters or numbers',
+        }
+    }
+
+    const normalizedName = input.name?.trim() || deriveSourceName(endpoint)
+    const baseId = normalizedRequestedId || deriveSourceId(normalizedName, deriveSourceName(endpoint))
+
+    if (!baseId) {
+        return {
+            error: 'Source id could not be derived from the provided name',
+        }
+    }
+
+    if (normalizedRequestedId) {
+        return {
+            id: normalizedRequestedId,
+            name: normalizedName,
+        }
+    }
+
+    return {
+        id: createUniqueSourceId(baseId, (candidate) => Boolean(getSourceByIdIncludingDeleted(candidate))),
+        name: normalizedName,
+    }
+}
+
 export const createApp = (poller: SourcePoller) => {
     const app = new Hono()
 
@@ -183,10 +217,20 @@ export const createApp = (poller: SourcePoller) => {
 
         const now = Date.now()
         const endpoint = normalizeEndpoint(payload.data.endpoint)
+        const resolvedSource = resolveSourceId(payload.data, endpoint)
+
+        if ('error' in resolvedSource) {
+            return jsonError(400, resolvedSource.error)
+        }
+
+        if (payload.data.id && getSourceByIdIncludingDeleted(resolvedSource.id)) {
+            return jsonError(409, 'Source id already exists')
+        }
+
         const source: typeof sources.$inferInsert = {
-            id: crypto.randomUUID(),
+            id: resolvedSource.id,
             type: 'rss',
-            name: payload.data.name?.trim() || deriveSourceName(endpoint),
+            name: resolvedSource.name,
             endpoint,
             enabled: payload.data.enabled ?? true,
             configJson: '{}',
@@ -364,11 +408,7 @@ export const createApp = (poller: SourcePoller) => {
                 or(
                     sql`${feedItems.publishedAt} < ${cursor.publishedAt}`,
                     and(sql`${feedItems.publishedAt} = ${cursor.publishedAt}`, sql`${feedItems.fetchedAt} < ${cursor.fetchedAt}`),
-                    and(
-                        sql`${feedItems.publishedAt} = ${cursor.publishedAt}`,
-                        sql`${feedItems.fetchedAt} = ${cursor.fetchedAt}`,
-                        sql`${feedItems.id} < ${cursor.id}`
-                    ),
+                    and(sql`${feedItems.publishedAt} = ${cursor.publishedAt}`, sql`${feedItems.fetchedAt} = ${cursor.fetchedAt}`, sql`${feedItems.id} < ${cursor.id}`),
                 ),
             )
         }

@@ -4,10 +4,14 @@ export const sources = sqliteTable(
     'sources',
     {
         id: text('id').primaryKey(),
-        type: text('type').notNull().$defaultFn(() => 'rss'),
+        type: text('type')
+            .notNull()
+            .$defaultFn(() => 'rss'),
         name: text('name').notNull(),
         endpoint: text('endpoint').notNull(),
-        configJson: text('config_json').notNull().$defaultFn(() => '{}'),
+        configJson: text('config_json')
+            .notNull()
+            .$defaultFn(() => '{}'),
         enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
         nextPollAt: integer('next_poll_at').notNull(),
         currentIntervalMin: integer('current_interval_min').notNull(),

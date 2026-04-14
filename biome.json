@@ -32,6 +32,7 @@
             "correctness": {
                 "noUnusedFunctionParameters": "off",
                 "noUnusedPrivateClassMembers": "off",
+                "noUnusedImports": "error",
                 "noVoidElementsWithChildren": "off",
                 "useExhaustiveDependencies": "warn",
                 "useHookAtTopLevel": "off",

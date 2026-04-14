@@ -33,12 +33,7 @@ interface ComputeNextPollIntervalOptions {
     newCount?: number
 }
 
-export const computeNextPollIntervalMinutes = ({
-    currentIntervalMin,
-    status,
-    ttlHintMin = null,
-    newCount = 0,
-}: ComputeNextPollIntervalOptions) => {
+export const computeNextPollIntervalMinutes = ({ currentIntervalMin, status, ttlHintMin = null, newCount = 0 }: ComputeNextPollIntervalOptions) => {
     const current = clampIntervalMinutes(currentIntervalMin)
 
     if (status === 'error') {

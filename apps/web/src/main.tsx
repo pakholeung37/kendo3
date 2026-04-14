@@ -1,8 +1,9 @@
-import * as React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router/dom'
 
+import { ThemeProvider } from '@/components/theme-provider'
 import './styles/index.css'
 import { router } from './router'
 
@@ -24,8 +25,10 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-        </QueryClientProvider>
+        <ThemeProvider>
+            <QueryClientProvider client={queryClient}>
+                <RouterProvider router={router} />
+            </QueryClientProvider>
+        </ThemeProvider>
     </React.StrictMode>,
 )

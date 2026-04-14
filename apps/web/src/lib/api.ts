@@ -33,7 +33,7 @@ const withSearchParams = (path: string, params: Record<string, string | undefine
 
 export const api = {
     getSources: async () => request<{ items: Source[] }>('/api/sources'),
-    createSource: async (payload: { name?: string; endpoint: string; enabled?: boolean }) =>
+    createSource: async (payload: { id?: string; name?: string; endpoint: string; enabled?: boolean }) =>
         request<{ item: Source }>('/api/sources', {
             method: 'POST',
             body: JSON.stringify(payload),

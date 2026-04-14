@@ -87,7 +87,7 @@ export class SourcePoller {
         }
     }
 
-    private async runSource(source: (typeof sources.$inferSelect), trigger: SourceRunTrigger): Promise<SourceRunResult> {
+    private async runSource(source: typeof sources.$inferSelect, trigger: SourceRunTrigger): Promise<SourceRunResult> {
         if (this.#inFlight.has(source.id)) {
             throw new SourceBusyError()
         }
