@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/lib/api'
-import { cn, formatCompactNumber, formatDateTime, formatDateOnly, formatTimeOnly } from '@/lib/utils'
+import { cn, formatCompactNumber, formatDateOnly, formatDateTime, formatTimeOnly } from '@/lib/utils'
 import { useFeedFilterStore } from '@/store/feed-filters'
 
 export function FeedPage() {
@@ -167,7 +167,10 @@ export function FeedPage() {
                                         }
 
                                         return (
-                                            <article className={cn("group flex items-start border-b border-border/50 px-2 py-1 hover:bg-muted/30 transition-colors", isNewArrival && "animate-[new-item-flash_1.5s_ease-out]")} key={item.id}>
+                                            <article
+                                                className={cn('group flex items-start border-b border-border/50 px-2 py-1 hover:bg-muted/30 transition-colors', isNewArrival && 'animate-[new-item-flash_1.5s_ease-out]')}
+                                                key={item.id}
+                                            >
                                                 <div className="w-24 shrink-0 tabular-nums flex flex-col justify-start pt-[2px]">
                                                     <span className="text-primary text-xs font-bold leading-none">{formatTimeOnly(item.publishedAt)}</span>
                                                     <span className="text-muted-foreground text-[9px] font-bold opacity-60 mt-[3px] leading-none">{formatDateOnly(item.publishedAt)}</span>

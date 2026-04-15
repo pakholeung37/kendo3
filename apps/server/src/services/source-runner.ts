@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 
 import { db } from '../db/client'
-import { feedItems, sourceRuns, sources, type SourceRow } from '../db/schema'
+import { feedItems, type SourceRow, sourceRuns, sources } from '../db/schema'
 import { computeNextPollIntervalMinutes, DEFAULT_POLL_INTERVAL_MINUTES } from '../lib/time'
 import { HttpStatusError } from './rss-adapter'
 import { resolveSourceAdapter } from './source-adapters'

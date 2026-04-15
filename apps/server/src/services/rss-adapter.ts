@@ -1,9 +1,8 @@
 import Parser from 'rss-parser'
-
+import type { SourceRow } from '../db/schema'
 import { env } from '../env'
 import { extractSummary } from '../lib/text'
 import { parseFeedTtl } from '../lib/time'
-import type { SourceRow } from '../db/schema'
 import type { AdapterFetchResult, NormalizedFeedItem, SourceAdapter } from './source-adapters'
 
 interface ParsedFeedItem {
